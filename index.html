@@ -40,7 +40,6 @@
 
     .layout {
       display: grid;
-      /* 左右のバランスをほぼ同じに */
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
     }
@@ -458,6 +457,19 @@
             </div>
           </div>
 
+          <!-- 自動入力対象のチェック -->
+          <div class="field">
+            <label>自動入力したい支援項目（チェックした内容だけ文章を挿入）</label>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="auto-item" value="med_manage" /> 服薬管理</label>
+              <label><input type="checkbox" class="auto-item" value="oral_check" /> 内服確認</label>
+              <label><input type="checkbox" class="auto-item" value="bathing" /> 入浴</label>
+            </div>
+            <div class="small-text">
+              「自動」ボタンを押すと、チェックを入れた項目の文章だけが「本日の支援内容・様子」に自動入力されます。
+            </div>
+          </div>
+
           <div class="field">
             <label for="support">本日の支援内容・様子</label>
             <textarea
@@ -471,10 +483,10 @@
 
           <div class="btn-row">
             <button type="button" class="btn-secondary" id="autoSupportBtn">
-              ✨ 自動
+              自動
             </button>
             <span class="small-text">
-              上の体調・時間帯・タグ・食事・服薬の内容から、ひな形の文章を自動入力します。
+              チェックを入れた支援項目の文章だけを自動で入力します。
             </span>
           </div>
 
@@ -636,11 +648,8 @@
       "夜間対応",
     ];
 
-    /** @type {Array} */
     let records = [];
-    /** @type {Array<string>} */
     let residents = [];
-    /** @type {Array<string>} */
     let currentTags = [];
     let editingIndex = null; // null のときは新規、それ以外は編集
 
@@ -674,7 +683,6 @@
         console.error("load residents error", e);
       }
 
-      // 記録から自動生成
       const fromRecords = Array.from(
         new Set(records.map((r) => r.resident).filter(Boolean))
       );
@@ -682,7 +690,6 @@
         return fromRecords;
       }
 
-      // デフォルト
       return [
         "利用者A",
         "利用者B",
@@ -805,10 +812,8 @@
       tbody.innerHTML = "";
 
       const filtered = records.filter((r) => {
-        // 利用者フィルター
         if (filterResident && r.resident !== filterResident) return false;
 
-        // 期間フィルター
         const dateStr = r.date;
         if (dateStr) {
           if (periodFilter === "today") {
@@ -826,11 +831,9 @@
             if (periodTo && dateStr > periodTo) return false;
           }
         } else {
-          // 日付が入っていないデータは、期間指定があるときは除外
           if (periodFilter !== "all") return false;
         }
 
-        // キーワード検索
         if (keyword) {
           const tagsText = (r.tags || []).join(" ");
           const target =
@@ -857,7 +860,8 @@
         const td = document.createElement("td");
         td.colSpan = 7;
         td.className = "no-records";
-        td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
+        td.textContent =
+          "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
         tbody.appendChild(tr);
         return;
@@ -865,7 +869,7 @@
 
       filtered
         .slice()
-        .sort((a, b) => (a.date < b.date ? 1 : -1)) // 新しい日付を上に
+        .sort((a, b) => (a.date < b.date ? 1 : -1))
         .forEach((record) => {
           const tr = document.createElement("tr");
 
@@ -950,7 +954,6 @@
 
     function resetForm() {
       document.getElementById("recordForm").reset();
-      // 日付は今日に戻す
       document.getElementById("date").value = new Date()
         .toISOString()
         .slice(0, 10);
@@ -968,6 +971,11 @@
       document.getElementById("modeLabel").style.background = "#eff6ff";
       document.getElementById("modeLabel").style.color = "#1d4ed8";
       document.getElementById("saveButton").textContent = "💾 記録を保存";
+
+      // 自動用チェックもリセット
+      document.querySelectorAll(".auto-item").forEach((el) => {
+        el.checked = false;
+      });
     }
 
     function startEdit(id) {
@@ -1003,6 +1011,11 @@
       document.getElementById("modeLabel").style.background = "#fee2e2";
       document.getElementById("modeLabel").style.color = "#b91c1c";
       document.getElementById("saveButton").textContent = "✏️ この内容で上書き";
+
+      // 自動用チェックはリセット（編集時は手動でチェックしてもらう）
+      document.querySelectorAll(".auto-item").forEach((el) => {
+        el.checked = false;
+      });
     }
 
     function deleteRecord(id) {
@@ -1053,62 +1066,78 @@
       resetForm();
     }
 
-    // ===== 本日の支援内容を自動生成（AIっぽく） =====
+    // ===== 本日の支援内容を自動生成（チェックした項目だけ） =====
     function generateSupportText() {
-      const resident = document.getElementById("resident").value;
       const timeSlot = document.getElementById("timeSlot").value;
       const condition = document.getElementById("condition").value;
       const mental = document.getElementById("mental").value;
       const meal = document.getElementById("meal").value.trim();
       const medTaken = document.getElementById("medTaken").checked;
 
-      const tags = [...currentTags];
+      const checkedItems = Array.from(
+        document.querySelectorAll(".auto-item:checked")
+      ).map((el) => el.value);
+
+      if (checkedItems.length === 0) {
+        alert("自動入力したい項目にチェックを入れてください。（例：服薬管理・内服確認・入浴）");
+        return;
+      }
 
       let lines = [];
 
       // 1行目：全体の様子
-      let line1 = `本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`;
-      lines.push(line1);
+      lines.push(`本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`);
 
-      // 2行目：食事
+      // 食事が入っていれば一行
       if (meal) {
         lines.push(`食事は ${meal}。`);
-      } else {
-        lines.push(`食事はおおむね自立して摂取され、特記すべき問題はみられなかった。`);
       }
 
-      // 3行目：服薬
-      if (medTaken) {
-        lines.push(`服薬は声かけにて確認し、内服済みを確認した。`);
-      } else {
-        lines.push(`服薬は未確認または飲み忘れの可能性があり、今後も注意して見守りが必要。`);
+      // 服薬管理
+      if (checkedItems.includes("med_manage")) {
+        if (medTaken) {
+          lines.push(
+            "服薬管理として、服薬時間の声かけと残薬の確認を行い、内服済みを確認した。"
+          );
+        } else {
+          lines.push(
+            "服薬管理として、服薬時間の声かけと残薬の確認を行ったが、内服状況について継続した確認が必要。"
+          );
+        }
       }
 
-      // 4行目以降：タグに応じた文章
-      if (tags.includes("外出")) {
-        lines.push(`日中は外出（散歩・買い物等）を行い、職員が安全に配慮しながら同行した。`);
-      }
-      if (tags.includes("入浴")) {
-        lines.push(`入浴については声かけ・準備の一部介助を行い、本人のペースを尊重しながら支援した。`);
-      }
-      if (tags.includes("体調不良")) {
-        lines.push(`体調不良の訴えがあり、表情や訴えの内容を確認しながら、必要に応じて休息や受診の検討を行った。`);
-      }
-      if (tags.includes("相談")) {
-        lines.push(`本人から生活面や人間関係等についての相談があり、傾聴を中心に気持ちの整理ができるよう支援した。`);
-      }
-      if (tags.includes("仕事")) {
-        lines.push(`就労（作業）については、出勤状況や疲労度を確認しつつ、無理のない範囲で取り組めるよう声かけを行った。`);
+      // 内服確認
+      if (checkedItems.includes("oral_check")) {
+        if (medTaken) {
+          lines.push(
+            "内服確認を行い、処方通り内服できていることを本人と一緒に確認した。"
+          );
+        } else {
+          lines.push(
+            "内服確認を行ったが、一部飲み忘れや服薬タイミングに注意が必要と思われた。"
+          );
+        }
       }
 
-      // 最後にまとめ文
-      lines.push(`全体として大きな問題行動は見られず、今後も同様の支援を継続していく。`);
+      // 入浴
+      if (checkedItems.includes("bathing")) {
+        lines.push(
+          "入浴については声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。"
+        );
+      }
+
+      // まとめ
+      lines.push(
+        "全体として大きな問題行動は見られず、今後も同様の支援を継続していく。"
+      );
 
       const textArea = document.getElementById("support");
       const newText = lines.join("\n");
 
       if (textArea.value.trim()) {
-        const ok = confirm("すでに入力されている内容を、自動生成した文章で置き換えますか？");
+        const ok = confirm(
+          "すでに入力されている内容を、自動生成した文章で置き換えますか？"
+        );
         if (!ok) return;
       }
 
@@ -1296,7 +1325,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      // 今日の日付を初期値に
       document.getElementById("date").value = new Date()
         .toISOString()
         .slice(0, 10);
@@ -1371,4 +1399,3 @@
   </script>
 </body>
 </html>
-
