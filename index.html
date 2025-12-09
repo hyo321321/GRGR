@@ -16,13 +16,15 @@
         "YuGothic", "Meiryo", sans-serif;
       background: #f3f4f6;
       color: #111827;
+      font-size: 16px;
+      line-height: 1.6;
     }
 
     header {
       background: #2563eb;
       color: white;
-      padding: 14px 16px;
-      font-size: 20px;
+      padding: 16px 18px;
+      font-size: 22px;
       font-weight: bold;
       text-align: center;
       position: sticky;
@@ -31,18 +33,19 @@
     }
 
     main {
-      max-width: 1100px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 18px;
     }
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.5fr);
-      gap: 16px;
+      /* 左（入力フォーム）を広め、右（一覧）をやや細めに */
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr);
+      gap: 18px;
     }
 
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
       .layout {
         grid-template-columns: 1fr;
       }
@@ -50,32 +53,32 @@
 
     .card {
       background: white;
-      border-radius: 16px;
-      padding: 16px 18px 18px;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-      margin-bottom: 16px;
+      border-radius: 18px;
+      padding: 20px 22px 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+      margin-bottom: 18px;
     }
 
     .card-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .card-subtitle {
-      font-size: 12px;
+      font-size: 13px;
       color: #6b7280;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     label {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       color: #374151;
     }
 
@@ -84,10 +87,10 @@
     select,
     textarea {
       width: 100%;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid #d1d5db;
-      padding: 8px 10px;
-      font-size: 14px;
+      padding: 10px 12px;
+      font-size: 15px;
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
       background: #f9fafb;
@@ -103,24 +106,24 @@
     }
 
     textarea {
-      min-height: 70px;
+      min-height: 80px;
       resize: vertical;
     }
 
     .field-row {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 12px;
     }
 
     .field-row-3 {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 12px;
     }
 
     .field {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .checkbox-row {
@@ -136,21 +139,21 @@
       align-items: center;
       gap: 6px;
       font-weight: 500;
-      font-size: 13px;
+      font-size: 14px;
       margin-bottom: 0;
     }
 
     .btn-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 12px;
+      margin-top: 12px;
     }
 
     button {
       border: none;
       border-radius: 999px;
-      padding: 8px 16px;
+      padding: 10px 18px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -168,7 +171,7 @@
     .btn-primary {
       background: #2563eb;
       color: white;
-      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
     }
 
     .btn-secondary {
@@ -184,22 +187,22 @@
     .pill {
       border-radius: 999px;
       background: #eff6ff;
-      padding: 3px 10px;
-      font-size: 11px;
+      padding: 4px 11px;
+      font-size: 12px;
       color: #1d4ed8;
       border: 1px solid #bfdbfe;
     }
 
     .record-count {
-      font-size: 12px;
+      font-size: 13px;
       color: #6b7280;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
-      margin-top: 4px;
+      font-size: 13px;
+      margin-top: 6px;
     }
 
     thead {
@@ -212,7 +215,7 @@
     th,
     td {
       border-bottom: 1px solid #e5e7eb;
-      padding: 6px 4px;
+      padding: 8px 6px;
       text-align: left;
       vertical-align: top;
     }
@@ -228,18 +231,18 @@
     }
 
     .table-wrapper {
-      max-height: 480px;
+      max-height: 520px;
       overflow: auto;
-      border-radius: 12px;
+      border-radius: 14px;
       border: 1px solid #e5e7eb;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     .badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 999px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       color: white;
     }
@@ -257,12 +260,12 @@
     }
 
     .small-text {
-      font-size: 11px;
+      font-size: 12px;
       color: #6b7280;
     }
 
     .no-records {
-      padding: 12px;
+      padding: 14px;
       font-size: 13px;
       color: #6b7280;
       text-align: center;
@@ -270,19 +273,19 @@
 
     .resident-select-row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       align-items: center;
     }
 
     .resident-select-row span {
-      font-size: 12px;
+      font-size: 13px;
       color: #4b5563;
     }
 
     .resident-select-row select {
-      max-width: 220px;
+      max-width: 240px;
     }
 
     /* タグボタンまわり */
@@ -297,8 +300,8 @@
       border-radius: 999px;
       border: 1px solid #e5e7eb;
       background: #f3f4f6;
-      padding: 3px 10px;
-      font-size: 11px;
+      padding: 4px 10px;
+      font-size: 12px;
       cursor: pointer;
     }
 
@@ -312,11 +315,11 @@
       display: inline-block;
       margin-top: 2px;
       margin-right: 4px;
-      padding: 1px 6px;
+      padding: 2px 7px;
       border-radius: 999px;
       border: 1px solid #fde68a;
       background: #fffbeb;
-      font-size: 10px;
+      font-size: 11px;
     }
   </style>
 </head>
@@ -408,21 +411,22 @@
             </div>
           </div>
 
-          <<div class="field">
-  <label for="support">本日の支援内容・様子</label>
-  <textarea
-    id="support"
-    rows="8"
-    placeholder="【標準の書き方例】
+          <div class="field">
+            <label for="support">本日の支援内容・様子</label>
+            <textarea
+              id="support"
+              rows="8"
+              placeholder="【標準の書き方例】
 日中は落ち着いて穏やかに過ごされる。食事・服薬ともに見守り中心で実施。
 必要時のみ声かけ・介助を行った。"
-  ></textarea>
-</div>
+            ></textarea>
+          </div>
 
           <div class="field">
             <label for="note">特記事項（事故・トラブル・受診・相談など）</label>
             <textarea
               id="note"
+              rows="4"
               placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"
             ></textarea>
           </div>
@@ -461,7 +465,7 @@
             type="text"
             id="searchKeyword"
             placeholder="例：通院, 夜間, #体調不良 など"
-            style="flex:1; min-width:160px;"
+            style="flex:1; min-width:180px;"
           />
           <button type="button" class="btn-secondary" id="searchClearButton">
             クリア
@@ -687,8 +691,8 @@
     function formatSupportSummary(text) {
       if (!text) return "";
       const trimmed = text.trim().replace(/\s+/g, " ");
-      if (trimmed.length <= 30) return trimmed;
-      return trimmed.slice(0, 30) + "…";
+      if (trimmed.length <= 40) return trimmed;
+      return trimmed.slice(0, 40) + "…";
     }
 
     function renderRecords() {
@@ -787,13 +791,13 @@
           const editBtn = document.createElement("button");
           editBtn.textContent = "編集";
           editBtn.className = "btn-secondary";
-          editBtn.style.fontSize = "11px";
+          editBtn.style.fontSize = "12px";
           editBtn.onclick = () => startEdit(record.id);
 
           const delBtn = document.createElement("button");
           delBtn.textContent = "削除";
           delBtn.className = "btn-danger";
-          delBtn.style.fontSize = "11px";
+          delBtn.style.fontSize = "12px";
           delBtn.onclick = () => deleteRecord(record.id);
 
           tdActions.appendChild(editBtn);
@@ -1101,4 +1105,3 @@
   </script>
 </body>
 </html>
-
