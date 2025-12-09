@@ -506,6 +506,31 @@
         </div>
 
         <div class="resident-select-row">
+          <span>期間：</span>
+          <select id="periodFilter">
+            <option value="today">今日</option>
+            <option value="week">直近7日間</option>
+            <option value="month" selected>今月</option>
+            <option value="year">今年</option>
+            <option value="all">全期間</option>
+            <option value="custom">日付指定</option>
+          </select>
+          <span class="small-text">
+            ※全期間は件数が多くなる場合があります。
+          </span>
+        </div>
+
+        <div class="resident-select-row" id="customPeriodRow" style="display:none;">
+          <span>期間指定：</span>
+          <input type="date" id="periodFrom">
+          <span>〜</span>
+          <input type="date" id="periodTo">
+          <button type="button" class="btn-secondary" id="applyCustomPeriod">
+            反映
+          </button>
+        </div>
+
+        <div class="resident-select-row">
           <span>キーワード検索：</span>
           <input
             type="text"
@@ -748,24 +773,70 @@
         .getElementById("searchKeyword")
         .value.trim()
         .toLowerCase();
+
+      const periodFilterElement = document.getElementById("periodFilter");
+      const periodFilter = periodFilterElement
+        ? periodFilterElement.value
+        : "month";
+
+      const periodFromInput = document.getElementById("periodFrom");
+      const periodToInput = document.getElementById("periodTo");
+      const periodFrom = periodFromInput ? periodFromInput.value : "";
+      const periodTo = periodToInput ? periodToInput.value : "";
+
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+      const monthPrefix = todayStr.slice(0, 7);
+      const yearPrefix = todayStr.slice(0, 4);
+
+      const weekStart = new Date(today);
+      weekStart.setDate(weekStart.getDate() - 6);
+
       tbody.innerHTML = "";
 
       const filtered = records.filter((r) => {
+        // 利用者フィルター
         if (filterResident && r.resident !== filterResident) return false;
-        if (!keyword) return true;
 
-        const tagsText = (r.tags || []).join(" ");
-        const target =
-          ((r.support || "") +
-            " " +
-            (r.note || "") +
-            " " +
-            (r.meal || "") +
-            " " +
-            tagsText)
-            .toLowerCase();
+        // 期間フィルター
+        const dateStr = r.date;
+        if (dateStr) {
+          if (periodFilter === "today") {
+            if (dateStr !== todayStr) return false;
+          } else if (periodFilter === "week") {
+            const d = new Date(dateStr);
+            if (isNaN(d)) return false;
+            if (d < weekStart || d > today) return false;
+          } else if (periodFilter === "month") {
+            if (dateStr.slice(0, 7) !== monthPrefix) return false;
+          } else if (periodFilter === "year") {
+            if (dateStr.slice(0, 4) !== yearPrefix) return false;
+          } else if (periodFilter === "custom") {
+            if (periodFrom && dateStr < periodFrom) return false;
+            if (periodTo && dateStr > periodTo) return false;
+          }
+        } else {
+          // 日付が入っていないデータは、期間指定があるときは除外
+          if (periodFilter !== "all") return false;
+        }
 
-        return target.includes(keyword);
+        // キーワード検索
+        if (keyword) {
+          const tagsText = (r.tags || []).join(" ");
+          const target =
+            ((r.support || "") +
+              " " +
+              (r.note || "") +
+              " " +
+              (r.meal || "") +
+              " " +
+              tagsText)
+              .toLowerCase();
+
+          if (!target.includes(keyword)) return false;
+        }
+
+        return true;
       });
 
       document.getElementById("recordCount").textContent =
@@ -776,7 +847,7 @@
         const td = document.createElement("td");
         td.colSpan = 7;
         td.className = "no-records";
-        td.textContent = "まだ記録がありません。左のフォームから登録してください。";
+        td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
         tbody.appendChild(tr);
         return;
@@ -1202,6 +1273,23 @@
       document
         .getElementById("residentDeleteButton")
         .addEventListener("click", handleResidentDelete);
+
+      const periodFilterElement = document.getElementById("periodFilter");
+      if (periodFilterElement) {
+        periodFilterElement.addEventListener("change", () => {
+          const val = periodFilterElement.value;
+          const row = document.getElementById("customPeriodRow");
+          if (row) {
+            row.style.display = val === "custom" ? "flex" : "none";
+          }
+          renderRecords();
+        });
+      }
+
+      const applyCustomBtn = document.getElementById("applyCustomPeriod");
+      if (applyCustomBtn) {
+        applyCustomBtn.addEventListener("click", renderRecords);
+      }
     });
   </script>
 </body>
