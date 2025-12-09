@@ -284,10 +284,44 @@
     .resident-select-row select {
       max-width: 220px;
     }
+
+    /* タグボタンまわり */
+    .tag-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .tag-button {
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #f3f4f6;
+      padding: 3px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .tag-button.tag-button-active {
+      background: #f59e0b;
+      border-color: #f97316;
+      color: #fff;
+    }
+
+    .tag-chip {
+      display: inline-block;
+      margin-top: 2px;
+      margin-right: 4px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      font-size: 10px;
+    }
   </style>
 </head>
 <body>
-  <header>グループホーム 個人記録 WEBアプリ（簡易版）</header>
+  <header>グループホーム 個人記録 WEBアプリ（タグ・検索付き）</header>
 
   <main>
     <div class="layout">
@@ -365,6 +399,16 @@
           </div>
 
           <div class="field">
+            <label>キーワード（タグ）</label>
+            <div class="tag-buttons" id="tagButtons">
+              <!-- JSで挿入 -->
+            </div>
+            <div class="small-text" id="selectedTagsInfo">
+              選択中：なし
+            </div>
+          </div>
+
+          <div class="field">
             <label for="support">本日の支援内容・様子</label>
             <textarea
               id="support"
@@ -408,6 +452,19 @@
           </span>
         </div>
 
+        <div class="resident-select-row">
+          <span>キーワード検索：</span>
+          <input
+            type="text"
+            id="searchKeyword"
+            placeholder="例：通院, 夜間, #体調不良 など"
+            style="flex:1; min-width:160px;"
+          />
+          <button type="button" class="btn-secondary" id="searchClearButton">
+            クリア
+          </button>
+        </div>
+
         <div class="table-wrapper" id="tableWrapper">
           <table>
             <thead>
@@ -416,7 +473,7 @@
                 <th>利用者</th>
                 <th>時間帯</th>
                 <th>体調 / 心の状態</th>
-                <th>支援内容（抜粋）</th>
+                <th>支援内容・タグ</th>
                 <th>服薬</th>
                 <th>操作</th>
               </tr>
@@ -451,7 +508,7 @@
           <input
             type="text"
             id="residentNameInput"
-            placeholder="例：田中さん"
+            placeholder="例：Aさん"
           />
         </div>
       </div>
@@ -477,10 +534,26 @@
     const STORAGE_KEY = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
 
+    // タグ候補（必要に応じてここを書き換えればOK）
+    const TAG_LIST = [
+      "服薬",
+      "通院",
+      "入浴",
+      "外出",
+      "体調不良",
+      "相談",
+      "仕事",
+      "掃除",
+      "金銭",
+      "夜間対応",
+    ];
+
     /** @type {Array} */
     let records = [];
     /** @type {Array<string>} */
     let residents = [];
+    /** @type {Array<string>} */
+    let currentTags = [];
     let editingIndex = null; // null のときは新規、それ以外は編集
 
     function loadRecords() {
@@ -618,11 +691,29 @@
     function renderRecords() {
       const tbody = document.getElementById("recordTableBody");
       const filterResident = document.getElementById("filterResident").value;
+      const keyword = document
+        .getElementById("searchKeyword")
+        .value.trim()
+        .toLowerCase();
       tbody.innerHTML = "";
 
-      const filtered = records.filter((r) =>
-        filterResident ? r.resident === filterResident : true
-      );
+      const filtered = records.filter((r) => {
+        if (filterResident && r.resident !== filterResident) return false;
+        if (!keyword) return true;
+
+        const tagsText = (r.tags || []).join(" ");
+        const target =
+          ((r.support || "") +
+            " " +
+            (r.note || "") +
+            " " +
+            (r.meal || "") +
+            " " +
+            tagsText)
+            .toLowerCase();
+
+        return target.includes(keyword);
+      });
 
       document.getElementById("recordCount").textContent =
         filtered.length + "件";
@@ -669,6 +760,20 @@
 
           const tdSupport = document.createElement("td");
           tdSupport.textContent = formatSupportSummary(record.support);
+
+          if (record.tags && record.tags.length) {
+            const tagDiv = document.createElement("div");
+            tagDiv.className = "small-text";
+            record.tags.forEach((tag) => {
+              const spanTag = document.createElement("span");
+              spanTag.className = "tag-chip";
+              spanTag.textContent = "#" + tag;
+              tagDiv.appendChild(spanTag);
+            });
+            tdSupport.appendChild(document.createElement("br"));
+            tdSupport.appendChild(tagDiv);
+          }
+
           tr.appendChild(tdSupport);
 
           const tdMed = document.createElement("td");
@@ -721,6 +826,9 @@
       document.getElementById("medTaken").checked = false;
 
       editingIndex = null;
+      currentTags = [];
+      updateTagUI();
+
       document.getElementById("modeLabel").textContent = "新規入力モード";
       document.getElementById("modeLabel").style.background = "#eff6ff";
       document.getElementById("modeLabel").style.color = "#1d4ed8";
@@ -751,6 +859,9 @@
       document.getElementById("support").value = r.support || "";
       document.getElementById("note").value = r.note || "";
 
+      currentTags = Array.isArray(r.tags) ? [...r.tags] : [];
+      updateTagUI();
+
       document.getElementById("modeLabel").textContent =
         "編集モード（上書き保存）";
       document.getElementById("modeLabel").style.background = "#fee2e2";
@@ -763,7 +874,6 @@
       records = records.filter((r) => r.id !== id);
       saveRecords();
       renderRecords();
-      // 編集中のものを消した場合はフォームをリセット
       if (editingIndex !== null) {
         resetForm();
       }
@@ -793,6 +903,7 @@
         medTaken: document.getElementById("medTaken").checked,
         support: document.getElementById("support").value,
         note: document.getElementById("note").value,
+        tags: [...currentTags],
       };
 
       if (editingIndex !== null) {
@@ -806,6 +917,55 @@
       resetForm();
     }
 
+    // ===== タグボタンまわり =====
+    function setupTagButtons() {
+      const container = document.getElementById("tagButtons");
+      container.innerHTML = "";
+      TAG_LIST.forEach((tag) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tag-button";
+        btn.textContent = "#" + tag;
+        btn.dataset.tag = tag;
+        btn.addEventListener("click", () => toggleTag(tag));
+        container.appendChild(btn);
+      });
+      updateTagUI();
+    }
+
+    function toggleTag(tag) {
+      const idx = currentTags.indexOf(tag);
+      if (idx >= 0) {
+        currentTags.splice(idx, 1);
+      } else {
+        currentTags.push(tag);
+      }
+      updateTagUI();
+    }
+
+    function updateTagUI() {
+      const info = document.getElementById("selectedTagsInfo");
+      if (!info) return;
+
+      if (currentTags.length === 0) {
+        info.textContent = "選択中：なし";
+      } else {
+        info.textContent =
+          "選択中： " + currentTags.map((t) => "#" + t).join(" ");
+      }
+
+      const buttons = document.querySelectorAll(".tag-button");
+      buttons.forEach((btn) => {
+        const t = btn.dataset.tag;
+        if (currentTags.includes(t)) {
+          btn.classList.add("tag-button-active");
+        } else {
+          btn.classList.remove("tag-button-active");
+        }
+      });
+    }
+
+    // ===== 利用者管理ボタン =====
     function handleResidentAdd() {
       const nameInput = document.getElementById("residentNameInput");
       const name = nameInput.value.trim();
@@ -897,6 +1057,8 @@
 
       renderResidentSelects();
       renderRecords();
+      setupTagButtons();
+      updateTagUI();
 
       document
         .getElementById("recordForm")
@@ -909,6 +1071,17 @@
       document
         .getElementById("filterResident")
         .addEventListener("change", renderRecords);
+
+      document
+        .getElementById("searchKeyword")
+        .addEventListener("input", renderRecords);
+
+      document
+        .getElementById("searchClearButton")
+        .addEventListener("click", () => {
+          document.getElementById("searchKeyword").value = "";
+          renderRecords();
+        });
 
       document
         .getElementById("residentAddButton")
