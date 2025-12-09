@@ -53,6 +53,7 @@
       border-radius: 16px;
       padding: 16px 18px 18px;
       box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      margin-bottom: 16px;
     }
 
     .card-title {
@@ -310,14 +311,7 @@
             <div class="field">
               <label for="resident">利用者</label>
               <select id="resident" required>
-                <option value="">選択してください</option>
-                <option>利用者A</option>
-                <option>利用者B</option>
-                <option>利用者C</option>
-                <option>利用者D</option>
-                <option>利用者E</option>
-                <option>利用者F</option>
-                <option>利用者G</option>
+                <!-- JSで挿入 -->
               </select>
             </div>
           </div>
@@ -407,14 +401,7 @@
         <div class="resident-select-row">
           <span>表示する利用者：</span>
           <select id="filterResident">
-            <option value="">全員</option>
-            <option>利用者A</option>
-            <option>利用者B</option>
-            <option>利用者C</option>
-            <option>利用者D</option>
-            <option>利用者E</option>
-            <option>利用者F</option>
-            <option>利用者G</option>
+            <!-- JSで挿入 -->
           </select>
           <span class="small-text">
             ※フィルターを変えると、その利用者の記録だけ表示されます。
@@ -441,13 +428,59 @@
         </div>
       </section>
     </div>
+
+    <!-- 利用者管理 -->
+    <section class="card">
+      <div class="card-title">
+        <span>利用者管理</span>
+        <span class="record-count" id="residentCount">0名</span>
+      </div>
+      <div class="card-subtitle">
+        利用者名の追加・変更・削除を行います。ここで変更すると、記録一覧の表示にも反映されます。
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="residentManageSelect">対象の利用者</label>
+          <select id="residentManageSelect">
+            <!-- JSで挿入 -->
+          </select>
+        </div>
+        <div class="field">
+          <label for="residentNameInput">名前（追加・変更後）</label>
+          <input
+            type="text"
+            id="residentNameInput"
+            placeholder="例：田中さん"
+          />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="residentAddButton">
+          ＋ 新しく追加
+        </button>
+        <button type="button" class="btn-secondary" id="residentRenameButton">
+          ✏️ 選択をこの名前に変更
+        </button>
+        <button type="button" class="btn-danger" id="residentDeleteButton">
+          🗑️ 利用者と記録を削除
+        </button>
+      </div>
+      <div class="small-text" style="margin-top:6px;">
+        ※削除すると、その利用者のすべての記録も削除されます。
+      </div>
+    </section>
   </main>
 
   <script>
     const STORAGE_KEY = "group_home_records_v1";
+    const RESIDENTS_KEY = "group_home_residents_v1";
 
     /** @type {Array} */
     let records = [];
+    /** @type {Array<string>} */
+    let residents = [];
     let editingIndex = null; // null のときは新規、それ以外は編集
 
     function loadRecords() {
@@ -465,6 +498,114 @@
 
     function saveRecords() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function loadResidents() {
+      try {
+        const raw = localStorage.getItem(RESIDENTS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.error("load residents error", e);
+      }
+
+      // 記録から自動生成
+      const fromRecords = Array.from(
+        new Set(records.map((r) => r.resident).filter(Boolean))
+      );
+      if (fromRecords.length > 0) {
+        return fromRecords;
+      }
+
+      // デフォルト
+      return [
+        "利用者A",
+        "利用者B",
+        "利用者C",
+        "利用者D",
+        "利用者E",
+        "利用者F",
+        "利用者G",
+      ];
+    }
+
+    function saveResidents() {
+      localStorage.setItem(RESIDENTS_KEY, JSON.stringify(residents));
+    }
+
+    function renderResidentSelects() {
+      const residentSelect = document.getElementById("resident");
+      const filterSelect = document.getElementById("filterResident");
+      const manageSelect = document.getElementById("residentManageSelect");
+      const residentCountLabel = document.getElementById("residentCount");
+
+      if (residentCountLabel) {
+        residentCountLabel.textContent = residents.length + "名";
+      }
+
+      if (residentSelect) {
+        const current = residentSelect.value;
+        residentSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "選択してください";
+        residentSelect.appendChild(placeholder);
+        residents.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          residentSelect.appendChild(opt);
+        });
+        if (current && residents.includes(current)) {
+          residentSelect.value = current;
+        } else {
+          residentSelect.value = "";
+        }
+      }
+
+      if (filterSelect) {
+        const current = filterSelect.value;
+        filterSelect.innerHTML = "";
+        const optAll = document.createElement("option");
+        optAll.value = "";
+        optAll.textContent = "全員";
+        filterSelect.appendChild(optAll);
+        residents.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          filterSelect.appendChild(opt);
+        });
+        if (current && residents.includes(current)) {
+          filterSelect.value = current;
+        } else {
+          filterSelect.value = "";
+        }
+      }
+
+      if (manageSelect) {
+        const current = manageSelect.value;
+        manageSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "選択してください";
+        manageSelect.appendChild(placeholder);
+        residents.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          manageSelect.appendChild(opt);
+        });
+        if (current && residents.includes(current)) {
+          manageSelect.value = current;
+        } else {
+          manageSelect.value = "";
+        }
+      }
     }
 
     function formatSupportSummary(text) {
@@ -591,6 +732,13 @@
       if (index === -1) return;
 
       const r = records[index];
+
+      if (r.resident && !residents.includes(r.resident)) {
+        residents.push(r.resident);
+        saveResidents();
+        renderResidentSelects();
+      }
+
       editingIndex = index;
 
       document.getElementById("date").value = r.date || "";
@@ -658,6 +806,86 @@
       resetForm();
     }
 
+    function handleResidentAdd() {
+      const nameInput = document.getElementById("residentNameInput");
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert("追加する名前を入力してください。");
+        return;
+      }
+      if (residents.includes(name)) {
+        alert("同じ名前の利用者がすでに存在します。");
+        return;
+      }
+      residents.push(name);
+      saveResidents();
+      renderResidentSelects();
+      nameInput.value = "";
+      alert("利用者を追加しました。");
+    }
+
+    function handleResidentRename() {
+      const manageSelect = document.getElementById("residentManageSelect");
+      const oldName = manageSelect.value;
+      const nameInput = document.getElementById("residentNameInput");
+      const newName = nameInput.value.trim();
+
+      if (!oldName) {
+        alert("変更する利用者を選択してください。");
+        return;
+      }
+      if (!newName) {
+        alert("新しい名前を入力してください。");
+        return;
+      }
+      if (oldName === newName) {
+        alert("同じ名前です。");
+        return;
+      }
+      if (residents.includes(newName)) {
+        const ok = confirm(
+          "同じ名前の利用者がすでに存在します。統合しますか？"
+        );
+        if (!ok) return;
+      }
+
+      residents = residents.map((n) => (n === oldName ? newName : n));
+      records = records.map((r) =>
+        r.resident === oldName ? { ...r, resident: newName } : r
+      );
+
+      saveResidents();
+      saveRecords();
+      renderResidentSelects();
+      renderRecords();
+      nameInput.value = "";
+      alert("利用者名を変更しました。");
+    }
+
+    function handleResidentDelete() {
+      const manageSelect = document.getElementById("residentManageSelect");
+      const target = manageSelect.value;
+      if (!target) {
+        alert("削除する利用者を選択してください。");
+        return;
+      }
+      const ok = confirm(
+        target +
+          " を削除しますか？\nこの利用者のすべての記録も削除されます。"
+      );
+      if (!ok) return;
+
+      residents = residents.filter((n) => n !== target);
+      records = records.filter((r) => r.resident !== target);
+
+      saveResidents();
+      saveRecords();
+      renderResidentSelects();
+      renderRecords();
+      document.getElementById("residentNameInput").value = "";
+      alert("削除しました。");
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       // 今日の日付を初期値に
       document.getElementById("date").value = new Date()
@@ -665,6 +893,9 @@
         .slice(0, 10);
 
       records = loadRecords();
+      residents = loadResidents();
+
+      renderResidentSelects();
       renderRecords();
 
       document
@@ -678,6 +909,18 @@
       document
         .getElementById("filterResident")
         .addEventListener("change", renderRecords);
+
+      document
+        .getElementById("residentAddButton")
+        .addEventListener("click", handleResidentAdd);
+
+      document
+        .getElementById("residentRenameButton")
+        .addEventListener("click", handleResidentRename);
+
+      document
+        .getElementById("residentDeleteButton")
+        .addEventListener("click", handleResidentDelete);
     });
   </script>
 </body>
