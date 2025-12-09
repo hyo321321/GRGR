@@ -464,11 +464,111 @@
               <label><input type="checkbox" class="auto-item" value="med_manage" /> 服薬管理</label>
               <label><input type="checkbox" class="auto-item" value="oral_check" /> 内服確認</label>
               <label><input type="checkbox" class="auto-item" value="bathing" /> 入浴</label>
+              <label><input type="checkbox" class="auto-item" value="day_support" /> 日中支援加算</label>
             </div>
             <div class="small-text">
               「自動」ボタンを押すと、チェックを入れた項目の文章だけが「本日の支援内容・様子」に自動入力されます。
             </div>
           </div>
+
+          <!-- 日中支援加算 区分 -->
+          <div class="field">
+            <label for="daySupportType">日中支援加算の区分</label>
+            <select id="daySupportType">
+              <option value="">選択なし</option>
+              <option value="Ⅰ">日中支援加算Ⅰ</option>
+              <option value="Ⅱ">日中支援加算Ⅱ</option>
+            </select>
+            <div class="small-text">
+              日中支援加算に該当する場合のみ、Ⅰ / Ⅱ を選択してください。（自動文章にも反映されます）
+            </div>
+          </div>
+
+          <!-- ★ ここから追加：日中支援加算の状況・支援内容（チェック） -->
+          <div class="field">
+            <label>日中支援加算に関わる状況・支援内容（チェック用メモ）</label>
+            <div class="small-text" style="margin-bottom:4px;">
+              該当するものにチェックしてください（あとから自動文章テンプレに使えます）。
+            </div>
+
+            <div class="checkbox-row">
+              <span class="small-text">【日中活動に行けなかった理由】</span>
+            </div>
+            <div class="checkbox-row">
+              <label>
+                <input type="checkbox" class="day-support-item" value="体調不良で日中活動を欠席" />
+                体調不良で日中活動（通所・就労）を欠席
+              </label>
+              <label>
+                <input type="checkbox" class="day-support-item" value="通所先・就労先が休みや臨時休業で在宅" />
+                通所先・就労先が休み／臨時休業のため在宅
+              </label>
+            </div>
+            <div class="checkbox-row">
+              <label>
+                <input type="checkbox" class="day-support-item" value="障害特性や行動面の不安で日中活動利用が困難" />
+                障害特性・行動面の不安で日中活動利用が困難
+              </label>
+              <label>
+                <input type="checkbox" class="day-support-item" value="医師の指示で外出や通所を控えている" />
+                医師から外出・通所を控えるよう指示あり
+              </label>
+            </div>
+
+            <div class="checkbox-row" style="margin-top:8px;">
+              <span class="small-text">【日中に行った主な支援】</span>
+            </div>
+            <div class="checkbox-row">
+              <label>
+                <input type="checkbox" class="day-support-item" value="体調管理（検温・症状確認・安静の見守りなど）" />
+                体調管理（検温・症状確認・安静の見守りなど）
+              </label>
+              <label>
+                <input type="checkbox" class="day-support-item" value="食事の支援（準備・配膳・介助・摂取量の観察など）" />
+                食事の支援（準備・配膳・介助）
+              </label>
+            </div>
+            <div class="checkbox-row">
+              <label>
+                <input type="checkbox" class="day-support-item" value="服薬管理・内服確認（日中の服薬声かけや残薬確認など）" />
+                服薬管理・内服確認
+              </label>
+              <label>
+                <input type="checkbox" class="day-support-item" value="水分・トイレの声かけや誘導・介助" />
+                水分・トイレの声かけ・介助
+              </label>
+            </div>
+            <div class="checkbox-row">
+              <label>
+                <input type="checkbox" class="day-support-item" value="入浴や清潔保持の支援（洗面・更衣・整容など）" />
+                入浴・清潔保持の支援
+              </label>
+              <label>
+                <input type="checkbox" class="day-support-item" value="行動や安全面の見守り（転倒・徘徊などへの対応）" />
+                行動・安全の見守り
+              </label>
+            </div>
+            <div class="checkbox-row">
+              <label>
+                <input type="checkbox" class="day-support-item" value="心理面の支援や相談（不安時の傾聴や気分転換など）" />
+                心理面の支援・相談
+              </label>
+              <label>
+                <input type="checkbox" class="day-support-item" value="日中の活動支援や生活リズムの調整" />
+                日中の活動支援・生活リズム調整
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="daySupportTime">日中支援の主な時間帯（任意）</label>
+            <input
+              type="text"
+              id="daySupportTime"
+              placeholder="例）9:00〜15:00 の間、居室と共有スペースで継続的に見守り支援"
+            />
+          </div>
+          <!-- ★ 追加ここまで -->
 
           <div class="field">
             <label for="support">本日の支援内容・様子</label>
@@ -486,7 +586,7 @@
               自動
             </button>
             <span class="small-text">
-              チェックを入れた支援項目の文章だけを自動で入力します。
+              チェックを入れた支援項目（服薬管理・内服確認・入浴・日中支援加算）の文章だけを自動で入力します。
             </span>
           </div>
 
@@ -634,7 +734,6 @@
     const STORAGE_KEY = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
 
-    // タグ候補（必要に応じてここを書き換えればOK）
     const TAG_LIST = [
       "服薬",
       "通院",
@@ -651,7 +750,7 @@
     let records = [];
     let residents = [];
     let currentTags = [];
-    let editingIndex = null; // null のときは新規、それ以外は編集
+    let editingIndex = null;
 
     function loadRecords() {
       try {
@@ -962,6 +1061,11 @@
       document.getElementById("mental").value = "安定";
       document.getElementById("medTaken").checked = false;
 
+      const daySupportType = document.getElementById("daySupportType");
+      if (daySupportType) daySupportType.value = "";
+      const daySupportTime = document.getElementById("daySupportTime");
+      if (daySupportTime) daySupportTime.value = "";
+
       editingIndex = null;
       currentTags = [];
       updateTagUI();
@@ -972,8 +1076,10 @@
       document.getElementById("modeLabel").style.color = "#1d4ed8";
       document.getElementById("saveButton").textContent = "💾 記録を保存";
 
-      // 自動用チェックもリセット
       document.querySelectorAll(".auto-item").forEach((el) => {
+        el.checked = false;
+      });
+      document.querySelectorAll(".day-support-item").forEach((el) => {
         el.checked = false;
       });
     }
@@ -1002,6 +1108,17 @@
       document.getElementById("support").value = r.support || "";
       document.getElementById("note").value = r.note || "";
 
+      const daySupportType = document.getElementById("daySupportType");
+      if (daySupportType) daySupportType.value = r.daySupportType || "";
+
+      const daySupportTime = document.getElementById("daySupportTime");
+      if (daySupportTime) daySupportTime.value = r.daySupportTime || "";
+
+      const items = Array.isArray(r.daySupportItems) ? r.daySupportItems : [];
+      document.querySelectorAll(".day-support-item").forEach((el) => {
+        el.checked = items.includes(el.value);
+      });
+
       currentTags = Array.isArray(r.tags) ? [...r.tags] : [];
       updateTagUI();
       syncQuickButtonsAll();
@@ -1012,7 +1129,6 @@
       document.getElementById("modeLabel").style.color = "#b91c1c";
       document.getElementById("saveButton").textContent = "✏️ この内容で上書き";
 
-      // 自動用チェックはリセット（編集時は手動でチェックしてもらう）
       document.querySelectorAll(".auto-item").forEach((el) => {
         el.checked = false;
       });
@@ -1038,6 +1154,14 @@
         return;
       }
 
+      const daySupportTypeEl = document.getElementById("daySupportType");
+      const daySupportType = daySupportTypeEl ? daySupportTypeEl.value : "";
+      const daySupportTimeEl = document.getElementById("daySupportTime");
+      const daySupportTime = daySupportTimeEl ? daySupportTimeEl.value : "";
+      const daySupportItems = Array.from(
+        document.querySelectorAll(".day-support-item:checked")
+      ).map((el) => el.value);
+
       const recordData = {
         id:
           editingIndex !== null
@@ -1053,6 +1177,9 @@
         support: document.getElementById("support").value,
         note: document.getElementById("note").value,
         tags: [...currentTags],
+        daySupportType,
+        daySupportItems,
+        daySupportTime,
       };
 
       if (editingIndex !== null) {
@@ -1073,27 +1200,28 @@
       const mental = document.getElementById("mental").value;
       const meal = document.getElementById("meal").value.trim();
       const medTaken = document.getElementById("medTaken").checked;
+      const daySupportTypeSelect = document.getElementById("daySupportType");
+      const daySupportType = daySupportTypeSelect
+        ? daySupportTypeSelect.value
+        : "";
 
       const checkedItems = Array.from(
         document.querySelectorAll(".auto-item:checked")
       ).map((el) => el.value);
 
       if (checkedItems.length === 0) {
-        alert("自動入力したい項目にチェックを入れてください。（例：服薬管理・内服確認・入浴）");
+        alert("自動入力したい項目にチェックを入れてください。（例：服薬管理・内服確認・入浴・日中支援加算）");
         return;
       }
 
       let lines = [];
 
-      // 1行目：全体の様子
       lines.push(`本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`);
 
-      // 食事が入っていれば一行
       if (meal) {
         lines.push(`食事は ${meal}。`);
       }
 
-      // 服薬管理
       if (checkedItems.includes("med_manage")) {
         if (medTaken) {
           lines.push(
@@ -1106,7 +1234,6 @@
         }
       }
 
-      // 内服確認
       if (checkedItems.includes("oral_check")) {
         if (medTaken) {
           lines.push(
@@ -1119,14 +1246,28 @@
         }
       }
 
-      // 入浴
       if (checkedItems.includes("bathing")) {
         lines.push(
           "入浴については声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。"
         );
       }
 
-      // まとめ
+      if (checkedItems.includes("day_support")) {
+        if (daySupportType === "Ⅰ") {
+          lines.push(
+            "日中支援加算Ⅰの対象として、日中もグループホーム内での生活全般にわたり、見守り・声かけ・誘導等の支援を継続して実施した。"
+          );
+        } else if (daySupportType === "Ⅱ") {
+          lines.push(
+            "日中支援加算Ⅱの対象として、より手厚い見守りや介助が必要な場面が多く、日中を通して継続的な支援を実施した。"
+          );
+        } else {
+          lines.push(
+            "日中支援加算の対象となる支援として、日中もグループホーム内での見守りや声かけ等を継続して行った。"
+          );
+        }
+      }
+
       lines.push(
         "全体として大きな問題行動は見られず、今後も同様の支援を継続していく。"
       );
