@@ -148,6 +148,7 @@
       flex-wrap: wrap;
       gap: 12px;
       margin-top: 12px;
+      align-items: center;
     }
 
     button {
@@ -466,6 +467,15 @@
 日中は落ち着いて穏やかに過ごされる。食事・服薬ともに見守り中心で実施。
 必要時のみ声かけ・介助を行った。"
             ></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button type="button" class="btn-secondary" id="autoSupportBtn">
+              ✨ 自動文章（AIぽい）
+            </button>
+            <span class="small-text">
+              上の体調・時間帯・タグ・食事・服薬の内容から、ひな形の文章を自動入力します。
+            </span>
           </div>
 
           <div class="field">
@@ -1043,6 +1053,68 @@
       resetForm();
     }
 
+    // ===== 本日の支援内容を自動生成（AIっぽく） =====
+    function generateSupportText() {
+      const resident = document.getElementById("resident").value;
+      const timeSlot = document.getElementById("timeSlot").value;
+      const condition = document.getElementById("condition").value;
+      const mental = document.getElementById("mental").value;
+      const meal = document.getElementById("meal").value.trim();
+      const medTaken = document.getElementById("medTaken").checked;
+
+      const tags = [...currentTags];
+
+      let lines = [];
+
+      // 1行目：全体の様子
+      let line1 = `本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`;
+      lines.push(line1);
+
+      // 2行目：食事
+      if (meal) {
+        lines.push(`食事は ${meal}。`);
+      } else {
+        lines.push(`食事はおおむね自立して摂取され、特記すべき問題はみられなかった。`);
+      }
+
+      // 3行目：服薬
+      if (medTaken) {
+        lines.push(`服薬は声かけにて確認し、内服済みを確認した。`);
+      } else {
+        lines.push(`服薬は未確認または飲み忘れの可能性があり、今後も注意して見守りが必要。`);
+      }
+
+      // 4行目以降：タグに応じた文章
+      if (tags.includes("外出")) {
+        lines.push(`日中は外出（散歩・買い物等）を行い、職員が安全に配慮しながら同行した。`);
+      }
+      if (tags.includes("入浴")) {
+        lines.push(`入浴については声かけ・準備の一部介助を行い、本人のペースを尊重しながら支援した。`);
+      }
+      if (tags.includes("体調不良")) {
+        lines.push(`体調不良の訴えがあり、表情や訴えの内容を確認しながら、必要に応じて休息や受診の検討を行った。`);
+      }
+      if (tags.includes("相談")) {
+        lines.push(`本人から生活面や人間関係等についての相談があり、傾聴を中心に気持ちの整理ができるよう支援した。`);
+      }
+      if (tags.includes("仕事")) {
+        lines.push(`就労（作業）については、出勤状況や疲労度を確認しつつ、無理のない範囲で取り組めるよう声かけを行った。`);
+      }
+
+      // 最後にまとめ文
+      lines.push(`全体として大きな問題行動は見られず、今後も同様の支援を継続していく。`);
+
+      const textArea = document.getElementById("support");
+      const newText = lines.join("\n");
+
+      if (textArea.value.trim()) {
+        const ok = confirm("すでに入力されている内容を、自動生成した文章で置き換えますか？");
+        if (!ok) return;
+      }
+
+      textArea.value = newText;
+    }
+
     // ===== タグボタンまわり =====
     function setupTagButtons() {
       const container = document.getElementById("tagButtons");
@@ -1289,6 +1361,11 @@
       const applyCustomBtn = document.getElementById("applyCustomPeriod");
       if (applyCustomBtn) {
         applyCustomBtn.addEventListener("click", renderRecords);
+      }
+
+      const autoSupportBtn = document.getElementById("autoSupportBtn");
+      if (autoSupportBtn) {
+        autoSupportBtn.addEventListener("click", generateSupportText);
       }
     });
   </script>
