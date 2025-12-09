@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>グループホーム 個人記録</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+        "YuGothic", "Meiryo", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    header {
+      background: #2563eb;
+      color: white;
+      padding: 14px 16px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.5fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px 18px 18px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+      color: #374151;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      padding: 8px 10px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: #f9fafb;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.5);
+      background: white;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .checkbox-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 13px;
+      margin-bottom: 0;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.05s ease-out, box-shadow 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .pill {
+      border-radius: 999px;
+      background: #eff6ff;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+
+    .record-count {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      background: #eff6ff;
+      z-index: 1;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 6px 4px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-weight: 600;
+      color: #374151;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .table-wrapper {
+      max-height: 480px;
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      margin-top: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .badge-day {
+      background: #22c55e;
+    }
+
+    .badge-evening {
+      background: #f59e0b;
+    }
+
+    .badge-night {
+      background: #6366f1;
+    }
+
+    .small-text {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .no-records {
+      padding: 12px;
+      font-size: 13px;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .resident-select-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .resident-select-row span {
+      font-size: 12px;
+      color: #4b5563;
+    }
+
+    .resident-select-row select {
+      max-width: 220px;
+    }
+  </style>
+</head>
+<body>
+  <header>グループホーム 個人記録 WEBアプリ（簡易版）</header>
+
+  <main>
+    <div class="layout">
+      <!-- 入力フォーム -->
+      <section class="card">
+        <div class="card-title">
+          <span>今日の個人記録</span>
+          <span class="pill" id="modeLabel">新規入力モード</span>
+        </div>
+        <div class="card-subtitle">
+          利用者を選び、日中の様子・支援内容・服薬状況などを記録します。
+          ブラウザ内に自動保存されます（localStorage）。
+        </div>
+
+        <form id="recordForm">
+          <div class="field-row">
+            <div class="field">
+              <label for="date">日付</label>
+              <input type="date" id="date" required />
+            </div>
+            <div class="field">
+              <label for="resident">利用者</label>
+              <select id="resident" required>
+                <option value="">選択してください</option>
+                <option>利用者A</option>
+                <option>利用者B</option>
+                <option>利用者C</option>
+                <option>利用者D</option>
+                <option>利用者E</option>
+                <option>利用者F</option>
+                <option>利用者G</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-row-3">
+            <div class="field">
+              <label for="timeSlot">時間帯</label>
+              <select id="timeSlot">
+                <option>日中</option>
+                <option>夕方</option>
+                <option>夜間</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="condition">体調</label>
+              <select id="condition">
+                <option>良好</option>
+                <option>普通</option>
+                <option>不良</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mental">心の状態</label>
+              <select id="mental">
+                <option>安定</option>
+                <option>やや不安</option>
+                <option>不安定</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="meal">食事の様子（朝・昼・夕 / 摂取量など）</label>
+            <input
+              type="text"
+              id="meal"
+              placeholder="例）朝：完食 / 昼：7割 / 夕：少なめ など"
+            />
+          </div>
+
+          <div class="field">
+            <div class="checkbox-row">
+              <label>
+                <input type="checkbox" id="medTaken" />
+                服薬済み
+              </label>
+              <span class="small-text">
+                （服薬状況のチェックや、飲み忘れなどがあれば下の支援内容に記入）
+              </span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="support">本日の支援内容・様子</label>
+            <textarea
+              id="support"
+              placeholder="例）朝食準備の声かけ、服薬確認、掃除の見守り、散歩同行 など"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label for="note">特記事項（事故・トラブル・受診・相談など）</label>
+            <textarea
+              id="note"
+              placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"
+            ></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button type="submit" class="btn-primary" id="saveButton">
+              💾 記録を保存
+            </button>
+            <button type="button" class="btn-secondary" id="resetButton">
+              🧹 入力リセット
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- 一覧表示 -->
+      <section class="card">
+        <div class="card-title">
+          <span>記録一覧</span>
+          <span class="record-count" id="recordCount">0件</span>
+        </div>
+
+        <div class="resident-select-row">
+          <span>表示する利用者：</span>
+          <select id="filterResident">
+            <option value="">全員</option>
+            <option>利用者A</option>
+            <option>利用者B</option>
+            <option>利用者C</option>
+            <option>利用者D</option>
+            <option>利用者E</option>
+            <option>利用者F</option>
+            <option>利用者G</option>
+          </select>
+          <span class="small-text">
+            ※フィルターを変えると、その利用者の記録だけ表示されます。
+          </span>
+        </div>
+
+        <div class="table-wrapper" id="tableWrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>利用者</th>
+                <th>時間帯</th>
+                <th>体調 / 心の状態</th>
+                <th>支援内容（抜粋）</th>
+                <th>服薬</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="recordTableBody">
+              <!-- JSで挿入 -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "group_home_records_v1";
+
+    /** @type {Array} */
+    let records = [];
+    let editingIndex = null; // null のときは新規、それ以外は編集
+
+    function loadRecords() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch (e) {
+        console.error("load error", e);
+        return [];
+      }
+    }
+
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function formatSupportSummary(text) {
+      if (!text) return "";
+      const trimmed = text.trim().replace(/\s+/g, " ");
+      if (trimmed.length <= 30) return trimmed;
+      return trimmed.slice(0, 30) + "…";
+    }
+
+    function renderRecords() {
+      const tbody = document.getElementById("recordTableBody");
+      const filterResident = document.getElementById("filterResident").value;
+      tbody.innerHTML = "";
+
+      const filtered = records.filter((r) =>
+        filterResident ? r.resident === filterResident : true
+      );
+
+      document.getElementById("recordCount").textContent =
+        filtered.length + "件";
+
+      if (filtered.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.className = "no-records";
+        td.textContent = "まだ記録がありません。左のフォームから登録してください。";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      filtered
+        .slice()
+        .sort((a, b) => (a.date < b.date ? 1 : -1)) // 新しい日付を上に
+        .forEach((record) => {
+          const tr = document.createElement("tr");
+
+          const tdDate = document.createElement("td");
+          tdDate.textContent = record.date || "";
+          tr.appendChild(tdDate);
+
+          const tdResident = document.createElement("td");
+          tdResident.textContent = record.resident || "";
+          tr.appendChild(tdResident);
+
+          const tdTime = document.createElement("td");
+          const span = document.createElement("span");
+          span.textContent = record.timeSlot || "";
+          span.className = "badge " + getTimeBadgeClass(record.timeSlot);
+          tdTime.appendChild(span);
+          tr.appendChild(tdTime);
+
+          const tdCond = document.createElement("td");
+          tdCond.innerHTML =
+            (record.condition || "") +
+            "<br><span class='small-text'>" +
+            (record.mental || "") +
+            "</span>";
+          tr.appendChild(tdCond);
+
+          const tdSupport = document.createElement("td");
+          tdSupport.textContent = formatSupportSummary(record.support);
+          tr.appendChild(tdSupport);
+
+          const tdMed = document.createElement("td");
+          tdMed.textContent = record.medTaken ? "服薬済み" : "";
+          tr.appendChild(tdMed);
+
+          const tdActions = document.createElement("td");
+          const editBtn = document.createElement("button");
+          editBtn.textContent = "編集";
+          editBtn.className = "btn-secondary";
+          editBtn.style.fontSize = "11px";
+          editBtn.onclick = () => startEdit(record.id);
+
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "削除";
+          delBtn.className = "btn-danger";
+          delBtn.style.fontSize = "11px";
+          delBtn.onclick = () => deleteRecord(record.id);
+
+          tdActions.appendChild(editBtn);
+          tdActions.appendChild(delBtn);
+          tr.appendChild(tdActions);
+
+          tbody.appendChild(tr);
+        });
+    }
+
+    function getTimeBadgeClass(timeSlot) {
+      switch (timeSlot) {
+        case "日中":
+          return "badge-day";
+        case "夕方":
+          return "badge-evening";
+        case "夜間":
+          return "badge-night";
+        default:
+          return "badge-day";
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("recordForm").reset();
+      // 日付は今日に戻す
+      document.getElementById("date").value = new Date()
+        .toISOString()
+        .slice(0, 10);
+      document.getElementById("timeSlot").value = "日中";
+      document.getElementById("condition").value = "良好";
+      document.getElementById("mental").value = "安定";
+      document.getElementById("medTaken").checked = false;
+
+      editingIndex = null;
+      document.getElementById("modeLabel").textContent = "新規入力モード";
+      document.getElementById("modeLabel").style.background = "#eff6ff";
+      document.getElementById("modeLabel").style.color = "#1d4ed8";
+      document.getElementById("saveButton").textContent = "💾 記録を保存";
+    }
+
+    function startEdit(id) {
+      const index = records.findIndex((r) => r.id === id);
+      if (index === -1) return;
+
+      const r = records[index];
+      editingIndex = index;
+
+      document.getElementById("date").value = r.date || "";
+      document.getElementById("resident").value = r.resident || "";
+      document.getElementById("timeSlot").value = r.timeSlot || "日中";
+      document.getElementById("condition").value = r.condition || "良好";
+      document.getElementById("mental").value = r.mental || "安定";
+      document.getElementById("meal").value = r.meal || "";
+      document.getElementById("medTaken").checked = !!r.medTaken;
+      document.getElementById("support").value = r.support || "";
+      document.getElementById("note").value = r.note || "";
+
+      document.getElementById("modeLabel").textContent =
+        "編集モード（上書き保存）";
+      document.getElementById("modeLabel").style.background = "#fee2e2";
+      document.getElementById("modeLabel").style.color = "#b91c1c";
+      document.getElementById("saveButton").textContent = "✏️ この内容で上書き";
+    }
+
+    function deleteRecord(id) {
+      if (!confirm("この記録を削除しますか？")) return;
+      records = records.filter((r) => r.id !== id);
+      saveRecords();
+      renderRecords();
+      // 編集中のものを消した場合はフォームをリセット
+      if (editingIndex !== null) {
+        resetForm();
+      }
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+
+      const date = document.getElementById("date").value;
+      const resident = document.getElementById("resident").value;
+      if (!date || !resident) {
+        alert("日付と利用者は必須です。");
+        return;
+      }
+
+      const recordData = {
+        id:
+          editingIndex !== null
+            ? records[editingIndex].id
+            : Date.now().toString(),
+        date,
+        resident,
+        timeSlot: document.getElementById("timeSlot").value,
+        condition: document.getElementById("condition").value,
+        mental: document.getElementById("mental").value,
+        meal: document.getElementById("meal").value,
+        medTaken: document.getElementById("medTaken").checked,
+        support: document.getElementById("support").value,
+        note: document.getElementById("note").value,
+      };
+
+      if (editingIndex !== null) {
+        records[editingIndex] = recordData;
+      } else {
+        records.push(recordData);
+      }
+
+      saveRecords();
+      renderRecords();
+      resetForm();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // 今日の日付を初期値に
+      document.getElementById("date").value = new Date()
+        .toISOString()
+        .slice(0, 10);
+
+      records = loadRecords();
+      renderRecords();
+
+      document
+        .getElementById("recordForm")
+        .addEventListener("submit", handleSubmit);
+
+      document
+        .getElementById("resetButton")
+        .addEventListener("click", resetForm);
+
+      document
+        .getElementById("filterResident")
+        .addEventListener("change", renderRecords);
+    });
+  </script>
+</body>
+</html>
