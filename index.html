@@ -569,29 +569,46 @@
             />
           </div>
 
-          <!-- 自作テンプレ管理 -->
+          <!-- 自作テンプレ管理（項目ごと） -->
           <div class="field">
             <label>支援内容テンプレート（自作）</label>
+
             <div class="field-row">
               <div class="field">
-                <select id="templateSelect">
-                  <option value="">選択してください</option>
+                <label for="templateScope" class="small-text">テンプレの対象項目</label>
+                <select id="templateScope">
+                  <option value="common">共通（どの項目でも）</option>
+                  <option value="med_manage">服薬管理</option>
+                  <option value="oral_check">内服確認</option>
+                  <option value="bathing">入浴</option>
+                  <option value="day_support">日中支援加算</option>
                 </select>
                 <div class="small-text">
-                  使いたいテンプレートを選んで「テンプレ挿入」を押すと、「本日の支援内容・様子」にコピーされます。
+                  上で対象項目を選ぶと、その項目用のテンプレ一覧が下に表示されます。
                 </div>
               </div>
               <div class="field">
+                <label for="templateNameInput" class="small-text">テンプレート名</label>
                 <input
                   type="text"
                   id="templateNameInput"
-                  placeholder="テンプレート名（例：日中・安定パターン）"
+                  placeholder="例：服薬管理・安定パターン"
                 />
                 <div class="small-text">
-                  今の「本日の支援内容・様子」をこの名前でテンプレート保存します。
+                  今の「本日の支援内容・様子」を、この名前・対象項目のテンプレートとして保存します。
                 </div>
               </div>
             </div>
+
+            <div class="field" style="margin-top:8px;">
+              <select id="templateSelect">
+                <option value="">選択してください</option>
+              </select>
+              <div class="small-text">
+                選んだテンプレートを「テンプレ挿入」または「自動」から使えます。
+              </div>
+            </div>
+
             <div class="btn-row">
               <button type="button" class="btn-secondary" id="templateApplyButton">
                 テンプレ挿入
@@ -624,7 +641,7 @@
               自動
             </button>
             <span class="small-text">
-              チェックを入れた支援項目（服薬管理・内服確認・入浴・日中支援加算）の文章だけを自動で入力します。
+              チェックを入れた支援項目（服薬管理・内服確認・入浴・日中支援加算）の文章だけを自動で入力します。テンプレを選んでおけば、その項目用テンプレも使えます。
             </span>
           </div>
 
@@ -1122,6 +1139,10 @@
       document.querySelectorAll(".day-support-item").forEach((el) => {
         el.checked = false;
       });
+
+      const templateScope = document.getElementById("templateScope");
+      if (templateScope) templateScope.value = "common";
+      renderTemplateSelect();
     }
 
     function startEdit(id) {
@@ -1172,6 +1193,8 @@
       document.querySelectorAll(".auto-item").forEach((el) => {
         el.checked = false;
       });
+
+      updateTemplateScopeFromAutoItems();
     }
 
     function deleteRecord(id) {
@@ -1250,10 +1273,38 @@
       ).map((el) => el.value);
 
       if (checkedItems.length === 0) {
-        alert("自動入力したい項目にチェックを入れてください。（例：服薬管理・内服確認・入浴・日中支援加算）");
+        alert(
+          "自動入力したい項目にチェックを入れてください。（例：服薬管理・内服確認・入浴・日中支援加算）"
+        );
         return;
       }
 
+      // テンプレが選ばれていて、チェックが1つだけのときは
+      // 「その項目用テンプレ」をそのまま使う
+      const templateSelectEl = document.getElementById("templateSelect");
+      const selectedTemplateIndex = templateSelectEl
+        ? templateSelectEl.value
+        : "";
+
+      if (selectedTemplateIndex && checkedItems.length === 1) {
+        const idx = parseInt(selectedTemplateIndex, 10);
+        if (!isNaN(idx) && templates[idx]) {
+          const textArea = document.getElementById("support");
+          const newText = templates[idx].text || "";
+
+          if (textArea.value.trim()) {
+            const ok = confirm(
+              "すでに入力されている内容を、選択したテンプレートの文章で置き換えますか？"
+            );
+            if (!ok) return;
+          }
+
+          textArea.value = newText;
+          return;
+        }
+      }
+
+      // ここから下は、テンプレを使わない通常の自動文章
       let lines = [];
 
       lines.push(`本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`);
@@ -1505,16 +1556,23 @@
       alert("削除しました。");
     }
 
-    // テンプレート管理
+    // テンプレート管理（項目ごと）
     function loadTemplates() {
       try {
         const raw = localStorage.getItem(TEMPLATES_KEY);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) return [];
-        return parsed.filter(
-          (t) => t && typeof t.name === "string" && typeof t.text === "string"
-        );
+        return parsed
+          .filter(
+            (t) => t && typeof t.name === "string" && typeof t.text === "string"
+          )
+          .map((t) => {
+            if (!t.scope) {
+              return { ...t, scope: "common" };
+            }
+            return t;
+          });
       } catch (e) {
         console.error("load templates error", e);
         return [];
@@ -1527,7 +1585,10 @@
 
     function renderTemplateSelect() {
       const select = document.getElementById("templateSelect");
-      if (!select) return;
+      const scopeSelect = document.getElementById("templateScope");
+      if (!select || !scopeSelect) return;
+      const currentScope = scopeSelect.value || "common";
+
       select.innerHTML = "";
       const placeholder = document.createElement("option");
       placeholder.value = "";
@@ -1535,6 +1596,8 @@
       select.appendChild(placeholder);
 
       templates.forEach((tpl, index) => {
+        const scope = tpl.scope || "common";
+        if (scope !== currentScope) return;
         const opt = document.createElement("option");
         opt.value = String(index);
         opt.textContent = tpl.name;
@@ -1579,6 +1642,9 @@
         return;
       }
 
+      const scopeSelect = document.getElementById("templateScope");
+      const scope = scopeSelect ? scopeSelect.value || "common" : "common";
+
       const support = document.getElementById("support");
       const text = support.value;
       if (!text.trim()) {
@@ -1588,15 +1654,17 @@
         if (!ok) return;
       }
 
-      const existingIndex = templates.findIndex((t) => t.name === name);
+      const existingIndex = templates.findIndex(
+        (t) => t.name === name && (t.scope || "common") === scope
+      );
       if (existingIndex >= 0) {
         const ok = confirm(
-          "同じ名前のテンプレートがあります。上書きしますか？"
+          "同じ名前・対象項目のテンプレートがあります。上書きしますか？"
         );
         if (!ok) return;
         templates[existingIndex].text = text;
       } else {
-        templates.push({ name, text });
+        templates.push({ name, text, scope });
       }
 
       saveTemplates();
@@ -1626,6 +1694,23 @@
       alert("テンプレートを削除しました。");
     }
 
+    // 自動チェック項目からテンプレ対象を自動で切り替え
+    function updateTemplateScopeFromAutoItems() {
+      const scopeSelect = document.getElementById("templateScope");
+      if (!scopeSelect) return;
+
+      const checkedItems = Array.from(
+        document.querySelectorAll(".auto-item:checked")
+      ).map((el) => el.value);
+
+      if (checkedItems.length === 1) {
+        scopeSelect.value = checkedItems[0];
+      } else if (!scopeSelect.value) {
+        scopeSelect.value = "common";
+      }
+      renderTemplateSelect();
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("date").value = new Date()
         .toISOString()
@@ -1641,6 +1726,13 @@
       updateTagUI();
       setupQuickButtons();
       syncQuickButtonsAll();
+
+      const templateScopeEl = document.getElementById("templateScope");
+      if (templateScopeEl) {
+        templateScopeEl.addEventListener("change", renderTemplateSelect);
+        templateScopeEl.value = "common";
+      }
+
       renderTemplateSelect();
 
       document
@@ -1714,6 +1806,11 @@
       if (templateDeleteBtn) {
         templateDeleteBtn.addEventListener("click", handleTemplateDelete);
       }
+
+      // 自動項目のチェックが変わったらテンプレ対象を自動で切り替え
+      document.querySelectorAll(".auto-item").forEach((el) => {
+        el.addEventListener("change", updateTemplateScopeFromAutoItems);
+      });
     });
   </script>
 </body>
