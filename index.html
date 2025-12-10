@@ -467,8 +467,9 @@
               <label><input type="checkbox" class="auto-item" value="day_support" /> 日中支援加算</label>
             </div>
             <div class="small-text">
-              ・テンプレを選んでいる状態で『自動』 → そのテンプレ文章を挿入<br>
-              ・テンプレ未選択で『自動』 → チェック内容に合わせて AI 文章を作成
+              ・テンプレを選んでいる状態で『自動』 → そのテンプレ文章を追加<br>
+              ・テンプレ未選択で『自動』 → チェック内容に合わせて AI 文章を追加<br>
+              ※既に書いてある内容は消えず、下に追記されます。
             </div>
           </div>
 
@@ -606,8 +607,9 @@
                 <option value="">選択してください</option>
               </select>
               <div class="small-text">
-                ・『自動』ボタンは、テンプレが選ばれていればそのテンプレを挿入。<br>
-                ・テンプレ未選択なら、チェック内容に応じた AI 文章を作ります。
+                ・『自動』ボタンは、テンプレが選ばれていればそのテンプレを追加。<br>
+                ・テンプレ未選択なら、チェック内容に応じた AI 文章を追加します。<br>
+                ※どちらの場合も、既存の文章は残り、下に追記されます。
               </div>
             </div>
 
@@ -643,8 +645,9 @@
               自動
             </button>
             <span class="small-text">
-              ・テンプレ選択あり → そのテンプレ文章だけを挿入<br>
-              ・テンプレ未選択 → チェックに応じた AI 文章をまとめて作成
+              ・テンプレ選択あり → そのテンプレ文章だけを追加<br>
+              ・テンプレ未選択 → チェックに応じた AI 文章を追加<br>
+              ・どちらも「下に追記」されるだけで、書いた文章は消えません。
             </span>
           </div>
 
@@ -1258,8 +1261,8 @@
     }
 
     // 本日の支援内容を自動生成
-    // ・テンプレが選択されている → そのテンプレを挿入
-    // ・テンプレ未選択 → チェックされた項目に応じて AI 文章を作る
+    // ・テンプレが選択されている → そのテンプレを「追記」
+    // ・テンプレ未選択 → チェックされた項目に応じて AI 文章を「追記」
     function generateSupportText() {
       const timeSlot = document.getElementById("timeSlot").value;
       const condition = document.getElementById("condition").value;
@@ -1281,19 +1284,18 @@
           const tpl = templates[idx];
           const newText = tpl.text || "";
 
+          // ★常に追記のみ（既存の文章は残す）
           if (textArea.value.trim()) {
-            const ok = confirm(
-              "すでに入力されている内容を、選択したテンプレートの文章で置き換えますか？"
-            );
-            if (!ok) return;
+            textArea.value =
+              textArea.value.replace(/\s*$/, "") + "\n" + newText;
+          } else {
+            textArea.value = newText;
           }
-
-          textArea.value = newText;
           return; // テンプレを入れたらここで終了（AI には行かない）
         }
       }
 
-      // 2) テンプレ未選択 → AI 文章を作成
+      // 2) テンプレ未選択 → AI 文章を作成（こちらも追記のみ）
       const checkedItems = Array.from(
         document.querySelectorAll(".auto-item:checked")
       ).map((el) => el.value);
@@ -1370,14 +1372,13 @@
 
       const newText = lines.join("\n");
 
+      // ★ここも置き換えず、常に「追記」だけ
       if (textArea.value.trim()) {
-        const ok = confirm(
-          "すでに入力されている内容を、自動生成した文章で置き換えますか？"
-        );
-        if (!ok) return;
+        textArea.value =
+          textArea.value.replace(/\s*$/, "") + "\n" + newText;
+      } else {
+        textArea.value = newText;
       }
-
-      textArea.value = newText;
     }
 
     // タグボタンまわり
@@ -1623,16 +1624,11 @@
         return;
       }
       const support = document.getElementById("support");
+
+      // ★ここも常に「追記のみ」：上書き・確認ダイアログなし
       if (support.value.trim()) {
-        const ok = confirm(
-          "現在の『本日の支援内容・様子』を選択したテンプレートで置き換えますか？\nキャンセルを押すと、末尾に追記します。"
-        );
-        if (ok) {
-          support.value = tpl.text;
-        } else {
-          support.value =
-            support.value.replace(/\s*$/, "") + "\n" + tpl.text;
-        }
+        support.value =
+          support.value.replace(/\s*$/, "") + "\n" + tpl.text;
       } else {
         support.value = tpl.text;
       }
