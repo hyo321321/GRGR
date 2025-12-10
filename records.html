@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>グループホーム 個人記録 - 一覧ページ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+      "YuGothic", "Meiryo", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    header {
+      background: #2563eb;
+      color: white;
+      padding: 14px 16px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px 20px 20px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .record-count {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .filter-row span {
+      font-size: 13px;
+      color: #4b5563;
+    }
+    input[type="text"],
+    input[type="date"],
+    select {
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      padding: 7px 10px;
+      font-size: 14px;
+      background: #f9fafb;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.4);
+      background: white;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+    .table-wrapper {
+      max-height: calc(100vh - 220px);
+      overflow: auto;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead {
+      position: sticky;
+      top: 0;
+      background: #eff6ff;
+      z-index: 1;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-weight: 600;
+      color: #374151;
+      white-space: nowrap;
+    }
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+    }
+    .badge-day    { background: #22c55e; }
+    .badge-evening{ background: #f59e0b; }
+    .badge-night  { background: #6366f1; }
+    .tag-chip {
+      display: inline-block;
+      margin-top: 2px;
+      margin-right: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      font-size: 11px;
+    }
+    .small-text {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .no-records {
+      padding: 14px;
+      font-size: 13px;
+      text-align: center;
+      color: #6b7280;
+    }
+    @media (max-width: 800px) {
+      header { font-size: 18px; }
+      main { padding: 10px; }
+      .card { padding: 14px 12px 16px; }
+      .filter-row { gap: 6px; }
+      table { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+<header>グループホーム 個人記録 - 一覧専用ページ</header>
+
+<main>
+  <section class="card">
+    <div class="card-title">
+      <span>記録一覧（読み取り専用）</span>
+      <span class="record-count" id="recordCount">0件</span>
+    </div>
+    <div class="card-subtitle">
+      左の入力ページ（index.html）で保存した記録を、<strong>大きな画面で一覧表示</strong>するページです。<br>
+      ここでは編集・削除はできず、「見る専用」です。
+    </div>
+
+    <div class="filter-row">
+      <span>利用者：</span>
+      <select id="filterResident"></select>
+      <span>期間：</span>
+      <select id="periodFilter">
+        <option value="today">今日</option>
+        <option value="week">直近7日間</option>
+        <option value="month" selected>今月</option>
+        <option value="year">今年</option>
+        <option value="all">全期間</option>
+        <option value="custom">日付指定</option>
+      </select>
+      <button type="button" id="backIndex" class="btn-primary">
+        個人記録画面に戻る
+      </button>
+    </div>
+
+    <div class="filter-row" id="customPeriodRow" style="display:none;">
+      <span>期間指定：</span>
+      <input type="date" id="periodFrom">
+      <span>〜</span>
+      <input type="date" id="periodTo">
+      <button type="button" id="applyCustomPeriod">反映</button>
+    </div>
+
+    <div class="filter-row">
+      <span>キーワード：</span>
+      <input type="text" id="searchKeyword"
+             placeholder="例：通院, 夜間, #体調不良 など" style="flex:1; min-width:180px;">
+      <button type="button" id="searchClearButton">クリア</button>
+      <span class="small-text">
+        ※支援内容・特記事項・タグから検索します。
+      </span>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+        <tr>
+          <th>日付</th>
+          <th>利用者</th>
+          <th>時間帯</th>
+          <th>体調 / 心の状態</th>
+          <th>食事</th>
+          <th>支援内容（概要）</th>
+          <th>服薬</th>
+          <th>日中支援</th>
+        </tr>
+        </thead>
+        <tbody id="recordTableBody">
+        <!-- JSで挿入 -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+  const STORAGE_KEY   = "group_home_records_v1";
+  const RESIDENTS_KEY = "group_home_residents_v1";
+
+  function loadRecords() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch(e) {
+      console.error(e);
+      return [];
+    }
+  }
+
+  function loadResidents(records) {
+    try {
+      const raw = localStorage.getItem(RESIDENTS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch(e) {
+      console.error(e);
+    }
+    return Array.from(
+      new Set(records.map(r => r.resident).filter(Boolean))
+    );
+  }
+
+  function getTimeBadgeClass(timeSlot) {
+    switch (timeSlot) {
+      case "日中": return "badge-day";
+      case "夕方": return "badge-evening";
+      case "夜間": return "badge-night";
+      default: return "badge-day";
+    }
+  }
+
+  function formatSupportSummary(text) {
+    if (!text) return "";
+    const trimmed = text.trim().replace(/\s+/g, " ");
+    if (trimmed.length <= 60) return trimmed;
+    return trimmed.slice(0, 60) + "…";
+  }
+
+  function renderFilters(residents) {
+    const filterResident = document.getElementById("filterResident");
+    filterResident.innerHTML = "";
+
+    const optAll = document.createElement("option");
+    optAll.value = "";
+    optAll.textContent = "全員";
+    filterResident.appendChild(optAll);
+
+    residents.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      filterResident.appendChild(opt);
+    });
+  }
+
+  function renderRecords(records) {
+    const tbody = document.getElementById("recordTableBody");
+    const filterResident = document.getElementById("filterResident").value;
+    const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase();
+    const periodFilter = document.getElementById("periodFilter").value;
+    const periodFrom = document.getElementById("periodFrom").value;
+    const periodTo   = document.getElementById("periodTo").value;
+
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0,10);
+    const monthPrefix = todayStr.slice(0,7);
+    const yearPrefix  = todayStr.slice(0,4);
+
+    const weekStart = new Date(today);
+    weekStart.setDate(weekStart.getDate() - 6);
+
+    tbody.innerHTML = "";
+
+    const filtered = records.filter(r => {
+      if (filterResident && r.resident !== filterResident) return false;
+
+      const dateStr = r.date;
+      if (dateStr) {
+        if (periodFilter === "today") {
+          if (dateStr !== todayStr) return false;
+        } else if (periodFilter === "week") {
+          const d = new Date(dateStr);
+          if (isNaN(d)) return false;
+          if (d < weekStart || d > today) return false;
+        } else if (periodFilter === "month") {
+          if (dateStr.slice(0,7) !== monthPrefix) return false;
+        } else if (periodFilter === "year") {
+          if (dateStr.slice(0,4) !== yearPrefix) return false;
+        } else if (periodFilter === "custom") {
+          if (periodFrom && dateStr < periodFrom) return false;
+          if (periodTo   && dateStr > periodTo)   return false;
+        }
+      } else {
+        if (periodFilter !== "all") return false;
+      }
+
+      if (keyword) {
+        const tagsText = (r.tags || []).join(" ");
+        const target = (
+          (r.support || "") + " " +
+          (r.note || "")    + " " +
+          (r.meal || "")    + " " +
+          tagsText
+        ).toLowerCase();
+        if (!target.includes(keyword)) return false;
+      }
+
+      return true;
+    });
+
+    document.getElementById("recordCount").textContent =
+      filtered.length + "件";
+
+    if (filtered.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 8;
+      td.className = "no-records";
+      td.textContent =
+        "該当する記録がありません。利用者・期間・キーワードを確認してください。";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+
+    filtered
+      .slice()
+      .sort((a,b) => (a.date < b.date ? 1 : -1))
+      .forEach(record => {
+        const tr = document.createElement("tr");
+
+        const tdDate = document.createElement("td");
+        tdDate.textContent = record.date || "";
+        tr.appendChild(tdDate);
+
+        const tdResident = document.createElement("td");
+        tdResident.textContent = record.resident || "";
+        tr.appendChild(tdResident);
+
+        const tdTime = document.createElement("td");
+        const span = document.createElement("span");
+        span.textContent = record.timeSlot || "";
+        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
+        tdTime.appendChild(span);
+        tr.appendChild(tdTime);
+
+        const tdCond = document.createElement("td");
+        tdCond.innerHTML =
+          (record.condition || "") +
+          "<br><span class='small-text'>" +
+          (record.mental || "") + "</span>";
+        tr.appendChild(tdCond);
+
+        const tdMeal = document.createElement("td");
+        tdMeal.textContent = record.meal || "";
+        tr.appendChild(tdMeal);
+
+        const tdSupport = document.createElement("td");
+        tdSupport.textContent = formatSupportSummary(record.support);
+        if (record.tags && record.tags.length) {
+          const tagDiv = document.createElement("div");
+          tagDiv.className = "small-text";
+          record.tags.forEach(tag => {
+            const chip = document.createElement("span");
+            chip.className = "tag-chip";
+            chip.textContent = "#" + tag;
+            tagDiv.appendChild(chip);
+          });
+          tdSupport.appendChild(document.createElement("br"));
+          tdSupport.appendChild(tagDiv);
+        }
+        tr.appendChild(tdSupport);
+
+        const tdMed = document.createElement("td");
+        tdMed.textContent = record.medTaken ? "服薬済み" : "";
+        tr.appendChild(tdMed);
+
+        const tdDay = document.createElement("td");
+        const typeLabel = record.daySupportType
+          ? "加算" + record.daySupportType
+          : "";
+        tdDay.innerHTML =
+          (typeLabel || "") +
+          (record.daySupportItems && record.daySupportItems.length
+            ? "<br><span class='small-text'>" +
+              record.daySupportItems.join("、") + "</span>"
+            : "");
+        tr.appendChild(tdDay);
+
+        tbody.appendChild(tr);
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const records = loadRecords();
+    const residents = loadResidents(records);
+    renderFilters(residents);
+    renderRecords(records);
+
+    document.getElementById("filterResident")
+      .addEventListener("change", () => renderRecords(records));
+
+    document.getElementById("searchKeyword")
+      .addEventListener("input", () => renderRecords(records));
+
+    document.getElementById("searchClearButton")
+      .addEventListener("click", () => {
+        document.getElementById("searchKeyword").value = "";
+        renderRecords(records);
+      });
+
+    const periodFilterEl = document.getElementById("periodFilter");
+    const customRow = document.getElementById("customPeriodRow");
+    periodFilterEl.addEventListener("change", () => {
+      const v = periodFilterEl.value;
+      customRow.style.display = v === "custom" ? "flex" : "none";
+      if (v !== "custom") renderRecords(records);
+    });
+
+    document.getElementById("applyCustomPeriod")
+      .addEventListener("click", () => renderRecords(records));
+
+    document.getElementById("backIndex")
+      .addEventListener("click", () => {
+        // 同じフォルダ内の index.html を開く
+        window.location.href = "./index.html";
+      });
+  });
+</script>
+</body>
+</html>
