@@ -459,7 +459,7 @@
 
           <!-- 自動入力対象のチェック -->
           <div class="field">
-            <label>自動入力したい支援項目（AI文章用の目安）</label>
+            <label>自動入力したい支援項目（テンプレ & AI文章用）</label>
             <div class="checkbox-row">
               <label><input type="checkbox" class="auto-item" value="med_manage" /> 服薬管理</label>
               <label><input type="checkbox" class="auto-item" value="oral_check" /> 内服確認</label>
@@ -467,8 +467,8 @@
               <label><input type="checkbox" class="auto-item" value="day_support" /> 日中支援加算</label>
             </div>
             <div class="small-text">
-              ※テンプレを選んでいるときは、チェック有無に関係なくテンプレが優先されます。<br>
-              ※テンプレ未選択のときに「自動」を押すと、チェック内容に応じたAIっぽい文章が入ります。
+              ・テンプレ未選択で「自動」→ チェックした項目ごとに、その項目のテンプレを全部まとめて貼り付け（服薬＋内服なども同時OK）<br>
+              ・その項目にテンプレが無い場合だけ、AIっぽい文章で自動生成します。
             </div>
           </div>
 
@@ -606,8 +606,8 @@
                 <option value="">選択してください</option>
               </select>
               <div class="small-text">
-                ※テンプレを選んだ状態で「自動」を押すと、そのテンプレ文章がそのまま入ります。<br>
-                ※テンプレ未選択で「自動」を押すと、AI文章が入ります。
+                ・テンプレを選んで「自動」→ そのテンプレ文章だけを入力<br>
+                ・テンプレ未選択で「自動」→ チェックした項目ごとにテンプレをまとめて入力（なければAI文章）
               </div>
             </div>
 
@@ -643,8 +643,8 @@
               自動
             </button>
             <span class="small-text">
-              ・テンプレを選んで「自動」→ そのテンプレ文章を入力<br>
-              ・テンプレ未選択で「自動」→ チェック内容に応じたAI文章を自動入力
+              ・テンプレ選択あり→その1つをそのまま入力<br>
+              ・テンプレ選択なし→チェックした項目ごとのテンプレを全部つなげて入力（テンプレ無しの項目はAI文章）
             </span>
           </div>
 
@@ -1259,7 +1259,7 @@
       resetForm();
     }
 
-    // 本日の支援内容を自動生成
+    // 本日の支援内容を自動生成（テンプレまたはAI）
     function generateSupportText() {
       const timeSlot = document.getElementById("timeSlot").value;
       const condition = document.getElementById("condition").value;
@@ -1273,7 +1273,7 @@
 
       const textArea = document.getElementById("support");
 
-      // 1) まずテンプレが選ばれているか確認 → 選ばれていればそれを優先
+      // 1) まず「テンプレ選択あり」の場合 → そのテンプレだけを使う
       const templateSelectEl = document.getElementById("templateSelect");
       const idxStr = templateSelectEl ? templateSelectEl.value : "";
 
@@ -1295,18 +1295,47 @@
         }
       }
 
-      // 2) テンプレ未選択 → AIっぽい自動文章を作成
+      // 2) テンプレ未選択 → チェックされた項目ごとのテンプレをまとめて使う or AI文章
       const checkedItems = Array.from(
         document.querySelectorAll(".auto-item:checked")
       ).map((el) => el.value);
 
       if (checkedItems.length === 0) {
         alert(
-          "テンプレが選ばれていないのでAI文章モードになります。\n自動文章を作る項目にチェックを入れてください。（服薬管理・内服確認・入浴・日中支援加算など）"
+          "テンプレも選ばれておらず、チェックも入っていません。\n「服薬管理」や「内服確認」など、自動で文章を作りたい項目にチェックを入れてから『自動』を押してください。"
         );
         return;
       }
 
+      // 2-1) チェックされた項目ごとに、そのscope用のテンプレを探す（最後に保存したものを使用）
+      const templateTexts = [];
+      checkedItems.forEach((scope) => {
+        const scoped = templates.filter(
+          (t) => (t.scope || "common") === scope
+        );
+        if (scoped.length > 0) {
+          const tpl = scoped[scoped.length - 1]; // そのscopeで一番新しいテンプレ
+          if (tpl.text && tpl.text.trim()) {
+            templateTexts.push(tpl.text.trim());
+          }
+        }
+      });
+
+      if (templateTexts.length > 0) {
+        const combined = templateTexts.join("\n\n"); // 項目ごとに1行空けてつなげる
+
+        if (textArea.value.trim()) {
+          const ok = confirm(
+            "すでに入力されている内容を、選択された項目のテンプレ文章で置き換えますか？"
+          );
+          if (!ok) return;
+        }
+
+        textArea.value = combined;
+        return; // テンプレ複数を貼り付けて終了
+      }
+
+      // 2-2) どのscopeにもテンプレが無かった場合だけ、AIっぽい文章を自動生成
       let lines = [];
 
       lines.push(`本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`);
@@ -1658,19 +1687,29 @@
       const existingIndex = templates.findIndex(
         (t) => t.name === name && (t.scope || "common") === scope
       );
+
+      let targetIndex;
       if (existingIndex >= 0) {
         const ok = confirm(
           "同じ名前・対象項目のテンプレートがあります。上書きしますか？"
         );
         if (!ok) return;
         templates[existingIndex].text = text;
+        targetIndex = existingIndex;
       } else {
         templates.push({ name, text, scope });
+        targetIndex = templates.length - 1;
       }
 
       saveTemplates();
       renderTemplateSelect();
-      alert("テンプレートを保存しました。");
+
+      const select = document.getElementById("templateSelect");
+      if (select) {
+        select.value = String(targetIndex);
+      }
+
+      alert("テンプレートを保存しました。（プルダウンに選択されました）");
     }
 
     function handleTemplateDelete() {
@@ -1695,7 +1734,6 @@
       alert("テンプレートを削除しました。");
     }
 
-    // 自動チェック項目からテンプレ対象を自動で切り替え（おまけ）
     function updateTemplateScopeFromAutoItems() {
       const scopeSelect = document.getElementById("templateScope");
       if (!scopeSelect) return;
@@ -1808,7 +1846,6 @@
         templateDeleteBtn.addEventListener("click", handleTemplateDelete);
       }
 
-      // 自動項目のチェックが変わったらテンプレ対象を自動で切り替え（おまけ機能）
       document.querySelectorAll(".auto-item").forEach((el) => {
         el.addEventListener("change", updateTemplateScopeFromAutoItems);
       });
