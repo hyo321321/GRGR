@@ -730,12 +730,20 @@
             <button type="button" class="btn-secondary" id="autoSupportBtn">
               自動
             </button>
+
+            <!-- 音声入力ボタン -->
+            <button type="button" class="btn-secondary" id="voiceSupportBtn">
+              🎙 音声入力
+            </button>
+
             <span class="small-text">
               ・テンプレ選択あり → そのテンプレ文章だけを追加<br>
-              ・テンプレ未選択 → チェックに応じた AI 文章を追加<br>
-              ・どちらも「下に追記」されるだけで、書いた文章は消えません。
+              ・テンプレ未選択 → チェック内容に応じた AI 文章を追加<br>
+              ・どちらも「下に追記」されるだけで、書いた文章は消えません。<br>
+              ・🎙 音声入力ボタンで話した内容も追記できます。
             </span>
           </div>
+          <div class="small-text" id="voiceStatus" style="margin-top:4px;"></div>
 
           <div class="field">
             <label for="note">特記事項（事故・トラブル・受診・相談など）</label>
@@ -760,18 +768,17 @@
       <!-- 一覧表示 -->
       <section class="card">
         <div class="card-title">
-  <span>記録一覧</span>
-  <div style="display:flex; align-items:center; gap:8px;">
-    <button type="button"
-            onclick="window.open('records.html', '_blank')"
-            class="btn-secondary"
-            style="font-size:12px; padding:6px 10px;">
-      📄 別ページで開く
-    </button>
-    <span class="record-count" id="recordCount">0件</span>
-  </div>
-</div>
-
+          <span>記録一覧</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button"
+                    onclick="window.open('records.html', '_blank')"
+                    class="btn-secondary"
+                    style="font-size:12px; padding:6px 10px;">
+              📄 別ページで開く
+            </button>
+            <span class="record-count" id="recordCount">0件</span>
+          </div>
+        </div>
 
         <div class="resident-select-row">
           <span>表示する利用者：</span>
@@ -899,6 +906,7 @@
     </div>
   </div>
 
+  <!-- メインスクリプト -->
   <script>
     const STORAGE_KEY = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
@@ -2009,6 +2017,85 @@
       }
     });
   </script>
+
+  <!-- 音声入力スクリプト -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const voiceBtn = document.getElementById("voiceSupportBtn");
+      const voiceStatus = document.getElementById("voiceStatus");
+      const support = document.getElementById("support");
+
+      if (!voiceBtn || !voiceStatus || !support) return;
+
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        voiceBtn.disabled = true;
+        voiceStatus.textContent =
+          "※ このブラウザでは音声入力が使えません（Chrome / Edge 推奨）";
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ja-JP";
+      recognition.interimResults = true;
+      recognition.continuous = true;
+
+      let recognizing = false;
+
+      voiceBtn.addEventListener("click", () => {
+        if (!recognizing) {
+          try {
+            recognition.start();
+          } catch (e) {
+            // 連打対策
+          }
+        } else {
+          recognition.stop();
+        }
+      });
+
+      recognition.addEventListener("start", () => {
+        recognizing = true;
+        voiceBtn.textContent = "■ 停止";
+        voiceStatus.textContent =
+          "音声入力中… 話し終わったらもう一度ボタンを押して停止してください。";
+      });
+
+      recognition.addEventListener("end", () => {
+        recognizing = false;
+        voiceBtn.textContent = "🎙 音声入力";
+        voiceStatus.textContent = "";
+      });
+
+      recognition.addEventListener("result", (event) => {
+        let finalText = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (res.isFinal) {
+            finalText += res[0].transcript;
+          }
+        }
+
+        if (!finalText) return;
+
+        // 既存の文章の「下に追記」する
+        if (support.value.trim()) {
+          support.value =
+            support.value.replace(/\s*$/, "") + "\n" + finalText;
+        } else {
+          support.value = finalText;
+        }
+      });
+
+      recognition.addEventListener("error", (e) => {
+        recognizing = false;
+        voiceBtn.textContent = "🎙 音声入力";
+        voiceStatus.textContent = "音声入力エラー：" + e.error;
+      });
+    });
+  </script>
 </body>
 </html>
-
