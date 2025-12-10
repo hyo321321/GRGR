@@ -484,7 +484,7 @@
             </div>
           </div>
 
-          <!-- ★ ここから追加：日中支援加算の状況・支援内容（チェック） -->
+          <!-- 日中支援加算の状況・支援内容（チェック） -->
           <div class="field">
             <label>日中支援加算に関わる状況・支援内容（チェック用メモ）</label>
             <div class="small-text" style="margin-bottom:4px;">
@@ -568,7 +568,45 @@
               placeholder="例）9:00〜15:00 の間、居室と共有スペースで継続的に見守り支援"
             />
           </div>
-          <!-- ★ 追加ここまで -->
+
+          <!-- 自作テンプレ管理 -->
+          <div class="field">
+            <label>支援内容テンプレート（自作）</label>
+            <div class="field-row">
+              <div class="field">
+                <select id="templateSelect">
+                  <option value="">選択してください</option>
+                </select>
+                <div class="small-text">
+                  使いたいテンプレートを選んで「テンプレ挿入」を押すと、「本日の支援内容・様子」にコピーされます。
+                </div>
+              </div>
+              <div class="field">
+                <input
+                  type="text"
+                  id="templateNameInput"
+                  placeholder="テンプレート名（例：日中・安定パターン）"
+                />
+                <div class="small-text">
+                  今の「本日の支援内容・様子」をこの名前でテンプレート保存します。
+                </div>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button type="button" class="btn-secondary" id="templateApplyButton">
+                テンプレ挿入
+              </button>
+              <button type="button" class="btn-primary" id="templateSaveButton">
+                テンプレ保存 / 上書き
+              </button>
+              <button type="button" class="btn-danger" id="templateDeleteButton">
+                選択テンプレ削除
+              </button>
+            </div>
+            <div class="small-text">
+              ※テンプレートはこのパソコンのブラウザに保存されます。他のPCとは共有されません。
+            </div>
+          </div>
 
           <div class="field">
             <label for="support">本日の支援内容・様子</label>
@@ -733,6 +771,7 @@
   <script>
     const STORAGE_KEY = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
+    const TEMPLATES_KEY = "group_home_support_templates_v1";
 
     const TAG_LIST = [
       "服薬",
@@ -751,6 +790,7 @@
     let residents = [];
     let currentTags = [];
     let editingIndex = null;
+    let templates = [];
 
     function loadRecords() {
       try {
@@ -1193,7 +1233,7 @@
       resetForm();
     }
 
-    // ===== 本日の支援内容を自動生成（チェックした項目だけ） =====
+    // 本日の支援内容を自動生成（チェックした項目だけ）
     function generateSupportText() {
       const timeSlot = document.getElementById("timeSlot").value;
       const condition = document.getElementById("condition").value;
@@ -1285,7 +1325,7 @@
       textArea.value = newText;
     }
 
-    // ===== タグボタンまわり =====
+    // タグボタンまわり
     function setupTagButtons() {
       const container = document.getElementById("tagButtons");
       container.innerHTML = "";
@@ -1333,7 +1373,7 @@
       });
     }
 
-    // ===== PC初心者向け：大きなボタンでセレクトを操作 =====
+    // PC初心者向け：大きなボタンでセレクトを操作
     function setupQuickButtons() {
       const groups = document.querySelectorAll(".quick-row");
       groups.forEach((row) => {
@@ -1384,7 +1424,7 @@
       });
     }
 
-    // ===== 利用者管理ボタン =====
+    // 利用者管理ボタン
     function handleResidentAdd() {
       const nameInput = document.getElementById("residentNameInput");
       const name = nameInput.value.trim();
@@ -1465,6 +1505,127 @@
       alert("削除しました。");
     }
 
+    // テンプレート管理
+    function loadTemplates() {
+      try {
+        const raw = localStorage.getItem(TEMPLATES_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(
+          (t) => t && typeof t.name === "string" && typeof t.text === "string"
+        );
+      } catch (e) {
+        console.error("load templates error", e);
+        return [];
+      }
+    }
+
+    function saveTemplates() {
+      localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+    }
+
+    function renderTemplateSelect() {
+      const select = document.getElementById("templateSelect");
+      if (!select) return;
+      select.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "選択してください";
+      select.appendChild(placeholder);
+
+      templates.forEach((tpl, index) => {
+        const opt = document.createElement("option");
+        opt.value = String(index);
+        opt.textContent = tpl.name;
+        select.appendChild(opt);
+      });
+    }
+
+    function handleTemplateApply() {
+      const select = document.getElementById("templateSelect");
+      const idxStr = select.value;
+      if (!idxStr) {
+        alert("挿入するテンプレートを選択してください。");
+        return;
+      }
+      const idx = parseInt(idxStr, 10);
+      const tpl = templates[idx];
+      if (!tpl) {
+        alert("テンプレートが見つかりませんでした。");
+        return;
+      }
+      const support = document.getElementById("support");
+      if (support.value.trim()) {
+        const ok = confirm(
+          "現在の『本日の支援内容・様子』を選択したテンプレートで置き換えますか？\nキャンセルを押すと、末尾に追記します。"
+        );
+        if (ok) {
+          support.value = tpl.text;
+        } else {
+          support.value =
+            support.value.replace(/\s*$/, "") + "\n" + tpl.text;
+        }
+      } else {
+        support.value = tpl.text;
+      }
+    }
+
+    function handleTemplateSave() {
+      const nameInput = document.getElementById("templateNameInput");
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert("テンプレート名を入力してください。");
+        return;
+      }
+
+      const support = document.getElementById("support");
+      const text = support.value;
+      if (!text.trim()) {
+        const ok = confirm(
+          "『本日の支援内容・様子』が空ですが、このままテンプレートとして保存しますか？"
+        );
+        if (!ok) return;
+      }
+
+      const existingIndex = templates.findIndex((t) => t.name === name);
+      if (existingIndex >= 0) {
+        const ok = confirm(
+          "同じ名前のテンプレートがあります。上書きしますか？"
+        );
+        if (!ok) return;
+        templates[existingIndex].text = text;
+      } else {
+        templates.push({ name, text });
+      }
+
+      saveTemplates();
+      renderTemplateSelect();
+      alert("テンプレートを保存しました。");
+    }
+
+    function handleTemplateDelete() {
+      const select = document.getElementById("templateSelect");
+      const idxStr = select.value;
+      if (!idxStr) {
+        alert("削除するテンプレートを選択してください。");
+        return;
+      }
+      const idx = parseInt(idxStr, 10);
+      const tpl = templates[idx];
+      if (!tpl) {
+        alert("テンプレートが見つかりませんでした。");
+        return;
+      }
+      const ok = confirm(`「${tpl.name}」を削除しますか？`);
+      if (!ok) return;
+
+      templates.splice(idx, 1);
+      saveTemplates();
+      renderTemplateSelect();
+      alert("テンプレートを削除しました。");
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("date").value = new Date()
         .toISOString()
@@ -1472,6 +1633,7 @@
 
       records = loadRecords();
       residents = loadResidents();
+      templates = loadTemplates();
 
       renderResidentSelects();
       renderRecords();
@@ -1479,6 +1641,7 @@
       updateTagUI();
       setupQuickButtons();
       syncQuickButtonsAll();
+      renderTemplateSelect();
 
       document
         .getElementById("recordForm")
@@ -1535,6 +1698,21 @@
       const autoSupportBtn = document.getElementById("autoSupportBtn");
       if (autoSupportBtn) {
         autoSupportBtn.addEventListener("click", generateSupportText);
+      }
+
+      const templateApplyBtn = document.getElementById("templateApplyButton");
+      if (templateApplyBtn) {
+        templateApplyBtn.addEventListener("click", handleTemplateApply);
+      }
+
+      const templateSaveBtn = document.getElementById("templateSaveButton");
+      if (templateSaveBtn) {
+        templateSaveBtn.addEventListener("click", handleTemplateSave);
+      }
+
+      const templateDeleteBtn = document.getElementById("templateDeleteButton");
+      if (templateDeleteBtn) {
+        templateDeleteBtn.addEventListener("click", handleTemplateDelete);
       }
     });
   </script>
