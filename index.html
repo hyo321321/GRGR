@@ -467,8 +467,8 @@
               <label><input type="checkbox" class="auto-item" value="day_support" /> 日中支援加算</label>
             </div>
             <div class="small-text">
-              ・ここで選んだ項目に合わせて、『自動』ボタンでAIっぽい文章をまとめて作ります。<br>
-              ・テンプレは下の「テンプレ挿入」ボタンから使います（自動とは別）。
+              ・テンプレを選んでいる状態で『自動』 → そのテンプレ文章を挿入<br>
+              ・テンプレ未選択で『自動』 → チェック内容に合わせて AI 文章を作成
             </div>
           </div>
 
@@ -606,8 +606,8 @@
                 <option value="">選択してください</option>
               </select>
               <div class="small-text">
-                ・テンプレを使いたいときは「テンプレ挿入」を押します。<br>
-                ・『自動』ボタンはテンプレとは関係なく、チェックに応じたAI文章だけを作ります。
+                ・『自動』ボタンは、テンプレが選ばれていればそのテンプレを挿入。<br>
+                ・テンプレ未選択なら、チェック内容に応じた AI 文章を作ります。
               </div>
             </div>
 
@@ -643,8 +643,8 @@
               自動
             </button>
             <span class="small-text">
-              ・チェックを入れて『自動』→ AIが定型文をまとめて作成します。<br>
-              ・テンプレを使いたいときは『テンプレ挿入』を使います。
+              ・テンプレ選択あり → そのテンプレ文章だけを挿入<br>
+              ・テンプレ未選択 → チェックに応じた AI 文章をまとめて作成
             </span>
           </div>
 
@@ -1257,8 +1257,9 @@
       resetForm();
     }
 
-    // 本日の支援内容を自動生成（AI専用）
-    // ・テンプレは一切見ず、チェックされた項目に応じてAI風の文章だけを作る
+    // 本日の支援内容を自動生成
+    // ・テンプレが選択されている → そのテンプレを挿入
+    // ・テンプレ未選択 → チェックされた項目に応じて AI 文章を作る
     function generateSupportText() {
       const timeSlot = document.getElementById("timeSlot").value;
       const condition = document.getElementById("condition").value;
@@ -1270,7 +1271,29 @@
 
       const textArea = document.getElementById("support");
 
-      // 自動入力対象のチェック
+      // 1) まず「テンプレが選ばれているか？」をチェック
+      const templateSelectEl = document.getElementById("templateSelect");
+      const idxStr = templateSelectEl ? templateSelectEl.value : "";
+
+      if (idxStr) {
+        const idx = parseInt(idxStr, 10);
+        if (!Number.isNaN(idx) && templates[idx]) {
+          const tpl = templates[idx];
+          const newText = tpl.text || "";
+
+          if (textArea.value.trim()) {
+            const ok = confirm(
+              "すでに入力されている内容を、選択したテンプレートの文章で置き換えますか？"
+            );
+            if (!ok) return;
+          }
+
+          textArea.value = newText;
+          return; // テンプレを入れたらここで終了（AI には行かない）
+        }
+      }
+
+      // 2) テンプレ未選択 → AI 文章を作成
       const checkedItems = Array.from(
         document.querySelectorAll(".auto-item:checked")
       ).map((el) => el.value);
