@@ -459,7 +459,7 @@
 
           <!-- 自動入力対象のチェック -->
           <div class="field">
-            <label>自動入力したい支援項目（チェックした内容だけ文章を挿入）</label>
+            <label>自動入力したい支援項目（AI文章用の目安）</label>
             <div class="checkbox-row">
               <label><input type="checkbox" class="auto-item" value="med_manage" /> 服薬管理</label>
               <label><input type="checkbox" class="auto-item" value="oral_check" /> 内服確認</label>
@@ -467,7 +467,8 @@
               <label><input type="checkbox" class="auto-item" value="day_support" /> 日中支援加算</label>
             </div>
             <div class="small-text">
-              「自動」ボタンを押すと、チェックを入れた項目の文章だけが「本日の支援内容・様子」に自動入力されます。
+              ※テンプレを選んでいるときは、チェック有無に関係なくテンプレが優先されます。<br>
+              ※テンプレ未選択のときに「自動」を押すと、チェック内容に応じたAIっぽい文章が入ります。
             </div>
           </div>
 
@@ -605,7 +606,8 @@
                 <option value="">選択してください</option>
               </select>
               <div class="small-text">
-                選んだテンプレートを「テンプレ挿入」または「自動」から使えます。
+                ※テンプレを選んだ状態で「自動」を押すと、そのテンプレ文章がそのまま入ります。<br>
+                ※テンプレ未選択で「自動」を押すと、AI文章が入ります。
               </div>
             </div>
 
@@ -641,8 +643,8 @@
               自動
             </button>
             <span class="small-text">
-              チェックを入れた支援項目（服薬管理・内服確認・入浴・日中支援加算）の文章だけを自動で入力します。
-              テンプレがあれば、テンプレを優先して使用します。
+              ・テンプレを選んで「自動」→ そのテンプレ文章を入力<br>
+              ・テンプレ未選択で「自動」→ チェック内容に応じたAI文章を自動入力
             </span>
           </div>
 
@@ -1257,46 +1259,7 @@
       resetForm();
     }
 
-    // ★ テンプレート優先で自動入力するための補助関数
-    function pickTemplateForAuto(checkedItems) {
-      if (!Array.isArray(templates) || templates.length === 0) return null;
-
-      const templateSelectEl = document.getElementById("templateSelect");
-      const idxStr = templateSelectEl ? templateSelectEl.value : "";
-
-      // 1) プルダウンで選択されているテンプレがあればそれを最優先
-      if (idxStr) {
-        const idx = parseInt(idxStr, 10);
-        if (!Number.isNaN(idx) && templates[idx]) {
-          return templates[idx];
-        }
-      }
-
-      // 2) チェックが1つだけなら、その項目とscopeが同じテンプレを探す
-      if (checkedItems.length === 1) {
-        const scope = checkedItems[0]; // med_manage / oral_check / bathing / day_support
-        const scoped = templates.filter(
-          (t) => (t.scope || "common") === scope
-        );
-        if (scoped.length > 0) {
-          // 一番最後（＝新しく保存したもの想定）
-          return scoped[scoped.length - 1];
-        }
-      }
-
-      // 3) 見つからない場合は、共通テンプレ（scope: common）があればそれを使う
-      const common = templates.filter(
-        (t) => (t.scope || "common") === "common"
-      );
-      if (common.length > 0) {
-        return common[common.length - 1];
-      }
-
-      // どれも無ければテンプレは使わない
-      return null;
-    }
-
-    // 本日の支援内容を自動生成（チェックした項目だけ）
+    // 本日の支援内容を自動生成
     function generateSupportText() {
       const timeSlot = document.getElementById("timeSlot").value;
       const condition = document.getElementById("condition").value;
@@ -1308,36 +1271,42 @@
         ? daySupportTypeSelect.value
         : "";
 
-      // 自動に使う支援項目（服薬管理・内服確認・入浴・日中支援加算）
+      const textArea = document.getElementById("support");
+
+      // 1) まずテンプレが選ばれているか確認 → 選ばれていればそれを優先
+      const templateSelectEl = document.getElementById("templateSelect");
+      const idxStr = templateSelectEl ? templateSelectEl.value : "";
+
+      if (idxStr) {
+        const idx = parseInt(idxStr, 10);
+        if (!Number.isNaN(idx) && templates[idx]) {
+          const tpl = templates[idx];
+          const newText = tpl.text || "";
+
+          if (textArea.value.trim()) {
+            const ok = confirm(
+              "すでに入力されている内容を、選択したテンプレートの文章で置き換えますか？"
+            );
+            if (!ok) return;
+          }
+
+          textArea.value = newText;
+          return; // テンプレで入力したので終了
+        }
+      }
+
+      // 2) テンプレ未選択 → AIっぽい自動文章を作成
       const checkedItems = Array.from(
         document.querySelectorAll(".auto-item:checked")
       ).map((el) => el.value);
 
       if (checkedItems.length === 0) {
         alert(
-          "自動入力したい項目にチェックを入れてください。（例：服薬管理・内服確認・入浴・日中支援加算）"
+          "テンプレが選ばれていないのでAI文章モードになります。\n自動文章を作る項目にチェックを入れてください。（服薬管理・内服確認・入浴・日中支援加算など）"
         );
         return;
       }
 
-      // ① まずテンプレートがあればそれを優先して使う
-      const template = pickTemplateForAuto(checkedItems);
-      if (template) {
-        const textArea = document.getElementById("support");
-        const newText = template.text || "";
-
-        if (textArea.value.trim()) {
-          const ok = confirm(
-            "すでに入力されている内容を、テンプレートの文章で置き換えますか？"
-          );
-          if (!ok) return;
-        }
-
-        textArea.value = newText;
-        return; // テンプレで入力したらここで終了（AI文章は作らない）
-      }
-
-      // ② テンプレートが見つからない場合は、従来通りの自動文章（AIっぽい文章）
       let lines = [];
 
       lines.push(`本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`);
@@ -1396,7 +1365,6 @@
         "全体として大きな問題行動は見られず、今後も同様の支援を継続していく。"
       );
 
-      const textArea = document.getElementById("support");
       const newText = lines.join("\n");
 
       if (textArea.value.trim()) {
@@ -1589,7 +1557,7 @@
       alert("削除しました。");
     }
 
-    // テンプレート管理（項目ごと）
+    // テンプレート管理
     function loadTemplates() {
       try {
         const raw = localStorage.getItem(TEMPLATES_KEY);
@@ -1727,7 +1695,7 @@
       alert("テンプレートを削除しました。");
     }
 
-    // 自動チェック項目からテンプレ対象を自動で切り替え
+    // 自動チェック項目からテンプレ対象を自動で切り替え（おまけ）
     function updateTemplateScopeFromAutoItems() {
       const scopeSelect = document.getElementById("templateScope");
       if (!scopeSelect) return;
@@ -1840,7 +1808,7 @@
         templateDeleteBtn.addEventListener("click", handleTemplateDelete);
       }
 
-      // 自動項目のチェックが変わったらテンプレ対象を自動で切り替え
+      // 自動項目のチェックが変わったらテンプレ対象を自動で切り替え（おまけ機能）
       document.querySelectorAll(".auto-item").forEach((el) => {
         el.addEventListener("change", updateTemplateScopeFromAutoItems);
       });
