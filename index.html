@@ -349,6 +349,92 @@
       border-color: #1d4ed8;
       box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
     }
+
+    /* 詳細モーダル */
+    .detail-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .detail-modal-backdrop.show {
+      display: flex;
+    }
+
+    .detail-modal {
+      background: #ffffff;
+      border-radius: 18px;
+      max-width: 720px;
+      width: 100%;
+      max-height: 90vh;
+      padding: 18px 20px 20px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+      overflow: auto;
+    }
+
+    .detail-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .detail-modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .detail-modal-close {
+      border-radius: 999px;
+      border: none;
+      padding: 4px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #e5e7eb;
+    }
+
+    .detail-modal-body {
+      font-size: 14px;
+      color: #111827;
+    }
+
+    .detail-field {
+      margin-bottom: 6px;
+    }
+
+    .detail-field strong {
+      display: inline-block;
+      min-width: 120px;
+      color: #4b5563;
+    }
+
+    .detail-multiline {
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .detail-multiline strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #4b5563;
+    }
+
+    .detail-multiline pre {
+      margin: 0;
+      padding: 8px 10px;
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: inherit;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -791,6 +877,19 @@
     </section>
   </main>
 
+  <!-- 記録の詳細モーダル -->
+  <div id="detailModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="detailModalTitle">記録の詳細</div>
+        <button type="button" class="detail-modal-close" id="detailModalClose">×</button>
+      </div>
+      <div class="detail-modal-body" id="detailModalContent">
+        <!-- JSで挿入 -->
+      </div>
+    </div>
+  </div>
+
   <script>
     const STORAGE_KEY = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
@@ -945,6 +1044,19 @@
       return trimmed.slice(0, 40) + "…";
     }
 
+    function getTimeBadgeClass(timeSlot) {
+      switch (timeSlot) {
+        case "日中":
+          return "badge-day";
+        case "夕方":
+          return "badge-evening";
+        case "夜間":
+          return "badge-night";
+        default:
+          return "badge-day";
+      }
+    }
+
     function renderRecords() {
       const tbody = document.getElementById("recordTableBody");
       const filterResident = document.getElementById("filterResident").value;
@@ -1081,6 +1193,13 @@
           tr.appendChild(tdMed);
 
           const tdActions = document.createElement("td");
+
+          const viewBtn = document.createElement("button");
+          viewBtn.textContent = "詳細";
+          viewBtn.className = "btn-secondary";
+          viewBtn.style.fontSize = "12px";
+          viewBtn.onclick = () => showRecordDetail(record.id);
+
           const editBtn = document.createElement("button");
           editBtn.textContent = "編集";
           editBtn.className = "btn-secondary";
@@ -1093,25 +1212,13 @@
           delBtn.style.fontSize = "12px";
           delBtn.onclick = () => deleteRecord(record.id);
 
+          tdActions.appendChild(viewBtn);
           tdActions.appendChild(editBtn);
           tdActions.appendChild(delBtn);
           tr.appendChild(tdActions);
 
           tbody.appendChild(tr);
         });
-    }
-
-    function getTimeBadgeClass(timeSlot) {
-      switch (timeSlot) {
-        case "日中":
-          return "badge-day";
-        case "夕方":
-          return "badge-evening";
-        case "夜間":
-          return "badge-night";
-        default:
-          return "badge-day";
-      }
     }
 
     function resetForm() {
@@ -1378,6 +1485,87 @@
           textArea.value.replace(/\s*$/, "") + "\n" + newText;
       } else {
         textArea.value = newText;
+      }
+    }
+
+    // 記録詳細モーダル表示
+    function showRecordDetail(id) {
+      const record = records.find((r) => r.id === id);
+      if (!record) return;
+
+      const modal = document.getElementById("detailModal");
+      const content = document.getElementById("detailModalContent");
+      const titleEl = document.getElementById("detailModalTitle");
+      if (!modal || !content) return;
+
+      content.innerHTML = "";
+
+      const addRow = (label, value) => {
+        const div = document.createElement("div");
+        div.className = "detail-field";
+        const strong = document.createElement("strong");
+        strong.textContent = label;
+        const span = document.createElement("span");
+        span.textContent = value || "";
+        div.appendChild(strong);
+        div.appendChild(span);
+        content.appendChild(div);
+      };
+
+      const addMultiline = (label, value) => {
+        const wrap = document.createElement("div");
+        wrap.className = "detail-multiline";
+        const strong = document.createElement("strong");
+        strong.textContent = label;
+        const pre = document.createElement("pre");
+        pre.textContent = value || "";
+        wrap.appendChild(strong);
+        wrap.appendChild(pre);
+        content.appendChild(wrap);
+      };
+
+      const tagsText =
+        record.tags && record.tags.length
+          ? record.tags.map((t) => "#" + t).join(" ")
+          : "なし";
+
+      const medText = record.medTaken ? "服薬済み" : "未確認／未内服の可能性あり";
+
+      const daySupportTypeLabel = record.daySupportType
+        ? "日中支援加算" + record.daySupportType
+        : "なし";
+
+      const daySupportItemsText =
+        record.daySupportItems && record.daySupportItems.length
+          ? record.daySupportItems.join("、")
+          : "なし";
+
+      if (titleEl) {
+        titleEl.textContent = `${record.date || ""} ${record.resident || ""} さんの記録`;
+      }
+
+      addRow("日付：", record.date || "");
+      addRow("利用者：", record.resident || "");
+      addRow("時間帯：", record.timeSlot || "");
+      addRow("体調：", record.condition || "");
+      addRow("心の状態：", record.mental || "");
+      addRow("食事の様子：", record.meal || "");
+      addRow("服薬：", medText);
+      addRow("タグ：", tagsText);
+      addRow("日中支援加算区分：", daySupportTypeLabel);
+      addRow("日中支援の時間帯：", record.daySupportTime || "");
+      addRow("日中支援の状況・支援内容：", daySupportItemsText);
+
+      addMultiline("本日の支援内容・様子：", record.support || "");
+      addMultiline("特記事項：", record.note || "");
+
+      modal.classList.add("show");
+    }
+
+    function closeRecordDetail() {
+      const modal = document.getElementById("detailModal");
+      if (modal) {
+        modal.classList.remove("show");
       }
     }
 
@@ -1798,6 +1986,17 @@
       const templateDeleteBtn = document.getElementById("templateDeleteButton");
       if (templateDeleteBtn) {
         templateDeleteBtn.addEventListener("click", handleTemplateDelete);
+      }
+
+      const detailModal = document.getElementById("detailModal");
+      const detailModalClose = document.getElementById("detailModalClose");
+      if (detailModal && detailModalClose) {
+        detailModalClose.addEventListener("click", closeRecordDetail);
+        detailModal.addEventListener("click", (e) => {
+          if (e.target === detailModal) {
+            closeRecordDetail();
+          }
+        });
       }
     });
   </script>
