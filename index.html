@@ -363,7 +363,7 @@
           <span class="pill" id="modeLabel">新規入力モード</span>
         </div>
         <div class="card-subtitle">
-          利用者を選び、日中の様子・支援内容・服薬状況などを記録します。
+          利用者を選び、日中の様子・支援内容・服薬状況などを記録します。<br>
           パソコン操作に不慣れな方でも、できるだけ「ボタンを押すだけ」で入力できるようにしています。
         </div>
 
@@ -442,7 +442,7 @@
                 服薬済み
               </label>
               <span class="small-text">
-                （服薬状況のチェックや、飲み忘れなどがあれば下の支援内容に記入）
+                （服薬状況のチェックや、飲み忘れがあれば下の支援内容に記入）
               </span>
             </div>
           </div>
@@ -459,7 +459,7 @@
 
           <!-- 自動入力対象のチェック -->
           <div class="field">
-            <label>自動入力したい支援項目（テンプレ & AI文章用）</label>
+            <label>自動入力したい支援項目（AI文章用の目安）</label>
             <div class="checkbox-row">
               <label><input type="checkbox" class="auto-item" value="med_manage" /> 服薬管理</label>
               <label><input type="checkbox" class="auto-item" value="oral_check" /> 内服確認</label>
@@ -467,8 +467,8 @@
               <label><input type="checkbox" class="auto-item" value="day_support" /> 日中支援加算</label>
             </div>
             <div class="small-text">
-              ・テンプレ未選択で「自動」→ チェックした項目ごとに、その項目のテンプレを全部まとめて貼り付け（服薬＋内服なども同時OK）<br>
-              ・その項目にテンプレが無い場合だけ、AIっぽい文章で自動生成します。
+              ・ここで選んだ項目に合わせて、『自動』ボタンでAIっぽい文章をまとめて作ります。<br>
+              ・テンプレは下の「テンプレ挿入」ボタンから使います（自動とは別）。
             </div>
           </div>
 
@@ -489,7 +489,7 @@
           <div class="field">
             <label>日中支援加算に関わる状況・支援内容（チェック用メモ）</label>
             <div class="small-text" style="margin-bottom:4px;">
-              該当するものにチェックしてください（あとから自動文章テンプレに使えます）。
+              該当するものにチェックしてください（あとから自動文章テンプレなどを作る目安になります）。
             </div>
 
             <div class="checkbox-row">
@@ -512,7 +512,7 @@
               </label>
               <label>
                 <input type="checkbox" class="day-support-item" value="医師の指示で外出や通所を控えている" />
-                医師から外出・通所を控えるよう指示あり
+                医師の指示で外出・通所を控えている
               </label>
             </div>
 
@@ -546,17 +546,17 @@
               </label>
               <label>
                 <input type="checkbox" class="day-support-item" value="行動や安全面の見守り（転倒・徘徊などへの対応）" />
-                行動・安全の見守り
+                行動や安全面の見守り
               </label>
             </div>
             <div class="checkbox-row">
               <label>
                 <input type="checkbox" class="day-support-item" value="心理面の支援や相談（不安時の傾聴や気分転換など）" />
-                心理面の支援・相談
+                心理面の支援や相談
               </label>
               <label>
                 <input type="checkbox" class="day-support-item" value="日中の活動支援や生活リズムの調整" />
-                日中の活動支援・生活リズム調整
+                日中の活動支援・生活リズムの調整
               </label>
             </div>
           </div>
@@ -585,7 +585,7 @@
                   <option value="day_support">日中支援加算</option>
                 </select>
                 <div class="small-text">
-                  上で対象項目を選ぶと、その項目用のテンプレ一覧が下に表示されます。
+                  対象を選ぶと、その項目用のテンプレ一覧が下に表示されます。
                 </div>
               </div>
               <div class="field">
@@ -606,8 +606,8 @@
                 <option value="">選択してください</option>
               </select>
               <div class="small-text">
-                ・テンプレを選んで「自動」→ そのテンプレ文章だけを入力<br>
-                ・テンプレ未選択で「自動」→ チェックした項目ごとにテンプレをまとめて入力（なければAI文章）
+                ・テンプレを使いたいときは「テンプレ挿入」を押します。<br>
+                ・『自動』ボタンはテンプレとは関係なく、チェックに応じたAI文章だけを作ります。
               </div>
             </div>
 
@@ -643,8 +643,8 @@
               自動
             </button>
             <span class="small-text">
-              ・テンプレ選択あり→その1つをそのまま入力<br>
-              ・テンプレ選択なし→チェックした項目ごとのテンプレを全部つなげて入力（テンプレ無しの項目はAI文章）
+              ・チェックを入れて『自動』→ AIが定型文をまとめて作成します。<br>
+              ・テンプレを使いたいときは『テンプレ挿入』を使います。
             </span>
           </div>
 
@@ -1196,8 +1196,6 @@
       document.querySelectorAll(".auto-item").forEach((el) => {
         el.checked = false;
       });
-
-      updateTemplateScopeFromAutoItems();
     }
 
     function deleteRecord(id) {
@@ -1259,7 +1257,8 @@
       resetForm();
     }
 
-    // 本日の支援内容を自動生成（テンプレまたはAI）
+    // 本日の支援内容を自動生成（AI専用）
+    // ・テンプレは一切見ず、チェックされた項目に応じてAI風の文章だけを作る
     function generateSupportText() {
       const timeSlot = document.getElementById("timeSlot").value;
       const condition = document.getElementById("condition").value;
@@ -1267,83 +1266,31 @@
       const meal = document.getElementById("meal").value.trim();
       const medTaken = document.getElementById("medTaken").checked;
       const daySupportTypeSelect = document.getElementById("daySupportType");
-      const daySupportType = daySupportTypeSelect
-        ? daySupportTypeSelect.value
-        : "";
+      const daySupportType = daySupportTypeSelect ? daySupportTypeSelect.value : "";
 
       const textArea = document.getElementById("support");
 
-      // 1) まず「テンプレ選択あり」の場合 → そのテンプレだけを使う
-      const templateSelectEl = document.getElementById("templateSelect");
-      const idxStr = templateSelectEl ? templateSelectEl.value : "";
-
-      if (idxStr) {
-        const idx = parseInt(idxStr, 10);
-        if (!Number.isNaN(idx) && templates[idx]) {
-          const tpl = templates[idx];
-          const newText = tpl.text || "";
-
-          if (textArea.value.trim()) {
-            const ok = confirm(
-              "すでに入力されている内容を、選択したテンプレートの文章で置き換えますか？"
-            );
-            if (!ok) return;
-          }
-
-          textArea.value = newText;
-          return; // テンプレで入力したので終了
-        }
-      }
-
-      // 2) テンプレ未選択 → チェックされた項目ごとのテンプレをまとめて使う or AI文章
+      // 自動入力対象のチェック
       const checkedItems = Array.from(
         document.querySelectorAll(".auto-item:checked")
       ).map((el) => el.value);
 
       if (checkedItems.length === 0) {
         alert(
-          "テンプレも選ばれておらず、チェックも入っていません。\n「服薬管理」や「内服確認」など、自動で文章を作りたい項目にチェックを入れてから『自動』を押してください。"
+          "自動で文章を作る項目にチェックが入っていません。\n「服薬管理」や「内服確認」などにチェックを入れてから『自動』を押してください。"
         );
         return;
       }
 
-      // 2-1) チェックされた項目ごとに、そのscope用のテンプレを探す（最後に保存したものを使用）
-      const templateTexts = [];
-      checkedItems.forEach((scope) => {
-        const scoped = templates.filter(
-          (t) => (t.scope || "common") === scope
-        );
-        if (scoped.length > 0) {
-          const tpl = scoped[scoped.length - 1]; // そのscopeで一番新しいテンプレ
-          if (tpl.text && tpl.text.trim()) {
-            templateTexts.push(tpl.text.trim());
-          }
-        }
-      });
+      const lines = [];
 
-      if (templateTexts.length > 0) {
-        const combined = templateTexts.join("\n\n"); // 項目ごとに1行空けてつなげる
-
-        if (textArea.value.trim()) {
-          const ok = confirm(
-            "すでに入力されている内容を、選択された項目のテンプレ文章で置き換えますか？"
-          );
-          if (!ok) return;
-        }
-
-        textArea.value = combined;
-        return; // テンプレ複数を貼り付けて終了
-      }
-
-      // 2-2) どのscopeにもテンプレが無かった場合だけ、AIっぽい文章を自動生成
-      let lines = [];
-
+      // 共通の頭
       lines.push(`本日${timeSlot}は概ね${condition}で、心の状態は${mental}な様子。`);
-
       if (meal) {
         lines.push(`食事は ${meal}。`);
       }
 
+      // 服薬管理
       if (checkedItems.includes("med_manage")) {
         if (medTaken) {
           lines.push(
@@ -1356,6 +1303,7 @@
         }
       }
 
+      // 内服確認
       if (checkedItems.includes("oral_check")) {
         if (medTaken) {
           lines.push(
@@ -1368,12 +1316,14 @@
         }
       }
 
+      // 入浴
       if (checkedItems.includes("bathing")) {
         lines.push(
-          "入浴については声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。"
+          "入浴については、声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。"
         );
       }
 
+      // 日中支援加算
       if (checkedItems.includes("day_support")) {
         if (daySupportType === "Ⅰ") {
           lines.push(
@@ -1390,6 +1340,7 @@
         }
       }
 
+      // 総括
       lines.push(
         "全体として大きな問題行動は見られず、今後も同様の支援を継続していく。"
       );
@@ -1734,22 +1685,6 @@
       alert("テンプレートを削除しました。");
     }
 
-    function updateTemplateScopeFromAutoItems() {
-      const scopeSelect = document.getElementById("templateScope");
-      if (!scopeSelect) return;
-
-      const checkedItems = Array.from(
-        document.querySelectorAll(".auto-item:checked")
-      ).map((el) => el.value);
-
-      if (checkedItems.length === 1) {
-        scopeSelect.value = checkedItems[0];
-      } else if (!scopeSelect.value) {
-        scopeSelect.value = "common";
-      }
-      renderTemplateSelect();
-    }
-
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("date").value = new Date()
         .toISOString()
@@ -1845,10 +1780,6 @@
       if (templateDeleteBtn) {
         templateDeleteBtn.addEventListener("click", handleTemplateDelete);
       }
-
-      document.querySelectorAll(".auto-item").forEach((el) => {
-        el.addEventListener("change", updateTemplateScopeFromAutoItems);
-      });
     });
   </script>
 </body>
