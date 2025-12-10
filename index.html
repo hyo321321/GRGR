@@ -760,9 +760,18 @@
       <!-- 一覧表示 -->
       <section class="card">
         <div class="card-title">
-          <span>記録一覧</span>
-          <span class="record-count" id="recordCount">0件</span>
-        </div>
+  <span>記録一覧</span>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <button type="button"
+            onclick="window.open('records.html', '_blank')"
+            class="btn-secondary"
+            style="font-size:12px; padding:6px 10px;">
+      📄 別ページで開く
+    </button>
+    <span class="record-count" id="recordCount">0件</span>
+  </div>
+</div>
+
 
         <div class="resident-select-row">
           <span>表示する利用者：</span>
@@ -2002,3 +2011,4 @@
   </script>
 </body>
 </html>
+
