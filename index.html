@@ -867,29 +867,38 @@
     // ★ 今後項目を増やすのはここに追加するだけ
     // key が保存用ID / label が画面表示 / defaultText が共通テンプレ（デフォルト）
     const AUTO_ITEM_DEFS = [
-      {
-        key: "med_manage",
-        label: "服薬管理",
-        defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。"
-      },
-      {
-        key: "oral_check",
-        label: "内服確認",
-        defaultText: "【内服確認】服薬時は職員が手渡し、目の前で飲んで頂き内服確認を行った。"
-      },
-      {
-        key: "bathing",
-        label: "入浴",
-        defaultText: "【入浴】入浴の声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。"
-      },
-      {
-        key: "day_support",
-        label: "日中支援加算",
-        defaultText: "【日中支援加算】{{daySupportTypeLabel}}の対象として、日中もグループホーム内で見守り・声かけ・誘導等の支援を継続して実施した。"
-      }
-    ];
+  {
+    key: "med_manage",
+    label: "服薬管理",
+    defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。"
+  },
+  {
+    key: "oral_check",
+    label: "内服確認",
+    defaultText: "【内服確認】服薬時は職員が手渡し、目の前で飲んで頂き内服確認を行った。"
+  },
+  {
+    key: "bathing",
+    label: "入浴",
+    defaultText: "【入浴】入浴の声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。"
+  },
 
-    let records = [];
+  // ★ここに追加（keyは必ず一意）
+  {
+    key: "money_support",
+    label: "金銭管理",
+    defaultText: "【金銭管理】金銭の確認と声かけを行い、必要に応じて支援した。"
+  },
+
+  {
+    key: "day_support",
+    label: "日中支援加算",
+    defaultText: "【日中支援加算】{{daySupportTypeLabel}}の対象として、日中もグループホーム内で見守り・声かけ・誘導等の支援を継続して実施した。"
+  }
+];
+
+let records = [];
+
     let residents = [];
     let currentTags = [];
     let editingIndex = null;
@@ -2103,3 +2112,4 @@
   </script>
 </body>
 </html>
+
