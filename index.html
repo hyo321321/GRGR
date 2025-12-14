@@ -680,22 +680,12 @@
 
           </div>
 
-         <div class="field">
-  <label for="support">本日の支援内容・様子</label>
-
-  <!-- ✅ 3種類テンプレ（追記） -->
-  <div class="btn-row" style="margin-top:-2px; margin-bottom:6px;">
-    <button type="button" class="btn-secondary" id="supportTplShortBtn">📝 短め</button>
-    <button type="button" class="btn-secondary" id="supportTplStandardBtn">📝 標準</button>
-    <button type="button" class="btn-secondary" id="supportTplAuditBtn">📝 監査向け</button>
-    <span class="small-text">※押すと下に追記されます（消えません）</span>
-  </div>
-
-  <textarea id="support" rows="8" placeholder="【標準の書き方例】
+          <div class="field">
+            <label for="support">本日の支援内容・様子</label>
+            <textarea id="support" rows="8" placeholder="【標準の書き方例】
 日中は落ち着いて穏やかに過ごされる。食事・服薬ともに見守り中心で実施。
 必要時のみ声かけ・介助を行った。"></textarea>
-</div>
-
+          </div>
 
           <!-- ★自動ボタン（初心者OK） -->
           <div class="beginner-zone">
@@ -1857,127 +1847,6 @@
 
     // ★自動：利用者別テンプレ（選択）＋共通テンプレ（選択）＋チェック項目（選択）をまとめて追記
     function generateSupportText() {
-      // ✅ 3種類テンプレ（短め／標準／監査向け）を「本日の支援内容・様子」に追記
-function appendToSupport(text) {
-  const ta = document.getElementById("support");
-  if (!ta) return;
-  const t = (text || "").trim();
-  if (!t) return;
-  if (ta.value.trim()) ta.value = ta.value.replace(/\s*$/, "") + "\n\n" + t;
-  else ta.value = t;
-}
-
-function collectSupportSnapshot() {
-  const date = document.getElementById("date")?.value || "";
-  const resident = document.getElementById("resident")?.value || "";
-  const timeSlot = document.getElementById("timeSlot")?.value || "";
-  const condition = document.getElementById("condition")?.value || "";
-  const mental = document.getElementById("mental")?.value || "";
-  const meal = document.getElementById("meal")?.value || "";
-  const medTaken = !!document.getElementById("medTaken")?.checked;
-
-  const daySupportType = document.getElementById("daySupportType")?.value || "";
-  const daySupportTime = document.getElementById("daySupportTime")?.value || "";
-
-  const dayMain = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
-  const dayReason = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
-
-  const tags = Array.isArray(currentTags) ? [...currentTags] : [];
-
-  const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "";
-
-  return {
-    date, resident, timeSlot, condition, mental, meal, medTaken,
-    daySupportType, daySupportTypeLabel, daySupportTime,
-    dayMain, dayReason, tags
-  };
-}
-
-function buildSupportTemplate(mode, s) {
-  const ts = s.timeSlot || "日中";
-  const cond = s.condition || "—";
-  const ment = s.mental || "—";
-  const meal = (s.meal || "").trim();
-  const medLine = s.medTaken
-    ? "服薬：職員が手渡し、内服確認を実施（服薬済み）。"
-    : "服薬：未／要確認（状況は必要に応じて記載）。";
-
-  const tagsText = (s.tags && s.tags.length) ? ("タグ：" + s.tags.map(t => "#" + t).join(" ")) : "";
-
-  const hasDayInfo = (s.daySupportTypeLabel || (s.dayMain && s.dayMain.length) || (s.dayReason && s.dayReason.length) || (s.daySupportTime || "").trim());
-
-  if (mode === "short") {
-    const lines = [];
-    lines.push(`【${ts}】体調：${cond}／心：${ment}。`);
-    if (meal) lines.push(`食事：${meal}。`);
-    lines.push(s.medTaken ? "服薬：済（手渡し・内服確認）。" : "服薬：未／要確認。");
-
-    if (hasDayInfo) {
-      if (s.daySupportTypeLabel) lines.push(`日中支援：${s.daySupportTypeLabel}。`);
-      if ((s.daySupportTime || "").trim()) lines.push(`日中支援時間帯：${s.daySupportTime.trim()}。`);
-      if (s.dayMain && s.dayMain.length) lines.push(`主な支援：${s.dayMain.join("、")}。`);
-      if (s.dayReason && s.dayReason.length) lines.push(`欠席理由：${s.dayReason.join("、")}。`);
-    }
-
-    lines.push("必要時、声かけ・見守りを実施。");
-    if (tagsText) lines.push(tagsText);
-    return lines.join("\n");
-  }
-
-  if (mode === "standard") {
-    const lines = [];
-    lines.push(`【状況】${ts}は体調「${cond}」、心の状態「${ment}」。`);
-    if (meal) lines.push(`【食事】${meal}。`);
-    lines.push(`【服薬】${s.medTaken ? "職員が手渡し、内服確認を実施。" : "未／要確認（必要に応じて対応）。"}`);
-
-    if (hasDayInfo) {
-      lines.push(`【日中支援】${s.daySupportTypeLabel ? s.daySupportTypeLabel + "の対象として、" : ""}必要時に見守り・声かけ等を実施。`);
-      if ((s.daySupportTime || "").trim()) lines.push(`・時間帯：${s.daySupportTime.trim()}`);
-      if (s.dayMain && s.dayMain.length) {
-        lines.push("・主な支援：");
-        s.dayMain.forEach(x => lines.push("  ・" + x));
-      }
-      if (s.dayReason && s.dayReason.length) lines.push(`【欠席理由】${s.dayReason.join("、")}`);
-    }
-
-    lines.push("【対応】本人のペースを尊重しつつ、安全に配慮して見守り・声かけを行った。");
-    lines.push("【引継ぎ】変化時は速やかに共有・記録。");
-    if (tagsText) lines.push(tagsText);
-    return lines.join("\n");
-  }
-
-  // audit
-  const lines = [];
-  lines.push(`【基本情報】日付：${s.date || "—"}／利用者：${s.resident || "—"}／時間帯：${ts}`);
-  lines.push(`【観察】体調：${cond}／心の状態：${ment}${meal ? `／食事：${meal}` : ""}。`);
-  lines.push(`【服薬】処方薬は事務所にて一括管理。服薬時は職員が手渡し、内服確認を実施。結果：${s.medTaken ? "内服確認済" : "未／要確認"}。`);
-
-  lines.push("【支援内容】");
-  if (s.daySupportTypeLabel) lines.push(`・日中支援加算：${s.daySupportTypeLabel}`);
-  if ((s.daySupportTime || "").trim()) lines.push(`・日中支援の主な時間帯：${s.daySupportTime.trim()}`);
-  if (s.dayMain && s.dayMain.length) {
-    s.dayMain.forEach(x => lines.push("・" + x));
-  } else {
-    lines.push("・主な支援：記載なし（必要に応じて追記）");
-  }
-
-  if (s.dayReason && s.dayReason.length) {
-    lines.push(`【日中活動に行けなかった理由】${s.dayReason.join("、")}`);
-  }
-
-  lines.push("【評価】大きな変化は認めず（変化があれば詳細を追記）。");
-  lines.push("【今後】状態に応じて見守り・声かけを継続し、必要時は関係機関・家族へ共有する。");
-  if (tagsText) lines.push(tagsText);
-
-  return lines.join("\n");
-}
-
-function insertSupportTemplate(mode) {
-  const s = collectSupportSnapshot();
-  const text = buildSupportTemplate(mode, s);
-  appendToSupport(text);
-}
-
       const textArea = document.getElementById("support");
       const resident = document.getElementById("resident")?.value;
 
@@ -3294,113 +3163,8 @@ function insertSupportTemplate(mode) {
         renderResidentTemplateSelectForForm();
       });
 
-    
-// 自動
-document.getElementById("autoSupportBtn").addEventListener("click", generateSupportText);
-
-// ←この直後あたりに追加でOK
-document.getElementById("supportTplShortBtn")?.addEventListener("click", () => insertSupportTemplate("short"));
-document.getElementById("supportTplStandardBtn")?.addEventListener("click", () => insertSupportTemplate("standard"));
-document.getElementById("supportTplAuditBtn")?.addEventListener("click", () => insertSupportTemplate("audit"));
-
-      // ===== テンプレボタン用（短め/標準/監査）ここから =====
-function appendToSupport(text) {
-  const ta = document.getElementById("support");
-  if (!ta) return;
-  const t = (text || "").trim();
-  if (!t) return;
-  if (ta.value.trim()) ta.value = ta.value.replace(/\s*$/, "") + "\n\n" + t;
-  else ta.value = t;
-}
-
-function collectSupportSnapshot() {
-  const date = document.getElementById("date")?.value || "";
-  const resident = document.getElementById("resident")?.value || "";
-  const timeSlot = document.getElementById("timeSlot")?.value || "";
-  const condition = document.getElementById("condition")?.value || "";
-  const mental = document.getElementById("mental")?.value || "";
-  const meal = document.getElementById("meal")?.value || "";
-  const medTaken = !!document.getElementById("medTaken")?.checked;
-
-  const daySupportType = document.getElementById("daySupportType")?.value || "";
-  const daySupportTime = document.getElementById("daySupportTime")?.value || "";
-
-  const dayMain = Array.from(document.querySelectorAll(".day-main-item:checked")).map(el => el.value);
-  const dayReason = Array.from(document.querySelectorAll(".day-reason-item:checked")).map(el => el.value);
-
-  const tags = (typeof currentTags !== "undefined" && Array.isArray(currentTags)) ? [...currentTags] : [];
-  const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "";
-
-  return { date, resident, timeSlot, condition, mental, meal, medTaken, daySupportTypeLabel, daySupportTime, dayMain, dayReason, tags };
-}
-
-function buildSupportTemplate(mode, s) {
-  const ts = s.timeSlot || "日中";
-  const cond = s.condition || "—";
-  const ment = s.mental || "—";
-  const meal = (s.meal || "").trim();
-  const tagsText = (s.tags && s.tags.length) ? ("タグ：" + s.tags.map(t => "#" + t).join(" ")) : "";
-
-  const hasDayInfo =
-    (s.daySupportTypeLabel || (s.dayMain && s.dayMain.length) || (s.dayReason && s.dayReason.length) || (s.daySupportTime || "").trim());
-
-  if (mode === "short") {
-    const lines = [];
-    lines.push(`【${ts}】体調：${cond}／心：${ment}。`);
-    if (meal) lines.push(`食事：${meal}。`);
-    lines.push(s.medTaken ? "服薬：済（手渡し・内服確認）。" : "服薬：未／要確認。");
-    if (hasDayInfo) {
-      if (s.daySupportTypeLabel) lines.push(`日中支援：${s.daySupportTypeLabel}。`);
-      if ((s.daySupportTime || "").trim()) lines.push(`日中支援時間帯：${s.daySupportTime.trim()}。`);
-      if (s.dayMain?.length) lines.push(`主な支援：${s.dayMain.join("、")}。`);
-      if (s.dayReason?.length) lines.push(`欠席理由：${s.dayReason.join("、")}。`);
-    }
-    lines.push("必要時、声かけ・見守りを実施。");
-    if (tagsText) lines.push(tagsText);
-    return lines.join("\n");
-  }
-
-  if (mode === "standard") {
-    const lines = [];
-    lines.push(`【状況】${ts}は体調「${cond}」、心の状態「${ment}」。`);
-    if (meal) lines.push(`【食事】${meal}。`);
-    lines.push(`【服薬】${s.medTaken ? "職員が手渡し、内服確認を実施。" : "未／要確認（必要に応じて対応）。"}`);
-    if (hasDayInfo) {
-      lines.push(`【日中支援】${s.daySupportTypeLabel ? s.daySupportTypeLabel + "の対象として、" : ""}必要時に見守り・声かけ等を実施。`);
-      if ((s.daySupportTime || "").trim()) lines.push(`・時間帯：${s.daySupportTime.trim()}`);
-      if (s.dayMain?.length) lines.push(`・主な支援：${s.dayMain.join("、")}`);
-      if (s.dayReason?.length) lines.push(`【欠席理由】${s.dayReason.join("、")}`);
-    }
-    lines.push("【対応】本人のペースを尊重しつつ、安全に配慮して見守り・声かけを行った。");
-    lines.push("【引継ぎ】変化時は速やかに共有・記録。");
-    if (tagsText) lines.push(tagsText);
-    return lines.join("\n");
-  }
-
-  // audit
-  const lines = [];
-  lines.push(`【基本情報】日付：${s.date || "—"}／利用者：${s.resident || "—"}／時間帯：${ts}`);
-  lines.push(`【観察】体調：${cond}／心の状態：${ment}${meal ? `／食事：${meal}` : ""}。`);
-  lines.push(`【服薬】処方薬は事務所にて一括管理。服薬時は職員が手渡し、内服確認を実施。結果：${s.medTaken ? "内服確認済" : "未／要確認"}。`);
-  lines.push("【支援内容】");
-  if (s.daySupportTypeLabel) lines.push(`・日中支援加算：${s.daySupportTypeLabel}`);
-  if ((s.daySupportTime || "").trim()) lines.push(`・日中支援の主な時間帯：${s.daySupportTime.trim()}`);
-  if (s.dayMain?.length) s.dayMain.forEach(x => lines.push("・" + x));
-  else lines.push("・主な支援：記載なし（必要に応じて追記）");
-  if (s.dayReason?.length) lines.push(`【日中活動に行けなかった理由】${s.dayReason.join("、")}`);
-  lines.push("【評価】大きな変化は認めず（変化があれば詳細を追記）。");
-  lines.push("【今後】状態に応じて見守り・声かけを継続し、必要時は関係機関・家族へ共有する。");
-  if (tagsText) lines.push(tagsText);
-  return lines.join("\n");
-}
-
-function insertSupportTemplate(mode) {
-  const s = collectSupportSnapshot();
-  const text = buildSupportTemplate(mode, s);
-  appendToSupport(text);
-}
-// ===== テンプレボタン用 ここまで =====
-
+      // 自動
+      document.getElementById("autoSupportBtn").addEventListener("click", generateSupportText);
 
       // テンプレ（共通）
       document.getElementById("templateApplyButton").addEventListener("click", handleTemplateApply);
@@ -3564,6 +3328,3 @@ function insertSupportTemplate(mode) {
   </script>
 </body>
 </html>
-
-
-
