@@ -3111,9 +3111,10 @@ function clearFavChecks() {
       document.getElementById("resident")?.addEventListener("change", () => {
         const r = document.getElementById("resident").value;
         if (!r) return;
-        applyFavToMainCheckboxes(r);
         applyDaySupportListsForResident(r);
-        renderResidentTemplateSelectForForm();
+　　　　applyFavToMainCheckboxes(r);
+　　　　renderResidentTemplateSelectForForm();
+
       });
 
       // 自動
@@ -3279,4 +3280,5 @@ function clearFavChecks() {
   </script>
 </body>
 </html>
+
 
