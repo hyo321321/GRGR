@@ -680,12 +680,22 @@
 
           </div>
 
-          <div class="field">
-            <label for="support">本日の支援内容・様子</label>
-            <textarea id="support" rows="8" placeholder="【標準の書き方例】
+         <div class="field">
+  <label for="support">本日の支援内容・様子</label>
+
+  <!-- ✅ 3種類テンプレ（追記） -->
+  <div class="btn-row" style="margin-top:-2px; margin-bottom:6px;">
+    <button type="button" class="btn-secondary" id="supportTplShortBtn">📝 短め</button>
+    <button type="button" class="btn-secondary" id="supportTplStandardBtn">📝 標準</button>
+    <button type="button" class="btn-secondary" id="supportTplAuditBtn">📝 監査向け</button>
+    <span class="small-text">※押すと下に追記されます（消えません）</span>
+  </div>
+
+  <textarea id="support" rows="8" placeholder="【標準の書き方例】
 日中は落ち着いて穏やかに過ごされる。食事・服薬ともに見守り中心で実施。
 必要時のみ声かけ・介助を行った。"></textarea>
-          </div>
+</div>
+
 
           <!-- ★自動ボタン（初心者OK） -->
           <div class="beginner-zone">
@@ -3328,3 +3338,4 @@
   </script>
 </body>
 </html>
+
