@@ -7,6 +7,7 @@
 
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
@@ -16,6 +17,7 @@
       font-size: 16px;
       line-height: 1.6;
     }
+
     header {
       background: #2563eb;
       color: white;
@@ -27,9 +29,22 @@
       top: 0;
       z-index: 10;
     }
-    main { max-width: 1280px; margin: 0 auto; padding: 18px; }
-    .layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
 
     .card {
       background: white;
@@ -38,6 +53,7 @@
       box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
       margin-bottom: 18px;
     }
+
     .card-title {
       font-size: 20px;
       font-weight: 600;
@@ -45,13 +61,26 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
     }
-    .card-subtitle { font-size: 13px; color: #6b7280; margin-bottom: 14px; }
-    label { font-size: 14px; font-weight: 600; display: block; margin-bottom: 5px; color: #374151; }
 
-    input[type="text"], input[type="date"], select, textarea {
+    .card-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 5px;
+      color: #374151;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
       width: 100%;
       border-radius: 12px;
       border: 1px solid #d1d5db;
@@ -61,14 +90,30 @@
       transition: border-color 0.15s, box-shadow 0.15s;
       background: #f9fafb;
     }
-    input[type="text"]:focus, input[type="date"]:focus, select:focus, textarea:focus {
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
       border-color: #2563eb;
       box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.5);
       background: white;
     }
+
     textarea { min-height: 80px; resize: vertical; }
-    .field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .field-row-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
     .field { margin-bottom: 12px; }
 
     .checkbox-row {
@@ -78,6 +123,7 @@
       align-items: center;
       margin-bottom: 6px;
     }
+
     .checkbox-row label {
       display: inline-flex;
       align-items: center;
@@ -87,7 +133,14 @@
       margin-bottom: 0;
     }
 
-    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; align-items: center; }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+      align-items: center;
+    }
+
     button {
       border: none;
       border-radius: 999px;
@@ -98,11 +151,19 @@
       transition: transform 0.05s ease-out, box-shadow 0.1s;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
+
     button:active { transform: translateY(1px); box-shadow: none; }
-    .btn-primary { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+
     .btn-secondary { background: #e5e7eb; color: #111827; }
+
     .btn-danger { background: #dc2626; color: white; }
 
     .pill {
@@ -112,14 +173,28 @@
       font-size: 12px;
       color: #1d4ed8;
       border: 1px solid #bfdbfe;
-      white-space: nowrap;
     }
-    .record-count { font-size: 13px; color: #6b7280; white-space: nowrap; }
 
-    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    .record-count { font-size: 13px; color: #6b7280; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
     thead { position: sticky; top: 0; background: #eff6ff; z-index: 1; }
-    th, td { border-bottom: 1px solid #e5e7eb; padding: 8px 6px; text-align: left; vertical-align: top; }
+
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
     th { font-weight: 600; color: #374151; white-space: nowrap; }
+
     tbody tr:nth-child(even) { background: #f9fafb; }
 
     .table-wrapper {
@@ -137,14 +212,20 @@
       font-size: 11px;
       font-weight: 600;
       color: white;
-      white-space: nowrap;
     }
+
     .badge-day { background: #22c55e; }
     .badge-evening { background: #f59e0b; }
     .badge-night { background: #6366f1; }
 
     .small-text { font-size: 12px; color: #6b7280; }
-    .no-records { padding: 14px; font-size: 13px; color: #6b7280; text-align: center; }
+
+    .no-records {
+      padding: 14px;
+      font-size: 13px;
+      color: #6b7280;
+      text-align: center;
+    }
 
     .resident-select-row {
       display: flex;
@@ -153,10 +234,19 @@
       margin-bottom: 10px;
       align-items: center;
     }
+
     .resident-select-row span { font-size: 13px; color: #4b5563; }
+
     .resident-select-row select { max-width: 240px; }
 
-    .tag-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    /* タグボタンまわり */
+    .tag-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
     .tag-button {
       border-radius: 999px;
       border: 1px solid #e5e7eb;
@@ -165,7 +255,13 @@
       font-size: 12px;
       cursor: pointer;
     }
-    .tag-button.tag-button-active { background: #f59e0b; border-color: #f97316; color: #fff; }
+
+    .tag-button.tag-button-active {
+      background: #f59e0b;
+      border-color: #f97316;
+      color: #fff;
+    }
+
     .tag-chip {
       display: inline-block;
       margin-top: 2px;
@@ -175,10 +271,17 @@
       border: 1px solid #fde68a;
       background: #fffbeb;
       font-size: 11px;
-      white-space: nowrap;
     }
 
-    .quick-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; margin-bottom: 4px; }
+    /* PC苦手な人向け：大きな選択ボタン */
+    .quick-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+
     .quick-btn {
       flex: 1 0 0;
       min-width: 70px;
@@ -190,6 +293,7 @@
       font-size: 13px;
       cursor: pointer;
     }
+
     .quick-btn-active {
       background: #2563eb;
       color: #fff;
@@ -197,6 +301,7 @@
       box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
     }
 
+    /* 詳細モーダル（小窓） */
     .detail-modal-backdrop {
       position: fixed;
       inset: 0;
@@ -207,39 +312,56 @@
       padding: 16px;
       z-index: 50;
     }
+
     .detail-modal-backdrop.show { display: flex; }
+
     .detail-modal {
       background: #ffffff;
       border-radius: 18px;
-      max-width: 820px;
+      max-width: 760px;
       width: 100%;
       max-height: 90vh;
       padding: 18px 20px 20px;
       box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
       overflow: auto;
     }
+
     .detail-modal-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 8px;
-      gap: 10px;
-      flex-wrap: wrap;
     }
+
     .detail-modal-title { font-size: 18px; font-weight: 600; }
+
     .detail-modal-close {
       border-radius: 999px;
       border: none;
-      padding: 6px 12px;
-      font-size: 14px;
+      padding: 4px 10px;
+      font-size: 16px;
       cursor: pointer;
       background: #e5e7eb;
     }
+
     .detail-modal-body { font-size: 14px; color: #111827; }
+
     .detail-field { margin-bottom: 6px; }
-    .detail-field strong { display: inline-block; min-width: 140px; color: #4b5563; }
+
+    .detail-field strong {
+      display: inline-block;
+      min-width: 120px;
+      color: #4b5563;
+    }
+
     .detail-multiline { margin-top: 8px; margin-bottom: 8px; }
-    .detail-multiline strong { display: block; margin-bottom: 2px; color: #4b5563; }
+
+    .detail-multiline strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #4b5563;
+    }
+
     .detail-multiline pre {
       margin: 0;
       padding: 8px 10px;
@@ -252,75 +374,11 @@
       font-size: 13px;
     }
 
-    .auto-tpl-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
-    @media (min-width: 900px) { .auto-tpl-grid { grid-template-columns: 1fr 1fr; } }
-    .auto-tpl-item {
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      border-radius: 14px;
-      padding: 10px 12px;
-    }
-    .auto-tpl-item-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-    .auto-tpl-item-title .name { font-weight: 800; font-size: 14px; color: #111827; }
-    .auto-tpl-item-title .key {
-      font-size: 11px;
-      color: #6b7280;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 999px;
-      padding: 2px 8px;
-      white-space: nowrap;
-    }
-    .mini-btn { font-size: 12px; padding: 7px 12px; border-radius: 999px; }
-
-    /* 管理者向けエリア（色分け） */
-    .admin-card{
-      --admin-accent:#f59e0b;
-      --admin-bg:#fff7ed;
-      border-left: 12px solid var(--admin-accent);
-      background: var(--admin-bg);
-      position: relative;
-    }
-    .admin-badge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      border:1px solid rgba(0,0,0,0.08);
-      background: rgba(255,255,255,0.7);
-      white-space: nowrap;
-    }
-    .admin-note{ margin-top:6px; font-size:12px; color:#92400e; }
-    .admin-manage { --admin-accent:#f59e0b; --admin-bg:#fff7ed; }
-    .admin-danger { --admin-accent:#ef4444; --admin-bg:#fff1f2; }
-    .admin-card input[type="text"], .admin-card input[type="date"], .admin-card select, .admin-card textarea{
-      background: rgba(255,255,255,0.92);
-    }
-    .danger-hint{ box-shadow: 0 0 0 2px rgba(239,68,68,0.18) inset; }
-
-    /* 見出し分離の見た目（初心者向け） */
-    .section-split {
-      border: 1px dashed #d1d5db;
-      border-radius: 14px;
-      padding: 12px 12px;
-      background: rgba(255,255,255,0.65);
-      margin-top: 8px;
-    }
-    .section-split-title {
-      font-weight: 800;
-      font-size: 14px;
-      margin-bottom: 6px;
-      color: #111827;
+    .modal-section-title{
+      margin: 10px 0 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
     }
   </style>
 </head>
@@ -337,7 +395,7 @@
         </div>
         <div class="card-subtitle">
           利用者を選び、日中の様子・支援内容・服薬状況などを記録します。<br>
-          ※利用者を選ぶと、その人の「よく使う項目（自動ON）」が自動でONになります。
+          パソコン操作に不慣れな方でも、できるだけ「ボタンを押すだけ」で入力できるようにしています。
         </div>
 
         <form id="recordForm">
@@ -348,8 +406,9 @@
             </div>
             <div class="field">
               <label for="resident">利用者</label>
-              <select id="resident" required></select>
-              <div class="small-text">※利用者を選ぶと「①自動入力支援項目」「②日中支援チェック」が自動でONになります。</div>
+              <select id="resident" required>
+                <!-- JSで挿入 -->
+              </select>
             </div>
           </div>
 
@@ -357,38 +416,44 @@
             <div class="field">
               <label for="timeSlot">時間帯</label>
               <select id="timeSlot">
-                <option>日中</option><option>夕方</option><option>夜間</option>
+                <option>日中</option>
+                <option>夕方</option>
+                <option>夜間</option>
               </select>
               <div class="quick-row" data-target="timeSlot">
                 <button type="button" class="quick-btn" data-value="日中">日中</button>
                 <button type="button" class="quick-btn" data-value="夕方">夕方</button>
                 <button type="button" class="quick-btn" data-value="夜間">夜間</button>
               </div>
-              <div class="small-text">上のボタンで選べます。</div>
+              <div class="small-text">上のボタンをクリックすると時間帯が選択されます。</div>
             </div>
             <div class="field">
               <label for="condition">体調</label>
               <select id="condition">
-                <option>良好</option><option>普通</option><option>不良</option>
+                <option>良好</option>
+                <option>普通</option>
+                <option>不良</option>
               </select>
               <div class="quick-row" data-target="condition">
                 <button type="button" class="quick-btn" data-value="良好">😊 良好</button>
                 <button type="button" class="quick-btn" data-value="普通">😐 普通</button>
                 <button type="button" class="quick-btn" data-value="不良">😟 不良</button>
               </div>
-              <div class="small-text">ボタンで選べます。</div>
+              <div class="small-text">ボタンを押すだけで体調を選べます。</div>
             </div>
             <div class="field">
               <label for="mental">心の状態</label>
               <select id="mental">
-                <option>安定</option><option>やや不安</option><option>不安定</option>
+                <option>安定</option>
+                <option>やや不安</option>
+                <option>不安定</option>
               </select>
               <div class="quick-row" data-target="mental">
                 <button type="button" class="quick-btn" data-value="安定">😊 安定</button>
                 <button type="button" class="quick-btn" data-value="やや不安">😐 やや不安</button>
                 <button type="button" class="quick-btn" data-value="不安定">😟 不安定</button>
               </div>
-              <div class="small-text">ボタンで選べます。</div>
+              <div class="small-text">心の状態もボタンで選べます。</div>
             </div>
           </div>
 
@@ -399,8 +464,13 @@
 
           <div class="field">
             <div class="checkbox-row">
-              <label><input type="checkbox" id="medTaken" /> 服薬済み</label>
-              <span class="small-text">（飲み忘れ等は支援内容に記入）</span>
+              <label>
+                <input type="checkbox" id="medTaken" />
+                服薬済み
+              </label>
+              <span class="small-text">
+                （服薬状況のチェックや、飲み忘れがあれば下の支援内容に記入）
+              </span>
             </div>
           </div>
 
@@ -410,16 +480,13 @@
             <div class="small-text" id="selectedTagsInfo">選択中：なし</div>
           </div>
 
-          <!-- ① 自動入力（文章追記） -->
+          <!-- 自動入力対象のチェック（サイト上で増やせる） -->
           <div class="field">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-              <label style="margin-bottom:0;">① 自動入力したい支援項目（チェックした定型文だけを追記）</label>
-              <button type="button" class="btn-secondary mini-btn" id="openResidentAutoTplBtn">🛠 自動テンプレ編集（利用者別）</button>
-            </div>
+            <label>自動入力したい支援項目（チェックした定型文だけを追記）</label>
             <div class="checkbox-row" id="autoItemCheckboxes"></div>
             <div class="small-text">
-              ・「自動」ボタン → チェックした項目の定型文だけを「追記」（置き換えなし）<br>
-              ・テンプレ選択中 → テンプレだけを追記
+              ・「自動」ボタン → チェックした項目の定型文だけを「追記」します（置き換えなし）<br>
+              ・テンプレが選択されている場合 → テンプレだけを追記（AI生成には行きません）
             </div>
           </div>
 
@@ -431,24 +498,48 @@
               <option value="Ⅰ">日中支援加算Ⅰ</option>
               <option value="Ⅱ">日中支援加算Ⅱ</option>
             </select>
-            <div class="small-text">該当する場合のみ選択してください。</div>
+            <div class="small-text">
+              日中支援加算に該当する場合のみ、Ⅰ / Ⅱ を選択してください。（自動文章の置換にも反映）
+            </div>
           </div>
 
-          <!-- ② 日中支援チェック（理由＆主な支援） -->
+          <!-- 日中支援加算の状況・支援内容（チェック） -->
           <div class="field">
-            <label>② 日中支援加算に関わる状況・支援内容（チェック用メモ）</label>
-            <div class="small-text" style="margin-bottom:6px;">
-              ※ここは「チェックの記録」です（文章追記とは別）。項目はサイト上で編集できます。
+            <label>日中支援加算に関わる状況・支援内容（チェック用メモ）</label>
+            <div class="small-text" style="margin-bottom:4px;">
+              該当するものにチェックしてください（あとから自動文章テンプレなどを作る目安になります）。
             </div>
 
-            <div class="section-split">
-              <div class="section-split-title">【日中活動に行けなかった理由】</div>
-              <div class="checkbox-row" id="daySupportReasonCheckboxes"></div>
+            <div class="checkbox-row">
+              <span class="small-text">【日中活動に行けなかった理由】</span>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="day-support-item" value="体調不良で日中活動を欠席" />体調不良で日中活動（通所・就労）を欠席</label>
+              <label><input type="checkbox" class="day-support-item" value="通所先・就労先が休みや臨時休業で在宅" />通所先・就労先が休み／臨時休業のため在宅</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="day-support-item" value="障害特性や行動面の不安で日中活動利用が困難" />障害特性・行動面の不安で日中活動利用が困難</label>
+              <label><input type="checkbox" class="day-support-item" value="医師の指示で外出や通所を控えている" />医師の指示で外出・通所を控えている</label>
             </div>
 
-            <div class="section-split">
-              <div class="section-split-title">【日中に行った主な支援】</div>
-              <div class="checkbox-row" id="daySupportSupportCheckboxes"></div>
+            <div class="checkbox-row" style="margin-top:8px;">
+              <span class="small-text">【日中に行った主な支援】</span>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="day-support-item" value="体調管理（検温・症状確認・安静の見守りなど）" />体調管理（検温・症状確認・安静の見守りなど）</label>
+              <label><input type="checkbox" class="day-support-item" value="食事の支援（準備・配膳・介助・摂取量の観察など）" />食事の支援（準備・配膳・介助）</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="day-support-item" value="服薬管理・内服確認（日中の服薬声かけや残薬確認など）" />服薬管理・内服確認</label>
+              <label><input type="checkbox" class="day-support-item" value="水分・トイレの声かけや誘導・介助" />水分・トイレの声かけ・介助</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="day-support-item" value="入浴や清潔保持の支援（洗面・更衣・整容など）" />入浴・清潔保持の支援</label>
+              <label><input type="checkbox" class="day-support-item" value="行動や安全面の見守り（転倒・徘徊などへの対応）" />行動や安全面の見守り</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="day-support-item" value="心理面の支援や相談（不安時の傾聴や気分転換など）" />心理面の支援や相談</label>
+              <label><input type="checkbox" class="day-support-item" value="日中の活動支援や生活リズムの調整" />日中の活動支援・生活リズムの調整</label>
             </div>
           </div>
 
@@ -457,7 +548,7 @@
             <input type="text" id="daySupportTime" placeholder="例）9:00〜15:00 の間、居室と共有スペースで継続的に見守り支援" />
           </div>
 
-          <!-- 自作テンプレ（文章） -->
+          <!-- 自作テンプレ管理（項目ごと） -->
           <div class="field">
             <label>支援内容テンプレート（自作）</label>
 
@@ -476,16 +567,18 @@
               <div class="field">
                 <label for="templateNameInput" class="small-text">テンプレート名</label>
                 <input type="text" id="templateNameInput" placeholder="例：服薬管理・安定パターン" />
-                <div class="small-text">今の「本日の支援内容・様子」をテンプレとして保存します。</div>
+                <div class="small-text">今の「本日の支援内容・様子」を、この名前・対象項目のテンプレートとして保存します。</div>
               </div>
             </div>
 
             <div class="field" style="margin-top:8px;">
-              <select id="templateSelect"><option value="">選択してください</option></select>
+              <select id="templateSelect">
+                <option value="">選択してください</option>
+              </select>
               <div class="small-text">
-                ・『自動』はテンプレが選ばれていればテンプレ追記。<br>
-                ・未選択なら①のチェック定型文を追記。<br>
-                ※いずれも「追記」で、既存文章は消えません。
+                ・『自動』ボタンは、テンプレが選ばれていればそのテンプレを追加。<br>
+                ・テンプレ未選択なら、チェックした項目の定型文を追加します。<br>
+                ※どちらの場合も、既存の文章は残り、下に追記されます。
               </div>
             </div>
 
@@ -494,12 +587,12 @@
               <button type="button" class="btn-primary" id="templateSaveButton">テンプレ保存 / 上書き</button>
               <button type="button" class="btn-danger" id="templateDeleteButton">選択テンプレ削除</button>
             </div>
-            <div class="small-text">※テンプレはこのPCのブラウザに保存されます。</div>
+            <div class="small-text">※テンプレートはこのパソコンのブラウザに保存されます。他のPCとは共有されません。</div>
           </div>
 
           <div class="field">
             <label for="support">本日の支援内容・様子</label>
-            <textarea id="support" rows="8" placeholder="例）
+            <textarea id="support" rows="8" placeholder="【標準の書き方例】
 日中は落ち着いて穏やかに過ごされる。食事・服薬ともに見守り中心で実施。
 必要時のみ声かけ・介助を行った。"></textarea>
           </div>
@@ -507,10 +600,12 @@
           <div class="btn-row">
             <button type="button" class="btn-secondary" id="autoSupportBtn">自動</button>
             <button type="button" class="btn-secondary" id="voiceSupportBtn">🎙 音声入力</button>
+
             <span class="small-text">
-              ・テンプレ選択あり → テンプレ追記<br>
-              ・テンプレ未選択 → ①のチェック定型文を追記（利用者別上書きがあれば優先）<br>
-              ・🎙 音声入力も追記されます
+              ・テンプレ選択あり → そのテンプレ文章だけを追加<br>
+              ・テンプレ未選択 → チェックした項目の定型文だけを追加<br>
+              ・どちらも「下に追記」されるだけで、書いた文章は消えません。<br>
+              ・🎙 音声入力ボタンで話した内容も追記できます。
             </span>
           </div>
           <div class="small-text" id="voiceStatus" style="margin-top:4px;"></div>
@@ -532,7 +627,12 @@
         <div class="card-title">
           <span>記録一覧</span>
           <div style="display:flex; align-items:center; gap:8px;">
-            <button type="button" onclick="window.open('records.html', '_blank')" class="btn-secondary" style="font-size:12px; padding:6px 10px;">📄 別ページで開く</button>
+            <button type="button"
+                    onclick="window.open('records.html', '_blank')"
+                    class="btn-secondary"
+                    style="font-size:12px; padding:6px 10px;">
+              📄 別ページで開く
+            </button>
             <span class="record-count" id="recordCount">0件</span>
           </div>
         </div>
@@ -540,7 +640,7 @@
         <div class="resident-select-row">
           <span>表示する利用者：</span>
           <select id="filterResident"></select>
-          <span class="small-text">※フィルターで絞り込み</span>
+          <span class="small-text">※フィルターを変えると、その利用者の記録だけ表示されます。</span>
         </div>
 
         <div class="resident-select-row">
@@ -553,7 +653,7 @@
             <option value="all">全期間</option>
             <option value="custom">日付指定</option>
           </select>
-          <span class="small-text">※全期間は件数が多い場合があります</span>
+          <span class="small-text">※全期間は件数が多くなる場合があります。</span>
         </div>
 
         <div class="resident-select-row" id="customPeriodRow" style="display:none;">
@@ -589,15 +689,15 @@
       </section>
     </div>
 
-    <!-- 利用者管理（管理者向け） -->
-    <section class="card admin-card admin-manage">
+    <!-- 利用者管理 -->
+    <section class="card">
       <div class="card-title">
         <span>利用者管理</span>
-        <span class="admin-badge">🛠 管理者向け</span>
+        <span class="record-count" id="residentCount">0名</span>
       </div>
-      <div class="admin-note">※初心者は触らないでください（名前変更・削除で記録データに影響します）</div>
-
-      <div class="card-subtitle">利用者名の追加・変更・削除を行います。</div>
+      <div class="card-subtitle">
+        利用者名の追加・変更・削除を行います。ここで変更すると、記録一覧の表示にも反映されます。
+      </div>
 
       <div class="field-row">
         <div class="field">
@@ -615,70 +715,34 @@
         <button type="button" class="btn-secondary" id="residentRenameButton">✏️ 選択をこの名前に変更</button>
         <button type="button" class="btn-danger" id="residentDeleteButton">🗑️ 利用者と記録を削除</button>
       </div>
-      <div class="small-text" style="margin-top:6px;">※削除すると、その利用者のすべての記録も削除されます。</div>
+      <div class="small-text" style="margin-top:6px;">
+        ※削除すると、その利用者のすべての記録も削除されます。
+      </div>
     </section>
 
-    <!-- よく使う項目 管理（利用者別）（管理者向け） -->
-    <section class="card admin-card admin-manage">
-      <div class="card-title">
-        <span>よく使う項目 管理（利用者別）</span>
-        <span class="admin-badge">🛠 管理者向け</span>
-      </div>
-      <div class="admin-note">※初心者は触らないでください（利用者選択時に自動ONになる項目が変わります）</div>
-
-      <div class="field-row">
-        <div class="field">
-          <label for="favManageResident">対象の利用者</label>
-          <select id="favManageResident"></select>
-          <div class="small-text">ここで設定した項目が、上のフォームで利用者を選ぶと自動でONになります。</div>
-        </div>
-
-        <div class="field">
-          <label>自動ON項目（分離してわかりやすく）</label>
-
-          <div class="section-split">
-            <div class="section-split-title">① 自動入力（文章追記）</div>
-            <div class="checkbox-row" id="favManageCheckboxes"></div>
-          </div>
-
-          <div class="section-split">
-            <div class="section-split-title">② 日中支援チェック：理由</div>
-            <div class="checkbox-row" id="favManageDayReason"></div>
-          </div>
-
-          <div class="section-split">
-            <div class="section-split-title">② 日中支援チェック：主な支援</div>
-            <div class="checkbox-row" id="favManageDaySupport"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="btn-row">
-        <button type="button" class="btn-primary" id="favManageSaveBtn">💾 この利用者の設定を保存</button>
-        <button type="button" class="btn-secondary danger-hint" id="favManageResetBtn">↩ この利用者を初期に戻す</button>
-      </div>
-      <div class="small-text">※「初期に戻す」は、この利用者の“自動ON設定”だけをリセット（記録は消えません）。</div>
-    </section>
-
-    <!-- 自動入力の支援項目 管理（管理者向け） -->
-    <section class="card admin-card admin-manage">
+    <!-- ★自動入力項目（支援項目）管理：サイト上で増やせる -->
+    <section class="card">
       <div class="card-title">
         <span>自動入力の支援項目 管理（サイト上で追加・編集・削除）</span>
-        <span class="admin-badge">🛠 管理者向け</span>
+        <span class="record-count" id="autoItemCount">0件</span>
       </div>
-      <div class="admin-note">※初心者は触らないでください（文章・項目が変わります）</div>
-      <div class="card-subtitle">ここで追加した項目は、上の「① 自動入力支援項目」に表示されます。</div>
+      <div class="card-subtitle">
+        ここで追加した項目は、上の「自動入力したい支援項目」に自動で表示されます。<br>
+        ※このPC（ブラウザ）内に保存されます。他PCとは共有されません。
+      </div>
 
       <div class="field-row">
         <div class="field">
           <label for="autoItemSelect">既存項目（編集したい場合に選択）</label>
-          <select id="autoItemSelect"><option value="">（新規追加）</option></select>
+          <select id="autoItemSelect">
+            <option value="">（新規追加）</option>
+          </select>
           <div class="small-text">選ぶと下の入力欄に内容が入ります。</div>
         </div>
         <div class="field">
           <label for="autoItemKey">内部キー（英数字・重複不可）</label>
           <input type="text" id="autoItemKey" placeholder="例：money_support" />
-          <div class="small-text">※最初に決めたら基本変更しないのが安全です。</div>
+          <div class="small-text">※最初に決めたら、基本変更しないのが安全です。</div>
         </div>
       </div>
 
@@ -690,7 +754,10 @@
         <div class="field">
           <label for="autoItemText">自動で追記する定型文</label>
           <textarea id="autoItemText" rows="3" placeholder="例：【金銭管理】金銭の確認と声かけを行い、必要に応じて支援した。"></textarea>
-          <div class="small-text">置換：<b>{{daySupportTypeLabel}}</b> → 日中支援加算Ⅰ/Ⅱ</div>
+          <div class="small-text">
+            日中支援加算の区分を入れたい場合：<br>
+            <b>{{daySupportTypeLabel}}</b> を文中に入れると「日中支援加算Ⅰ/Ⅱ」に置換されます。
+          </div>
         </div>
       </div>
 
@@ -698,54 +765,7 @@
         <button type="button" class="btn-primary" id="autoItemSaveBtn">💾 追加 / 更新</button>
         <button type="button" class="btn-danger" id="autoItemDeleteBtn">🗑️ 選択項目を削除</button>
         <button type="button" class="btn-secondary" id="autoItemClearBtn">🧹 入力クリア</button>
-        <button type="button" class="btn-secondary danger-hint" id="autoItemResetDefaultBtn">↩ 初期項目に戻す</button>
-      </div>
-    </section>
-
-    <!-- ★追加：日中支援チェック項目 管理（理由/主な支援） -->
-    <section class="card admin-card admin-manage">
-      <div class="card-title">
-        <span>日中支援チェック項目 管理（理由 / 主な支援）</span>
-        <span class="admin-badge">🛠 管理者向け</span>
-      </div>
-      <div class="admin-note">※初心者は触らないでください（チェック項目が変わります）</div>
-      <div class="card-subtitle">
-        ここで編集した内容は、上の「② 日中支援チェック（理由/主な支援）」と「よく使う項目 管理（利用者別）」に反映されます。
-      </div>
-
-      <div class="field-row">
-        <div class="field">
-          <label for="dayItemSelect">既存項目（編集したい場合に選択）</label>
-          <select id="dayItemSelect"><option value="">（新規追加）</option></select>
-          <div class="small-text">選ぶと下の入力欄に内容が入ります。</div>
-        </div>
-        <div class="field">
-          <label for="dayItemGroup">分類</label>
-          <select id="dayItemGroup">
-            <option value="reason">理由（行けなかった理由）</option>
-            <option value="support">主な支援（行った支援）</option>
-          </select>
-          <div class="small-text">どちらの枠に表示するかを選びます。</div>
-        </div>
-      </div>
-
-      <div class="field-row">
-        <div class="field">
-          <label for="dayItemKey">内部キー（英数字・重複不可）</label>
-          <input type="text" id="dayItemKey" placeholder="例：reason_health" />
-          <div class="small-text">※空でもOK（自動で作ります）</div>
-        </div>
-        <div class="field">
-          <label for="dayItemLabel">表示名（チェック項目の文言）</label>
-          <input type="text" id="dayItemLabel" placeholder="例：体調不良で日中活動を欠席" />
-        </div>
-      </div>
-
-      <div class="btn-row">
-        <button type="button" class="btn-primary" id="dayItemSaveBtn">💾 追加 / 更新</button>
-        <button type="button" class="btn-danger" id="dayItemDeleteBtn">🗑️ 選択項目を削除</button>
-        <button type="button" class="btn-secondary" id="dayItemClearBtn">🧹 入力クリア</button>
-        <button type="button" class="btn-secondary danger-hint" id="dayItemResetDefaultBtn">↩ 初期項目に戻す</button>
+        <button type="button" class="btn-secondary" id="autoItemResetDefaultBtn">↩ 初期項目に戻す</button>
       </div>
     </section>
   </main>
@@ -755,72 +775,166 @@
     <div class="detail-modal">
       <div class="detail-modal-header">
         <div class="detail-modal-title" id="detailModalTitle">記録の詳細</div>
-        <button type="button" class="detail-modal-close" id="detailModalClose">× 閉じる</button>
+        <button type="button" class="detail-modal-close" id="detailModalClose">×</button>
       </div>
       <div class="detail-modal-body" id="detailModalContent"></div>
     </div>
   </div>
 
-  <!-- 自動テンプレ編集（利用者別）モーダル -->
-  <div id="residentAutoTplModal" class="detail-modal-backdrop">
+  <!-- ★編集モーダル（小窓） -->
+  <div id="editModal" class="detail-modal-backdrop">
     <div class="detail-modal">
       <div class="detail-modal-header">
-        <div>
-          <div class="detail-modal-title">🛠 自動テンプレ編集（利用者別）</div>
-          <div class="small-text">この小窓で「自動ON」と「文章上書き」を編集できます。</div>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <button type="button" class="detail-modal-close" id="residentAutoTplCloseBtn">× 閉じる</button>
-        </div>
+        <div class="detail-modal-title" id="editModalTitle">記録を編集</div>
+        <button type="button" class="detail-modal-close" id="editModalClose">×</button>
       </div>
 
       <div class="detail-modal-body">
-        <div class="resident-select-row" style="margin-top:6px;">
-          <span>編集する利用者：</span>
-          <select id="residentAutoTplResident"></select>
-          <span class="small-text">（フォームの選択が自動で入ります）</span>
-        </div>
+        <form id="editForm">
+          <div class="field-row">
+            <div class="field">
+              <label for="edit_date">日付</label>
+              <input type="date" id="edit_date" required />
+            </div>
+            <div class="field">
+              <label for="edit_resident">利用者</label>
+              <select id="edit_resident" required></select>
+            </div>
+          </div>
 
-        <div class="card" style="box-shadow:none; margin:10px 0 0; padding:14px 14px; border:1px solid #e5e7eb;">
-          <div style="font-weight:900; margin-bottom:6px;">✅ 自動ON（① 自動入力：文章追記）</div>
-          <div class="checkbox-row" id="residentFavCheckboxes"></div>
-          <div class="small-text">※ここでチェックした項目が、利用者選択時に自動でONになります。</div>
-        </div>
+          <div class="field-row-3">
+            <div class="field">
+              <label for="edit_timeSlot">時間帯</label>
+              <select id="edit_timeSlot">
+                <option>日中</option>
+                <option>夕方</option>
+                <option>夜間</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="edit_condition">体調</label>
+              <select id="edit_condition">
+                <option>良好</option>
+                <option>普通</option>
+                <option>不良</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="edit_mental">心の状態</label>
+              <select id="edit_mental">
+                <option>安定</option>
+                <option>やや不安</option>
+                <option>不安定</option>
+              </select>
+            </div>
+          </div>
 
-        <!-- ★追加：日中支援チェックも自動ON対象に -->
-        <div class="card" style="box-shadow:none; margin:10px 0 0; padding:14px 14px; border:1px solid #e5e7eb;">
-          <div style="font-weight:900; margin-bottom:6px;">✅ 自動ON（② 日中支援チェック：理由）</div>
-          <div class="checkbox-row" id="residentDayReasonFav"></div>
-          <div style="font-weight:900; margin:12px 0 6px;">✅ 自動ON（② 日中支援チェック：主な支援）</div>
-          <div class="checkbox-row" id="residentDaySupportFav"></div>
-          <div class="small-text">※ここでチェックした項目が、利用者選択時に自動でONになります。</div>
-        </div>
+          <div class="field">
+            <label for="edit_meal">食事の様子</label>
+            <input type="text" id="edit_meal" placeholder="例）朝：完食 / 昼：7割 / 夕：少なめ" />
+          </div>
 
-        <div class="card" style="box-shadow:none; margin:10px 0 0; padding:14px 14px; border:1px solid #e5e7eb;">
-          <div style="font-weight:900; margin-bottom:6px;">📝 文章上書き（利用者別：任意）</div>
-          <div class="small-text">空欄のまま保存すると、その項目は「共通の定型文」が使われます。</div>
-          <div class="auto-tpl-grid" id="residentAutoTplTextGrid"></div>
-        </div>
+          <div class="field">
+            <div class="checkbox-row">
+              <label><input type="checkbox" id="edit_medTaken" /> 服薬済み</label>
+              <span class="small-text">（編集時に服薬チェックも変更できます）</span>
+            </div>
+          </div>
 
-        <div class="btn-row">
-          <button type="button" class="btn-primary" id="residentAutoTplSaveBtn">💾 この利用者の設定を保存</button>
-          <button type="button" class="btn-secondary danger-hint" id="residentAutoTplResetBtn">↩ この利用者を初期に戻す</button>
-        </div>
-        <div class="small-text">※「初期に戻す」は、この利用者の“自動ON”と“文章上書き”のみリセットします。</div>
+          <div class="field">
+            <div class="modal-section-title">キーワード（タグ）</div>
+            <div class="checkbox-row" id="edit_tagCheckboxes"></div>
+            <div class="small-text">※チェックで付け外しできます。</div>
+          </div>
+
+          <div class="field">
+            <div class="modal-section-title">自動入力したい支援項目（この記録で使用したチェック）</div>
+            <div class="checkbox-row" id="editAutoItemCheckboxes"></div>
+            <div class="small-text">※「編集でチェックが外れる」問題はこの小窓で確実に復元されます。</div>
+          </div>
+
+          <div class="field">
+            <div class="modal-section-title">日中支援加算</div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="edit_daySupportType">区分</label>
+                <select id="edit_daySupportType">
+                  <option value="">選択なし</option>
+                  <option value="Ⅰ">日中支援加算Ⅰ</option>
+                  <option value="Ⅱ">日中支援加算Ⅱ</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="edit_daySupportTime">主な時間帯</label>
+                <input type="text" id="edit_daySupportTime" placeholder="例）9:00〜15:00 の間…" />
+              </div>
+            </div>
+
+            <div class="small-text" style="margin-bottom:6px;">【日中支援の状況・支援内容（チェック）】</div>
+
+            <div class="checkbox-row">
+              <span class="small-text">【日中活動に行けなかった理由】</span>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="edit-day-support-item" value="体調不良で日中活動を欠席" />体調不良で日中活動（通所・就労）を欠席</label>
+              <label><input type="checkbox" class="edit-day-support-item" value="通所先・就労先が休みや臨時休業で在宅" />通所先・就労先が休み／臨時休業のため在宅</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="edit-day-support-item" value="障害特性や行動面の不安で日中活動利用が困難" />障害特性・行動面の不安で日中活動利用が困難</label>
+              <label><input type="checkbox" class="edit-day-support-item" value="医師の指示で外出や通所を控えている" />医師の指示で外出・通所を控えている</label>
+            </div>
+
+            <div class="checkbox-row" style="margin-top:8px;">
+              <span class="small-text">【日中に行った主な支援】</span>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="edit-day-support-item" value="体調管理（検温・症状確認・安静の見守りなど）" />体調管理（検温・症状確認・安静の見守りなど）</label>
+              <label><input type="checkbox" class="edit-day-support-item" value="食事の支援（準備・配膳・介助・摂取量の観察など）" />食事の支援（準備・配膳・介助）</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="edit-day-support-item" value="服薬管理・内服確認（日中の服薬声かけや残薬確認など）" />服薬管理・内服確認</label>
+              <label><input type="checkbox" class="edit-day-support-item" value="水分・トイレの声かけや誘導・介助" />水分・トイレの声かけ・介助</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="edit-day-support-item" value="入浴や清潔保持の支援（洗面・更衣・整容など）" />入浴・清潔保持の支援</label>
+              <label><input type="checkbox" class="edit-day-support-item" value="行動や安全面の見守り（転倒・徘徊などへの対応）" />行動や安全面の見守り</label>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" class="edit-day-support-item" value="心理面の支援や相談（不安時の傾聴や気分転換など）" />心理面の支援や相談</label>
+              <label><input type="checkbox" class="edit-day-support-item" value="日中の活動支援や生活リズムの調整" />日中の活動支援・生活リズムの調整</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="edit_support">本日の支援内容・様子</label>
+            <textarea id="edit_support" rows="8"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="edit_note">特記事項</label>
+            <textarea id="edit_note" rows="4"></textarea>
+          </div>
+
+          <div class="btn-row" style="margin-top: 14px;">
+            <button type="submit" class="btn-primary">💾 上書き保存</button>
+            <button type="button" class="btn-secondary" id="editCancelBtn">キャンセル</button>
+            <button type="button" class="btn-danger" id="editDeleteBtn">🗑️ 削除</button>
+          </div>
+          <div class="small-text">
+            ※「編集」ボタンはこの小窓が開きます（ページ移動なし）。保存すると一覧が更新されます。
+          </div>
+        </form>
       </div>
     </div>
   </div>
 
+  <!-- メインスクリプト -->
   <script>
     const STORAGE_KEY   = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
     const TEMPLATES_KEY = "group_home_support_templates_v1";
-
     const AUTO_ITEM_DEFS_KEY = "group_home_auto_item_defs_v1";
-    const RESIDENT_AUTO_TPL_KEY = "group_home_resident_auto_templates_v2";
-
-    // ★追加：日中支援チェック項目（理由/主な支援）を編集可能に
-    const DAY_SUPPORT_DEFS_KEY = "group_home_day_support_defs_v1";
 
     const DEFAULT_AUTO_ITEM_DEFS = [
       { key: "med_manage", label: "服薬管理", defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。" },
@@ -829,216 +943,165 @@
       { key: "day_support", label: "日中支援加算", defaultText: "【日中支援加算】{{daySupportTypeLabel}}の対象として、日中もグループホーム内で見守り・声かけ・誘導等の支援を継続して実施した。" }
     ];
 
-    // ★初期：日中支援チェック（理由/主な支援）
-    const DEFAULT_DAY_SUPPORT_DEFS = {
-      reasons: [
-        { key: "reason_health",   label: "体調不良で日中活動を欠席" },
-        { key: "reason_closed",   label: "通所先・就労先が休みや臨時休業で在宅" },
-        { key: "reason_behavior", label: "障害特性や行動面の不安で日中活動利用が困難" },
-        { key: "reason_doctor",   label: "医師の指示で外出や通所を控えている" }
-      ],
-      supports: [
-        { key: "support_health_manage",  label: "体調管理（検温・症状確認・安静の見守りなど）" },
-        { key: "support_meal",           label: "食事の支援（準備・配膳・介助）" },
-        { key: "support_med",            label: "服薬管理・内服確認" },
-        { key: "support_water_toilet",   label: "水分・トイレの声かけ・介助" },
-        { key: "support_hygiene",        label: "入浴・清潔保持の支援" },
-        { key: "support_safety",         label: "行動や安全面の見守り" },
-        { key: "support_mental",         label: "心理面の支援や相談" },
-        { key: "support_rhythm",         label: "日中の活動支援・生活リズムの調整" }
-      ]
-    };
-
     const TAG_LIST = ["服薬","通院","入浴","外出","体調不良","相談","仕事","掃除","金銭","夜間対応"];
 
     let records = [];
     let residents = [];
     let currentTags = [];
-    let editingIndex = null;
+    let editingIndex = null; // （現状は基本使いませんが互換のため残します）
     let templates = [];
-
     let AUTO_ITEM_DEFS = [];
-    let residentAutoTpl = {}; // { resident: { favorites:[], texts:{}, daySupportFavorites:[] } }
 
-    let daySupportDefs = { reasons: [], supports: [] };
-
-    function safeJSONParse(raw, fallback) {
-      try { if (!raw) return fallback; const parsed = JSON.parse(raw); return parsed ?? fallback; }
-      catch { return fallback; }
-    }
+    // ★編集モーダル用
+    let editModalRecordId = null;
 
     function loadAutoItemDefs() {
       const raw = localStorage.getItem(AUTO_ITEM_DEFS_KEY);
       if (raw) {
-        const parsed = safeJSONParse(raw, null);
-        if (Array.isArray(parsed)) return parsed;
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        } catch {}
       }
       localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(DEFAULT_AUTO_ITEM_DEFS));
       return DEFAULT_AUTO_ITEM_DEFS.slice();
     }
-    function saveAutoItemDefs() { localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(AUTO_ITEM_DEFS)); }
 
-    function loadDaySupportDefs() {
-      const raw = localStorage.getItem(DAY_SUPPORT_DEFS_KEY);
-      if (raw) {
-        const parsed = safeJSONParse(raw, null);
-        if (parsed && typeof parsed === "object") {
-          const reasons = Array.isArray(parsed.reasons) ? parsed.reasons : [];
-          const supports = Array.isArray(parsed.supports) ? parsed.supports : [];
-          return { reasons, supports };
-        }
-      }
-      localStorage.setItem(DAY_SUPPORT_DEFS_KEY, JSON.stringify(DEFAULT_DAY_SUPPORT_DEFS));
-      return { reasons: DEFAULT_DAY_SUPPORT_DEFS.reasons.slice(), supports: DEFAULT_DAY_SUPPORT_DEFS.supports.slice() };
-    }
-    function saveDaySupportDefs() { localStorage.setItem(DAY_SUPPORT_DEFS_KEY, JSON.stringify(daySupportDefs)); }
-
-    function loadResidentAutoTpl() {
-      const raw = localStorage.getItem(RESIDENT_AUTO_TPL_KEY);
-      const obj = safeJSONParse(raw, {});
-      return (obj && typeof obj === "object" && !Array.isArray(obj)) ? obj : {};
-    }
-    function saveResidentAutoTpl() { localStorage.setItem(RESIDENT_AUTO_TPL_KEY, JSON.stringify(residentAutoTpl)); }
-
-    function getResidentAutoData(name) {
-      if (!name) return { favorites: [], texts: {}, daySupportFavorites: [] };
-      const data = residentAutoTpl[name];
-      if (!data || typeof data !== "object") return { favorites: [], texts: {}, daySupportFavorites: [] };
-
-      const favorites = Array.isArray(data.favorites) ? data.favorites : [];
-      const texts = (data.texts && typeof data.texts === "object") ? data.texts : {};
-      const daySupportFavorites = Array.isArray(data.daySupportFavorites) ? data.daySupportFavorites : [];
-      return { favorites, texts, daySupportFavorites };
-    }
-
-    function setResidentAutoData(name, data) {
-      if (!name) return;
-      residentAutoTpl[name] = {
-        favorites: Array.isArray(data.favorites) ? data.favorites : [],
-        texts: (data.texts && typeof data.texts === "object") ? data.texts : {},
-        daySupportFavorites: Array.isArray(data.daySupportFavorites) ? data.daySupportFavorites : []
-      };
-      saveResidentAutoTpl();
-    }
-
-    function mergeResidentAutoData(a, b) {
-      const favA = Array.isArray(a?.favorites) ? a.favorites : [];
-      const favB = Array.isArray(b?.favorites) ? b.favorites : [];
-      const favorites = Array.from(new Set([...favA, ...favB]));
-
-      const textsA = (a?.texts && typeof a.texts === "object") ? a.texts : {};
-      const textsB = (b?.texts && typeof b.texts === "object") ? b.texts : {};
-      const texts = { ...textsB, ...textsA }; // a優先
-
-      const dsA = Array.isArray(a?.daySupportFavorites) ? a.daySupportFavorites : [];
-      const dsB = Array.isArray(b?.daySupportFavorites) ? b.daySupportFavorites : [];
-      const daySupportFavorites = Array.from(new Set([...dsA, ...dsB]));
-
-      return { favorites, texts, daySupportFavorites };
-    }
-
-    function deleteResidentAutoData(name) {
-      if (!name) return;
-      delete residentAutoTpl[name];
-      saveResidentAutoTpl();
+    function saveAutoItemDefs() {
+      localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(AUTO_ITEM_DEFS));
     }
 
     function loadRecords() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = safeJSONParse(raw, []);
-      return Array.isArray(parsed) ? parsed : [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch (e) {
+        console.error("load error", e);
+        return [];
+      }
     }
-    function saveRecords() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
 
     function loadResidents() {
-      const raw = localStorage.getItem(RESIDENTS_KEY);
-      const parsed = safeJSONParse(raw, null);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      try {
+        const raw = localStorage.getItem(RESIDENTS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        console.error("load residents error", e);
+      }
+
       const fromRecords = Array.from(new Set(records.map((r) => r.resident).filter(Boolean)));
       if (fromRecords.length > 0) return fromRecords;
+
       return ["利用者A","利用者B","利用者C","利用者D","利用者E","利用者F","利用者G"];
     }
-    function saveResidents() { localStorage.setItem(RESIDENTS_KEY, JSON.stringify(residents)); }
+
+    function saveResidents() {
+      localStorage.setItem(RESIDENTS_KEY, JSON.stringify(residents));
+    }
 
     function renderResidentSelects() {
       const residentSelect = document.getElementById("resident");
       const filterSelect = document.getElementById("filterResident");
       const manageSelect = document.getElementById("residentManageSelect");
-      const favManageSelect = document.getElementById("favManageResident");
-      const modalResidentSelect = document.getElementById("residentAutoTplResident");
+      const residentCountLabel = document.getElementById("residentCount");
 
-      const fill = (sel, list, withAll=false) => {
-        if (!sel) return;
-        const current = sel.value;
-        sel.innerHTML = "";
-        const first = document.createElement("option");
-        first.value = "";
-        first.textContent = withAll ? "全員" : "選択してください";
-        sel.appendChild(first);
-        list.forEach((name) => {
+      if (residentCountLabel) residentCountLabel.textContent = residents.length + "名";
+
+      if (residentSelect) {
+        const current = residentSelect.value;
+        residentSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "選択してください";
+        residentSelect.appendChild(placeholder);
+        residents.forEach((name) => {
           const opt = document.createElement("option");
           opt.value = name;
           opt.textContent = name;
-          sel.appendChild(opt);
+          residentSelect.appendChild(opt);
         });
-        sel.value = (current && list.includes(current)) ? current : "";
-      };
+        residentSelect.value = (current && residents.includes(current)) ? current : "";
+      }
 
-      fill(residentSelect, residents, false);
-      fill(filterSelect, residents, true);
-      fill(manageSelect, residents, false);
-      fill(favManageSelect, residents, false);
-      fill(modalResidentSelect, residents, false);
+      if (filterSelect) {
+        const current = filterSelect.value;
+        filterSelect.innerHTML = "";
+        const optAll = document.createElement("option");
+        optAll.value = "";
+        optAll.textContent = "全員";
+        filterSelect.appendChild(optAll);
+        residents.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          filterSelect.appendChild(opt);
+        });
+        filterSelect.value = (current && residents.includes(current)) ? current : "";
+      }
+
+      if (manageSelect) {
+        const current = manageSelect.value;
+        manageSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "選択してください";
+        manageSelect.appendChild(placeholder);
+        residents.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          manageSelect.appendChild(opt);
+        });
+        manageSelect.value = (current && residents.includes(current)) ? current : "";
+      }
     }
 
     function formatSupportSummary(text) {
       if (!text) return "";
       const trimmed = text.trim().replace(/\s+/g, " ");
-      return trimmed.length <= 40 ? trimmed : (trimmed.slice(0, 40) + "…");
+      if (trimmed.length <= 40) return trimmed;
+      return trimmed.slice(0, 40) + "…";
     }
+
     function getTimeBadgeClass(timeSlot) {
-      if (timeSlot === "夕方") return "badge-evening";
-      if (timeSlot === "夜間") return "badge-night";
-      return "badge-day";
-    }
-
-    function daySupportLabelByKey(keyOrLabel) {
-      const all = [...daySupportDefs.reasons, ...daySupportDefs.supports];
-      const byKey = all.find(x => x.key === keyOrLabel);
-      if (byKey) return byKey.label;
-      const byLabel = all.find(x => x.label === keyOrLabel);
-      if (byLabel) return byLabel.label;
-      return keyOrLabel || "";
-    }
-
-    function normalizeDaySupportSelections(arr) {
-      const input = Array.isArray(arr) ? arr : [];
-      const all = [...daySupportDefs.reasons, ...daySupportDefs.supports];
-      const out = [];
-      input.forEach(v => {
-        if (!v) return;
-        if (all.some(x => x.key === v)) out.push(v);
-        else {
-          const hit = all.find(x => x.label === v);
-          if (hit) out.push(hit.key);
-        }
-      });
-      return Array.from(new Set(out));
+      switch (timeSlot) {
+        case "日中": return "badge-day";
+        case "夕方": return "badge-evening";
+        case "夜間": return "badge-night";
+        default: return "badge-day";
+      }
     }
 
     function renderRecords() {
       const tbody = document.getElementById("recordTableBody");
       const filterResident = document.getElementById("filterResident").value;
       const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase();
-      const periodFilter = document.getElementById("periodFilter")?.value || "month";
-      const periodFrom = document.getElementById("periodFrom")?.value || "";
-      const periodTo = document.getElementById("periodTo")?.value || "";
+
+      const periodFilterElement = document.getElementById("periodFilter");
+      const periodFilter = periodFilterElement ? periodFilterElement.value : "month";
+
+      const periodFromInput = document.getElementById("periodFrom");
+      const periodToInput = document.getElementById("periodTo");
+      const periodFrom = periodFromInput ? periodFromInput.value : "";
+      const periodTo = periodToInput ? periodToInput.value : "";
 
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
       const monthPrefix = todayStr.slice(0, 7);
       const yearPrefix = todayStr.slice(0, 4);
-      const weekStart = new Date(today); weekStart.setDate(weekStart.getDate() - 6);
+
+      const weekStart = new Date(today);
+      weekStart.setDate(weekStart.getDate() - 6);
 
       tbody.innerHTML = "";
 
@@ -1047,15 +1110,17 @@
 
         const dateStr = r.date;
         if (dateStr) {
-          if (periodFilter === "today" && dateStr !== todayStr) return false;
-          if (periodFilter === "week") {
+          if (periodFilter === "today") {
+            if (dateStr !== todayStr) return false;
+          } else if (periodFilter === "week") {
             const d = new Date(dateStr);
             if (isNaN(d)) return false;
             if (d < weekStart || d > today) return false;
-          }
-          if (periodFilter === "month" && dateStr.slice(0, 7) !== monthPrefix) return false;
-          if (periodFilter === "year" && dateStr.slice(0, 4) !== yearPrefix) return false;
-          if (periodFilter === "custom") {
+          } else if (periodFilter === "month") {
+            if (dateStr.slice(0, 7) !== monthPrefix) return false;
+          } else if (periodFilter === "year") {
+            if (dateStr.slice(0, 4) !== yearPrefix) return false;
+          } else if (periodFilter === "custom") {
             if (periodFrom && dateStr < periodFrom) return false;
             if (periodTo && dateStr > periodTo) return false;
           }
@@ -1065,8 +1130,7 @@
 
         if (keyword) {
           const tagsText = (r.tags || []).join(" ");
-          const dsLabels = (r.daySupportItems || []).map(daySupportLabelByKey).join(" ");
-          const target = (((r.support || "") + " " + (r.note || "") + " " + (r.meal || "") + " " + tagsText + " " + dsLabels)).toLowerCase();
+          const target = (((r.support || "") + " " + (r.note || "") + " " + (r.meal || "") + " " + tagsText)).toLowerCase();
           if (!target.includes(keyword)) return false;
         }
 
@@ -1080,7 +1144,7 @@
         const td = document.createElement("td");
         td.colSpan = 7;
         td.className = "no-records";
-        td.textContent = "まだ記録がありません。左のフォームから登録するか、条件を変えてみてください。";
+        td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
         tbody.appendChild(tr);
         return;
@@ -1132,18 +1196,22 @@
         const tdActions = document.createElement("td");
 
         const viewBtn = document.createElement("button");
+        viewBtn.type = "button";
         viewBtn.textContent = "詳細";
         viewBtn.className = "btn-secondary";
         viewBtn.style.fontSize = "12px";
         viewBtn.onclick = () => showRecordDetail(record.id);
 
         const editBtn = document.createElement("button");
+        editBtn.type = "button";
         editBtn.textContent = "編集";
         editBtn.className = "btn-secondary";
         editBtn.style.fontSize = "12px";
-        editBtn.onclick = () => startEdit(record.id);
+        // ★編集は小窓（モーダル）で開く
+        editBtn.onclick = () => openEditModal(record.id);
 
         const delBtn = document.createElement("button");
+        delBtn.type = "button";
         delBtn.textContent = "削除";
         delBtn.className = "btn-danger";
         delBtn.style.fontSize = "12px";
@@ -1166,8 +1234,10 @@
       document.getElementById("mental").value = "安定";
       document.getElementById("medTaken").checked = false;
 
-      document.getElementById("daySupportType").value = "";
-      document.getElementById("daySupportTime").value = "";
+      const daySupportType = document.getElementById("daySupportType");
+      if (daySupportType) daySupportType.value = "";
+      const daySupportTime = document.getElementById("daySupportTime");
+      if (daySupportTime) daySupportTime.value = "";
 
       editingIndex = null;
       currentTags = [];
@@ -1179,58 +1249,12 @@
       document.getElementById("modeLabel").style.color = "#1d4ed8";
       document.getElementById("saveButton").textContent = "💾 記録を保存";
 
-      clearAutoItemChecks();
-      clearDaySupportChecks();
+      document.querySelectorAll(".auto-item").forEach((el) => { el.checked = false; });
+      document.querySelectorAll(".day-support-item").forEach((el) => { el.checked = false; });
 
-      document.getElementById("templateScope").value = "common";
+      const templateScope = document.getElementById("templateScope");
+      if (templateScope) templateScope.value = "common";
       renderTemplateSelect();
-    }
-
-    function startEdit(id) {
-      const index = records.findIndex((r) => r.id === id);
-      if (index === -1) return;
-      const r = records[index];
-
-      if (r.resident && !residents.includes(r.resident)) {
-        residents.push(r.resident);
-        saveResidents();
-        renderResidentSelects();
-      }
-
-      editingIndex = index;
-
-      document.getElementById("date").value = r.date || "";
-      document.getElementById("resident").value = r.resident || "";
-      document.getElementById("timeSlot").value = r.timeSlot || "日中";
-      document.getElementById("condition").value = r.condition || "良好";
-      document.getElementById("mental").value = r.mental || "安定";
-      document.getElementById("meal").value = r.meal || "";
-      document.getElementById("medTaken").checked = !!r.medTaken;
-      document.getElementById("support").value = r.support || "";
-      document.getElementById("note").value = r.note || "";
-      document.getElementById("daySupportType").value = r.daySupportType || "";
-      document.getElementById("daySupportTime").value = r.daySupportTime || "";
-
-      // ★日中支援チェック：旧データ（ラベル保存）も吸収
-      clearDaySupportChecks();
-      const keys = normalizeDaySupportSelections(r.daySupportItems || []);
-      keys.forEach((k) => {
-        const el = document.querySelector(`.day-support-item[value="${CSS.escape(k)}"]`);
-        if (el) el.checked = true;
-      });
-
-      currentTags = Array.isArray(r.tags) ? [...r.tags] : [];
-      updateTagUI();
-      syncQuickButtonsAll();
-
-      document.getElementById("modeLabel").textContent = "編集モード（上書き保存）";
-      document.getElementById("modeLabel").style.background = "#fee2e2";
-      document.getElementById("modeLabel").style.color = "#b91c1c";
-      document.getElementById("saveButton").textContent = "✏️ この内容で上書き";
-
-      // ★利用者選択の自動ON
-      applyResidentFavorites(r.resident || "");
-      applyResidentDaySupportFavorites(r.resident || "");
     }
 
     function deleteRecord(id) {
@@ -1246,13 +1270,19 @@
 
       const date = document.getElementById("date").value;
       const resident = document.getElementById("resident").value;
-      if (!date || !resident) { alert("日付と利用者は必須です。"); return; }
+      if (!date || !resident) {
+        alert("日付と利用者は必須です。");
+        return;
+      }
 
-      const daySupportType = document.getElementById("daySupportType")?.value || "";
-      const daySupportTime = document.getElementById("daySupportTime")?.value || "";
-
-      // ★日中支援チェック：キーで保存
+      const daySupportTypeEl = document.getElementById("daySupportType");
+      const daySupportType = daySupportTypeEl ? daySupportTypeEl.value : "";
+      const daySupportTimeEl = document.getElementById("daySupportTime");
+      const daySupportTime = daySupportTimeEl ? daySupportTimeEl.value : "";
       const daySupportItems = Array.from(document.querySelectorAll(".day-support-item:checked")).map((el) => el.value);
+
+      // ★重要：自動入力（よく使う項目チェック）の状態も保存する
+      const autoItems = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
 
       const recordData = {
         id: (editingIndex !== null) ? records[editingIndex].id : Date.now().toString(),
@@ -1269,16 +1299,73 @@
         daySupportType,
         daySupportItems,
         daySupportTime,
+        autoItems, // ★追加
       };
 
+      // ※今の運用は基本「新規入力」想定（編集は小窓で行う）
       if (editingIndex !== null) records[editingIndex] = recordData;
       else records.push(recordData);
+
+      // もし新しい名前なら住民リストに追加
+      if (resident && !residents.includes(resident)) {
+        residents.push(resident);
+        saveResidents();
+        renderResidentSelects();
+      }
 
       saveRecords();
       renderRecords();
       resetForm();
     }
 
+    // ★自動：テンプレ選択があればテンプレだけ。なければチェックした項目の定型文だけを追記。
+    function generateSupportText() {
+      const textArea = document.getElementById("support");
+
+      const templateSelectEl = document.getElementById("templateSelect");
+      const idxStr = templateSelectEl ? templateSelectEl.value : "";
+      if (idxStr) {
+        const idx = parseInt(idxStr, 10);
+        if (!Number.isNaN(idx) && templates[idx]) {
+          const newText = templates[idx].text || "";
+          if (textArea.value.trim()) textArea.value = textArea.value.replace(/\s*$/, "") + "\n" + newText;
+          else textArea.value = newText;
+          return;
+        }
+      }
+
+      const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
+      if (checkedKeys.length === 0) {
+        alert("自動で追記する項目にチェックが入っていません。");
+        return;
+      }
+
+      const daySupportType = document.getElementById("daySupportType")?.value || "";
+      const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
+
+      const parts = [];
+      checkedKeys.forEach((key) => {
+        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
+        if (!def) return;
+
+        let text = (def.defaultText || "").trim();
+        if (!text) return;
+
+        text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
+        parts.push(text);
+      });
+
+      if (parts.length === 0) {
+        alert("定型文が空の項目がありました。項目管理で文章を入れてください。");
+        return;
+      }
+
+      const newText = parts.join("\n");
+      if (textArea.value.trim()) textArea.value = textArea.value.replace(/\s*$/, "") + "\n" + newText;
+      else textArea.value = newText;
+    }
+
+    // 記録詳細モーダル表示
     function showRecordDetail(id) {
       const record = records.find((r) => r.id === id);
       if (!record) return;
@@ -1287,6 +1374,7 @@
       const content = document.getElementById("detailModalContent");
       const titleEl = document.getElementById("detailModalTitle");
       if (!modal || !content) return;
+
       content.innerHTML = "";
 
       const addRow = (label, value) => {
@@ -1300,6 +1388,7 @@
         div.appendChild(span);
         content.appendChild(div);
       };
+
       const addMultiline = (label, value) => {
         const wrap = document.createElement("div");
         wrap.className = "detail-multiline";
@@ -1316,8 +1405,14 @@
       const medText = record.medTaken ? "服薬済み" : "未確認／未内服の可能性あり";
 
       const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + record.daySupportType : "なし";
-      const dsLabels = (record.daySupportItems || []).map(daySupportLabelByKey).filter(Boolean);
-      const daySupportItemsText = dsLabels.length ? dsLabels.join("、") : "なし";
+      const daySupportItemsText = record.daySupportItems && record.daySupportItems.length ? record.daySupportItems.join("、") : "なし";
+
+      const autoItemsText = record.autoItems && record.autoItems.length
+        ? record.autoItems.map(k => {
+            const def = AUTO_ITEM_DEFS.find(d => d.key === k);
+            return def ? def.label : k;
+          }).join("、")
+        : "なし";
 
       if (titleEl) titleEl.textContent = `${record.date || ""} ${record.resident || ""} さんの記録`;
 
@@ -1329,9 +1424,10 @@
       addRow("食事の様子：", record.meal || "");
       addRow("服薬：", medText);
       addRow("タグ：", tagsText);
+      addRow("自動入力項目：", autoItemsText);
       addRow("日中支援加算区分：", daySupportTypeLabel);
       addRow("日中支援の時間帯：", record.daySupportTime || "");
-      addRow("日中支援チェック：", daySupportItemsText);
+      addRow("日中支援の状況・支援内容：", daySupportItemsText);
 
       addMultiline("本日の支援内容・様子：", record.support || "");
       addMultiline("特記事項：", record.note || "");
@@ -1344,7 +1440,173 @@
       if (modal) modal.classList.remove("show");
     }
 
-    // タグ
+    // ★編集モーダル（小窓） -----
+    function renderEditResidentSelect(selected) {
+      const sel = document.getElementById("edit_resident");
+      if (!sel) return;
+      sel.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "選択してください";
+      sel.appendChild(placeholder);
+      residents.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+      sel.value = selected && residents.includes(selected) ? selected : "";
+    }
+
+    function renderEditTagCheckboxes(selectedTags) {
+      const wrap = document.getElementById("edit_tagCheckboxes");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      const set = new Set(Array.isArray(selectedTags) ? selectedTags : []);
+      TAG_LIST.forEach(tag => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="edit-tag" value="${tag}"> #${tag}`;
+        wrap.appendChild(label);
+      });
+      wrap.querySelectorAll(".edit-tag").forEach(el => {
+        el.checked = set.has(el.value);
+      });
+    }
+
+    function renderEditAutoItemCheckboxes(selectedKeys) {
+      const wrap = document.getElementById("editAutoItemCheckboxes");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      const set = new Set(Array.isArray(selectedKeys) ? selectedKeys : []);
+      AUTO_ITEM_DEFS.forEach(def => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="edit-auto-item" value="${def.key}"> ${def.label}`;
+        wrap.appendChild(label);
+      });
+      wrap.querySelectorAll(".edit-auto-item").forEach(el => {
+        el.checked = set.has(el.value);
+      });
+    }
+
+    function openEditModal(id) {
+      const record = records.find(r => r.id === id);
+      if (!record) return;
+
+      editModalRecordId = id;
+
+      // 住民一覧に存在しない名前があれば追加（事故防止）
+      if (record.resident && !residents.includes(record.resident)) {
+        residents.push(record.resident);
+        saveResidents();
+        renderResidentSelects();
+      }
+
+      document.getElementById("editModalTitle").textContent =
+        `${record.date || ""} ${record.resident || ""} さんの編集`;
+
+      document.getElementById("edit_date").value = record.date || "";
+      renderEditResidentSelect(record.resident || "");
+
+      document.getElementById("edit_timeSlot").value = record.timeSlot || "日中";
+      document.getElementById("edit_condition").value = record.condition || "良好";
+      document.getElementById("edit_mental").value = record.mental || "安定";
+      document.getElementById("edit_meal").value = record.meal || "";
+      document.getElementById("edit_medTaken").checked = !!record.medTaken;
+
+      document.getElementById("edit_daySupportType").value = record.daySupportType || "";
+      document.getElementById("edit_daySupportTime").value = record.daySupportTime || "";
+
+      // タグ
+      renderEditTagCheckboxes(record.tags || []);
+
+      // ★自動入力チェック（これが編集で外れないように復元）
+      renderEditAutoItemCheckboxes(record.autoItems || []);
+
+      // 日中支援チェック復元
+      const items = Array.isArray(record.daySupportItems) ? record.daySupportItems : [];
+      document.querySelectorAll(".edit-day-support-item").forEach((el) => {
+        el.checked = items.includes(el.value);
+      });
+
+      document.getElementById("edit_support").value = record.support || "";
+      document.getElementById("edit_note").value = record.note || "";
+
+      const modal = document.getElementById("editModal");
+      if (modal) modal.classList.add("show");
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById("editModal");
+      if (modal) modal.classList.remove("show");
+      editModalRecordId = null;
+    }
+
+    function handleEditSubmit(e) {
+      e.preventDefault();
+      if (!editModalRecordId) return;
+
+      const date = document.getElementById("edit_date").value;
+      const resident = document.getElementById("edit_resident").value;
+      if (!date || !resident) {
+        alert("日付と利用者は必須です。");
+        return;
+      }
+
+      const idx = records.findIndex(r => r.id === editModalRecordId);
+      if (idx === -1) return;
+
+      const tags = Array.from(document.querySelectorAll(".edit-tag:checked")).map(el => el.value);
+      const autoItems = Array.from(document.querySelectorAll(".edit-auto-item:checked")).map(el => el.value);
+      const daySupportItems = Array.from(document.querySelectorAll(".edit-day-support-item:checked")).map(el => el.value);
+
+      const updated = {
+        ...records[idx],
+        date,
+        resident,
+        timeSlot: document.getElementById("edit_timeSlot").value,
+        condition: document.getElementById("edit_condition").value,
+        mental: document.getElementById("edit_mental").value,
+        meal: document.getElementById("edit_meal").value,
+        medTaken: document.getElementById("edit_medTaken").checked,
+        support: document.getElementById("edit_support").value,
+        note: document.getElementById("edit_note").value,
+        tags,
+        autoItems,            // ★保存
+        daySupportType: document.getElementById("edit_daySupportType").value,
+        daySupportTime: document.getElementById("edit_daySupportTime").value,
+        daySupportItems,
+      };
+
+      records[idx] = updated;
+
+      // もし新しい名前なら住民リストに追加
+      if (resident && !residents.includes(resident)) {
+        residents.push(resident);
+        saveResidents();
+        renderResidentSelects();
+      }
+
+      saveRecords();
+      renderRecords();
+      closeEditModal();
+      alert("編集内容を保存しました。");
+    }
+
+    function handleEditDelete() {
+      if (!editModalRecordId) return;
+      const r = records.find(x => x.id === editModalRecordId);
+      const name = r ? `${r.date || ""} ${r.resident || ""}` : "この記録";
+      const ok = confirm(`${name} を削除しますか？`);
+      if (!ok) return;
+
+      records = records.filter(x => x.id !== editModalRecordId);
+      saveRecords();
+      renderRecords();
+      closeEditModal();
+      alert("削除しました。");
+    }
+
+    // タグボタン（メインフォーム）
     function setupTagButtons() {
       const container = document.getElementById("tagButtons");
       container.innerHTML = "";
@@ -1359,63 +1621,151 @@
       });
       updateTagUI();
     }
+
     function toggleTag(tag) {
       const idx = currentTags.indexOf(tag);
       if (idx >= 0) currentTags.splice(idx, 1);
       else currentTags.push(tag);
       updateTagUI();
     }
+
     function updateTagUI() {
       const info = document.getElementById("selectedTagsInfo");
       if (!info) return;
-      info.textContent = (currentTags.length === 0) ? "選択中：なし" : ("選択中： " + currentTags.map((t) => "#" + t).join(" "));
-      document.querySelectorAll(".tag-button").forEach((btn) => {
+
+      if (currentTags.length === 0) info.textContent = "選択中：なし";
+      else info.textContent = "選択中： " + currentTags.map((t) => "#" + t).join(" ");
+
+      const buttons = document.querySelectorAll(".tag-button");
+      buttons.forEach((btn) => {
         const t = btn.dataset.tag;
-        btn.classList.toggle("tag-button-active", currentTags.includes(t));
+        if (currentTags.includes(t)) btn.classList.add("tag-button-active");
+        else btn.classList.remove("tag-button-active");
       });
     }
 
     // クイックボタン
     function setupQuickButtons() {
-      document.querySelectorAll(".quick-row").forEach((row) => {
+      const groups = document.querySelectorAll(".quick-row");
+      groups.forEach((row) => {
+        const targetId = row.dataset.target;
+        const select = document.getElementById(targetId);
+        if (!select) return;
+
+        const buttons = row.querySelectorAll(".quick-btn");
+
+        function syncFromSelect() {
+          const val = select.value;
+          buttons.forEach((btn) => {
+            if (btn.dataset.value === val) btn.classList.add("quick-btn-active");
+            else btn.classList.remove("quick-btn-active");
+          });
+        }
+
+        buttons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            select.value = btn.dataset.value;
+            syncFromSelect();
+          });
+        });
+
+        select.addEventListener("change", syncFromSelect);
+        syncFromSelect();
+      });
+    }
+
+    function syncQuickButtonsAll() {
+      const groups = document.querySelectorAll(".quick-row");
+      groups.forEach((row) => {
         const targetId = row.dataset.target;
         const select = document.getElementById(targetId);
         if (!select) return;
         const buttons = row.querySelectorAll(".quick-btn");
-
-        const sync = () => {
-          const val = select.value;
-          buttons.forEach((btn) => btn.classList.toggle("quick-btn-active", btn.dataset.value === val));
-        };
-
-        buttons.forEach((btn) => {
-          btn.addEventListener("click", () => { select.value = btn.dataset.value; sync(); });
-        });
-
-        select.addEventListener("change", sync);
-        sync();
-      });
-    }
-    function syncQuickButtonsAll() {
-      document.querySelectorAll(".quick-row").forEach((row) => {
-        const targetId = row.dataset.target;
-        const select = document.getElementById(targetId);
-        if (!select) return;
         const val = select.value;
-        row.querySelectorAll(".quick-btn").forEach((btn) => btn.classList.toggle("quick-btn-active", btn.dataset.value === val));
+        buttons.forEach((btn) => {
+          if (btn.dataset.value === val) btn.classList.add("quick-btn-active");
+          else btn.classList.remove("quick-btn-active");
+        });
       });
     }
 
-    // ===== テンプレート（文章） =====
-    function loadTemplates() {
-      const raw = localStorage.getItem(TEMPLATES_KEY);
-      const parsed = safeJSONParse(raw, []);
-      return Array.isArray(parsed)
-        ? parsed.filter(t => t && typeof t.name === "string" && typeof t.text === "string")
-          .map(t => (!t.scope ? { ...t, scope: "common" } : t))
-        : [];
+    // 利用者管理
+    function handleResidentAdd() {
+      const nameInput = document.getElementById("residentNameInput");
+      const name = nameInput.value.trim();
+      if (!name) { alert("追加する名前を入力してください。"); return; }
+      if (residents.includes(name)) { alert("同じ名前の利用者がすでに存在します。"); return; }
+      residents.push(name);
+      saveResidents();
+      renderResidentSelects();
+      nameInput.value = "";
+      alert("利用者を追加しました。");
     }
-    function saveTemplates() { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates)); }
+
+    function handleResidentRename() {
+      const manageSelect = document.getElementById("residentManageSelect");
+      const oldName = manageSelect.value;
+      const nameInput = document.getElementById("residentNameInput");
+      const newName = nameInput.value.trim();
+
+      if (!oldName) { alert("変更する利用者を選択してください。"); return; }
+      if (!newName) { alert("新しい名前を入力してください。"); return; }
+      if (oldName === newName) { alert("同じ名前です。"); return; }
+
+      if (residents.includes(newName)) {
+        const ok = confirm("同じ名前の利用者がすでに存在します。統合しますか？");
+        if (!ok) return;
+      }
+
+      residents = residents.map((n) => (n === oldName ? newName : n));
+      records = records.map((r) => (r.resident === oldName ? { ...r, resident: newName } : r));
+
+      saveResidents();
+      saveRecords();
+      renderResidentSelects();
+      renderRecords();
+      nameInput.value = "";
+      alert("利用者名を変更しました。");
+    }
+
+    function handleResidentDelete() {
+      const manageSelect = document.getElementById("residentManageSelect");
+      const target = manageSelect.value;
+      if (!target) { alert("削除する利用者を選択してください。"); return; }
+
+      const ok = confirm(target + " を削除しますか？\nこの利用者のすべての記録も削除されます。");
+      if (!ok) return;
+
+      residents = residents.filter((n) => n !== target);
+      records = records.filter((r) => r.resident !== target);
+
+      saveResidents();
+      saveRecords();
+      renderResidentSelects();
+      renderRecords();
+      document.getElementById("residentNameInput").value = "";
+      alert("削除しました。");
+    }
+
+    // テンプレート管理
+    function loadTemplates() {
+      try {
+        const raw = localStorage.getItem(TEMPLATES_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .filter((t) => t && typeof t.name === "string" && typeof t.text === "string")
+          .map((t) => (!t.scope ? { ...t, scope: "common" } : t));
+      } catch (e) {
+        console.error("load templates error", e);
+        return [];
+      }
+    }
+
+    function saveTemplates() {
+      localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+    }
 
     function renderTemplateSelect() {
       const select = document.getElementById("templateSelect");
@@ -1440,30 +1790,38 @@
     }
 
     function handleTemplateApply() {
-      const idxStr = document.getElementById("templateSelect").value;
+      const select = document.getElementById("templateSelect");
+      const idxStr = select.value;
       if (!idxStr) { alert("挿入するテンプレートを選択してください。"); return; }
       const idx = parseInt(idxStr, 10);
       const tpl = templates[idx];
-      if (!tpl) return;
+      if (!tpl) { alert("テンプレートが見つかりませんでした。"); return; }
       const support = document.getElementById("support");
-      support.value = support.value.trim() ? (support.value.replace(/\s*$/, "") + "\n" + tpl.text) : tpl.text;
+      if (support.value.trim()) support.value = support.value.replace(/\s*$/, "") + "\n" + tpl.text;
+      else support.value = tpl.text;
     }
 
     function handleTemplateSave() {
-      const name = document.getElementById("templateNameInput").value.trim();
+      const nameInput = document.getElementById("templateNameInput");
+      const name = nameInput.value.trim();
       if (!name) { alert("テンプレート名を入力してください。"); return; }
-      const scope = document.getElementById("templateScope")?.value || "common";
-      const text = document.getElementById("support").value;
+
+      const scopeSelect = document.getElementById("templateScope");
+      const scope = scopeSelect ? (scopeSelect.value || "common") : "common";
+
+      const support = document.getElementById("support");
+      const text = support.value;
 
       if (!text.trim()) {
-        const ok = confirm("支援内容が空ですが、このまま保存しますか？");
+        const ok = confirm("『本日の支援内容・様子』が空ですが、このままテンプレートとして保存しますか？");
         if (!ok) return;
       }
 
       const existingIndex = templates.findIndex((t) => t.name === name && (t.scope || "common") === scope);
+
       let targetIndex;
       if (existingIndex >= 0) {
-        const ok = confirm("同じ名前・対象項目のテンプレが存在します。上書きしますか？");
+        const ok = confirm("同じ名前・対象項目のテンプレートがあります。上書きしますか？");
         if (!ok) return;
         templates[existingIndex].text = text;
         targetIndex = existingIndex;
@@ -1474,134 +1832,47 @@
 
       saveTemplates();
       renderTemplateSelect();
-      document.getElementById("templateSelect").value = String(targetIndex);
-      alert("テンプレを保存しました。");
+
+      const select = document.getElementById("templateSelect");
+      if (select) select.value = String(targetIndex);
+
+      alert("テンプレートを保存しました。（プルダウンに選択されました）");
     }
 
     function handleTemplateDelete() {
-      const idxStr = document.getElementById("templateSelect").value;
-      if (!idxStr) { alert("削除するテンプレを選択してください。"); return; }
+      const select = document.getElementById("templateSelect");
+      const idxStr = select.value;
+      if (!idxStr) { alert("削除するテンプレートを選択してください。"); return; }
       const idx = parseInt(idxStr, 10);
       const tpl = templates[idx];
-      if (!tpl) return;
+      if (!tpl) { alert("テンプレートが見つかりませんでした。"); return; }
       const ok = confirm(`「${tpl.name}」を削除しますか？`);
       if (!ok) return;
+
       templates.splice(idx, 1);
       saveTemplates();
       renderTemplateSelect();
-      alert("削除しました。");
+      alert("テンプレートを削除しました。");
     }
 
-    // ===== ① 自動入力（文章追記） =====
+    // ★自動入力項目チェック欄（メイン）
     function renderAutoItemCheckboxes() {
       const wrap = document.getElementById("autoItemCheckboxes");
+      if (!wrap) return;
       wrap.innerHTML = "";
       AUTO_ITEM_DEFS.forEach((def) => {
         const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="auto-item" value="${def.key}"> ${escapeHTML(def.label)}`;
+        label.innerHTML = `<input type="checkbox" class="auto-item" value="${def.key}"> ${def.label}`;
         wrap.appendChild(label);
       });
     }
-    function clearAutoItemChecks() {
-      document.querySelectorAll(".auto-item").forEach((el) => { el.checked = false; });
-    }
 
-    function applyResidentFavorites(residentName) {
-      clearAutoItemChecks();
-      if (!residentName) return;
-      const data = getResidentAutoData(residentName);
-      const favorites = (data.favorites || []).filter((k) => AUTO_ITEM_DEFS.some((d) => d.key === k));
-      favorites.forEach((key) => {
-        const el = document.querySelector(`.auto-item[value="${CSS.escape(key)}"]`);
-        if (el) el.checked = true;
-      });
-    }
-
-    // ===== ② 日中支援チェック（理由/主な支援） =====
-    function renderDaySupportCheckboxes() {
-      const reasonWrap = document.getElementById("daySupportReasonCheckboxes");
-      const supportWrap = document.getElementById("daySupportSupportCheckboxes");
-      if (!reasonWrap || !supportWrap) return;
-
-      reasonWrap.innerHTML = "";
-      supportWrap.innerHTML = "";
-
-      daySupportDefs.reasons.forEach((it) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="day-support-item" data-group="reason" value="${escapeHTML(it.key)}"> ${escapeHTML(it.label)}`;
-        reasonWrap.appendChild(label);
-      });
-
-      daySupportDefs.supports.forEach((it) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="day-support-item" data-group="support" value="${escapeHTML(it.key)}"> ${escapeHTML(it.label)}`;
-        supportWrap.appendChild(label);
-      });
-    }
-
-    function clearDaySupportChecks() {
-      document.querySelectorAll(".day-support-item").forEach((el) => { el.checked = false; });
-    }
-
-    function applyResidentDaySupportFavorites(residentName) {
-      // ②も自動ON
-      if (!residentName) { clearDaySupportChecks(); return; }
-      clearDaySupportChecks();
-      const data = getResidentAutoData(residentName);
-      const favs = Array.isArray(data.daySupportFavorites) ? data.daySupportFavorites : [];
-
-      favs.forEach((key) => {
-        const el = document.querySelector(`.day-support-item[value="${CSS.escape(key)}"]`);
-        if (el) el.checked = true;
-      });
-    }
-
-    // 自動文章生成
-    function generateSupportText() {
-      const textArea = document.getElementById("support");
-
-      // テンプレ優先
-      const idxStr = document.getElementById("templateSelect")?.value || "";
-      if (idxStr) {
-        const idx = parseInt(idxStr, 10);
-        if (!Number.isNaN(idx) && templates[idx]) {
-          const newText = templates[idx].text || "";
-          textArea.value = textArea.value.trim() ? (textArea.value.replace(/\s*$/, "") + "\n" + newText) : newText;
-          return;
-        }
-      }
-
-      const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
-      if (checkedKeys.length === 0) { alert("①自動入力の項目にチェックがありません。"); return; }
-
-      const daySupportType = document.getElementById("daySupportType")?.value || "";
-      const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
-
-      const resident = document.getElementById("resident")?.value || "";
-      const rData = getResidentAutoData(resident);
-      const rTexts = (rData.texts && typeof rData.texts === "object") ? rData.texts : {};
-
-      const parts = [];
-      checkedKeys.forEach((key) => {
-        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
-        if (!def) return;
-
-        const override = (rTexts[key] || "").trim();
-        let text = override ? override : (def.defaultText || "").trim();
-        if (!text) return;
-
-        text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
-        parts.push(text);
-      });
-
-      if (parts.length === 0) { alert("定型文が空の項目があります。管理で文章を入れてください。"); return; }
-      const newText = parts.join("\n");
-      textArea.value = textArea.value.trim() ? (textArea.value.replace(/\s*$/, "") + "\n" + newText) : newText;
-    }
-
-    // ===== 管理：自動入力項目 =====
+    // ★支援項目管理UI
     function renderAutoItemManager() {
       const sel = document.getElementById("autoItemSelect");
+      const count = document.getElementById("autoItemCount");
+      if (!sel) return;
+
       sel.innerHTML = `<option value="">（新規追加）</option>`;
       AUTO_ITEM_DEFS.forEach((d, i) => {
         const opt = document.createElement("option");
@@ -1609,36 +1880,54 @@
         opt.textContent = `${d.label}（${d.key}）`;
         sel.appendChild(opt);
       });
+
+      if (count) count.textContent = AUTO_ITEM_DEFS.length + "件";
     }
+
     function clearAutoItemInputs() {
       document.getElementById("autoItemSelect").value = "";
       document.getElementById("autoItemKey").value = "";
       document.getElementById("autoItemLabel").value = "";
       document.getElementById("autoItemText").value = "";
     }
+
     function fillAutoItemInputsBySelect() {
-      const idxStr = document.getElementById("autoItemSelect").value;
-      if (!idxStr) { clearAutoItemInputs(); return; }
+      const sel = document.getElementById("autoItemSelect");
+      const idxStr = sel.value;
+      if (!idxStr) {
+        clearAutoItemInputs();
+        return;
+      }
       const idx = parseInt(idxStr, 10);
       const d = AUTO_ITEM_DEFS[idx];
       if (!d) return;
+
       document.getElementById("autoItemKey").value = d.key || "";
       document.getElementById("autoItemLabel").value = d.label || "";
       document.getElementById("autoItemText").value = d.defaultText || "";
     }
+
     function saveAutoItemFromInputs() {
-      const idxStr = document.getElementById("autoItemSelect").value;
+      const sel = document.getElementById("autoItemSelect");
+      const idxStr = sel.value;
+
       const key = document.getElementById("autoItemKey").value.trim();
       const label = document.getElementById("autoItemLabel").value.trim();
       const text = document.getElementById("autoItemText").value;
 
-      if (!key) { alert("内部キーを入力してください"); return; }
-      if (!/^[a-zA-Z0-9_]+$/.test(key)) { alert("内部キーは英数字と _ のみ"); return; }
+      if (!key) { alert("内部キーを入力してください（英数字・重複不可）"); return; }
+      if (!/^[a-zA-Z0-9_]+$/.test(key)) {
+        alert("内部キーは英数字と _ のみで入力してください。例：money_support");
+        return;
+      }
       if (!label) { alert("表示名を入力してください"); return; }
       if (!text.trim()) { alert("定型文を入力してください"); return; }
 
       const existsOther = AUTO_ITEM_DEFS.some((d, i) => d.key === key && String(i) !== idxStr);
-      if (existsOther) { alert("同じ内部キーが存在します"); return; }
+      if (existsOther) {
+        alert("同じ内部キーがすでに存在します。別のキーにしてください。");
+        return;
+      }
 
       if (idxStr) {
         const idx = parseInt(idxStr, 10);
@@ -1651,16 +1940,18 @@
       saveAutoItemDefs();
       renderAutoItemCheckboxes();
       renderAutoItemManager();
-      renderFavManageCheckboxes();
-      renderResidentAutoTplModalUI();
       alert("保存しました。");
     }
+
     function deleteSelectedAutoItem() {
-      const idxStr = document.getElementById("autoItemSelect").value;
-      if (!idxStr) { alert("削除する項目を選択してください"); return; }
+      const sel = document.getElementById("autoItemSelect");
+      const idxStr = sel.value;
+      if (!idxStr) { alert("削除する項目を選択してください。"); return; }
+
       const idx = parseInt(idxStr, 10);
       const d = AUTO_ITEM_DEFS[idx];
       if (!d) return;
+
       const ok = confirm(`「${d.label}（${d.key}）」を削除しますか？`);
       if (!ok) return;
 
@@ -1669,486 +1960,43 @@
       renderAutoItemCheckboxes();
       renderAutoItemManager();
       clearAutoItemInputs();
-      renderFavManageCheckboxes();
-      renderResidentAutoTplModalUI();
       alert("削除しました。");
     }
+
     function resetAutoItemsToDefault() {
-      const ok = confirm("自動入力の支援項目を初期状態に戻しますか？（追加分は消えます）");
+      const ok = confirm("自動入力の支援項目を初期状態に戻しますか？（今追加した項目は消えます）");
       if (!ok) return;
       AUTO_ITEM_DEFS = DEFAULT_AUTO_ITEM_DEFS.slice();
       saveAutoItemDefs();
       renderAutoItemCheckboxes();
       renderAutoItemManager();
       clearAutoItemInputs();
-      renderFavManageCheckboxes();
-      renderResidentAutoTplModalUI();
       alert("初期状態に戻しました。");
     }
 
-    // ===== 管理：日中支援チェック項目 =====
-    function renderDayItemManager() {
-      const sel = document.getElementById("dayItemSelect");
-      sel.innerHTML = `<option value="">（新規追加）</option>`;
-      daySupportDefs.reasons.forEach((d, i) => {
-        const opt = document.createElement("option");
-        opt.value = `reason:${i}`;
-        opt.textContent = `【理由】${d.label}（${d.key}）`;
-        sel.appendChild(opt);
-      });
-      daySupportDefs.supports.forEach((d, i) => {
-        const opt = document.createElement("option");
-        opt.value = `support:${i}`;
-        opt.textContent = `【主な支援】${d.label}（${d.key}）`;
-        sel.appendChild(opt);
-      });
-    }
-
-    function clearDayItemInputs() {
-      document.getElementById("dayItemSelect").value = "";
-      document.getElementById("dayItemGroup").value = "reason";
-      document.getElementById("dayItemKey").value = "";
-      document.getElementById("dayItemLabel").value = "";
-    }
-
-    function fillDayItemInputsBySelect() {
-      const val = document.getElementById("dayItemSelect").value;
-      if (!val) { clearDayItemInputs(); return; }
-      const [group, idxStr] = val.split(":");
-      const idx = parseInt(idxStr, 10);
-      const arr = (group === "support") ? daySupportDefs.supports : daySupportDefs.reasons;
-      const d = arr[idx];
-      if (!d) return;
-      document.getElementById("dayItemGroup").value = group;
-      document.getElementById("dayItemKey").value = d.key || "";
-      document.getElementById("dayItemLabel").value = d.label || "";
-    }
-
-    function saveDayItemFromInputs() {
-      const selected = document.getElementById("dayItemSelect").value;
-      const group = document.getElementById("dayItemGroup").value; // reason/support
-      let key = document.getElementById("dayItemKey").value.trim();
-      const label = document.getElementById("dayItemLabel").value.trim();
-
-      if (!label) { alert("表示名を入力してください"); return; }
-      if (!key) key = "ds_" + Date.now(); // 空なら自動キー
-
-      if (!/^[a-zA-Z0-9_]+$/.test(key)) { alert("内部キーは英数字と _ のみ"); return; }
-
-      const all = [...daySupportDefs.reasons, ...daySupportDefs.supports];
-      const existsOther = all.some((d) => d.key === key) &&
-        !(selected && (() => {
-          const [g, iStr] = selected.split(":");
-          const i = parseInt(iStr, 10);
-          const arr = (g === "support") ? daySupportDefs.supports : daySupportDefs.reasons;
-          return arr[i] && arr[i].key === key;
-        })());
-
-      if (existsOther) { alert("同じ内部キーがすでに存在します"); return; }
-
-      if (selected) {
-        const [g, iStr] = selected.split(":");
-        const i = parseInt(iStr, 10);
-        const arr = (g === "support") ? daySupportDefs.supports : daySupportDefs.reasons;
-        if (!arr[i]) return;
-
-        // 分類が変更された場合は移動
-        if (g !== group) {
-          const old = arr[i];
-          arr.splice(i, 1);
-          const targetArr = (group === "support") ? daySupportDefs.supports : daySupportDefs.reasons;
-          targetArr.push({ key, label });
-        } else {
-          arr[i] = { key, label };
-        }
-      } else {
-        const targetArr = (group === "support") ? daySupportDefs.supports : daySupportDefs.reasons;
-        targetArr.push({ key, label });
-      }
-
-      saveDaySupportDefs();
-      renderDaySupportCheckboxes();
-      renderDayItemManager();
-      renderFavManageDaySupportCheckboxes();
-      renderResidentAutoTplModalDaySupportFavUI();
-
-      alert("保存しました。");
-    }
-
-    function deleteSelectedDayItem() {
-      const selected = document.getElementById("dayItemSelect").value;
-      if (!selected) { alert("削除する項目を選択してください"); return; }
-      const [g, iStr] = selected.split(":");
-      const i = parseInt(iStr, 10);
-      const arr = (g === "support") ? daySupportDefs.supports : daySupportDefs.reasons;
-      const d = arr[i];
-      if (!d) return;
-
-      const ok = confirm(`「${d.label}（${d.key}）」を削除しますか？`);
-      if (!ok) return;
-
-      arr.splice(i, 1);
-      saveDaySupportDefs();
-      renderDaySupportCheckboxes();
-      renderDayItemManager();
-      clearDayItemInputs();
-      renderFavManageDaySupportCheckboxes();
-      renderResidentAutoTplModalDaySupportFavUI();
-      alert("削除しました。");
-    }
-
-    function resetDayItemsToDefault() {
-      const ok = confirm("日中支援チェック項目を初期状態に戻しますか？（追加分は消えます）");
-      if (!ok) return;
-      daySupportDefs = {
-        reasons: DEFAULT_DAY_SUPPORT_DEFS.reasons.slice(),
-        supports: DEFAULT_DAY_SUPPORT_DEFS.supports.slice()
-      };
-      saveDaySupportDefs();
-      renderDaySupportCheckboxes();
-      renderDayItemManager();
-      clearDayItemInputs();
-      renderFavManageDaySupportCheckboxes();
-      renderResidentAutoTplModalDaySupportFavUI();
-      alert("初期状態に戻しました。");
-    }
-
-    // ===== よく使う項目（利用者別） =====
-    function renderFavManageCheckboxes() {
-      const wrap = document.getElementById("favManageCheckboxes");
-      wrap.innerHTML = "";
-      AUTO_ITEM_DEFS.forEach((def) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="fav-manage-item" value="${escapeHTML(def.key)}"> ${escapeHTML(def.label)}`;
-        wrap.appendChild(label);
-      });
-    }
-
-    function renderFavManageDaySupportCheckboxes() {
-      const reasonWrap = document.getElementById("favManageDayReason");
-      const supportWrap = document.getElementById("favManageDaySupport");
-      if (!reasonWrap || !supportWrap) return;
-
-      reasonWrap.innerHTML = "";
-      supportWrap.innerHTML = "";
-
-      daySupportDefs.reasons.forEach((it) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="fav-manage-day" data-group="reason" value="${escapeHTML(it.key)}"> ${escapeHTML(it.label)}`;
-        reasonWrap.appendChild(label);
-      });
-
-      daySupportDefs.supports.forEach((it) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="fav-manage-day" data-group="support" value="${escapeHTML(it.key)}"> ${escapeHTML(it.label)}`;
-        supportWrap.appendChild(label);
-      });
-    }
-
-    function syncFavManageUIFromResident(residentName) {
-      document.querySelectorAll(".fav-manage-item").forEach((el) => { el.checked = false; });
-      document.querySelectorAll(".fav-manage-day").forEach((el) => { el.checked = false; });
-      if (!residentName) return;
-
-      const data = getResidentAutoData(residentName);
-      const favs = (data.favorites || []).filter((k) => AUTO_ITEM_DEFS.some((d) => d.key === k));
-      favs.forEach((key) => {
-        const el = document.querySelector(`.fav-manage-item[value="${CSS.escape(key)}"]`);
-        if (el) el.checked = true;
-      });
-
-      const dsFav = (data.daySupportFavorites || []).filter((k) => {
-        return [...daySupportDefs.reasons, ...daySupportDefs.supports].some(x => x.key === k);
-      });
-      dsFav.forEach((key) => {
-        const el = document.querySelector(`.fav-manage-day[value="${CSS.escape(key)}"]`);
-        if (el) el.checked = true;
-      });
-    }
-
-    function saveFavManageForResident() {
-      const residentName = document.getElementById("favManageResident")?.value || "";
-      if (!residentName) { alert("対象の利用者を選択してください。"); return; }
-
-      const favs = Array.from(document.querySelectorAll(".fav-manage-item:checked")).map((el) => el.value);
-      const dsFav = Array.from(document.querySelectorAll(".fav-manage-day:checked")).map((el) => el.value);
-
-      const old = getResidentAutoData(residentName);
-      setResidentAutoData(residentName, { favorites: favs, texts: old.texts || {}, daySupportFavorites: dsFav });
-
-      // フォームに即反映
-      const formResident = document.getElementById("resident")?.value || "";
-      if (formResident === residentName) {
-        applyResidentFavorites(residentName);
-        applyResidentDaySupportFavorites(residentName);
-      }
-
-      alert("保存しました。");
-    }
-
-    function resetFavManageForResident() {
-      const residentName = document.getElementById("favManageResident")?.value || "";
-      if (!residentName) { alert("対象の利用者を選択してください。"); return; }
-
-      const ok = confirm("この利用者の「よく使う項目（自動ON）」を初期に戻しますか？");
-      if (!ok) return;
-
-      const old = getResidentAutoData(residentName);
-      setResidentAutoData(residentName, { favorites: [], texts: old.texts || {}, daySupportFavorites: [] });
-      syncFavManageUIFromResident(residentName);
-
-      const formResident = document.getElementById("resident")?.value || "";
-      if (formResident === residentName) {
-        applyResidentFavorites(residentName);
-        applyResidentDaySupportFavorites(residentName);
-      }
-      alert("初期に戻しました。");
-    }
-
-    // ===== 利用者管理 =====
-    function handleResidentAdd() {
-      const name = document.getElementById("residentNameInput").value.trim();
-      if (!name) { alert("追加する名前を入力してください。"); return; }
-      if (residents.includes(name)) { alert("同じ名前が存在します。"); return; }
-      residents.push(name);
-      saveResidents();
-      renderResidentSelects();
-      document.getElementById("residentNameInput").value = "";
-      alert("追加しました。");
-    }
-
-    function handleResidentRename() {
-      const oldName = document.getElementById("residentManageSelect").value;
-      const newName = document.getElementById("residentNameInput").value.trim();
-      if (!oldName) { alert("変更する利用者を選択してください。"); return; }
-      if (!newName) { alert("新しい名前を入力してください。"); return; }
-      if (oldName === newName) { alert("同じ名前です。"); return; }
-
-      if (residents.includes(newName)) {
-        const ok = confirm("同じ名前が存在します。統合しますか？");
-        if (!ok) return;
-      }
-
-      residents = residents.map((n) => (n === oldName ? newName : n));
-      records = records.map((r) => (r.resident === oldName ? { ...r, resident: newName } : r));
-
-      // 利用者別設定も移行
-      const oldData = residentAutoTpl[oldName];
-      if (oldData) {
-        const newData = residentAutoTpl[newName];
-        residentAutoTpl[newName] = newData ? mergeResidentAutoData(newData, oldData) : oldData;
-        delete residentAutoTpl[oldName];
-        saveResidentAutoTpl();
-      }
-
-      saveResidents();
-      saveRecords();
-      renderResidentSelects();
-      renderRecords();
-      document.getElementById("residentNameInput").value = "";
-      alert("変更しました。");
-    }
-
-    function handleResidentDelete() {
-      const target = document.getElementById("residentManageSelect").value;
-      if (!target) { alert("削除する利用者を選択してください。"); return; }
-      const ok = confirm(target + " を削除しますか？\nこの利用者の記録も削除されます。");
-      if (!ok) return;
-
-      residents = residents.filter((n) => n !== target);
-      records = records.filter((r) => r.resident !== target);
-      deleteResidentAutoData(target);
-
-      saveResidents();
-      saveRecords();
-      renderResidentSelects();
-      renderRecords();
-      document.getElementById("residentNameInput").value = "";
-      alert("削除しました。");
-    }
-
-    // ===== 自動テンプレ編集（利用者別）モーダル =====
-    function openResidentAutoTplModal() {
-      const formResident = document.getElementById("resident")?.value || "";
-      if (!formResident) { alert("先にフォームで利用者を選択してください。"); return; }
-      document.getElementById("residentAutoTplResident").value = formResident;
-
-      renderResidentAutoTplModalUI();
-      renderResidentAutoTplModalDaySupportFavUI();
-      syncResidentAutoTplModalUIFromResident(formResident);
-
-      document.getElementById("residentAutoTplModal").classList.add("show");
-    }
-    function closeResidentAutoTplModal() {
-      document.getElementById("residentAutoTplModal").classList.remove("show");
-    }
-
-    function renderResidentAutoTplModalUI() {
-      const favWrap = document.getElementById("residentFavCheckboxes");
-      favWrap.innerHTML = "";
-      AUTO_ITEM_DEFS.forEach((def) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="resident-fav-item" value="${escapeHTML(def.key)}"> ${escapeHTML(def.label)}`;
-        favWrap.appendChild(label);
-      });
-
-      const grid = document.getElementById("residentAutoTplTextGrid");
-      grid.innerHTML = "";
-      AUTO_ITEM_DEFS.forEach((def) => {
-        const box = document.createElement("div");
-        box.className = "auto-tpl-item";
-        box.dataset.key = def.key;
-        box.innerHTML = `
-          <div class="auto-tpl-item-title">
-            <div class="name">${escapeHTML(def.label)}</div>
-            <div class="key">${escapeHTML(def.key)}</div>
-          </div>
-          <label class="small-text" style="margin-bottom:6px;">この利用者の文章（空なら共通の定型文）</label>
-          <textarea class="resident-tpl-text" rows="3" placeholder="（空なら共通が使われます）"></textarea>
-          <div class="small-text" style="margin-top:6px;">
-            共通の定型文：
-            <div style="background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:8px 10px; margin-top:4px; white-space:pre-wrap; font-size:12px; color:#374151;">${escapeHTML(def.defaultText || "")}</div>
-          </div>
-        `;
-        grid.appendChild(box);
-      });
-    }
-
-    function renderResidentAutoTplModalDaySupportFavUI() {
-      const reasonWrap = document.getElementById("residentDayReasonFav");
-      const supportWrap = document.getElementById("residentDaySupportFav");
-      reasonWrap.innerHTML = "";
-      supportWrap.innerHTML = "";
-
-      daySupportDefs.reasons.forEach((it) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="resident-day-fav" data-group="reason" value="${escapeHTML(it.key)}"> ${escapeHTML(it.label)}`;
-        reasonWrap.appendChild(label);
-      });
-      daySupportDefs.supports.forEach((it) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="resident-day-fav" data-group="support" value="${escapeHTML(it.key)}"> ${escapeHTML(it.label)}`;
-        supportWrap.appendChild(label);
-      });
-    }
-
-    function syncResidentAutoTplModalUIFromResident(residentName) {
-      document.querySelectorAll(".resident-fav-item").forEach((el) => { el.checked = false; });
-      document.querySelectorAll(".resident-day-fav").forEach((el) => { el.checked = false; });
-      document.querySelectorAll(".resident-tpl-text").forEach((el) => { el.value = ""; });
-
-      if (!residentName) return;
-
-      const data = getResidentAutoData(residentName);
-      (data.favorites || []).forEach((key) => {
-        const el = document.querySelector(`.resident-fav-item[value="${CSS.escape(key)}"]`);
-        if (el) el.checked = true;
-      });
-
-      (data.daySupportFavorites || []).forEach((key) => {
-        const el = document.querySelector(`.resident-day-fav[value="${CSS.escape(key)}"]`);
-        if (el) el.checked = true;
-      });
-
-      const texts = data.texts || {};
-      document.querySelectorAll(".auto-tpl-item").forEach((box) => {
-        const key = box.dataset.key;
-        const ta = box.querySelector(".resident-tpl-text");
-        if (!ta) return;
-        ta.value = texts[key] || "";
-      });
-    }
-
-    function saveResidentAutoTplFromModal() {
-      const residentName = document.getElementById("residentAutoTplResident")?.value || "";
-      if (!residentName) { alert("利用者を選択してください。"); return; }
-
-      const favs = Array.from(document.querySelectorAll(".resident-fav-item:checked")).map((el) => el.value);
-      const dsFav = Array.from(document.querySelectorAll(".resident-day-fav:checked")).map((el) => el.value);
-
-      const texts = {};
-      document.querySelectorAll(".auto-tpl-item").forEach((box) => {
-        const key = box.dataset.key;
-        const ta = box.querySelector(".resident-tpl-text");
-        const val = (ta ? ta.value : "").trim();
-        if (val) texts[key] = val;
-      });
-
-      setResidentAutoData(residentName, { favorites: favs, texts, daySupportFavorites: dsFav });
-
-      // 反映：管理欄
-      const favManageResident = document.getElementById("favManageResident")?.value || "";
-      if (favManageResident === residentName) syncFavManageUIFromResident(residentName);
-
-      // 反映：フォーム
-      const formResident = document.getElementById("resident")?.value || "";
-      if (formResident === residentName) {
-        applyResidentFavorites(residentName);
-        applyResidentDaySupportFavorites(residentName);
-      }
-
-      alert("保存しました。");
-    }
-
-    function resetResidentAutoTplFromModal() {
-      const residentName = document.getElementById("residentAutoTplResident")?.value || "";
-      if (!residentName) { alert("利用者を選択してください。"); return; }
-      const ok = confirm("この利用者の「自動ON」と「文章上書き」を初期に戻しますか？");
-      if (!ok) return;
-
-      setResidentAutoData(residentName, { favorites: [], texts: {}, daySupportFavorites: [] });
-      syncResidentAutoTplModalUIFromResident(residentName);
-
-      const favManageResident = document.getElementById("favManageResident")?.value || "";
-      if (favManageResident === residentName) syncFavManageUIFromResident(residentName);
-
-      const formResident = document.getElementById("resident")?.value || "";
-      if (formResident === residentName) {
-        applyResidentFavorites(residentName);
-        applyResidentDaySupportFavorites(residentName);
-      }
-
-      alert("初期に戻しました。");
-    }
-
-    function escapeHTML(str) {
-      return String(str ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    // ===== 起動 =====
+    // 起動
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("date").value = new Date().toISOString().slice(0, 10);
 
       records = loadRecords();
       residents = loadResidents();
       templates = loadTemplates();
-
       AUTO_ITEM_DEFS = loadAutoItemDefs();
-      residentAutoTpl = loadResidentAutoTpl();
-      daySupportDefs = loadDaySupportDefs();
 
       renderResidentSelects();
       renderRecords();
       setupTagButtons();
+      updateTagUI();
       setupQuickButtons();
       syncQuickButtonsAll();
 
       renderAutoItemCheckboxes();
-      renderDaySupportCheckboxes();
 
-      renderAutoItemManager();
-      renderFavManageCheckboxes();
-
-      renderDayItemManager();
-      renderFavManageDaySupportCheckboxes();
-
-      document.getElementById("templateScope").addEventListener("change", renderTemplateSelect);
-      document.getElementById("templateScope").value = "common";
+      const templateScopeEl = document.getElementById("templateScope");
+      if (templateScopeEl) {
+        templateScopeEl.addEventListener("change", renderTemplateSelect);
+        templateScopeEl.value = "common";
+      }
       renderTemplateSelect();
 
       document.getElementById("recordForm").addEventListener("submit", handleSubmit);
@@ -2161,83 +2009,68 @@
         renderRecords();
       });
 
-      document.getElementById("periodFilter").addEventListener("change", () => {
-        const val = document.getElementById("periodFilter").value;
-        document.getElementById("customPeriodRow").style.display = (val === "custom") ? "flex" : "none";
-        renderRecords();
-      });
-      document.getElementById("applyCustomPeriod").addEventListener("click", renderRecords);
-
-      document.getElementById("autoSupportBtn").addEventListener("click", generateSupportText);
-      document.getElementById("templateApplyButton").addEventListener("click", handleTemplateApply);
-      document.getElementById("templateSaveButton").addEventListener("click", handleTemplateSave);
-      document.getElementById("templateDeleteButton").addEventListener("click", handleTemplateDelete);
-
-      // 詳細モーダル
-      const detailModal = document.getElementById("detailModal");
-      document.getElementById("detailModalClose").addEventListener("click", closeRecordDetail);
-      detailModal.addEventListener("click", (e) => { if (e.target === detailModal) closeRecordDetail(); });
-
-      // 利用者管理
       document.getElementById("residentAddButton").addEventListener("click", handleResidentAdd);
       document.getElementById("residentRenameButton").addEventListener("click", handleResidentRename);
       document.getElementById("residentDeleteButton").addEventListener("click", handleResidentDelete);
 
-      // 自動入力項目 管理
+      const periodFilterElement = document.getElementById("periodFilter");
+      if (periodFilterElement) {
+        periodFilterElement.addEventListener("change", () => {
+          const val = periodFilterElement.value;
+          const row = document.getElementById("customPeriodRow");
+          if (row) row.style.display = (val === "custom") ? "flex" : "none";
+          renderRecords();
+        });
+      }
+      document.getElementById("applyCustomPeriod").addEventListener("click", renderRecords);
+
+      document.getElementById("autoSupportBtn").addEventListener("click", generateSupportText);
+
+      document.getElementById("templateApplyButton").addEventListener("click", handleTemplateApply);
+      document.getElementById("templateSaveButton").addEventListener("click", handleTemplateSave);
+      document.getElementById("templateDeleteButton").addEventListener("click", handleTemplateDelete);
+
+      // 詳細モーダル閉じる
+      const detailModal = document.getElementById("detailModal");
+      const detailModalClose = document.getElementById("detailModalClose");
+      if (detailModal && detailModalClose) {
+        detailModalClose.addEventListener("click", closeRecordDetail);
+        detailModal.addEventListener("click", (e) => { if (e.target === detailModal) closeRecordDetail(); });
+      }
+
+      // ★編集モーダル（小窓）
+      document.getElementById("editForm").addEventListener("submit", handleEditSubmit);
+      document.getElementById("editCancelBtn").addEventListener("click", closeEditModal);
+      document.getElementById("editDeleteBtn").addEventListener("click", handleEditDelete);
+
+      const editModal = document.getElementById("editModal");
+      const editModalClose = document.getElementById("editModalClose");
+      if (editModal && editModalClose) {
+        editModalClose.addEventListener("click", closeEditModal);
+        editModal.addEventListener("click", (e) => { if (e.target === editModal) closeEditModal(); });
+      }
+
+      // ★支援項目管理UIイベント
+      renderAutoItemManager();
       document.getElementById("autoItemSelect").addEventListener("change", fillAutoItemInputsBySelect);
       document.getElementById("autoItemSaveBtn").addEventListener("click", saveAutoItemFromInputs);
       document.getElementById("autoItemDeleteBtn").addEventListener("click", deleteSelectedAutoItem);
       document.getElementById("autoItemClearBtn").addEventListener("click", clearAutoItemInputs);
       document.getElementById("autoItemResetDefaultBtn").addEventListener("click", resetAutoItemsToDefault);
-
-      // 日中支援チェック項目 管理
-      document.getElementById("dayItemSelect").addEventListener("change", fillDayItemInputsBySelect);
-      document.getElementById("dayItemSaveBtn").addEventListener("click", saveDayItemFromInputs);
-      document.getElementById("dayItemDeleteBtn").addEventListener("click", deleteSelectedDayItem);
-      document.getElementById("dayItemClearBtn").addEventListener("click", clearDayItemInputs);
-      document.getElementById("dayItemResetDefaultBtn").addEventListener("click", resetDayItemsToDefault);
-
-      // よく使う項目（利用者別）
-      document.getElementById("favManageResident").addEventListener("change", (e) => {
-        syncFavManageUIFromResident(e.target.value);
-      });
-      document.getElementById("favManageSaveBtn").addEventListener("click", saveFavManageForResident);
-      document.getElementById("favManageResetBtn").addEventListener("click", resetFavManageForResident);
-
-      // フォーム：利用者選択 → 自動ON（①＋②）
-      document.getElementById("resident").addEventListener("change", (e) => {
-        applyResidentFavorites(e.target.value);
-        applyResidentDaySupportFavorites(e.target.value);
-      });
-
-      // 自動テンプレ編集モーダル
-      document.getElementById("openResidentAutoTplBtn").addEventListener("click", openResidentAutoTplModal);
-      const autoTplModal = document.getElementById("residentAutoTplModal");
-      document.getElementById("residentAutoTplCloseBtn").addEventListener("click", closeResidentAutoTplModal);
-      autoTplModal.addEventListener("click", (e) => { if (e.target === autoTplModal) closeResidentAutoTplModal(); });
-
-      document.getElementById("residentAutoTplResident").addEventListener("change", (e) => {
-        syncResidentAutoTplModalUIFromResident(e.target.value);
-      });
-
-      document.getElementById("residentAutoTplSaveBtn").addEventListener("click", saveResidentAutoTplFromModal);
-      document.getElementById("residentAutoTplResetBtn").addEventListener("click", resetResidentAutoTplFromModal);
-
-      // 初期同期
-      const initFavResident = document.getElementById("favManageResident").value;
-      if (initFavResident) syncFavManageUIFromResident(initFavResident);
     });
   </script>
 
-  <!-- 音声入力 -->
+  <!-- 音声入力スクリプト -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const voiceBtn = document.getElementById("voiceSupportBtn");
       const voiceStatus = document.getElementById("voiceStatus");
       const support = document.getElementById("support");
+
       if (!voiceBtn || !voiceStatus || !support) return;
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
       if (!SpeechRecognition) {
         voiceBtn.disabled = true;
         voiceStatus.textContent = "※ このブラウザでは音声入力が使えません（Chrome / Edge 推奨）";
@@ -2252,8 +2085,11 @@
       let recognizing = false;
 
       voiceBtn.addEventListener("click", () => {
-        if (!recognizing) { try { recognition.start(); } catch(e) {} }
-        else recognition.stop();
+        if (!recognizing) {
+          try { recognition.start(); } catch (e) {}
+        } else {
+          recognition.stop();
+        }
       });
 
       recognition.addEventListener("start", () => {
@@ -2275,7 +2111,9 @@
           if (res.isFinal) finalText += res[0].transcript;
         }
         if (!finalText) return;
-        support.value = support.value.trim() ? (support.value.replace(/\s*$/, "") + "\n" + finalText) : finalText;
+
+        if (support.value.trim()) support.value = support.value.replace(/\s*$/, "") + "\n" + finalText;
+        else support.value = finalText;
       });
 
       recognition.addEventListener("error", (e) => {
