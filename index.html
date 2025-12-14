@@ -312,7 +312,7 @@
       box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
     }
 
-    /* 詳細モーダル */
+    /* 詳細モーダル（詳細/編集 共通） */
     .detail-modal-backdrop {
       position: fixed;
       inset: 0;
@@ -903,6 +903,118 @@
     </div>
   </div>
 
+  <!-- ✅ 記録の編集モーダル（小窓） ※scriptの外に置くのが正解 -->
+  <div id="editModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="editModalTitle">記録の編集</div>
+        <button type="button" class="detail-modal-close" id="editModalClose">×</button>
+      </div>
+
+      <div class="detail-modal-body">
+        <div class="field-row">
+          <div class="field">
+            <label for="editDate">日付</label>
+            <input type="date" id="editDate" />
+          </div>
+          <div class="field">
+            <label for="editResident">利用者</label>
+            <select id="editResident"></select>
+          </div>
+        </div>
+
+        <div class="field-row-3">
+          <div class="field">
+            <label for="editTimeSlot">時間帯</label>
+            <select id="editTimeSlot">
+              <option>日中</option>
+              <option>夕方</option>
+              <option>夜間</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="editCondition">体調</label>
+            <select id="editCondition">
+              <option>良好</option>
+              <option>普通</option>
+              <option>不良</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="editMental">心の状態</label>
+            <select id="editMental">
+              <option>安定</option>
+              <option>やや不安</option>
+              <option>不安定</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="editMeal">食事の様子</label>
+          <input type="text" id="editMeal" placeholder="例）朝：完食 / 昼：7割 など" />
+        </div>
+
+        <div class="field">
+          <div class="checkbox-row">
+            <label><input type="checkbox" id="editMedTaken" /> 服薬済み</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>キーワード（タグ）</label>
+          <div class="tag-buttons" id="editTagButtons"></div>
+          <div class="small-text" id="editSelectedTagsInfo">選択中：なし</div>
+        </div>
+
+        <div class="field">
+          <label for="editDaySupportType">日中支援加算の区分</label>
+          <select id="editDaySupportType">
+            <option value="">選択なし</option>
+            <option value="Ⅰ">日中支援加算Ⅰ</option>
+            <option value="Ⅱ">日中支援加算Ⅱ</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="editDaySupportTime">日中支援の主な時間帯（任意）</label>
+          <input type="text" id="editDaySupportTime" placeholder="例）9:00〜15:00 の間、見守り支援" />
+        </div>
+
+        <div class="field">
+          <label>【日中に行った主な支援】</label>
+          <div class="checkbox-row" id="editDaySupportMainCheckboxes"></div>
+        </div>
+
+        <div class="field">
+          <label>【日中活動に行けなかった理由】（任意）</label>
+          <div class="checkbox-row" id="editDaySupportReasonCheckboxes"></div>
+        </div>
+
+        <div class="field">
+          <label for="editSupport">本日の支援内容・様子</label>
+          <textarea id="editSupport" rows="8"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="editNote">特記事項</label>
+          <textarea id="editNote" rows="4"></textarea>
+        </div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button type="button" class="btn-primary" id="editModalSaveBtn">💾 上書き保存</button>
+          <button type="button" class="btn-secondary" id="editModalCancelBtn">キャンセル</button>
+        </div>
+
+        <div class="small-text" style="margin-top:6px;">
+          ※ここで保存すると一覧が更新されます（左のフォームは触らなくてOK）
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- メインスクリプト -->
   <script>
     const STORAGE_KEY   = "group_home_records_v1";
@@ -977,6 +1089,10 @@
     // 日中支援チェック（表示用）
     let DAY_SUPPORT_MAIN_LIST = DEFAULT_DAY_SUPPORT_MAIN.slice();
     let DAY_SUPPORT_REASON_LIST = DEFAULT_DAY_SUPPORT_REASON.slice();
+
+    // ✅ 編集モーダル用
+    let editModalRecordId = null;
+    let editTags = [];
 
     function loadJSON(key, fallback) {
       const raw = localStorage.getItem(key);
@@ -1255,7 +1371,8 @@
         editBtn.textContent = "編集";
         editBtn.className = "btn-secondary";
         editBtn.style.fontSize = "12px";
-        editBtn.onclick = () => startEdit(record.id);
+        // ✅ ここが修正点：編集は小窓を開く
+        editBtn.onclick = () => openEditModal(record.id);
 
         const delBtn = document.createElement("button");
         delBtn.textContent = "削除";
@@ -1304,59 +1421,6 @@
       const templateScope = document.getElementById("templateScope");
       if (templateScope) templateScope.value = "common";
       renderTemplateSelect();
-    }
-
-    function startEdit(id) {
-      const index = records.findIndex((r) => r.id === id);
-      if (index === -1) return;
-
-      const r = records[index];
-
-      if (r.resident && !residents.includes(r.resident)) {
-        residents.push(r.resident);
-        saveResidents();
-        renderResidentSelects();
-      }
-
-      editingIndex = index;
-
-      document.getElementById("date").value = r.date || "";
-      document.getElementById("resident").value = r.resident || "";
-      document.getElementById("timeSlot").value = r.timeSlot || "日中";
-      document.getElementById("condition").value = r.condition || "良好";
-      document.getElementById("mental").value = r.mental || "安定";
-      document.getElementById("meal").value = r.meal || "";
-      document.getElementById("medTaken").checked = !!r.medTaken;
-      document.getElementById("support").value = r.support || "";
-      document.getElementById("note").value = r.note || "";
-
-      const daySupportType = document.getElementById("daySupportType");
-      if (daySupportType) daySupportType.value = r.daySupportType || "";
-
-      const daySupportTime = document.getElementById("daySupportTime");
-      if (daySupportTime) daySupportTime.value = r.daySupportTime || "";
-
-      // 日中支援：主な支援 / 理由
-      const mainItems = Array.isArray(r.daySupportMainItems) ? r.daySupportMainItems : [];
-      const reasonItems = Array.isArray(r.daySupportReasonItems) ? r.daySupportReasonItems : [];
-
-      document.querySelectorAll(".day-main-item").forEach((el) => {
-        el.checked = mainItems.includes(el.value);
-      });
-      document.querySelectorAll(".day-reason-item").forEach((el) => {
-        el.checked = reasonItems.includes(el.value);
-      });
-
-      currentTags = Array.isArray(r.tags) ? [...r.tags] : [];
-      updateTagUI();
-      syncQuickButtonsAll();
-
-      document.getElementById("modeLabel").textContent = "編集モード（上書き保存）";
-      document.getElementById("modeLabel").style.background = "#fee2e2";
-      document.getElementById("modeLabel").style.color = "#b91c1c";
-      document.getElementById("saveButton").textContent = "✏️ この内容で上書き";
-
-      document.querySelectorAll(".auto-item").forEach((el) => { el.checked = false; });
     }
 
     function deleteRecord(id) {
@@ -1530,7 +1594,173 @@
       if (modal) modal.classList.remove("show");
     }
 
-    // タグボタン
+    // =========================
+    // ✅ 編集モーダル（小窓）機能
+    // =========================
+    function renderEditResidentSelect() {
+      const sel = document.getElementById("editResident");
+      if (!sel) return;
+      sel.innerHTML = "";
+      residents.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    }
+
+    function setupEditTagButtons() {
+      const container = document.getElementById("editTagButtons");
+      if (!container) return;
+      container.innerHTML = "";
+      TAG_LIST.forEach((tag) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tag-button";
+        btn.textContent = "#" + tag;
+        btn.dataset.tag = tag;
+        btn.addEventListener("click", () => toggleEditTag(tag));
+        container.appendChild(btn);
+      });
+      updateEditTagUI();
+    }
+
+    function toggleEditTag(tag) {
+      const idx = editTags.indexOf(tag);
+      if (idx >= 0) editTags.splice(idx, 1);
+      else editTags.push(tag);
+      updateEditTagUI();
+    }
+
+    function updateEditTagUI() {
+      const info = document.getElementById("editSelectedTagsInfo");
+      if (info) {
+        info.textContent = (editTags.length === 0)
+          ? "選択中：なし"
+          : "選択中： " + editTags.map((t) => "#" + t).join(" ");
+      }
+      const buttons = document.querySelectorAll("#editTagButtons .tag-button");
+      buttons.forEach((btn) => {
+        const t = btn.dataset.tag;
+        if (editTags.includes(t)) btn.classList.add("tag-button-active");
+        else btn.classList.remove("tag-button-active");
+      });
+    }
+
+    function renderEditDaySupportMainCheckboxes() {
+      const wrap = document.getElementById("editDaySupportMainCheckboxes");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      DAY_SUPPORT_MAIN_LIST.forEach((text) => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="edit-day-main-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
+        wrap.appendChild(label);
+      });
+    }
+
+    function renderEditDaySupportReasonCheckboxes() {
+      const wrap = document.getElementById("editDaySupportReasonCheckboxes");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      DAY_SUPPORT_REASON_LIST.forEach((text) => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="edit-day-reason-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
+        wrap.appendChild(label);
+      });
+    }
+
+    function openEditModal(id) {
+      const record = records.find((r) => r.id === id);
+      if (!record) return;
+
+      editModalRecordId = id;
+
+      // 利用者select作り直し（最新の利用者名に追従）
+      renderEditResidentSelect();
+
+      document.getElementById("editDate").value = record.date || "";
+      document.getElementById("editResident").value = record.resident || (residents[0] || "");
+      document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
+      document.getElementById("editCondition").value = record.condition || "良好";
+      document.getElementById("editMental").value = record.mental || "安定";
+      document.getElementById("editMeal").value = record.meal || "";
+      document.getElementById("editMedTaken").checked = !!record.medTaken;
+
+      document.getElementById("editSupport").value = record.support || "";
+      document.getElementById("editNote").value = record.note || "";
+
+      document.getElementById("editDaySupportType").value = record.daySupportType || "";
+      document.getElementById("editDaySupportTime").value = record.daySupportTime || "";
+
+      // ✅ チェック保持（ここがポイント）
+      const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
+      const reasonItems = Array.isArray(record.daySupportReasonItems) ? record.daySupportReasonItems : [];
+
+      document.querySelectorAll(".edit-day-main-item").forEach((el) => {
+        el.checked = mainItems.includes(el.value);
+      });
+      document.querySelectorAll(".edit-day-reason-item").forEach((el) => {
+        el.checked = reasonItems.includes(el.value);
+      });
+
+      // タグ
+      editTags = Array.isArray(record.tags) ? [...record.tags] : [];
+      setupEditTagButtons();
+
+      const title = document.getElementById("editModalTitle");
+      if (title) title.textContent = `記録の編集（${record.date || ""} / ${record.resident || ""}）`;
+
+      const modal = document.getElementById("editModal");
+      if (modal) modal.classList.add("show");
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById("editModal");
+      if (modal) modal.classList.remove("show");
+      editModalRecordId = null;
+      editTags = [];
+    }
+
+    function saveEditModal() {
+      if (!editModalRecordId) return;
+
+      const idx = records.findIndex((r) => r.id === editModalRecordId);
+      if (idx === -1) { closeEditModal(); return; }
+
+      const date = document.getElementById("editDate").value;
+      const resident = document.getElementById("editResident").value;
+      if (!date || !resident) {
+        alert("日付と利用者は必須です。");
+        return;
+      }
+
+      const updated = {
+        ...records[idx],
+        date,
+        resident,
+        timeSlot: document.getElementById("editTimeSlot").value,
+        condition: document.getElementById("editCondition").value,
+        mental: document.getElementById("editMental").value,
+        meal: document.getElementById("editMeal").value,
+        medTaken: document.getElementById("editMedTaken").checked,
+        support: document.getElementById("editSupport").value,
+        note: document.getElementById("editNote").value,
+        tags: [...editTags],
+        daySupportType: document.getElementById("editDaySupportType").value,
+        daySupportTime: document.getElementById("editDaySupportTime").value,
+        daySupportMainItems: Array.from(document.querySelectorAll(".edit-day-main-item:checked")).map((el) => el.value),
+        daySupportReasonItems: Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((el) => el.value),
+      };
+
+      records[idx] = updated;
+
+      saveRecords();
+      renderRecords();
+      closeEditModal();
+      alert("編集内容を保存しました。");
+    }
+
+    // タグボタン（メイン）
     function setupTagButtons() {
       const container = document.getElementById("tagButtons");
       container.innerHTML = "";
@@ -1976,7 +2206,6 @@
       name = name.replace(/^#/, "").trim();
       if (!name) { alert("タグ名を入力してください"); return; }
 
-      // 重複チェック
       const existsOther = TAG_LIST.some((t, i) => t === name && String(i) !== idxStr);
       if (existsOther) { alert("同じタグがすでに存在します。別名にしてください。"); return; }
 
@@ -1990,6 +2219,12 @@
 
       saveTags();
       setupTagButtons();
+
+      // ✅ 編集モーダル側もタグ候補を更新したいので再描画
+      if (document.getElementById("editModal")?.classList.contains("show")) {
+        setupEditTagButtons();
+      }
+
       renderTagManager();
       alert("保存しました。");
     }
@@ -2005,8 +2240,8 @@
       const ok = confirm(`「${t}」を削除しますか？`);
       if (!ok) return;
 
-      // 現在選択中のタグからも外す
       currentTags = currentTags.filter((x) => x !== t);
+      editTags = editTags.filter((x) => x !== t);
 
       TAG_LIST.splice(idx, 1);
       saveTags();
@@ -2014,6 +2249,7 @@
       renderTagManager();
       clearTagInputs();
       updateTagUI();
+      updateEditTagUI();
       alert("削除しました。");
     }
 
@@ -2051,9 +2287,13 @@
       renderAutoItemCheckboxes();
       renderAutoItemManager();
 
-      // 日中支援チェック生成
+      // 日中支援チェック生成（メイン）
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
+
+      // ✅ 日中支援チェック生成（編集モーダル）
+      renderEditDaySupportMainCheckboxes();
+      renderEditDaySupportReasonCheckboxes();
 
       const templateScopeEl = document.getElementById("templateScope");
       if (templateScopeEl) {
@@ -2093,11 +2333,21 @@
       document.getElementById("templateSaveButton").addEventListener("click", handleTemplateSave);
       document.getElementById("templateDeleteButton").addEventListener("click", handleTemplateDelete);
 
+      // 詳細モーダル
       const detailModal = document.getElementById("detailModal");
       const detailModalClose = document.getElementById("detailModalClose");
       if (detailModal && detailModalClose) {
         detailModalClose.addEventListener("click", closeRecordDetail);
         detailModal.addEventListener("click", (e) => { if (e.target === detailModal) closeRecordDetail(); });
+      }
+
+      // ✅ 編集モーダル
+      const editModal = document.getElementById("editModal");
+      document.getElementById("editModalClose").addEventListener("click", closeEditModal);
+      document.getElementById("editModalCancelBtn").addEventListener("click", closeEditModal);
+      document.getElementById("editModalSaveBtn").addEventListener("click", saveEditModal);
+      if (editModal) {
+        editModal.addEventListener("click", (e) => { if (e.target === editModal) closeEditModal(); });
       }
 
       // 支援項目管理UI
