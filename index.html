@@ -1521,6 +1521,14 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
+    function toLocalISODate(d = new Date()) {
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tz).toISOString().slice(0, 10);
+}
+function parseLocalISODate(iso) {
+  return iso ? new Date(iso + "T00:00:00") : null; // ローカル0時
+}
+
     function escapeHtmlAttr(str) { return escapeHtml(str); }
 
     function populateResidentSelect(selectEl, placeholderText = "選択してください") {
@@ -1764,7 +1772,7 @@
 
     function resetForm() {
       document.getElementById("recordForm").reset();
-      document.getElementById("date").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("date").value = toLocalISODate();
       document.getElementById("timeSlot").value = "日中";
       document.getElementById("condition").value = "良好";
       document.getElementById("mental").value = "安定";
@@ -3094,7 +3102,7 @@
 
     // ===== 起動 =====
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("date").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("date").value = toLocalISODate();
 
       records = loadRecords();
       residents = loadResidents();
@@ -3328,3 +3336,4 @@
   </script>
 </body>
 </html>
+
