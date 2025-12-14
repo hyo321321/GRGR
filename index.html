@@ -481,14 +481,22 @@
             </div>
           </div>
 
-          <!-- 自動入力対象のチェック（サイト上で増やせる） -->
+          <!-- 自動入力対象のチェック（利用者別テンプレ対応） -->
           <div class="field">
             <label>自動入力したい支援項目（チェックした定型文だけを追記）</label>
 
-            <!-- ★ここはJSで自動生成 -->
             <div class="checkbox-row" id="autoItemCheckboxes"></div>
 
-            <div class="small-text">
+            <div class="btn-row" style="margin-top:8px;">
+              <button type="button" class="btn-secondary" id="openAutoTemplateEditorBtn">
+                🛠 自動テンプレ編集（この利用者）
+              </button>
+              <span class="small-text">
+                ※利用者を選んでから押してください（下の「自動入力の支援項目 管理」に移動して、その利用者を編集状態にします）
+              </span>
+            </div>
+
+            <div class="small-text" style="margin-top:8px;">
               ・「自動」ボタン → チェックした項目の定型文だけを「追記」します（置き換えなし）<br>
               ・テンプレが選択されている場合 → テンプレだけを追記（AI生成には行きません）
             </div>
@@ -784,7 +792,8 @@
         <span class="record-count" id="residentCount">0名</span>
       </div>
       <div class="card-subtitle">
-        利用者名の追加・変更・削除を行います。ここで変更すると、記録一覧の表示にも反映されます。
+        利用者名の追加・変更・削除を行います。ここで変更すると、記録一覧の表示にも反映されます。<br>
+        ※利用者名を変更すると「利用者別 自動テンプレ」も引き継がれます。
       </div>
 
       <div class="field-row">
@@ -804,20 +813,41 @@
         <button type="button" class="btn-danger" id="residentDeleteButton">🗑️ 利用者と記録を削除</button>
       </div>
       <div class="small-text" style="margin-top:6px;">
-        ※削除すると、その利用者のすべての記録も削除されます。
+        ※削除すると、その利用者のすべての記録も削除されます。（利用者別 自動テンプレも削除されます）
       </div>
     </section>
 
-    <!-- ★自動入力項目（支援項目）管理：サイト上で増やせる -->
-    <section class="card">
+    <!-- ★自動入力項目（支援項目）管理：利用者別テンプレ対応 -->
+    <section class="card" id="autoItemManagerCard">
       <div class="card-title">
-        <span>自動入力の支援項目 管理（サイト上で追加・編集・削除）</span>
+        <span>自動入力の支援項目 管理（利用者ごとのテンプレ編集）</span>
         <span class="record-count" id="autoItemCount">0件</span>
       </div>
       <div class="card-subtitle">
-        ここで追加した項目は、上の「自動入力したい支援項目」に自動で表示されます。<br>
-        ✅追加機能：<b>「共通」だけでなく「利用者別の定型文」</b>も保存できます（利用者別があればそちらを優先）。<br>
+        ここで編集した定型文は、上の「自動入力したい支援項目」の『自動』で追記されます。<br>
+        「共通（全員）」も作れますが、<b>利用者別テンプレがある場合はそちらが優先</b>されます。<br>
         ※このPC（ブラウザ）内に保存されます。他PCとは共有されません。
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="autoItemResidentScope">編集対象（利用者）</label>
+          <select id="autoItemResidentScope"></select>
+          <div class="small-text">
+            「共通（全員）」は全利用者のベースになります。利用者別は、その利用者を選んだ時に優先されます。
+          </div>
+        </div>
+        <div class="field">
+          <label class="small-text">便利</label>
+          <div class="btn-row" style="margin-top:0;">
+            <button type="button" class="btn-secondary" id="autoItemCopyCommonBtn">📥 共通をコピーして作成</button>
+            <button type="button" class="btn-secondary" id="autoItemResetDefaultBtn">↩ 初期に戻す</button>
+          </div>
+          <div class="small-text">
+            ・コピー：共通テンプレをこの利用者用に複製します（上書き）<br>
+            ・初期：共通は初期定義へ／利用者別は「共通内容」に戻します
+          </div>
+        </div>
       </div>
 
       <div class="field-row">
@@ -841,30 +871,11 @@
           <input type="text" id="autoItemLabel" placeholder="例：金銭管理" />
         </div>
         <div class="field">
-          <label for="autoItemScope">対象（共通 / 利用者別）</label>
-          <select id="autoItemScope">
-            <option value="__common__">共通（全員）</option>
-            <!-- JSで利用者を追加 -->
-          </select>
-          <div class="small-text">利用者別を選ぶと、その利用者専用の文章を保存できます。</div>
-        </div>
-      </div>
-
-      <div class="field-row">
-        <div class="field">
           <label for="autoItemText">自動で追記する定型文</label>
           <textarea id="autoItemText" rows="3" placeholder="例：【金銭管理】金銭の確認と声かけを行い、必要に応じて支援した。"></textarea>
           <div class="small-text">
             日中支援加算の区分を入れたい場合：<br>
             <b>{{daySupportTypeLabel}}</b> を文中に入れると「日中支援加算Ⅰ/Ⅱ」に置換されます。
-          </div>
-        </div>
-        <div class="field">
-          <label class="small-text">使い方</label>
-          <div class="small-text" style="padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;">
-            ・上の入力フォームで利用者を選び、チェックを入れて「自動」→ 追記されます。<br>
-            ・同じ支援項目でも、利用者別の文章があればそちらが優先されます。<br>
-            ・共通文も残るので「共通＋利用者別」どちらも運用できます。
           </div>
         </div>
       </div>
@@ -873,7 +884,6 @@
         <button type="button" class="btn-primary" id="autoItemSaveBtn">💾 追加 / 更新</button>
         <button type="button" class="btn-danger" id="autoItemDeleteBtn">🗑️ 選択項目を削除</button>
         <button type="button" class="btn-secondary" id="autoItemClearBtn">🧹 入力クリア</button>
-        <button type="button" class="btn-secondary" id="autoItemResetDefaultBtn">↩ 初期項目に戻す</button>
       </div>
     </section>
   </main>
@@ -895,34 +905,31 @@
     const RESIDENTS_KEY = "group_home_residents_v1";
     const TEMPLATES_KEY = "group_home_support_templates_v1";
 
-    // ★自動入力（支援項目）定義をブラウザ保存
-    const AUTO_ITEM_DEFS_KEY = "group_home_auto_item_defs_v1";
+    // ★自動入力（支援項目）を「利用者ごと」に保存する（共通もあり）
+    const AUTO_ITEM_MAP_KEY = "group_home_auto_item_map_v1";
+    const OLD_AUTO_ITEM_DEFS_KEY = "group_home_auto_item_defs_v1"; // 旧データ（移行用）
+    const COMMON_SCOPE = "__common__";
 
-    // ✅スキーマ： {key,label, defaultText, perResidentTexts:{[resident]:text}}
     const DEFAULT_AUTO_ITEM_DEFS = [
       {
         key: "med_manage",
         label: "服薬管理",
-        defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。",
-        perResidentTexts: {}
+        defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。"
       },
       {
         key: "oral_check",
         label: "内服確認",
-        defaultText: "【内服確認】服薬時は職員が手渡し、目の前で飲んで頂き内服確認を行った。",
-        perResidentTexts: {}
+        defaultText: "【内服確認】服薬時は職員が手渡し、目の前で飲んで頂き内服確認を行った。"
       },
       {
         key: "bathing",
         label: "入浴",
-        defaultText: "【入浴】入浴の声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。",
-        perResidentTexts: {}
+        defaultText: "【入浴】入浴の声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。"
       },
       {
         key: "day_support",
         label: "日中支援加算",
-        defaultText: "【日中支援加算】{{daySupportTypeLabel}}の対象として、日中もグループホーム内で見守り・声かけ・誘導等の支援を継続して実施した。",
-        perResidentTexts: {}
+        defaultText: "【日中支援加算】{{daySupportTypeLabel}}の対象として、日中もグループホーム内で見守り・声かけ・誘導等の支援を継続して実施した。"
       }
     ];
 
@@ -936,39 +943,89 @@
     let editingIndex = null;
     let templates = [];
 
-    // ★自動入力項目（増やせる）
-    let AUTO_ITEM_DEFS = [];
+    // ★利用者別テンプレ：scope -> defs[]
+    let autoItemMap = {};
+    let currentAutoItemScope = COMMON_SCOPE;
+    let currentAutoItemDefs = [];
 
-    function normalizeAutoItemDef(def) {
-      const d = def || {};
-      return {
-        key: (d.key || "").trim(),
-        label: (d.label || "").trim(),
-        defaultText: typeof d.defaultText === "string" ? d.defaultText : (typeof d.text === "string" ? d.text : ""),
-        perResidentTexts: (d.perResidentTexts && typeof d.perResidentTexts === "object") ? d.perResidentTexts : {}
-      };
+    function deepCopyDefs(defs) {
+      return (defs || []).map(d => ({ key: d.key, label: d.label, defaultText: d.defaultText }));
     }
 
-    function loadAutoItemDefs() {
-      const raw = localStorage.getItem(AUTO_ITEM_DEFS_KEY);
-      if (raw) {
-        try {
+    function normalizeDefsArray(defs) {
+      if (!Array.isArray(defs)) return [];
+      return defs
+        .filter(d => d && typeof d.key === "string" && typeof d.label === "string" && typeof d.defaultText === "string")
+        .map(d => ({ key: d.key.trim(), label: d.label.trim(), defaultText: d.defaultText }));
+    }
+
+    function loadAutoItemMap() {
+      // 1) 旧データがあれば共通へ移行（最初の1回だけ）
+      try {
+        const old = localStorage.getItem(OLD_AUTO_ITEM_DEFS_KEY);
+        const rawMap = localStorage.getItem(AUTO_ITEM_MAP_KEY);
+
+        if (old && !rawMap) {
+          const parsedOld = JSON.parse(old);
+          const defsOld = normalizeDefsArray(parsedOld);
+          const init = {};
+          init[COMMON_SCOPE] = defsOld.length ? defsOld : deepCopyDefs(DEFAULT_AUTO_ITEM_DEFS);
+          localStorage.setItem(AUTO_ITEM_MAP_KEY, JSON.stringify(init));
+          localStorage.removeItem(OLD_AUTO_ITEM_DEFS_KEY);
+          return init;
+        }
+      } catch {}
+
+      // 2) 通常ロード
+      try {
+        const raw = localStorage.getItem(AUTO_ITEM_MAP_KEY);
+        if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            // 旧形式（defaultTextだけ）もここで吸収
-            const normalized = parsed.map(normalizeAutoItemDef);
-            localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(normalized));
-            return normalized;
-          }
-        } catch {}
-      }
-      const init = DEFAULT_AUTO_ITEM_DEFS.map(normalizeAutoItemDef);
-      localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(init));
+          if (parsed && typeof parsed === "object") return parsed;
+        }
+      } catch {}
+
+      // 3) 何もなければ初期作成（共通のみ）
+      const init = {};
+      init[COMMON_SCOPE] = deepCopyDefs(DEFAULT_AUTO_ITEM_DEFS);
+      localStorage.setItem(AUTO_ITEM_MAP_KEY, JSON.stringify(init));
       return init;
     }
 
-    function saveAutoItemDefs() {
-      localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(AUTO_ITEM_DEFS));
+    function saveAutoItemMap() {
+      localStorage.setItem(AUTO_ITEM_MAP_KEY, JSON.stringify(autoItemMap));
+    }
+
+    function getAutoDefsForScope(scope) {
+      const sc = scope || COMMON_SCOPE;
+      const defs = normalizeDefsArray(autoItemMap[sc]);
+      if (defs.length) return defs;
+
+      if (sc === COMMON_SCOPE) return deepCopyDefs(DEFAULT_AUTO_ITEM_DEFS);
+
+      // 利用者別がなければ共通へフォールバック
+      return getAutoDefsForScope(COMMON_SCOPE);
+    }
+
+    function setAutoDefsForScope(scope, defs) {
+      const sc = scope || COMMON_SCOPE;
+      autoItemMap[sc] = normalizeDefsArray(defs);
+      saveAutoItemMap();
+    }
+
+    function getAutoDefsForResident(residentName) {
+      if (residentName && normalizeDefsArray(autoItemMap[residentName]).length) {
+        return getAutoDefsForScope(residentName);
+      }
+      return getAutoDefsForScope(COMMON_SCOPE);
+    }
+
+    function ensureCommonExists() {
+      const common = normalizeDefsArray(autoItemMap[COMMON_SCOPE]);
+      if (!common.length) {
+        autoItemMap[COMMON_SCOPE] = deepCopyDefs(DEFAULT_AUTO_ITEM_DEFS);
+        saveAutoItemMap();
+      }
     }
 
     function loadRecords() {
@@ -1065,8 +1122,8 @@
         manageSelect.value = (current && residents.includes(current)) ? current : "";
       }
 
-      // ✅自動入力項目の「対象（共通/利用者別）」も更新
-      renderAutoItemScopeOptions();
+      // ★自動テンプレ管理のスコープ一覧も更新
+      renderAutoItemScopeSelect();
     }
 
     function formatSupportSummary(text) {
@@ -1255,6 +1312,9 @@
       const templateScope = document.getElementById("templateScope");
       if (templateScope) templateScope.value = "common";
       renderTemplateSelect();
+
+      // ★利用者（未選択）状態のチェック欄を再生成（共通で表示）
+      renderAutoItemCheckboxes();
     }
 
     function startEdit(id) {
@@ -1301,6 +1361,8 @@
       document.getElementById("modeLabel").style.color = "#b91c1c";
       document.getElementById("saveButton").textContent = "✏️ この内容で上書き";
 
+      // ★利用者別テンプレのチェック欄を反映
+      renderAutoItemCheckboxes();
       document.querySelectorAll(".auto-item").forEach((el) => { el.checked = false; });
     }
 
@@ -1353,8 +1415,7 @@
       resetForm();
     }
 
-    // ★自動：テンプレ選択があればテンプレだけ。なければチェックした項目の定型文だけを追記。
-    // ✅追加：利用者別の定型文があれば「利用者別」優先
+    // ★自動：テンプレ選択があればテンプレだけ。なければチェックした項目（利用者別テンプレ）の定型文だけを追記。
     function generateSupportText() {
       const textArea = document.getElementById("support");
 
@@ -1371,48 +1432,37 @@
         }
       }
 
-      // 2) チェックされた項目の定型文を追記
+      // 2) チェックされた項目の定型文を追記（利用者別）
       const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
       if (checkedKeys.length === 0) {
         alert("自動で追記する項目にチェックが入っていません。");
         return;
       }
 
-      const resident = document.getElementById("resident")?.value || "";
+      const resident = document.getElementById("resident").value || "";
+      const defs = getAutoDefsForResident(resident);
 
       const daySupportType = document.getElementById("daySupportType")?.value || "";
       const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
 
       const parts = [];
       checkedKeys.forEach((key) => {
-        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
+        const def = defs.find((d) => d.key === key);
         if (!def) return;
 
-        const per = def.perResidentTexts || {};
-        let text = "";
-
-        // ✅利用者別があれば最優先
-        if (resident && typeof per[resident] === "string" && per[resident].trim()) {
-          text = per[resident].trim();
-        } else {
-          text = (def.defaultText || "").trim();
-        }
-
+        let text = (def.defaultText || "").trim();
         if (!text) return;
 
-        // 日中支援加算の置換
         text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
-
         parts.push(text);
       });
 
       if (parts.length === 0) {
-        alert("定型文が空の項目がありました。項目管理で文章を入れてください。");
+        alert("定型文が空の項目がありました。自動テンプレ管理で文章を入れてください。");
         return;
       }
 
       const newText = parts.join("\n");
-
       if (textArea.value.trim()) textArea.value = textArea.value.replace(/\s*$/, "") + "\n" + newText;
       else textArea.value = newText;
     }
@@ -1580,6 +1630,16 @@
       alert("利用者を追加しました。");
     }
 
+    function mergeAutoDefsPreferExisting(existing, incoming) {
+      // existing優先。key未存在のみincomingから追加
+      const map = new Map();
+      normalizeDefsArray(existing).forEach(d => map.set(d.key, d));
+      normalizeDefsArray(incoming).forEach(d => {
+        if (!map.has(d.key)) map.set(d.key, d);
+      });
+      return Array.from(map.values());
+    }
+
     function handleResidentRename() {
       const manageSelect = document.getElementById("residentManageSelect");
       const oldName = manageSelect.value;
@@ -1590,31 +1650,33 @@
       if (!newName) { alert("新しい名前を入力してください。"); return; }
       if (oldName === newName) { alert("同じ名前です。"); return; }
 
+      let merge = false;
       if (residents.includes(newName)) {
         const ok = confirm("同じ名前の利用者がすでに存在します。統合しますか？");
         if (!ok) return;
+        merge = true;
       }
 
       residents = residents.map((n) => (n === oldName ? newName : n));
       records = records.map((r) => (r.resident === oldName ? { ...r, resident: newName } : r));
 
-      // ✅自動入力の利用者別文も移し替え
-      AUTO_ITEM_DEFS = AUTO_ITEM_DEFS.map((d) => {
-        const per = d.perResidentTexts || {};
-        if (typeof per[oldName] === "string") {
-          per[newName] = per[oldName];
-          delete per[oldName];
+      // ★自動テンプレも引き継ぎ
+      const oldDefs = normalizeDefsArray(autoItemMap[oldName]);
+      const newDefs = normalizeDefsArray(autoItemMap[newName]);
+      if (oldDefs.length) {
+        if (merge && newDefs.length) {
+          autoItemMap[newName] = mergeAutoDefsPreferExisting(newDefs, oldDefs);
+        } else {
+          autoItemMap[newName] = oldDefs;
         }
-        return { ...d, perResidentTexts: per };
-      });
-      saveAutoItemDefs();
+        delete autoItemMap[oldName];
+        saveAutoItemMap();
+      }
 
       saveResidents();
       saveRecords();
       renderResidentSelects();
       renderRecords();
-      renderAutoItemCheckboxes();
-      renderAutoItemManager();
       nameInput.value = "";
       alert("利用者名を変更しました。");
     }
@@ -1630,20 +1692,16 @@
       residents = residents.filter((n) => n !== target);
       records = records.filter((r) => r.resident !== target);
 
-      // ✅自動入力の利用者別文も削除
-      AUTO_ITEM_DEFS = AUTO_ITEM_DEFS.map((d) => {
-        const per = d.perResidentTexts || {};
-        if (per[target]) delete per[target];
-        return { ...d, perResidentTexts: per };
-      });
-      saveAutoItemDefs();
+      // ★自動テンプレも削除
+      if (autoItemMap[target]) {
+        delete autoItemMap[target];
+        saveAutoItemMap();
+      }
 
       saveResidents();
       saveRecords();
       renderResidentSelects();
       renderRecords();
-      renderAutoItemCheckboxes();
-      renderAutoItemManager();
       document.getElementById("residentNameInput").value = "";
       alert("削除しました。");
     }
@@ -1757,17 +1815,73 @@
       alert("テンプレートを削除しました。");
     }
 
-    // ★自動入力項目（支援項目）チェック欄の生成
+    // ★自動入力項目（支援項目）チェック欄の生成：選択中の利用者に合わせる
     function renderAutoItemCheckboxes() {
       const wrap = document.getElementById("autoItemCheckboxes");
       if (!wrap) return;
 
+      const prevChecked = Array.from(document.querySelectorAll(".auto-item:checked")).map(el => el.value);
+
+      const resident = document.getElementById("resident")?.value || "";
+      const defs = getAutoDefsForResident(resident);
+
       wrap.innerHTML = "";
-      AUTO_ITEM_DEFS.forEach((def) => {
+      defs.forEach((def) => {
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="auto-item" value="${def.key}"> ${def.label}`;
         wrap.appendChild(label);
       });
+
+      // 可能ならチェックを復元
+      document.querySelectorAll(".auto-item").forEach(el => {
+        if (prevChecked.includes(el.value)) el.checked = true;
+      });
+    }
+
+    // ★自動テンプレ管理：スコープ（共通/利用者）選択肢
+    function renderAutoItemScopeSelect() {
+      const scopeSel = document.getElementById("autoItemResidentScope");
+      if (!scopeSel) return;
+
+      const current = scopeSel.value || currentAutoItemScope;
+
+      scopeSel.innerHTML = "";
+      const optCommon = document.createElement("option");
+      optCommon.value = COMMON_SCOPE;
+      optCommon.textContent = "共通（全員）";
+      scopeSel.appendChild(optCommon);
+
+      residents.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        scopeSel.appendChild(opt);
+      });
+
+      // 以前の選択が存在しなければ共通
+      const exists = Array.from(scopeSel.options).some(o => o.value === current);
+      scopeSel.value = exists ? current : COMMON_SCOPE;
+
+      // currentAutoItemScopeも同期
+      currentAutoItemScope = scopeSel.value;
+      loadScopeAutoItems(currentAutoItemScope);
+    }
+
+    function loadScopeAutoItems(scope) {
+      currentAutoItemScope = scope || COMMON_SCOPE;
+      currentAutoItemDefs = getAutoDefsForScope(currentAutoItemScope);
+
+      renderAutoItemManager();
+      clearAutoItemInputs();
+      renderAutoItemCheckboxes();
+      syncAutoItemButtons();
+    }
+
+    function syncAutoItemButtons() {
+      const copyBtn = document.getElementById("autoItemCopyCommonBtn");
+      const resetBtn = document.getElementById("autoItemResetDefaultBtn");
+      if (copyBtn) copyBtn.disabled = (currentAutoItemScope === COMMON_SCOPE);
+      if (resetBtn) resetBtn.textContent = (currentAutoItemScope === COMMON_SCOPE) ? "↩ 初期（共通デフォルト）" : "↩ 共通内容に戻す";
     }
 
     // ★支援項目管理UI
@@ -1777,45 +1891,20 @@
       if (!sel) return;
 
       sel.innerHTML = `<option value="">（新規追加）</option>`;
-      AUTO_ITEM_DEFS.forEach((d, i) => {
+      currentAutoItemDefs.forEach((d, i) => {
         const opt = document.createElement("option");
         opt.value = String(i);
         opt.textContent = `${d.label}（${d.key}）`;
         sel.appendChild(opt);
       });
 
-      if (count) count.textContent = AUTO_ITEM_DEFS.length + "件";
-    }
-
-    function renderAutoItemScopeOptions() {
-      const scopeSel = document.getElementById("autoItemScope");
-      if (!scopeSel) return;
-
-      const current = scopeSel.value || "__common__";
-      scopeSel.innerHTML = "";
-
-      const optCommon = document.createElement("option");
-      optCommon.value = "__common__";
-      optCommon.textContent = "共通（全員）";
-      scopeSel.appendChild(optCommon);
-
-      residents.forEach((name) => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = "利用者別：" + name;
-        scopeSel.appendChild(opt);
-      });
-
-      // 値復元
-      const values = Array.from(scopeSel.options).map(o => o.value);
-      scopeSel.value = values.includes(current) ? current : "__common__";
+      if (count) count.textContent = currentAutoItemDefs.length + "件";
     }
 
     function clearAutoItemInputs() {
       document.getElementById("autoItemSelect").value = "";
       document.getElementById("autoItemKey").value = "";
       document.getElementById("autoItemLabel").value = "";
-      document.getElementById("autoItemScope").value = "__common__";
       document.getElementById("autoItemText").value = "";
     }
 
@@ -1827,33 +1916,12 @@
         return;
       }
       const idx = parseInt(idxStr, 10);
-      const d0 = AUTO_ITEM_DEFS[idx];
-      if (!d0) return;
-      const d = normalizeAutoItemDef(d0);
+      const d = currentAutoItemDefs[idx];
+      if (!d) return;
 
       document.getElementById("autoItemKey").value = d.key || "";
       document.getElementById("autoItemLabel").value = d.label || "";
-
-      // スコープが変わったら文章も切り替える
-      const scope = document.getElementById("autoItemScope").value || "__common__";
-      const per = d.perResidentTexts || {};
-      document.getElementById("autoItemText").value =
-        (scope !== "__common__" && typeof per[scope] === "string") ? per[scope] : (d.defaultText || "");
-    }
-
-    function fillAutoItemTextByScopeOnly() {
-      const sel = document.getElementById("autoItemSelect");
-      const idxStr = sel.value;
-      const scope = document.getElementById("autoItemScope").value || "__common__";
-      if (!idxStr) return; // 新規時は触らない
-      const idx = parseInt(idxStr, 10);
-      const d0 = AUTO_ITEM_DEFS[idx];
-      if (!d0) return;
-      const d = normalizeAutoItemDef(d0);
-
-      const per = d.perResidentTexts || {};
-      document.getElementById("autoItemText").value =
-        (scope !== "__common__" && typeof per[scope] === "string") ? per[scope] : (d.defaultText || "");
+      document.getElementById("autoItemText").value = d.defaultText || "";
     }
 
     function saveAutoItemFromInputs() {
@@ -1862,7 +1930,6 @@
 
       const key = document.getElementById("autoItemKey").value.trim();
       const label = document.getElementById("autoItemLabel").value.trim();
-      const scope = document.getElementById("autoItemScope").value || "__common__";
       const text = document.getElementById("autoItemText").value;
 
       if (!key) { alert("内部キーを入力してください（英数字・重複不可）"); return; }
@@ -1873,7 +1940,7 @@
       if (!label) { alert("表示名を入力してください"); return; }
       if (!text.trim()) { alert("定型文を入力してください"); return; }
 
-      const existsOther = AUTO_ITEM_DEFS.some((d, i) => d.key === key && String(i) !== idxStr);
+      const existsOther = currentAutoItemDefs.some((d, i) => d.key === key && String(i) !== idxStr);
       if (existsOther) {
         alert("同じ内部キーがすでに存在します。別のキーにしてください。");
         return;
@@ -1881,26 +1948,17 @@
 
       if (idxStr) {
         const idx = parseInt(idxStr, 10);
-        if (!AUTO_ITEM_DEFS[idx]) return;
-
-        const base = normalizeAutoItemDef(AUTO_ITEM_DEFS[idx]);
-        base.key = key;
-        base.label = label;
-
-        if (scope === "__common__") base.defaultText = text;
-        else base.perResidentTexts[scope] = text;
-
-        AUTO_ITEM_DEFS[idx] = base;
+        if (!currentAutoItemDefs[idx]) return;
+        currentAutoItemDefs[idx] = { key, label, defaultText: text };
       } else {
-        const base = normalizeAutoItemDef({ key, label, defaultText: "", perResidentTexts: {} });
-        if (scope === "__common__") base.defaultText = text;
-        else base.perResidentTexts[scope] = text;
-        AUTO_ITEM_DEFS.push(base);
+        currentAutoItemDefs.push({ key, label, defaultText: text });
       }
 
-      saveAutoItemDefs();
-      renderAutoItemCheckboxes();
+      setAutoDefsForScope(currentAutoItemScope, currentAutoItemDefs);
+      currentAutoItemDefs = getAutoDefsForScope(currentAutoItemScope);
+
       renderAutoItemManager();
+      renderAutoItemCheckboxes();
       alert("保存しました。");
     }
 
@@ -1910,29 +1968,59 @@
       if (!idxStr) { alert("削除する項目を選択してください。"); return; }
 
       const idx = parseInt(idxStr, 10);
-      const d = AUTO_ITEM_DEFS[idx];
+      const d = currentAutoItemDefs[idx];
       if (!d) return;
 
-      const ok = confirm(`「${d.label}（${d.key}）」を削除しますか？\n（共通・利用者別の文章も含めて全部消えます）`);
+      const ok = confirm(`「${d.label}（${d.key}）」を削除しますか？`);
       if (!ok) return;
 
-      AUTO_ITEM_DEFS.splice(idx, 1);
-      saveAutoItemDefs();
-      renderAutoItemCheckboxes();
+      currentAutoItemDefs.splice(idx, 1);
+      setAutoDefsForScope(currentAutoItemScope, currentAutoItemDefs);
+      currentAutoItemDefs = getAutoDefsForScope(currentAutoItemScope);
+
       renderAutoItemManager();
+      renderAutoItemCheckboxes();
       clearAutoItemInputs();
       alert("削除しました。");
     }
 
-    function resetAutoItemsToDefault() {
-      const ok = confirm("自動入力の支援項目を初期状態に戻しますか？（今追加した項目・利用者別文章も消えます）");
-      if (!ok) return;
-      AUTO_ITEM_DEFS = DEFAULT_AUTO_ITEM_DEFS.map(normalizeAutoItemDef);
-      saveAutoItemDefs();
-      renderAutoItemCheckboxes();
+    function resetAutoItems() {
+      if (currentAutoItemScope === COMMON_SCOPE) {
+        const ok = confirm("共通テンプレを初期状態に戻しますか？（共通の編集内容が消えます）");
+        if (!ok) return;
+        currentAutoItemDefs = deepCopyDefs(DEFAULT_AUTO_ITEM_DEFS);
+        setAutoDefsForScope(COMMON_SCOPE, currentAutoItemDefs);
+      } else {
+        const ok = confirm("この利用者のテンプレを『共通内容』に戻しますか？（利用者別の編集内容が消えます）");
+        if (!ok) return;
+        const common = getAutoDefsForScope(COMMON_SCOPE);
+        currentAutoItemDefs = deepCopyDefs(common);
+        setAutoDefsForScope(currentAutoItemScope, currentAutoItemDefs);
+      }
+
       renderAutoItemManager();
+      renderAutoItemCheckboxes();
       clearAutoItemInputs();
-      alert("初期状態に戻しました。");
+      syncAutoItemButtons();
+      alert("戻しました。");
+    }
+
+    function copyCommonToCurrentScope() {
+      if (currentAutoItemScope === COMMON_SCOPE) {
+        alert("共通（全員）を選択中です。利用者を選んでからコピーしてください。");
+        return;
+      }
+      const ok = confirm("共通テンプレをこの利用者用にコピーしますか？（既存がある場合は上書きされます）");
+      if (!ok) return;
+
+      const common = getAutoDefsForScope(COMMON_SCOPE);
+      currentAutoItemDefs = deepCopyDefs(common);
+      setAutoDefsForScope(currentAutoItemScope, currentAutoItemDefs);
+
+      renderAutoItemManager();
+      renderAutoItemCheckboxes();
+      clearAutoItemInputs();
+      alert("コピーしました。");
     }
 
     // 起動
@@ -1943,8 +2031,9 @@
       residents = loadResidents();
       templates = loadTemplates();
 
-      // ★自動入力項目ロード（スキーマ吸収済み）
-      AUTO_ITEM_DEFS = loadAutoItemDefs().map(normalizeAutoItemDef);
+      // ★自動テンプレ（利用者別）ロード
+      autoItemMap = loadAutoItemMap();
+      ensureCommonExists();
 
       renderResidentSelects();
       renderRecords();
@@ -1953,7 +2042,7 @@
       setupQuickButtons();
       syncQuickButtonsAll();
 
-      // ★チェック欄を生成
+      // ★チェック欄（利用者別）を生成
       renderAutoItemCheckboxes();
 
       const templateScopeEl = document.getElementById("templateScope");
@@ -2001,17 +2090,41 @@
         detailModal.addEventListener("click", (e) => { if (e.target === detailModal) closeRecordDetail(); });
       }
 
+      // ★利用者を変えたら、その利用者の自動テンプレでチェック欄を更新
+      document.getElementById("resident").addEventListener("change", () => {
+        renderAutoItemCheckboxes();
+      });
+
+      // ★自動テンプレ編集ボタン：この利用者のスコープに切り替えて下へ移動
+      document.getElementById("openAutoTemplateEditorBtn").addEventListener("click", () => {
+        const resident = document.getElementById("resident").value;
+        if (!resident) {
+          alert("まず利用者を選択してください。");
+          return;
+        }
+        const scopeSel = document.getElementById("autoItemResidentScope");
+        if (scopeSel) {
+          scopeSel.value = resident;
+          loadScopeAutoItems(resident);
+        }
+        document.getElementById("autoItemManagerCard").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
       // ★支援項目管理UIイベント
-      renderAutoItemManager();
-      renderAutoItemScopeOptions();
+      const scopeSel = document.getElementById("autoItemResidentScope");
+      if (scopeSel) {
+        scopeSel.addEventListener("change", () => loadScopeAutoItems(scopeSel.value));
+      }
+
+      // 初期スコープ読み込み（renderResidentSelects内で呼ばれるが念のため）
+      renderAutoItemScopeSelect();
 
       document.getElementById("autoItemSelect").addEventListener("change", fillAutoItemInputsBySelect);
-      document.getElementById("autoItemScope").addEventListener("change", fillAutoItemTextByScopeOnly);
-
       document.getElementById("autoItemSaveBtn").addEventListener("click", saveAutoItemFromInputs);
       document.getElementById("autoItemDeleteBtn").addEventListener("click", deleteSelectedAutoItem);
       document.getElementById("autoItemClearBtn").addEventListener("click", clearAutoItemInputs);
-      document.getElementById("autoItemResetDefaultBtn").addEventListener("click", resetAutoItemsToDefault);
+      document.getElementById("autoItemResetDefaultBtn").addEventListener("click", resetAutoItems);
+      document.getElementById("autoItemCopyCommonBtn").addEventListener("click", copyCommonToCurrentScope);
     });
   </script>
 
