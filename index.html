@@ -1642,13 +1642,15 @@ function parseLocalISODate(iso) {
       const periodFrom = periodFromInput ? periodFromInput.value : "";
       const periodTo = periodToInput ? periodToInput.value : "";
 
-      const today = new Date();
-      const todayStr = today.toISOString().slice(0, 10);
-      const monthPrefix = todayStr.slice(0, 7);
-      const yearPrefix = todayStr.slice(0, 4);
+     const now = new Date();
+const todayStr = toLocalISODate(now);
+const today0 = parseLocalISODate(todayStr);
+const monthPrefix = todayStr.slice(0, 7);
+const yearPrefix = todayStr.slice(0, 4);
 
-      const weekStart = new Date(today);
-      weekStart.setDate(weekStart.getDate() - 6);
+const weekStart = new Date(today0);
+weekStart.setDate(weekStart.getDate() - 6);
+
 
       tbody.innerHTML = "";
 
@@ -1661,8 +1663,9 @@ function parseLocalISODate(iso) {
             if (dateStr !== todayStr) return false;
           } else if (periodFilter === "week") {
             const d = new Date(dateStr);
-            if (isNaN(d)) return false;
-            if (d < weekStart || d > today) return false;
+            const d0 = parseLocalISODate(dateStr);
+if (!d0) return false;
+if (d0 < weekStart || d0 > today0) return false;
           } else if (periodFilter === "month") {
             if (dateStr.slice(0, 7) !== monthPrefix) return false;
           } else if (periodFilter === "year") {
@@ -3336,4 +3339,5 @@ function parseLocalISODate(iso) {
   </script>
 </body>
 </html>
+
 
