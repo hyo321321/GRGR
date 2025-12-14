@@ -2,571 +2,276 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>グループホーム 個人記録</title>
+  <title>グループホーム 個人記録 - 一覧ページ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     * { box-sizing: border-box; }
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","YuGothic","Meiryo",sans-serif;
-      background:#f3f4f6;
-      color:#111827;
-      font-size:16px;
-      line-height:1.6;
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+      "YuGothic", "Meiryo", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      font-size: 16px;
+      line-height: 1.6;
     }
-    header{
-      background:#2563eb;
-      color:#fff;
-      padding:14px 16px;
-      font-size:20px;
-      font-weight:700;
-      text-align:center;
-      position:sticky; top:0; z-index:10;
+    header {
+      background: #2563eb;
+      color: white;
+      padding: 14px 16px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
-    main{
-      max-width:1200px;
-      margin:0 auto;
-      padding:16px;
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
     }
-    .grid{
-      display:grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap:14px;
-      align-items:start;
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px 20px 20px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
     }
-    @media (max-width: 980px){
-      .grid{ grid-template-columns:1fr; }
-      header{ font-size:18px; }
-      main{ padding:10px; }
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .card{
-      background:#fff;
-      border-radius:18px;
-      padding:18px 20px 20px;
-      box-shadow:0 8px 24px rgba(15,23,42,0.10);
+    .card-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
     }
-    .card-title{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:8px;
+    .record-count {
+      font-size: 13px;
+      color: #6b7280;
     }
-    .card-title h2{
-      margin:0;
-      font-size:18px;
-      font-weight:700;
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
     }
-    .muted{ color:#6b7280; font-size:13px; }
-    .row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      align-items:center;
-      margin-top:10px;
+    .filter-row span {
+      font-size: 13px;
+      color: #4b5563;
     }
-    label{ font-size:13px; color:#374151; font-weight:600; }
-    input[type="text"], input[type="date"], select, textarea{
-      width:100%;
-      border-radius:14px;
-      border:1px solid #d1d5db;
-      padding:10px 12px;
-      font-size:14px;
-      background:#f9fafb;
-      outline:none;
+    input[type="text"],
+    input[type="date"],
+    select {
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      padding: 7px 10px;
+      font-size: 14px;
+      background: #f9fafb;
+      outline: none;
     }
-    textarea{ min-height:92px; resize:vertical; }
-    input:focus, select:focus, textarea:focus{
-      border-color:#2563eb;
-      box-shadow:0 0 0 2px rgba(37,99,235,0.18);
-      background:#fff;
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.4);
+      background: white;
     }
-    .col2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #e5e7eb;
+      color: #111827;
     }
-    .col3{
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap:10px;
+    .btn-primary {
+      background: #2563eb;
+      color: white;
     }
-    @media (max-width: 700px){
-      .col2,.col3{ grid-template-columns:1fr; }
+    .table-wrapper {
+      max-height: calc(100vh - 220px);
+      overflow: auto;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
     }
-    button{
-      border:none;
-      border-radius:999px;
-      padding:9px 14px;
-      font-size:13px;
-      font-weight:700;
-      cursor:pointer;
-      background:#e5e7eb;
-      color:#111827;
-      white-space:nowrap;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
     }
-    .btn-primary{ background:#2563eb; color:#fff; }
-    .btn-danger{ background:#ef4444; color:#fff; }
-    .btn-ghost{ background:#f3f4f6; }
-    .chip{
-      display:inline-flex;
-      gap:6px;
-      align-items:center;
-      border-radius:999px;
-      border:1px solid #e5e7eb;
-      background:#f9fafb;
-      padding:6px 10px;
-      font-size:12px;
-      color:#374151;
+    thead {
+      position: sticky;
+      top: 0;
+      background: #eff6ff;
+      z-index: 1;
     }
-    .badge{
-      display:inline-block;
-      padding:3px 9px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:800;
-      color:#fff;
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
     }
-    .badge-day{ background:#22c55e; }
-    .badge-evening{ background:#f59e0b; }
-    .badge-night{ background:#6366f1; }
-    .divider{
-      height:1px;
-      background:#e5e7eb;
-      margin:14px 0;
+    th {
+      font-weight: 600;
+      color: #374151;
+      white-space: nowrap;
     }
-    .mini{
-      font-size:12px;
-      color:#6b7280;
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
     }
-    .inline{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
     }
-    .checkgrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:8px;
-      margin-top:8px;
+    .badge-day    { background: #22c55e; }
+    .badge-evening{ background: #f59e0b; }
+    .badge-night  { background: #6366f1; }
+    .tag-chip {
+      display: inline-block;
+      margin-top: 2px;
+      margin-right: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      font-size: 11px;
     }
-    @media (max-width: 700px){
-      .checkgrid{ grid-template-columns:1fr; }
+    .small-text {
+      font-size: 12px;
+      color: #6b7280;
     }
-    .checkitem{
-      display:flex;
-      gap:8px;
-      align-items:flex-start;
-      background:#f9fafb;
-      border:1px solid #e5e7eb;
-      border-radius:12px;
-      padding:8px 10px;
-      font-size:13px;
+    .no-records {
+      padding: 14px;
+      font-size: 13px;
+      text-align: center;
+      color: #6b7280;
     }
-    .checkitem input{ margin-top:3px; }
-    .table-wrapper{
-      max-height: 48vh;
-      overflow:auto;
-      border-radius:14px;
-      border:1px solid #e5e7eb;
-      margin-top:10px;
+    /* 支援内容を全文・改行ありで表示 */
+    .support-cell {
+      white-space: pre-wrap;   /* \n を改行として表示 */
+      word-wrap: break-word;
     }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-    }
-    thead{
-      position:sticky; top:0;
-      background:#eff6ff;
-      z-index:1;
-    }
-    th,td{
-      border-bottom:1px solid #e5e7eb;
-      padding:8px 6px;
-      text-align:left;
-      vertical-align:top;
-    }
-    th{ font-weight:800; color:#374151; white-space:nowrap; }
-    tbody tr:nth-child(even){ background:#f9fafb; }
-    .support-snippet{
-      max-width:520px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      color:#374151;
-    }
-    .right-tools{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .micbtn{
-      border-radius:999px;
-      padding:8px 12px;
-      background:#111827;
-      color:#fff;
-      font-weight:800;
-      font-size:12px;
-    }
-    .micbtn.off{
-      background:#e5e7eb;
-      color:#111827;
-    }
-    .hint{
-      background:#fffbeb;
-      border:1px solid #fde68a;
-      border-radius:14px;
-      padding:10px 12px;
-      font-size:12px;
-      color:#92400e;
-      margin-top:10px;
+    @media (max-width: 800px) {
+      header { font-size: 18px; }
+      main { padding: 10px; }
+      .card { padding: 14px 12px 16px; }
+      .filter-row { gap: 6px; }
+      table { font-size: 12px; }
     }
   </style>
 </head>
 <body>
-<header>グループホーム 個人記録（入力・保存）</header>
+<header>グループホーム 個人記録 - 一覧専用ページ</header>
 
 <main>
-  <div class="grid">
-    <!-- LEFT: 入力 -->
-    <section class="card">
-      <div class="card-title">
-        <h2>個人記録入力</h2>
-        <div class="right-tools">
-          <button type="button" id="openRecords" class="btn-primary">一覧ページ（records.html）</button>
-        </div>
-      </div>
-      <div class="muted">※保存データはブラウザ内（この端末のlocalStorage）です。GitHub Pagesでも端末ごとに別保存になります。</div>
+  <section class="card">
+    <div class="card-title">
+      <span>記録一覧（読み取り専用）</span>
+      <span class="record-count" id="recordCount">0件</span>
+    </div>
+    <div class="card-subtitle">
+      左の入力ページ（index.html）で保存した記録を、<strong>大きな画面で一覧表示</strong>するページです。<br>
+      ここでは編集・削除はできず、「見る専用」です。
+    </div>
 
-      <div class="divider"></div>
+    <div class="filter-row">
+      <span>利用者：</span>
+      <select id="filterResident"></select>
+      <span>期間：</span>
+      <select id="periodFilter">
+        <option value="today">今日</option>
+        <option value="week">直近7日間</option>
+        <option value="month" selected>今月</option>
+        <option value="year">今年</option>
+        <option value="all">全期間</option>
+        <option value="custom">日付指定</option>
+      </select>
+      <button type="button" id="backIndex" class="btn-primary">
+        個人記録画面に戻る
+      </button>
+    </div>
 
-      <div class="col3">
-        <div>
-          <label>日付</label>
-          <input type="date" id="date" />
-        </div>
-        <div>
-          <label>利用者</label>
-          <select id="resident"></select>
-          <div class="mini">※利用者がない場合は右の「利用者管理」で追加</div>
-        </div>
-        <div>
-          <label>時間帯</label>
-          <select id="timeSlot">
-            <option value="日中">日中</option>
-            <option value="夕方">夕方</option>
-            <option value="夜間">夜間</option>
-          </select>
-        </div>
-      </div>
+    <div class="filter-row" id="customPeriodRow" style="display:none;">
+      <span>期間指定：</span>
+      <input type="date" id="periodFrom">
+      <span>〜</span>
+      <input type="date" id="periodTo">
+      <button type="button" id="applyCustomPeriod">反映</button>
+    </div>
 
-      <div class="col2" style="margin-top:10px;">
-        <div>
-          <label>体調</label>
-          <input type="text" id="condition" placeholder="例：良好、倦怠感あり、発熱なし など" />
-        </div>
-        <div>
-          <label>心の状態</label>
-          <input type="text" id="mental" placeholder="例：落ち着いている、不安訴えあり など" />
-        </div>
-      </div>
+    <div class="filter-row">
+      <span>キーワード：</span>
+      <input type="text" id="searchKeyword"
+             placeholder="例：通院, 夜間, #体調不良 など" style="flex:1; min-width:180px;">
+      <button type="button" id="searchClearButton">クリア</button>
+      <span class="small-text">
+        ※支援内容・特記事項・タグから検索します。
+      </span>
+    </div>
 
-      <div style="margin-top:10px;">
-        <label>食事</label>
-        <input type="text" id="meal" placeholder="例：朝○/昼○/夕△、水分摂取あり など" />
-      </div>
-
-      <div class="row" style="justify-content:space-between;">
-        <div class="inline">
-          <label style="margin-right:6px;">支援内容（全文）</label>
-          <span class="mini">※改行OK / records.htmlで全文表示</span>
-        </div>
-        <div class="inline">
-          <button type="button" class="micbtn off" id="micSupport">🎙 支援</button>
-        </div>
-      </div>
-      <textarea id="support" placeholder="例：声かけ、服薬見守り、外出確認、金銭管理支援、通院同行 など"></textarea>
-
-      <div class="row" style="justify-content:space-between;">
-        <div class="inline">
-          <label style="margin-right:6px;">特記事項（メモ）</label>
-          <span class="mini">※検索対象になります</span>
-        </div>
-        <div class="inline">
-          <button type="button" class="micbtn off" id="micNote">🎙 メモ</button>
-        </div>
-      </div>
-      <textarea id="note" placeholder="例：夜間覚醒あり。職員対応で再入眠。など"></textarea>
-
-      <div style="margin-top:10px;">
-        <label>タグ（任意）</label>
-        <input type="text" id="tags" placeholder="例：#体調不良 #通院  （スペース/カンマ/、区切りOK）" />
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="col2">
-        <div>
-          <label>服薬</label>
-          <div class="inline" style="margin-top:6px;">
-            <span class="chip">
-              <input type="checkbox" id="medTaken" />
-              <span>服薬済み</span>
-            </span>
-          </div>
-
-          <div class="row" style="justify-content:space-between; margin-top:8px;">
-            <div class="inline">
-              <label style="margin-right:6px;">服薬メモ（詳細）</label>
-              <span class="mini">※テンプレ1〜3を追記できます</span>
-            </div>
-            <div class="inline">
-              <button type="button" class="micbtn off" id="micMed">🎙 服薬</button>
-            </div>
-          </div>
-          <textarea id="medNote" placeholder="例：事務所保管。職員手渡しで内服確認。"></textarea>
-
-          <div class="row">
-            <label style="min-width:110px;">テンプレ</label>
-            <select id="medTemplateLevel" style="max-width:260px;">
-              <option value="1">①短め</option>
-              <option value="2" selected>②標準</option>
-              <option value="3">③監査向け（丁寧）</option>
-            </select>
-            <button type="button" id="insertMedTemplate">テンプレを追記</button>
-            <button type="button" id="clearMedNote" class="btn-ghost">服薬メモだけクリア</button>
-          </div>
-
-          <div class="hint">
-            「テンプレを追記」は <b>置き換えではなく末尾に追記</b> します。<br>
-            監査向け（③）は長めなので、必要に応じて削って調整してください。
-          </div>
-        </div>
-
-        <div>
-          <label>日中支援</label>
-          <div class="mini" style="margin-top:6px;">※「加算タイプ」と「項目」を記録（古い記録は空欄でもOK）</div>
-
-          <div class="row" style="margin-top:8px;">
-            <label style="min-width:110px;">加算タイプ</label>
-            <select id="daySupportType" style="max-width:260px;">
-              <option value="">（なし）</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
-          </div>
-
-          <div style="margin-top:8px;">
-            <label>日中に行った主な支援（チェック）</label>
-            <div class="mini">※右の「よく使う項目（利用者別）」で候補を追加/削除できます</div>
-            <div class="checkgrid" id="daySupportChecks"></div>
-          </div>
-
-          <div style="margin-top:10px;">
-            <label>日中に行った主な支援（自由記述）</label>
-            <textarea id="dayMainSupport" placeholder="例：買い物同行、受診予約の電話、金銭管理支援、清掃の見守り など"></textarea>
-          </div>
-
-          <div class="row">
-            <input type="text" id="daySupportAddOne" placeholder="チェック項目を1つ追加（例：買い物同行）" style="flex:1; min-width:180px;" />
-            <button type="button" id="addDaySupportItem">追加</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="row" style="justify-content:space-between;">
-        <div class="inline">
-          <span class="chip"><span id="modeBadge" class="badge badge-day">新規</span></span>
-          <span class="mini" id="editHint">保存で新規追加されます</span>
-        </div>
-        <div class="inline" style="gap:8px;">
-          <button type="button" id="save" class="btn-primary">保存</button>
-          <button type="button" id="clearForm">フォームクリア</button>
-          <button type="button" id="cancelEdit" class="btn-ghost" style="display:none;">編集をやめる</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- RIGHT: 管理 / 一覧 / バックアップ -->
-    <section class="card">
-      <div class="card-title">
-        <h2>利用者管理・バックアップ</h2>
-        <div class="right-tools">
-          <span class="muted" id="counts">0件</span>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div>
-        <label>利用者を追加</label>
-        <div class="row">
-          <input type="text" id="newResident" placeholder="例：山田 太郎" style="flex:1; min-width:180px;" />
-          <button type="button" id="addResident" class="btn-primary">追加</button>
-        </div>
-        <div class="mini">※追加すると選択肢に出ます（既存の記録データはそのまま）</div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <label>登録済み利用者</label>
-        <div class="row" id="residentList"></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div>
-        <label>よく使う項目（利用者別：日中支援チェック候補）</label>
-        <div class="mini">※「利用者」を選ぶと、その人専用のチェック候補が反映されます。</div>
-        <div class="row" style="margin-top:8px;">
-          <select id="favResident" style="flex:1; min-width:160px;"></select>
-        </div>
-        <div class="row">
-          <input type="text" id="favAdd" placeholder="候補を追加（例：通院同行）" style="flex:1; min-width:180px;">
-          <button type="button" id="addFav">追加</button>
-        </div>
-        <div class="row" id="favChips"></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div>
-        <label>バックアップ（推奨）</label>
-        <div class="mini">※コード差し替え前に1回押しておくと安心です。</div>
-        <div class="row" style="margin-top:8px;">
-          <button type="button" id="exportData" class="btn-primary">バックアップ保存（JSON）</button>
-          <label class="chip" style="cursor:pointer;">
-            <input type="file" id="importFile" accept="application/json" style="display:none;">
-            <span>バックアップ読込</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="card-title" style="margin-bottom:6px;">
-        <h2 style="font-size:16px; margin:0;">保存済み記録（編集/削除）</h2>
-        <span class="muted" id="listCount">0件</span>
-      </div>
-
-      <div class="row">
-        <select id="listFilterResident" style="flex:1; min-width:140px;"></select>
-        <input type="text" id="listKeyword" placeholder="キーワード検索（支援/メモ/服薬/日中支援/タグ）" style="flex:2; min-width:180px;">
-        <button type="button" id="listClear">クリア</button>
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-          <tr>
-            <th>日付</th>
-            <th>利用者</th>
-            <th>時間帯</th>
-            <th>支援（先頭）</th>
-            <th>操作</th>
-          </tr>
-          </thead>
-          <tbody id="savedTbody"></tbody>
-        </table>
-      </div>
-
-      <div class="mini" style="margin-top:10px;">
-        ※「一覧専用」は <b>records.html</b> にまとめて表示（全文・改行あり）します。
-      </div>
-    </section>
-  </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+        <tr>
+          <th>日付</th>
+          <th>利用者</th>
+          <th>時間帯</th>
+          <th>体調 / 心の状態</th>
+          <th>食事</th>
+          <th>支援内容（全文）</th>
+          <th>服薬</th>
+          <th>日中支援</th>
+        </tr>
+        </thead>
+        <tbody id="recordTableBody">
+        <!-- JSで挿入 -->
+        </tbody>
+      </table>
+    </div>
+  </section>
 </main>
 
 <script>
   const STORAGE_KEY   = "group_home_records_v1";
   const RESIDENTS_KEY = "group_home_residents_v1";
-  const FAVORITES_KEY = "group_home_favorites_v1"; // 追加（既存に影響なし）
-
-  // ===== Utility =====
-  const $ = (id) => document.getElementById(id);
-
-  function todayStr() {
-    const d = new Date();
-    const pad = (n) => String(n).padStart(2,"0");
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  }
-
-  function safeJsonParse(raw, fallback) {
-    try { return JSON.parse(raw); } catch(e) { return fallback; }
-  }
 
   function loadRecords() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const arr = safeJsonParse(raw || "[]", []);
-    if (!Array.isArray(arr)) return [];
-    // id がない古いデータに id を付与
-    let changed = false;
-    arr.forEach(r => {
-      if (!r.id) { r.id = cryptoRandomId(); changed = true; }
-      if (!Array.isArray(r.tags)) r.tags = normalizeTags(r.tags || "");
-      if (!Array.isArray(r.daySupportItems)) r.daySupportItems = (r.daySupportItems ? [].concat(r.daySupportItems) : []);
-    });
-    if (changed) saveRecords(arr);
-    return arr;
-  }
-
-  function saveRecords(records) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  }
-
-  function loadResidentsFromKey(records) {
-    const raw = localStorage.getItem(RESIDENTS_KEY);
-    const arr = safeJsonParse(raw || "[]", []);
-    if (Array.isArray(arr) && arr.length) return arr;
-
-    // もし residents key が空なら、記録から推測して保存
-    const set = new Set(records.map(r => r.resident).filter(Boolean));
-    const inferred = Array.from(set);
-    if (inferred.length) localStorage.setItem(RESIDENTS_KEY, JSON.stringify(inferred));
-    return inferred;
-  }
-
-  function saveResidents(list) {
-    localStorage.setItem(RESIDENTS_KEY, JSON.stringify(list));
-  }
-
-  function loadFavorites() {
-    const raw = localStorage.getItem(FAVORITES_KEY);
-    const obj = safeJsonParse(raw || "{}", {});
-    return (obj && typeof obj === "object") ? obj : {};
-  }
-
-  function saveFavorites(obj) {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(obj));
-  }
-
-  function cryptoRandomId() {
-    // 可能なら crypto を使う（古い環境は fallback）
     try {
-      const a = new Uint32Array(2);
-      crypto.getRandomValues(a);
-      return `${Date.now().toString(36)}-${a[0].toString(36)}${a[1].toString(36)}`;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
     } catch(e) {
-      return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+      console.error(e);
+      return [];
     }
   }
 
-  function normalizeTags(input) {
-    if (Array.isArray(input)) return input.map(t => String(t).trim()).filter(Boolean);
-    const s = String(input || "").trim();
-    if (!s) return [];
-    return s
-      .split(/[\s,、]+/g)
-      .map(x => x.trim())
-      .filter(Boolean)
-      .map(x => x.startsWith("#") ? x.slice(1) : x)
-      .filter(Boolean);
+  function loadResidents(records) {
+    try {
+      const raw = localStorage.getItem(RESIDENTS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch(e) {
+      console.error(e);
+    }
+    return Array.from(
+      new Set(records.map(r => r.resident).filter(Boolean))
+    );
   }
 
   function getTimeBadgeClass(timeSlot) {
@@ -578,690 +283,196 @@
     }
   }
 
-  function escapeHtml(str) {
-    return String(str || "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
+  function renderFilters(residents) {
+    const filterResident = document.getElementById("filterResident");
+    filterResident.innerHTML = "";
 
-  function medTemplate(level) {
-    // 1〜3：短め / 標準 / 監査向け
-    if (String(level) === "1") {
-      return [
-        "服薬管理：処方薬は事務所にて一括管理している。",
-        "内服確認：服薬時は職員が手渡し、内服確認を実施。"
-      ].join("\n");
-    }
-    if (String(level) === "3") {
-      return [
-        "服薬管理：処方薬は事務所にて一括管理（施錠保管）し、受領時に薬剤名・数量等を確認して管理している。配薬は職員が実施し、誤薬防止のため本人確認と薬剤内容の照合を行う。",
-        "内服確認：服薬後は服用状況を口頭・目視等で確認し記録している。拒否・服用不能時は状況と対応を記録し、必要に応じて管理者へ報告する。"
-      ].join("\n");
-    }
-    // ②標準
-    return [
-      "服薬管理：処方薬は事務所で一括管理し、職員が服薬時に手渡ししている。",
-      "内服確認：職員が服薬状況を確認し、記録している。"
-    ].join("\n");
-  }
-
-  function appendToTextarea(el, text) {
-    const current = (el.value || "").trimEnd();
-    const add = String(text || "").trim();
-    if (!add) return;
-    el.value = current ? (current + "\n" + add) : add;
-    el.focus();
-  }
-
-  // ===== Speech Recognition（簡易）=====
-  function setupSpeechButton(btnId, targetTextareaId) {
-    const btn = $(btnId);
-    const target = $(targetTextareaId);
-
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      btn.classList.add("off");
-      btn.title = "このブラウザは音声入力に非対応です";
-      btn.addEventListener("click", () => alert("このブラウザは音声入力（SpeechRecognition）に対応していません。"));
-      return;
-    }
-
-    let rec = null;
-    let listening = false;
-
-    function start() {
-      if (listening) return;
-      rec = new SR();
-      rec.lang = "ja-JP";
-      rec.interimResults = false;
-      rec.maxAlternatives = 1;
-
-      listening = true;
-      btn.classList.remove("off");
-      btn.textContent = "● 録音中";
-
-      rec.onresult = (e) => {
-        const t = e.results?.[0]?.[0]?.transcript || "";
-        if (t) appendToTextarea(target, t);
-      };
-      rec.onerror = (e) => {
-        console.error(e);
-      };
-      rec.onend = () => {
-        listening = false;
-        btn.classList.add("off");
-        btn.textContent = btn.dataset.label || btn.textContent;
-        btn.textContent = btn.dataset.label;
-      };
-
-      rec.start();
-    }
-
-    btn.dataset.label = btn.textContent;
-    btn.addEventListener("click", () => {
-      if (!listening) start();
-      else {
-        try { rec.stop(); } catch(e) {}
-      }
-    });
-  }
-
-  // ===== State =====
-  let records = [];
-  let residents = [];
-  let favorites = {};
-  let editingId = null;
-
-  const DEFAULT_DAY_SUPPORT = [
-    "声かけ","見守り","服薬見守り","外出確認","金銭管理支援","清掃支援",
-    "入浴確認","健康確認","関係機関連絡","通院同行","買い物同行","相談対応"
-  ];
-
-  // ===== Renderers =====
-  function renderResidentSelects() {
-    // main resident select
-    const sel = $("resident");
-    sel.innerHTML = "";
-
-    const opt0 = document.createElement("option");
-    opt0.value = "";
-    opt0.textContent = "（選択）";
-    sel.appendChild(opt0);
-
-    residents.forEach(name => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
-    });
-
-    // right-side favResident
-    const favSel = $("favResident");
-    favSel.innerHTML = "";
-    const optF0 = document.createElement("option");
-    optF0.value = "";
-    optF0.textContent = "（利用者を選択）";
-    favSel.appendChild(optF0);
-    residents.forEach(name => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      favSel.appendChild(opt);
-    });
-
-    // list filter
-    const lsel = $("listFilterResident");
-    lsel.innerHTML = "";
     const optAll = document.createElement("option");
     optAll.value = "";
     optAll.textContent = "全員";
-    lsel.appendChild(optAll);
+    filterResident.appendChild(optAll);
+
     residents.forEach(name => {
       const opt = document.createElement("option");
       opt.value = name;
       opt.textContent = name;
-      lsel.appendChild(opt);
+      filterResident.appendChild(opt);
     });
   }
 
-  function renderResidentList() {
-    const wrap = $("residentList");
-    wrap.innerHTML = "";
-    if (!residents.length) {
-      const s = document.createElement("span");
-      s.className = "muted";
-      s.textContent = "まだ登録がありません。";
-      wrap.appendChild(s);
-      return;
-    }
-    residents.forEach(name => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.innerHTML = `<b>${escapeHtml(name)}</b>`;
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "btn-danger";
-      del.style.padding = "6px 10px";
-      del.textContent = "削除";
-      del.addEventListener("click", () => {
-        if (!confirm(`利用者「${name}」を削除しますか？（記録データは残ります）`)) return;
-        residents = residents.filter(x => x !== name);
-        saveResidents(residents);
-        // favoritesも整理
-        if (favorites[name]) {
-          delete favorites[name];
-          saveFavorites(favorites);
-        }
-        renderAll();
-      });
-      chip.appendChild(del);
-      wrap.appendChild(chip);
-    });
-  }
+  function renderRecords(records) {
+    const tbody = document.getElementById("recordTableBody");
+    const filterResident = document.getElementById("filterResident").value;
+    const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase();
+    const periodFilter = document.getElementById("periodFilter").value;
+    const periodFrom = document.getElementById("periodFrom").value;
+    const periodTo   = document.getElementById("periodTo").value;
 
-  function getCurrentResident() {
-    return $("resident").value || "";
-  }
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0,10);
+    const monthPrefix = todayStr.slice(0,7);
+    const yearPrefix  = todayStr.slice(0,4);
 
-  function getFavListForResident(name) {
-    const list = favorites[name];
-    if (Array.isArray(list) && list.length) return list;
-    return DEFAULT_DAY_SUPPORT.slice();
-  }
+    const weekStart = new Date(today);
+    weekStart.setDate(weekStart.getDate() - 6);
 
-  function renderDaySupportChecks() {
-    const wrap = $("daySupportChecks");
-    wrap.innerHTML = "";
-    const name = getCurrentResident();
-    const list = getFavListForResident(name);
-
-    list.forEach(item => {
-      const div = document.createElement("label");
-      div.className = "checkitem";
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.value = item;
-      cb.checked = false;
-      div.appendChild(cb);
-
-      const span = document.createElement("span");
-      span.textContent = item;
-      div.appendChild(span);
-      wrap.appendChild(div);
-    });
-  }
-
-  function setCheckedDaySupport(items) {
-    const wrap = $("daySupportChecks");
-    const set = new Set((items || []).map(String));
-    wrap.querySelectorAll("input[type=checkbox]").forEach(cb => {
-      cb.checked = set.has(cb.value);
-    });
-  }
-
-  function getCheckedDaySupport() {
-    const wrap = $("daySupportChecks");
-    const items = [];
-    wrap.querySelectorAll("input[type=checkbox]").forEach(cb => {
-      if (cb.checked) items.push(cb.value);
-    });
-    return items;
-  }
-
-  function renderFavoritesEditor() {
-    const name = $("favResident").value || "";
-    const chips = $("favChips");
-    chips.innerHTML = "";
-
-    if (!name) {
-      const s = document.createElement("span");
-      s.className = "muted";
-      s.textContent = "利用者を選んでください。";
-      chips.appendChild(s);
-      return;
-    }
-
-    const list = getFavListForResident(name);
-
-    list.forEach(item => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.innerHTML = `${escapeHtml(item)}`;
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "btn-danger";
-      del.style.padding = "6px 10px";
-      del.textContent = "削除";
-      del.addEventListener("click", () => {
-        const current = getFavListForResident(name).filter(x => x !== item);
-        favorites[name] = current;
-        saveFavorites(favorites);
-        renderFavoritesEditor();
-        // 入力欄側が同利用者なら反映
-        if (getCurrentResident() === name) renderDaySupportChecks();
-      });
-      chip.appendChild(del);
-      chips.appendChild(chip);
-    });
-  }
-
-  function renderCounts() {
-    $("counts").textContent = `${records.length}件`;
-    $("listCount").textContent = `${records.length}件`;
-  }
-
-  function renderSavedList() {
-    const tbody = $("savedTbody");
     tbody.innerHTML = "";
 
-    const filterResident = $("listFilterResident").value;
-    const keyword = ($("listKeyword").value || "").trim().toLowerCase();
+    const filtered = records.filter(r => {
+      if (filterResident && r.resident !== filterResident) return false;
 
-    let filtered = records.slice();
+      const dateStr = r.date;
+      if (dateStr) {
+        if (periodFilter === "today") {
+          if (dateStr !== todayStr) return false;
+        } else if (periodFilter === "week") {
+          const d = new Date(dateStr);
+          if (isNaN(d)) return false;
+          if (d < weekStart || d > today) return false;
+        } else if (periodFilter === "month") {
+          if (dateStr.slice(0,7) !== monthPrefix) return false;
+        } else if (periodFilter === "year") {
+          if (dateStr.slice(0,4) !== yearPrefix) return false;
+        } else if (periodFilter === "custom") {
+          if (periodFrom && dateStr < periodFrom) return false;
+          if (periodTo   && dateStr > periodTo)   return false;
+        }
+      } else {
+        if (periodFilter !== "all") return false;
+      }
 
-    if (filterResident) {
-      filtered = filtered.filter(r => r.resident === filterResident);
-    }
-    if (keyword) {
-      filtered = filtered.filter(r => {
+      if (keyword) {
         const tagsText = (r.tags || []).join(" ");
         const target = (
           (r.support || "") + " " +
-          (r.note || "") + " " +
-          (r.meal || "") + " " +
-          (r.medNote || "") + " " +
-          (r.dayMainSupport || "") + " " +
-          (r.daySupportItems || []).join(" ") + " " +
+          (r.note || "")    + " " +
+          (r.meal || "")    + " " +
           tagsText
         ).toLowerCase();
-        return target.includes(keyword);
-      });
-    }
+        if (!target.includes(keyword)) return false;
+      }
 
-    filtered.sort((a,b) => (a.date < b.date ? 1 : -1));
+      return true;
+    });
 
-    if (!filtered.length) {
+    document.getElementById("recordCount").textContent =
+      filtered.length + "件";
+
+    if (filtered.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 5;
-      td.className = "muted";
-      td.style.padding = "12px";
-      td.textContent = "該当する記録がありません。";
+      td.colSpan = 8;
+      td.className = "no-records";
+      td.textContent =
+        "該当する記録がありません。利用者・期間・キーワードを確認してください。";
       tr.appendChild(td);
       tbody.appendChild(tr);
-      $("listCount").textContent = "0件";
       return;
     }
 
-    $("listCount").textContent = `${filtered.length}件`;
+    filtered
+      .slice()
+      .sort((a,b) => (a.date < b.date ? 1 : -1))
+      .forEach(record => {
+        const tr = document.createElement("tr");
 
-    filtered.slice(0, 200).forEach(r => {
-      const tr = document.createElement("tr");
+        const tdDate = document.createElement("td");
+        tdDate.textContent = record.date || "";
+        tr.appendChild(tdDate);
 
-      const tdDate = document.createElement("td");
-      tdDate.textContent = r.date || "";
-      tr.appendChild(tdDate);
+        const tdResident = document.createElement("td");
+        tdResident.textContent = record.resident || "";
+        tr.appendChild(tdResident);
 
-      const tdRes = document.createElement("td");
-      tdRes.textContent = r.resident || "";
-      tr.appendChild(tdRes);
+        const tdTime = document.createElement("td");
+        const span = document.createElement("span");
+        span.textContent = record.timeSlot || "";
+        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
+        tdTime.appendChild(span);
+        tr.appendChild(tdTime);
 
-      const tdTime = document.createElement("td");
-      const span = document.createElement("span");
-      span.className = "badge " + getTimeBadgeClass(r.timeSlot);
-      span.textContent = r.timeSlot || "";
-      tdTime.appendChild(span);
-      tr.appendChild(tdTime);
+        const tdCond = document.createElement("td");
+        tdCond.innerHTML =
+          (record.condition || "") +
+          "<br><span class='small-text'>" +
+          (record.mental || "") + "</span>";
+        tr.appendChild(tdCond);
 
-      const tdSup = document.createElement("td");
-      tdSup.className = "support-snippet";
-      tdSup.textContent = (r.support || "").replace(/\n/g," ");
-      tr.appendChild(tdSup);
+        const tdMeal = document.createElement("td");
+        tdMeal.textContent = record.meal || "";
+        tr.appendChild(tdMeal);
 
-      const tdAct = document.createElement("td");
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.textContent = "編集";
-      editBtn.className = "btn-primary";
-      editBtn.style.padding = "6px 10px";
-      editBtn.addEventListener("click", () => startEdit(r.id));
+        const tdSupport = document.createElement("td");
+        tdSupport.className = "support-cell";
+        tdSupport.textContent = record.support || "";
 
-      const delBtn = document.createElement("button");
-      delBtn.type = "button";
-      delBtn.textContent = "削除";
-      delBtn.className = "btn-danger";
-      delBtn.style.padding = "6px 10px";
-      delBtn.style.marginLeft = "6px";
-      delBtn.addEventListener("click", () => {
-        if (!confirm("この記録を削除しますか？")) return;
-        records = records.filter(x => x.id !== r.id);
-        saveRecords(records);
-        renderAll();
+        if (record.tags && record.tags.length) {
+          const tagDiv = document.createElement("div");
+          tagDiv.className = "small-text";
+          record.tags.forEach(tag => {
+            const chip = document.createElement("span");
+            chip.className = "tag-chip";
+            chip.textContent = "#" + tag;
+            tagDiv.appendChild(chip);
+          });
+          tdSupport.appendChild(document.createElement("br"));
+          tdSupport.appendChild(tagDiv);
+        }
+        tr.appendChild(tdSupport);
+
+        const tdMed = document.createElement("td");
+        tdMed.textContent = record.medTaken ? "服薬済み" : "";
+        tr.appendChild(tdMed);
+
+        const tdDay = document.createElement("td");
+        const typeLabel = record.daySupportType
+          ? "加算" + record.daySupportType
+          : "";
+        tdDay.innerHTML =
+          (typeLabel || "") +
+          (record.daySupportItems && record.daySupportItems.length
+            ? "<br><span class='small-text'>" +
+              record.daySupportItems.join("、") + "</span>"
+            : "");
+        tr.appendChild(tdDay);
+
+        tbody.appendChild(tr);
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const records = loadRecords();
+    const residents = loadResidents(records);
+    renderFilters(residents);
+    renderRecords(records);
+
+    document.getElementById("filterResident")
+      .addEventListener("change", () => renderRecords(records));
+
+    document.getElementById("searchKeyword")
+      .addEventListener("input", () => renderRecords(records));
+
+    document.getElementById("searchClearButton")
+      .addEventListener("click", () => {
+        document.getElementById("searchKeyword").value = "";
+        renderRecords(records);
       });
 
-      tdAct.appendChild(editBtn);
-      tdAct.appendChild(delBtn);
-      tr.appendChild(tdAct);
-
-      tbody.appendChild(tr);
-    });
-  }
-
-  // ===== Form =====
-  function setModeBadge() {
-    const badge = $("modeBadge");
-    const hint = $("editHint");
-    const cancel = $("cancelEdit");
-
-    if (editingId) {
-      badge.textContent = "編集中";
-      badge.className = "badge badge-evening";
-      hint.textContent = "保存で上書き更新されます";
-      cancel.style.display = "inline-block";
-    } else {
-      badge.textContent = "新規";
-      badge.className = "badge badge-day";
-      hint.textContent = "保存で新規追加されます";
-      cancel.style.display = "none";
-    }
-  }
-
-  function clearForm(keepResident=false) {
-    $("date").value = todayStr();
-    if (!keepResident) $("resident").value = "";
-    $("timeSlot").value = "日中";
-    $("condition").value = "";
-    $("mental").value = "";
-    $("meal").value = "";
-    $("support").value = "";
-    $("note").value = "";
-    $("tags").value = "";
-    $("medTaken").checked = false;
-    $("medNote").value = "";
-    $("daySupportType").value = "";
-    $("dayMainSupport").value = "";
-    renderDaySupportChecks();
-    setCheckedDaySupport([]);
-    editingId = null;
-    setModeBadge();
-  }
-
-  function startEdit(id) {
-    const r = records.find(x => x.id === id);
-    if (!r) return;
-
-    editingId = id;
-    $("date").value = r.date || todayStr();
-    $("resident").value = r.resident || "";
-    $("timeSlot").value = r.timeSlot || "日中";
-    $("condition").value = r.condition || "";
-    $("mental").value = r.mental || "";
-    $("meal").value = r.meal || "";
-    $("support").value = r.support || "";
-    $("note").value = r.note || "";
-    $("tags").value = (r.tags || []).map(t => "#" + t).join(" ");
-    $("medTaken").checked = !!r.medTaken;
-    $("medNote").value = r.medNote || "";
-    $("daySupportType").value = r.daySupportType || "";
-    $("dayMainSupport").value = r.dayMainSupport || "";
-
-    renderDaySupportChecks();
-    setCheckedDaySupport(r.daySupportItems || []);
-
-    setModeBadge();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function buildRecordFromForm(existingId=null) {
-    const date = $("date").value;
-    const resident = $("resident").value;
-    if (!date) { alert("日付を入力してください"); return null; }
-    if (!resident) { alert("利用者を選択してください"); return null; }
-
-    const tags = normalizeTags($("tags").value);
-    const daySupportItems = getCheckedDaySupport();
-
-    return {
-      id: existingId || cryptoRandomId(),
-      date,
-      resident,
-      timeSlot: $("timeSlot").value || "日中",
-      condition: $("condition").value || "",
-      mental: $("mental").value || "",
-      meal: $("meal").value || "",
-      support: $("support").value || "",
-      note: $("note").value || "",
-      tags,
-      medTaken: $("medTaken").checked,
-      medNote: $("medNote").value || "",
-      daySupportType: $("daySupportType").value || "",
-      daySupportItems,
-      dayMainSupport: $("dayMainSupport").value || ""
-    };
-  }
-
-  function upsertRecord(r) {
-    const idx = records.findIndex(x => x.id === r.id);
-    if (idx >= 0) records[idx] = r;
-    else records.push(r);
-    saveRecords(records);
-  }
-
-  // ===== Export / Import =====
-  function exportData() {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      records,
-      residents,
-      favorites
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `group_home_backup_${todayStr()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  async function importData(file) {
-    const text = await file.text();
-    const parsed = safeJsonParse(text, null);
-    if (!parsed || typeof parsed !== "object") {
-      alert("JSONの形式が正しくありません。");
-      return;
-    }
-    const rec = Array.isArray(parsed.records) ? parsed.records : null;
-    const res = Array.isArray(parsed.residents) ? parsed.residents : null;
-    const fav = (parsed.favorites && typeof parsed.favorites === "object") ? parsed.favorites : null;
-
-    if (!rec || !res) {
-      alert("バックアップの中身が不足しています（records / residents）。");
-      return;
-    }
-    if (!confirm("バックアップを読み込みます。現在のデータは上書きされます。よろしいですか？")) return;
-
-    records = rec;
-    residents = res;
-    favorites = fav || {};
-
-    // 正規化
-    records.forEach(r => {
-      if (!r.id) r.id = cryptoRandomId();
-      if (!Array.isArray(r.tags)) r.tags = normalizeTags(r.tags || "");
-      if (!Array.isArray(r.daySupportItems)) r.daySupportItems = (r.daySupportItems ? [].concat(r.daySupportItems) : []);
+    const periodFilterEl = document.getElementById("periodFilter");
+    const customRow = document.getElementById("customPeriodRow");
+    periodFilterEl.addEventListener("change", () => {
+      const v = periodFilterEl.value;
+      customRow.style.display = v === "custom" ? "flex" : "none";
+      if (v !== "custom") renderRecords(records);
     });
 
-    saveRecords(records);
-    saveResidents(residents);
-    saveFavorites(favorites);
+    document.getElementById("applyCustomPeriod")
+      .addEventListener("click", () => renderRecords(records));
 
-    renderAll();
-    alert("読み込みが完了しました。");
-  }
-
-  // ===== Main Render =====
-  function renderAll() {
-    renderResidentSelects();
-    renderResidentList();
-    renderDaySupportChecks();
-    renderFavoritesEditor();
-    renderCounts();
-    renderSavedList();
-    setModeBadge();
-
-    // 編集中の利用者が消えていたら解除
-    if (editingId && !records.find(r => r.id === editingId)) {
-      editingId = null;
-      setModeBadge();
-    }
-  }
-
-  // ===== Events =====
-  document.addEventListener("DOMContentLoaded", () => {
-    records = loadRecords();
-    residents = loadResidentsFromKey(records);
-    favorites = loadFavorites();
-
-    // 初期日付
-    $("date").value = todayStr();
-
-    renderAll();
-
-    // 音声ボタン
-    setupSpeechButton("micSupport", "support");
-    setupSpeechButton("micNote", "note");
-    setupSpeechButton("micMed", "medNote");
-
-    // resident change => day support候補反映
-    $("resident").addEventListener("change", () => {
-      renderDaySupportChecks();
-      // 編集中のデータがあるならチェック復元はしない（誤上書き防止）
-      if (!editingId) setCheckedDaySupport([]);
-    });
-
-    // open records page
-    $("openRecords").addEventListener("click", () => {
-      window.location.href = "./records.html";
-    });
-
-    // add resident
-    $("addResident").addEventListener("click", () => {
-      const name = ($("newResident").value || "").trim();
-      if (!name) return;
-      if (residents.includes(name)) {
-        alert("同じ名前が既にあります。");
-        return;
-      }
-      residents.push(name);
-      saveResidents(residents);
-      $("newResident").value = "";
-      renderAll();
-      $("resident").value = name;
-      renderDaySupportChecks();
-    });
-
-    // favorites editor resident change
-    $("favResident").addEventListener("change", () => renderFavoritesEditor());
-
-    // add favorite chip
-    $("addFav").addEventListener("click", () => {
-      const name = $("favResident").value || "";
-      if (!name) { alert("利用者を選んでください"); return; }
-      const item = ($("favAdd").value || "").trim();
-      if (!item) return;
-
-      const list = getFavListForResident(name);
-      if (list.includes(item)) { alert("同じ項目が既にあります"); return; }
-
-      favorites[name] = list.concat(item);
-      saveFavorites(favorites);
-      $("favAdd").value = "";
-      renderFavoritesEditor();
-
-      if (getCurrentResident() === name) renderDaySupportChecks();
-    });
-
-    // add day support item (input side)
-    $("addDaySupportItem").addEventListener("click", () => {
-      const name = getCurrentResident();
-      if (!name) { alert("先に利用者を選択してください"); return; }
-      const item = ($("daySupportAddOne").value || "").trim();
-      if (!item) return;
-
-      const list = getFavListForResident(name);
-      if (!list.includes(item)) {
-        favorites[name] = list.concat(item);
-        saveFavorites(favorites);
-      }
-      $("daySupportAddOne").value = "";
-      renderDaySupportChecks();
-    });
-
-    // insert med template (append)
-    $("insertMedTemplate").addEventListener("click", () => {
-      const level = $("medTemplateLevel").value;
-      appendToTextarea($("medNote"), medTemplate(level));
-    });
-
-    $("clearMedNote").addEventListener("click", () => {
-      if (!confirm("服薬メモだけ消しますか？")) return;
-      $("medNote").value = "";
-    });
-
-    // save
-    $("save").addEventListener("click", () => {
-      const r = buildRecordFromForm(editingId);
-      if (!r) return;
-
-      upsertRecord(r);
-
-      // residents key の整合
-      if (!residents.includes(r.resident)) {
-        residents.push(r.resident);
-        saveResidents(residents);
-      }
-
-      // 編集終了
-      const keepRes = true;
-      clearForm(keepRes);
-      renderAll();
-      alert("保存しました。");
-    });
-
-    $("clearForm").addEventListener("click", () => {
-      if (!confirm("入力中の内容をクリアしますか？（保存済みデータは消えません）")) return;
-      clearForm(false);
-    });
-
-    $("cancelEdit").addEventListener("click", () => {
-      if (!confirm("編集をやめてフォームをクリアしますか？")) return;
-      clearForm(false);
-      renderAll();
-    });
-
-    // list filters
-    $("listFilterResident").addEventListener("change", renderSavedList);
-    $("listKeyword").addEventListener("input", renderSavedList);
-    $("listClear").addEventListener("click", () => {
-      $("listKeyword").value = "";
-      $("listFilterResident").value = "";
-      renderSavedList();
-    });
-
-    // export/import
-    $("exportData").addEventListener("click", exportData);
-    $("importFile").addEventListener("change", async (e) => {
-      const f = e.target.files?.[0];
-      if (!f) return;
-      await importData(f);
-      e.target.value = "";
-    });
+    document.getElementById("backIndex")
+      .addEventListener("click", () => {
+        window.location.href = "./index.html";
+      });
   });
 </script>
 </body>
