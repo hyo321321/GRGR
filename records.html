@@ -151,7 +151,6 @@
     .small-text {
       font-size: 12px;
       color: #6b7280;
-      white-space: pre-wrap;
     }
     .no-records {
       padding: 14px;
@@ -161,7 +160,7 @@
     }
     /* 支援内容を全文・改行ありで表示 */
     .support-cell {
-      white-space: pre-wrap;
+      white-space: pre-wrap;   /* \n を改行として表示 */
       word-wrap: break-word;
     }
     @media (max-width: 800px) {
@@ -218,7 +217,7 @@
              placeholder="例：通院, 夜間, #体調不良 など" style="flex:1; min-width:180px;">
       <button type="button" id="searchClearButton">クリア</button>
       <span class="small-text">
-        ※支援内容・特記事項・タグ・服薬メモ・日中支援から検索します。
+        ※支援内容・特記事項・タグから検索します。
       </span>
     </div>
 
@@ -236,7 +235,9 @@
           <th>日中支援</th>
         </tr>
         </thead>
-        <tbody id="recordTableBody"></tbody>
+        <tbody id="recordTableBody">
+        <!-- JSで挿入 -->
+        </tbody>
       </table>
     </div>
   </section>
@@ -268,7 +269,9 @@
     } catch(e) {
       console.error(e);
     }
-    return Array.from(new Set(records.map(r => r.resident).filter(Boolean)));
+    return Array.from(
+      new Set(records.map(r => r.resident).filter(Boolean))
+    );
   }
 
   function getTimeBadgeClass(timeSlot) {
@@ -340,14 +343,10 @@
 
       if (keyword) {
         const tagsText = (r.tags || []).join(" ");
-        const dayItems = (r.daySupportItems || []).join(" ");
         const target = (
           (r.support || "") + " " +
           (r.note || "")    + " " +
           (r.meal || "")    + " " +
-          (r.medNote || "") + " " +
-          (r.dayMainSupport || "") + " " +
-          dayItems + " " +
           tagsText
         ).toLowerCase();
         if (!target.includes(keyword)) return false;
@@ -356,14 +355,16 @@
       return true;
     });
 
-    document.getElementById("recordCount").textContent = filtered.length + "件";
+    document.getElementById("recordCount").textContent =
+      filtered.length + "件";
 
     if (filtered.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.colSpan = 8;
       td.className = "no-records";
-      td.textContent = "該当する記録がありません。利用者・期間・キーワードを確認してください。";
+      td.textContent =
+        "該当する記録がありません。利用者・期間・キーワードを確認してください。";
       tr.appendChild(td);
       tbody.appendChild(tr);
       return;
@@ -420,24 +421,19 @@
         tr.appendChild(tdSupport);
 
         const tdMed = document.createElement("td");
-        const medLine = record.medTaken ? "服薬済み" : "";
-        const medNote = (record.medNote || "").trim();
-        tdMed.innerHTML = medLine
-          + (medNote ? "<br><span class='small-text'>" + medNote.replace(/\n/g,"<br>") + "</span>" : "");
+        tdMed.textContent = record.medTaken ? "服薬済み" : "";
         tr.appendChild(tdMed);
 
         const tdDay = document.createElement("td");
-        const typeLabel = record.daySupportType ? "加算" + record.daySupportType : "";
-        const items = (record.daySupportItems && record.daySupportItems.length)
-          ? record.daySupportItems.join("、")
+        const typeLabel = record.daySupportType
+          ? "加算" + record.daySupportType
           : "";
-        const main = (record.dayMainSupport || "").trim();
-
         tdDay.innerHTML =
           (typeLabel || "") +
-          (items ? "<br><span class='small-text'>" + items + "</span>" : "") +
-          (main ? "<br><span class='small-text'>" + main.replace(/\n/g,"<br>") + "</span>" : "");
-
+          (record.daySupportItems && record.daySupportItems.length
+            ? "<br><span class='small-text'>" +
+              record.daySupportItems.join("、") + "</span>"
+            : "");
         tr.appendChild(tdDay);
 
         tbody.appendChild(tr);
