@@ -1438,18 +1438,17 @@
       // 服薬管理（あなたの文章に寄せて短め）
       if (checkedItems.includes("med_manage")) {
         parts.push(
-          "【服薬管理】処方薬は事務所にて一括管理。服薬時は職員が事務所より手渡し、服薬管理を実施。"
+          "【服薬管理】処方薬は事務所にて一括管理している。"
         );
       }
 
       // 内服確認（あなたの文章に寄せて短め）
-      if (checkedItems.includes("oral_check")) {
-        parts.push(
-          medTaken
-            ? "【内服確認】服薬時に職員が手渡し、内服確認を実施（内服済み）。"
-            : "【内服確認】服薬時に職員が手渡し、内服確認を実施（未確認／未内服の可能性あり）。"
-        );
-      }
+     if (checkedItems.includes("oral_check")) {
+  parts.push(
+    "【内服確認】服薬時は職員が手渡し、目の前で飲んで頂き内服確認を行った。"
+  );
+}
+
 
       // 入浴
       if (checkedItems.includes("bathing")) {
@@ -2080,3 +2079,4 @@
   </script>
 </body>
 </html>
+
