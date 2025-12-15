@@ -1422,7 +1422,6 @@
     const FAV_BY_RESIDENT_KEY = "group_home_fav_by_resident_v1";
     const RESIDENT_AUTO_TEMPLATES_KEY = "group_home_resident_auto_templates_v1";
     const DAY_SUPPORT_BY_RESIDENT_KEY = "group_home_day_support_by_resident_v1";
-    const DAY_SUPPORT_DEFAULT_KEY = "group_home_day_support_default_v1";
 
     const DEFAULT_AUTO_ITEM_DEFS = [
       { key: "med_manage",  label: "服薬管理", defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。" },
@@ -1626,23 +1625,11 @@
     function loadDaySupportByResident() { return loadJSON(DAY_SUPPORT_BY_RESIDENT_KEY, {}); }
     function saveDaySupportByResident() { saveJSON(DAY_SUPPORT_BY_RESIDENT_KEY, daySupportByResident); }
 
-// ✅ デフォルト（日中支援チェック：利用者未選択時/未上書き時に使う）
-function loadDaySupportDefault() {
-  const parsed = loadJSON(DAY_SUPPORT_DEFAULT_KEY, null);
-  if (parsed && Array.isArray(parsed.main) && Array.isArray(parsed.reason)) return parsed;
-  const init = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
-  saveJSON(DAY_SUPPORT_DEFAULT_KEY, init);
-  return init;
-}
-function saveDaySupportDefault(conf) { saveJSON(DAY_SUPPORT_DEFAULT_KEY, conf); }
-function resetDaySupportDefaultToBuiltIn() { localStorage.removeItem(DAY_SUPPORT_DEFAULT_KEY); }
-
     function getDaySupportForResident(resident) {
-  const name = (resident || "").trim();
-  const st = name ? daySupportByResident[name] : null;
-  if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return st;
-  return loadDaySupportDefault();
-}
+      const st = daySupportByResident[resident];
+      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return st;
+      return { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+    }
 
     function applyDaySupportListsForResident(resident) {
       if (!resident) return;
@@ -3431,119 +3418,51 @@ function handleRestoreFile(file) {
     }
 
     // ===== 日中支援チェック（この利用者）小窓 =====
-    
-function openDaySupportModalForCurrentResident() {
-  const resident = (document.getElementById("resident")?.value || "").trim();
-  const modal = document.getElementById("dsModal");
-  if (!modal) return;
+    function openDaySupportModalForCurrentResident() {
+      const resident = document.getElementById("resident")?.value;
+      if (!resident) { alert("先に利用者を選択してください。"); return; }
 
-  const isDefault = !resident;
+      document.getElementById("dsModalResidentInfo").textContent = `対象：${resident}`;
+      const conf = getDaySupportForResident(resident);
 
-  // モードを保持（保存/初期化で使う）
-  modal.dataset.mode = isDefault ? "default" : "resident";
-  modal.dataset.resident = resident;
+      document.getElementById("dsModalMain").value = conf.main.join("\n");
+      document.getElementById("dsModalReason").value = conf.reason.join("\n");
 
-  const titleEl = document.getElementById("dsModalTitle");
-  if (titleEl) titleEl.textContent = isDefault ? "日中支援チェック編集（デフォルト）" : "日中支援チェック編集（利用者別）";
+      document.getElementById("dsModal").classList.add("show");
+    }
 
-  document.getElementById("dsModalResidentInfo").textContent =
-    isDefault ? "対象：デフォルト（利用者未選択）" : `対象：${resident}`;
+    function saveDaySupportModal() {
+      const resident = document.getElementById("resident")?.value;
+      if (!resident) return;
 
-  const conf = isDefault ? loadDaySupportDefault() : getDaySupportForResident(resident);
+      const mainLines = (document.getElementById("dsModalMain").value || "").split("\n").map((x) => x.trim()).filter(Boolean);
+      const reasonLines = (document.getElementById("dsModalReason").value || "").split("\n").map((x) => x.trim()).filter(Boolean);
 
-  document.getElementById("dsModalMain").value = conf.main.join("
-");
-  document.getElementById("dsModalReason").value = conf.reason.join("
-");
+      daySupportByResident[resident] = { main: mainLines, reason: reasonLines };
+      saveDaySupportByResident();
 
-  const resetBtn = document.getElementById("dsModalResetBtn");
-  if (resetBtn) resetBtn.textContent = isDefault ? "↩ 初期（標準）に戻す" : "↩ 初期に戻す";
+      applyDaySupportListsForResident(resident);
+      renderDaySupportManager();
 
-  modal.classList.add("show");
-}
+      document.getElementById("dsModal").classList.remove("show");
+      alert("保存しました（フォームに反映）");
+    }
 
+    function resetDaySupportModalToDefault() {
+      const resident = document.getElementById("resident")?.value;
+      if (!resident) return;
+      if (!confirm("この利用者の日中支援チェックを初期に戻しますか？")) return;
 
-function saveDaySupportModal() {
-  const modal = document.getElementById("dsModal");
-  const mode = modal?.dataset.mode || "resident";
-  const resident = (modal?.dataset.resident || document.getElementById("resident")?.value || "").trim();
+      delete daySupportByResident[resident];
+      saveDaySupportByResident();
 
-  const mainLines = (document.getElementById("dsModalMain").value || "")
-    .split("
-").map((x) => x.trim()).filter(Boolean);
-  const reasonLines = (document.getElementById("dsModalReason").value || "")
-    .split("
-").map((x) => x.trim()).filter(Boolean);
+      applyDaySupportListsForResident(resident);
+      renderDaySupportManager();
 
-  // ✅ 利用者未選択なら「デフォルト」を保存
-  if (mode === "default" || !resident) {
-    const conf = { main: mainLines, reason: reasonLines };
-    saveDaySupportDefault(conf);
+      openDaySupportModalForCurrentResident();
+    }
 
-    // フォームの表示も更新（利用者未選択時の見え方）
-    DAY_SUPPORT_MAIN_LIST = conf.main.slice();
-    DAY_SUPPORT_REASON_LIST = conf.reason.slice();
-    renderDaySupportMainCheckboxes();
-    renderDaySupportReasonCheckboxes();
-
-    // 選択中の利用者がいれば、その表示も更新（上書き設定は保持）
-    const current = (document.getElementById("resident")?.value || "").trim();
-    if (current) applyDaySupportListsForResident(current);
-
-    renderDaySupportManager();
-
-    modal?.classList.remove("show");
-    alert("保存しました（デフォルトを更新）");
-    return;
-  }
-
-  // ✅ 利用者別（上書き）を保存
-  daySupportByResident[resident] = { main: mainLines, reason: reasonLines };
-  saveDaySupportByResident();
-
-  applyDaySupportListsForResident(resident);
-  renderDaySupportManager();
-
-  modal?.classList.remove("show");
-  alert("保存しました（フォームに反映）");
-}
-
-
-function resetDaySupportModalToDefault() {
-  const modal = document.getElementById("dsModal");
-  const mode = modal?.dataset.mode || "resident";
-  const resident = (modal?.dataset.resident || document.getElementById("resident")?.value || "").trim();
-
-  // ✅ デフォルトを「標準」に戻す
-  if (mode === "default" || !resident) {
-    if (!confirm("デフォルト（日中支援チェック）を初期（標準）に戻しますか？")) return;
-
-    resetDaySupportDefaultToBuiltIn(); // localStorage のデフォルトを消す
-    const conf = loadDaySupportDefault(); // 標準に復帰して読み直し
-
-    DAY_SUPPORT_MAIN_LIST = conf.main.slice();
-    DAY_SUPPORT_REASON_LIST = conf.reason.slice();
-    renderDaySupportMainCheckboxes();
-    renderDaySupportReasonCheckboxes();
-    renderDaySupportManager();
-
-    openDaySupportModalForCurrentResident();
-    return;
-  }
-
-  // ✅ 利用者別の上書きを削除（=デフォルトに戻す）
-  if (!confirm("この利用者の日中支援チェックを初期に戻しますか？")) return;
-
-  delete daySupportByResident[resident];
-  saveDaySupportByResident();
-
-  applyDaySupportListsForResident(resident);
-  renderDaySupportManager();
-
-  openDaySupportModalForCurrentResident();
-}
-
-function renderAllResidentScopedUIs() {() {
+    function renderAllResidentScopedUIs() {
       renderFavManager();
       renderResidentTemplateManager();
       renderDaySupportManager();
@@ -3577,10 +3496,7 @@ function renderAllResidentScopedUIs() {() {
       renderAutoItemCheckboxes();
       renderAutoItemManager();
 
-      // 初期（日中支援チェック）：デフォルト（編集済み）を反映
-      const dsDef = loadDaySupportDefault();
-      DAY_SUPPORT_MAIN_LIST = dsDef.main.slice();
-      DAY_SUPPORT_REASON_LIST = dsDef.reason.slice();
+      // 初期（日中支援チェック）
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
 
