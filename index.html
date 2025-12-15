@@ -322,7 +322,28 @@
       font-size: 11px;
     }
 
-    /* PC苦手な人向け：大きな選択ボタン */
+    
+
+    /* ✅ 記録一覧：日中に行った主な支援（チップ表示） */
+    .main-chip {
+      display: inline-block;
+      margin: 2px 6px 0 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-size: 11px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .label-mini {
+      font-size: 11px;
+      color: #374151;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+/* PC苦手な人向け：大きな選択ボタン */
     .quick-row {
       display: flex;
       gap: 8px;
@@ -827,8 +848,6 @@
           style="font-size:12px; padding:6px 10px;">
     🧷 バックアップ
   </button>
-            <button id="restoreBtn" class="ghost-btn">復元</button>
-            <input id="restoreInput" type="file" accept="application/json" style="display:none" />
 
   <button type="button" class="btn-secondary" id="exportExcelBtn"
           style="font-size:12px; padding:6px 10px;">
@@ -1842,6 +1861,28 @@ if (needToggle) {
 } else {
   tdSupport.appendChild(supportDiv);
 }
+
+
+// ✅ 日中に行った主な支援（記録一覧に表示）
+const dayMain = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems.filter(Boolean) : [];
+if (dayMain.length) {
+  const mainDiv = document.createElement("div");
+  mainDiv.className = "small-text";
+  const label = document.createElement("span");
+  label.className = "label-mini";
+  label.textContent = "日中主な支援：";
+  mainDiv.appendChild(label);
+
+  dayMain.forEach((item) => {
+    const chip = document.createElement("span");
+    chip.className = "main-chip";
+    chip.textContent = item;
+    mainDiv.appendChild(chip);
+  });
+
+  tdSupport.appendChild(mainDiv);
+}
+
 
 // タグ表示（今まで通り）
 if (record.tags && record.tags.length) {
@@ -3486,191 +3527,7 @@ tr.appendChild(tdSupport);
         voiceStatus.textContent = "音声入力エラー：" + e.error;
       });
     });
-  
-
-    // ================================
-    // バックアップ / 復元 / エクセル出力（CSV）
-    // ================================
-    (function () {
-      const APP_STORAGE_PREFIX = "group_home_";
-
-      function todayYMD() {
-        const d = new Date();
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
-        return `${yyyy}-${mm}-${dd}`;
-      }
-
-      function downloadTextFile(filename, text, mime) {
-        const blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-
-      function collectAppStorage() {
-        const data = {};
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (!k) continue;
-          if (k.startsWith(APP_STORAGE_PREFIX)) {
-            data[k] = localStorage.getItem(k);
-          }
-        }
-        return {
-          meta: {
-            app: "group_home_record",
-            version: 1,
-            createdAt: new Date().toISOString(),
-            note: "This file contains localStorage values (JSON strings) for keys starting with " + APP_STORAGE_PREFIX
-          },
-          data
-        };
-      }
-
-      function restoreAppStorage(payload) {
-        if (!payload || typeof payload !== "object" || !payload.data || typeof payload.data !== "object") {
-          throw new Error("バックアップファイルの形式が正しくありません。");
-        }
-        // まず現状のキーを消す（prefix一致のみ）
-        const toRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith(APP_STORAGE_PREFIX)) toRemove.push(k);
-        }
-        toRemove.forEach(k => localStorage.removeItem(k));
-        // 新しいキーを復元
-        Object.keys(payload.data).forEach(k => {
-          if (k.startsWith(APP_STORAGE_PREFIX)) {
-            localStorage.setItem(k, payload.data[k]);
-          }
-        });
-      }
-
-      function csvEscape(v) {
-        const s = (v ?? "").toString();
-        if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-        return s;
-      }
-
-      function recordsToCsv(recordsArr) {
-        const header = [
-          "記録日",
-          "利用者",
-          "時間帯",
-          "体調",
-          "心の状態",
-          "日中の支援種別",
-          "日中の主な支援",
-          "日中の支援理由",
-          "食事",
-          "服薬",
-          "支援内容・様子",
-          "支援タグ",
-          "連絡/特記事項",
-          "記録ID",
-          "作成日時"
-        ];
-
-        const rows = [header];
-        (recordsArr || []).forEach(r => {
-          const dayMain = Array.isArray(r.daySupportMainItems) ? r.daySupportMainItems.join(" / ") : (r.daySupportMainItems || "");
-          const dayReason = Array.isArray(r.daySupportReasonItems) ? r.daySupportReasonItems.join(" / ") : (r.daySupportReasonItems || "");
-          const tags = Array.isArray(r.supportTags) ? r.supportTags.join(" / ") : (r.supportTags || "");
-          rows.push([
-            r.date || "",
-            r.resident || "",
-            r.timeSlot || "",
-            r.condition || "",
-            r.mind || "",
-            r.daySupportType || "",
-            dayMain,
-            dayReason,
-            r.meal || "",
-            (r.medTaken === true ? "済" : (r.medTaken === false ? "未" : "")),
-            r.support || "",
-            tags,
-            r.note || "",
-            r.id || "",
-            r.createdAt || ""
-          ]);
-        });
-
-        // UTF-8 BOM を付けて Excel で文字化けしにくくする
-        const bom = "\ufeff";
-        return bom + rows.map(row => row.map(csvEscape).join(",")).join("\r\n");
-      }
-
-      function wireBackupRestoreExcel() {
-        const backupBtn = document.getElementById("backupBtn");
-        const restoreBtn = document.getElementById("restoreBtn");
-        const restoreInput = document.getElementById("restoreInput");
-        const exportExcelBtn = document.getElementById("exportExcelBtn");
-
-        if (backupBtn) {
-          backupBtn.addEventListener("click", () => {
-            try {
-              const payload = collectAppStorage();
-              const filename = `group_home_backup_${todayYMD()}.json`;
-              downloadTextFile(filename, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
-            } catch (e) {
-              alert("バックアップに失敗しました：\n" + (e?.message || e));
-            }
-          });
-        }
-
-        if (restoreBtn && restoreInput) {
-          restoreBtn.addEventListener("click", () => {
-            restoreInput.value = "";
-            restoreInput.click();
-          });
-
-          restoreInput.addEventListener("change", async (ev) => {
-            const file = ev.target.files && ev.target.files[0];
-            if (!file) return;
-
-            const ok = confirm("復元すると、現在のデータ（記録/設定）が上書きされます。よろしいですか？");
-            if (!ok) return;
-
-            try {
-              const txt = await file.text();
-              const payload = JSON.parse(txt);
-              restoreAppStorage(payload);
-              alert("復元が完了しました。ページを再読み込みします。");
-              location.reload();
-            } catch (e) {
-              alert("復元に失敗しました：\n" + (e?.message || e));
-            }
-          });
-        }
-
-        if (exportExcelBtn) {
-          exportExcelBtn.addEventListener("click", () => {
-            try {
-              const recs = (typeof records !== "undefined")
-                ? records
-                : (Array.isArray(window.records) ? window.records : []);
-              const csv = recordsToCsv(recs);
-              const filename = `group_home_records_${todayYMD()}.csv`;
-              downloadTextFile(filename, csv, "text/csv;charset=utf-8");
-            } catch (e) {
-              alert("エクセル出力に失敗しました：\n" + (e?.message || e));
-            }
-          });
-        }
-      }
-
-      // 既存のDOMContentLoadedとは別に安全に紐付け
-      document.addEventListener("DOMContentLoaded", wireBackupRestoreExcel);
-    })();
-
-</script>
+  </script>
 </body>
 </html>
 
