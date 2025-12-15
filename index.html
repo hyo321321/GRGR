@@ -7,50 +7,6 @@
 
   <style>
     * { box-sizing: border-box; }
-/* 主な支援：手書き丸チップ（改良版） */
-.hand-circle-wrap{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 12px;          /* ここで「線がつながる」を防ぐ */
-  align-items: flex-start;
-}
-
-.hand-circle{
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  background: rgba(255,255,255,0.92); /* 下の赤線が透けて繋がって見えるのを防ぐ */
-  border-radius: 9999px;
-  line-height: 1.6;
-  white-space: nowrap;
-}
-
-/* 外側の赤線（ペンっぽい） */
-.hand-circle::before{
-  content:"";
-  position:absolute;
-  inset: -5px -7px; /* ←広げすぎない（繋がる原因になる） */
-  border: 3px solid rgba(239,68,68,0.92);
-  border-radius: 9999px;
-  transform: rotate(var(--rot, -2deg));
-  filter: blur(0.15px);
-  pointer-events:none;
-}
-
-/* うっすら2重線で“手書き感” */
-.hand-circle::after{
-  content:"";
-  position:absolute;
-  inset: -6px -5px;
-  border: 2px solid rgba(239,68,68,0.45);
-  border-radius: 9999px;
-  transform: rotate(calc(var(--rot, -2deg) * -0.6));
-  filter: blur(0.15px);
-  pointer-events:none;
-}
-
-
 /* 記録一覧：支援内容を“折りたたみ→もっと見る” */
 .support-preview{
   white-space: pre-wrap;     /* 改行をそのまま表示 */
@@ -2052,47 +2008,7 @@ tr.appendChild(tdSupport);
       addRow("タグ：", tagsText);
       addRow("日中支援加算区分：", daySupportTypeLabel);
       addRow("日中支援の時間帯：", record.daySupportTime || "");
-     // 主な支援：手書き風の丸で表示（改良版）
-{
-  const wrap = document.createElement("div");
-  wrap.className = "detail-field";
-
-  const strong = document.createElement("strong");
-  strong.textContent = "主な支援：";
-  wrap.appendChild(strong);
-
-  const items = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
-  if (items.length === 0) {
-    const span = document.createElement("span");
-    span.textContent = "なし";
-    wrap.appendChild(span);
-  } else {
-    const list = document.createElement("div");
-    list.className = "hand-circle-wrap";
-
-    items.forEach((txt) => {
-      const chip = document.createElement("span");
-      chip.className = "hand-circle";
-      chip.textContent = txt;
-
-      // 角度を少しランダムにして“手書きのブレ”を出す
-      const rot = (Math.random() * 5 - 2.5).toFixed(1) + "deg";
-      chip.style.setProperty("--rot", rot);
-
-      list.appendChild(chip);
-    });
-
-    wrap.appendChild(list);
-  }
-
-  content.appendChild(wrap);
-}
-
-
-  wrap.appendChild(span);
-  content.appendChild(wrap);
-}
-
+      addRow("主な支援：", daySupportMainText);
       addRow("欠席理由：", daySupportReasonText);
 
       addMultiline("本日の支援内容・様子：", record.support || "");
@@ -3467,7 +3383,6 @@ tr.appendChild(tdSupport);
   </script>
 </body>
 </html>
-
 
 
 
