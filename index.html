@@ -52,16 +52,15 @@
     }
 
     main {
-      width: calc(100vw - 20px);
-      max-width: none;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 18px 10px 24px;
+      padding: 18px;
     }
 
     .layout {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 18px;
     }
 
     @media (max-width: 900px) {
@@ -323,28 +322,7 @@
       font-size: 11px;
     }
 
-    
-
-    /* ✅ 記録一覧：日中に行った主な支援（チップ表示） */
-    .main-chip {
-      display: inline-block;
-      margin: 2px 6px 0 0;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid #bfdbfe;
-      background: #eff6ff;
-      color: #1e3a8a;
-      font-size: 11px;
-      line-height: 1.4;
-      white-space: nowrap;
-    }
-    .label-mini {
-      font-size: 11px;
-      color: #374151;
-      font-weight: 600;
-      margin-right: 6px;
-    }
-/* PC苦手な人向け：大きな選択ボタン */
+    /* PC苦手な人向け：大きな選択ボタン */
     .quick-row {
       display: flex;
       gap: 8px;
@@ -561,7 +539,34 @@
   content:"!";
 }
 
-  </style>
+  
+    /* ===== 保存トースト（保存しました表示） ===== */
+    #saveToast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(17, 24, 39, 0.95);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 9999;
+      max-width: calc(100vw - 24px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #saveToast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-6px);
+    }
+
+</style>
 </head>
 
 <body>
@@ -1808,7 +1813,7 @@ if (d0 < weekStart || d0 > today0) return false;
       if (filtered.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 6;
+        td.colSpan = 7;
         td.className = "no-records";
         td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
@@ -1827,24 +1832,18 @@ if (d0 < weekStart || d0 > today0) return false;
         tdResident.textContent = record.resident || "";
         tr.appendChild(tdResident);
 
-        // 日中の主な支援（一覧表示：チェックした項目を表示）
-      const tdDayMain = document.createElement("td");
-      tdDayMain.className = "td-day-main";
-      const dayMain = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
-      if (dayMain.length) {
-        // チップ表示（main-chip は既存CSS）
-        dayMain.forEach((label) => {
-          const chip = document.createElement("span");
-          chip.className = "main-chip";
-          chip.textContent = label;
-          tdDayMain.appendChild(chip);
-        });
-      } else {
-        tdDayMain.textContent = "—";
-      }
-      tr.appendChild(tdDayMain);
+        const tdTime = document.createElement("td");
+        const span = document.createElement("span");
+        span.textContent = record.timeSlot || "";
+        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
+        tdTime.appendChild(span);
+        tr.appendChild(tdTime);
 
-const tdSupport = document.createElement("td");
+        const tdCond = document.createElement("td");
+        tdCond.innerHTML = (record.condition || "") + "<br><span class='small-text'>" + (record.mental || "") + "</span>";
+        tr.appendChild(tdCond);
+
+        const tdSupport = document.createElement("td");
 
 // 支援内容（折りたたみ）
 const full = (record.support || "").trim();
@@ -1868,7 +1867,6 @@ if (needToggle) {
 } else {
   tdSupport.appendChild(supportDiv);
 }
-
 
 // タグ表示（今まで通り）
 if (record.tags && record.tags.length) {
@@ -1962,6 +1960,18 @@ tr.appendChild(tdSupport);
       renderRecords();
     }
 
+    // ===== 保存しました（トースト） =====
+    let __toastTimer = null;
+    function showToast(message) {
+      const el = document.getElementById("saveToast");
+      if (!el) { alert(message || "保存しました"); return; }
+      el.textContent = (message || "保存しました");
+      el.classList.add("show");
+      if (__toastTimer) clearTimeout(__toastTimer);
+      __toastTimer = setTimeout(() => el.classList.remove("show"), 1600);
+    }
+
+
     function handleSubmit(event) {
       event.preventDefault();
 
@@ -1997,7 +2007,16 @@ tr.appendChild(tdSupport);
       };
 
       records.push(recordData);
-      saveRecords();
+
+      // ✅ 保存トーストが出ない場合は、localStorage保存で例外が出て止まっている可能性があるため、ここで握って通知します
+      try {
+        saveRecords();
+        showToast("保存しました");
+      } catch (e) {
+        console.error(e);
+        alert("保存に失敗しました（ブラウザのローカル保存がブロックされている可能性があります）。");
+      }
+
       renderRecords();
       resetForm();
     }
@@ -3514,6 +3533,10 @@ tr.appendChild(tdSupport);
       });
     });
   </script>
+
+  <!-- 保存しました：トースト表示 -->
+  <div id="saveToast" role="status" aria-live="polite"></div>
+
 </body>
 </html>
 
