@@ -7,6 +7,27 @@
 
   <style>
     * { box-sizing: border-box; }
+/* 記録一覧：支援内容を“折りたたみ→もっと見る” */
+.support-preview{
+  white-space: pre-wrap;     /* 改行をそのまま表示 */
+  word-break: break-word;    /* 長い文章も折り返す */
+  overflow: hidden;
+  max-height: 5.2em;         /* ←最初はこの高さまで（約3行） */
+}
+.support-preview.expanded{
+  max-height: none;          /* もっと見る→全文表示 */
+}
+
+.support-toggle{
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #2563eb;
+}
 
     body {
       margin: 0;
@@ -1723,22 +1744,45 @@ if (d0 < weekStart || d0 > today0) return false;
         tr.appendChild(tdCond);
 
         const tdSupport = document.createElement("td");
-        tdSupport.textContent = formatSupportSummary(record.support);
 
-        if (record.tags && record.tags.length) {
-          const tagDiv = document.createElement("div");
-          tagDiv.className = "small-text";
-          record.tags.forEach((tag) => {
-            const spanTag = document.createElement("span");
-            spanTag.className = "tag-chip";
-            spanTag.textContent = "#" + tag;
-            tagDiv.appendChild(spanTag);
-          });
-          tdSupport.appendChild(document.createElement("br"));
-          tdSupport.appendChild(tagDiv);
-        }
+// 支援内容（折りたたみ）
+const full = (record.support || "").trim();
+const supportDiv = document.createElement("div");
+supportDiv.className = "support-preview";
+supportDiv.textContent = full;
 
-        tr.appendChild(tdSupport);
+// 長文だけ「もっと見る」を出す
+const needToggle = full.length > 120 || full.includes("\n");
+if (needToggle) {
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "support-toggle";
+  toggle.textContent = "もっと見る";
+  toggle.addEventListener("click", () => {
+    const expanded = supportDiv.classList.toggle("expanded");
+    toggle.textContent = expanded ? "閉じる" : "もっと見る";
+  });
+  tdSupport.appendChild(supportDiv);
+  tdSupport.appendChild(toggle);
+} else {
+  tdSupport.appendChild(supportDiv);
+}
+
+// タグ表示（今まで通り）
+if (record.tags && record.tags.length) {
+  const tagDiv = document.createElement("div");
+  tagDiv.className = "small-text";
+  record.tags.forEach((tag) => {
+    const spanTag = document.createElement("span");
+    spanTag.className = "tag-chip";
+    spanTag.textContent = "#" + tag;
+    tagDiv.appendChild(spanTag);
+  });
+  tdSupport.appendChild(tagDiv);
+}
+
+tr.appendChild(tdSupport);
+
 
         const tdMed = document.createElement("td");
         tdMed.textContent = record.medTaken ? "服薬済み" : "";
@@ -3339,5 +3383,6 @@ if (d0 < weekStart || d0 > today0) return false;
   </script>
 </body>
 </html>
+
 
 
