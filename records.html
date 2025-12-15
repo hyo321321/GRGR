@@ -255,12 +255,8 @@
             <tr>
               <th>日付</th>
               <th>利用者</th>
-              <th>時間帯</th>
-              <th>体調 / 心の状態</th>
-              <th>食事</th>
+              <th>【日中に行った主な支援】</th>
               <th>支援内容（全文）</th>
-              <th>服薬</th>
-              <th>日中支援</th>
             </tr>
           </thead>
           <tbody id="recordTableBody">
@@ -371,10 +367,11 @@
 
       if (keyword) {
         const tagsText = (r.tags || []).join(" ");
+        const mainText = ((r.daySupportMainItems && r.daySupportMainItems.length) ? r.daySupportMainItems : (r.daySupportItems || [])).join(" ");
         const target = (
           (r.support || "") + " " +
           (r.note || "")    + " " +
-          (r.meal || "")    + " " +
+          mainText          + " " +
           tagsText
         ).toLowerCase();
         if (!target.includes(keyword)) return false;
@@ -389,7 +386,7 @@
     if (filtered.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 8;
+      td.colSpan = 4;
       td.className = "no-records";
       td.textContent =
         "該当する記録がありません。利用者・期間・キーワードを確認してください。";
@@ -412,23 +409,25 @@
         tdResident.textContent = record.resident || "";
         tr.appendChild(tdResident);
 
-        const tdTime = document.createElement("td");
-        const span = document.createElement("span");
-        span.textContent = record.timeSlot || "";
-        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
-        tdTime.appendChild(span);
-        tr.appendChild(tdTime);
-
-        const tdCond = document.createElement("td");
-        tdCond.innerHTML =
-          (record.condition || "") +
-          "<br><span class='small-text'>" +
-          (record.mental || "") + "</span>";
-        tr.appendChild(tdCond);
-
-        const tdMeal = document.createElement("td");
-        tdMeal.textContent = record.meal || "";
-        tr.appendChild(tdMeal);
+        const tdDayMain = document.createElement("td");
+        const mainItems = (record.daySupportMainItems && record.daySupportMainItems.length)
+          ? record.daySupportMainItems
+          : (record.daySupportItems || []);
+        if (mainItems && mainItems.length) {
+          // index.html と同じ「日中に行った主な支援」を表示
+          const wrap = document.createElement("div");
+          wrap.className = "small-text";
+          mainItems.forEach(item => {
+            const chip = document.createElement("span");
+            chip.className = "tag-chip";
+            chip.textContent = item;
+            wrap.appendChild(chip);
+          });
+          tdDayMain.appendChild(wrap);
+        } else {
+          tdDayMain.textContent = "";
+        }
+        tr.appendChild(tdDayMain);
 
         const tdSupport = document.createElement("td");
         tdSupport.className = "support-cell";
@@ -447,22 +446,6 @@
           tdSupport.appendChild(tagDiv);
         }
         tr.appendChild(tdSupport);
-
-        const tdMed = document.createElement("td");
-        tdMed.textContent = record.medTaken ? "服薬済み" : "";
-        tr.appendChild(tdMed);
-
-        const tdDay = document.createElement("td");
-        const typeLabel = record.daySupportType
-          ? "加算" + record.daySupportType
-          : "";
-        tdDay.innerHTML =
-          (typeLabel || "") +
-          (record.daySupportItems && record.daySupportItems.length
-            ? "<br><span class='small-text'>" +
-              record.daySupportItems.join("、") + "</span>"
-            : "");
-        tr.appendChild(tdDay);
 
         tbody.appendChild(tr);
       });
