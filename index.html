@@ -227,10 +227,7 @@
       vertical-align: top;
     }
 
-    
-
-    .day-support-cell { white-space: normal; word-break: break-word; color: #374151; }
-th { font-weight: 600; color: #374151; white-space: nowrap; }
+    th { font-weight: 600; color: #374151; white-space: nowrap; }
     tbody tr:nth-child(even) { background: #f9fafb; }
 
     .table-wrapper {
@@ -543,7 +540,6 @@ th { font-weight: 600; color: #374151; white-space: nowrap; }
 }
 
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -832,12 +828,10 @@ th { font-weight: 600; color: #374151; white-space: nowrap; }
     🧷 バックアップ
   </button>
 
-  <button type="button" class="btn-secondary" id="restoreBtn" title="バックアップJSONから復元">復元</button>
-            <button type="button" class="btn-secondary" id="exportExcelBtn"
+  <button type="button" class="btn-secondary" id="exportExcelBtn"
           style="font-size:12px; padding:6px 10px;">
     ⬇ Excel出力
   </button>
-            <input id="restoreFileInput" type="file" accept="application/json" style="display:none" />
 
   <span class="record-count" id="recordCount">0件</span>
 </div>
@@ -1810,23 +1804,17 @@ if (d0 < weekStart || d0 > today0) return false;
         const tdResident = document.createElement("td");
         tdResident.textContent = record.resident || "";
         tr.appendChild(tdResident);
-        tr.appendChild(tdDaySupport);
 
-        const tdDaySupport = document.createElement("td");
-        tdDaySupport.className = "day-support-cell";
+        const tdTime = document.createElement("td");
+        const span = document.createElement("span");
+        span.textContent = record.timeSlot || "";
+        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
+        tdTime.appendChild(span);
+        tr.appendChild(tdTime);
 
-        const dsParts = [];
-        const dsType = (record.daySupportType || "").trim();
-        const dsTime = (record.daySupportTime || "").trim();
-        const dsMain = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems.filter(Boolean) : [];
-        const dsReason = Array.isArray(record.daySupportReasonItems) ? record.daySupportReasonItems.filter(Boolean) : [];
-
-        if (dsType) dsParts.push(dsType);
-        if (dsTime) dsParts.push(dsTime);
-        if (dsMain.length) dsParts.push(dsMain.join("、"));
-        if (dsReason.length) dsParts.push("理由:" + dsReason.join("、"));
-
-        tdDaySupport.textContent = dsParts.join(" / ");
+        const tdCond = document.createElement("td");
+        tdCond.innerHTML = (record.condition || "") + "<br><span class='small-text'>" + (record.mental || "") + "</span>";
+        tr.appendChild(tdCond);
 
         const tdSupport = document.createElement("td");
 
@@ -3432,188 +3420,7 @@ tr.appendChild(tdSupport);
       document.getElementById("dsModalResetBtn").addEventListener("click", resetDaySupportModalToDefault);
       document.getElementById("dsModal").addEventListener("click", (e) => { if (e.target.id === "dsModal") document.getElementById("dsModal").classList.remove("show"); });
     });
-  
-
-// ===== データ操作（バックアップ / 復元 / エクセル出力） =====
-function getBackupKeys() {
-  const keys = [];
-  const add = (k) => { if (k && !keys.includes(k)) keys.push(k); };
-
-  // 既存の定数キー（あれば）を優先
-  try { add(STORAGE_KEY); } catch(e) {}
-  try { add(FAVORITES_KEY); } catch(e) {}
-  try { add(COMMON_TEMPLATES_KEY); } catch(e) {}
-  try { add(AUTO_ITEM_DEFS_KEY); } catch(e) {}
-  try { add(AUTO_ITEMS_BY_RESIDENT_KEY); } catch(e) {}
-  try { add(CHECK_ITEMS_SELECTED_KEY); } catch(e) {}
-  try { add(RECORD_ID_SEQ_KEY); } catch(e) {}
-  try { add(LIST_SETTINGS_KEY); } catch(e) {}
-
-  // 念のため prefix も拾う
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (!k) continue;
-    if (k.startsWith("gh_") || k.startsWith("group_home_")) add(k);
-  }
-  return keys;
-}
-
-function downloadBlob(filename, blob) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(a.href);
-    a.remove();
-  }, 0);
-}
-
-function downloadJSON(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json;charset=utf-8" });
-  downloadBlob(filename, blob);
-}
-
-function backupDataNow() {
-  const keys = getBackupKeys();
-  const data = {};
-  keys.forEach((k) => { data[k] = localStorage.getItem(k); });
-
-  const stamp = new Date();
-  const y = stamp.getFullYear();
-  const m = String(stamp.getMonth() + 1).padStart(2, "0");
-  const d = String(stamp.getDate()).padStart(2, "0");
-  const hh = String(stamp.getHours()).padStart(2, "0");
-  const mm = String(stamp.getMinutes()).padStart(2, "0");
-  const filename = `group_home_backup_${y}${m}${d}_${hh}${mm}.json`;
-
-  downloadJSON(filename, {
-    app: "group_home_personal_record",
-    version: 1,
-    exportedAt: stamp.toISOString(),
-    keys,
-    data
-  });
-}
-
-function restoreFromBackupFile(file) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    let obj;
-    try {
-      obj = JSON.parse(String(reader.result || ""));
-    } catch (e) {
-      alert("バックアップJSONの読み込みに失敗しました。");
-      return;
-    }
-    if (!obj || typeof obj !== "object" || !obj.data || typeof obj.data !== "object") {
-      alert("バックアップJSONの形式が違うようです。");
-      return;
-    }
-
-    const ok = confirm("このバックアップで上書き復元します。現在のデータは置き換わります。よろしいですか？");
-    if (!ok) return;
-
-    const data = obj.data;
-    Object.keys(data).forEach((k) => {
-      const v = data[k];
-      if (v === null || typeof v === "undefined") localStorage.removeItem(k);
-      else localStorage.setItem(k, String(v));
-    });
-
-    alert("復元しました。ページを再読み込みします。");
-    location.reload();
-  };
-  reader.readAsText(file, "utf-8");
-}
-
-function exportRecordsToExcel() {
-  let records = [];
-  try {
-    records = loadRecords();
-  } catch (e) {
-    // fallback
-    try {
-      records = JSON.parse(localStorage.getItem("group_home_records_v1") || "[]");
-    } catch (e2) { records = []; }
-  }
-
-  if (!records || records.length === 0) {
-    alert("エクセルに出力する記録がありません。");
-    return;
-  }
-
-  const rows = records.map((r) => ({
-    "日付": r.date || "",
-    "利用者": r.resident || "",
-    "時間帯": r.timeSlot || "",
-    "体調 / 心の状態": [r.condition || "", r.mental || ""].filter(Boolean).join(" / "),
-    "食事": r.meal || "",
-    "服薬": r.medTaken ? "服薬済" : "未",
-    "日中（種別）": r.daySupportType || "",
-    "日中（いつ頃）": r.daySupportTime || "",
-    "日中に行った主な支援": Array.isArray(r.daySupportMainItems) ? r.daySupportMainItems.filter(Boolean).join("、") : (r.daySupportMainItems || ""),
-    "日中に行った主な支援（理由など）": Array.isArray(r.daySupportReasonItems) ? r.daySupportReasonItems.filter(Boolean).join("、") : (r.daySupportReasonItems || ""),
-    "本日の支援内容・様子": r.support || "",
-    "特記事項": r.note || "",
-    "タグ": Array.isArray(r.tags) ? r.tags.filter(Boolean).join("、") : ""
-  }));
-
-  const stamp = new Date();
-  const y = stamp.getFullYear();
-  const m = String(stamp.getMonth() + 1).padStart(2, "0");
-  const d = String(stamp.getDate()).padStart(2, "0");
-  const filename = `group_home_records_${y}${m}${d}.xlsx`;
-
-  // XLSX が使えない環境はCSVで代替
-  const canXlsx = typeof XLSX !== "undefined" && XLSX.utils && XLSX.writeFile;
-  if (!canXlsx) {
-    const headers = Object.keys(rows[0] || {});
-    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const csv = [headers.map(esc).join(",")]
-      .concat(rows.map((row) => headers.map((h) => esc(row[h])).join(",")))
-      .join("\r\n");
-    downloadBlob(filename.replace(/\.xlsx$/i, ".csv"), new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    return;
-  }
-
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "記録");
-  XLSX.writeFile(wb, filename);
-}
-
-function setupBackupRestoreExportButtons() {
-  const backupBtn = document.getElementById("backupBtn");
-  const restoreBtn = document.getElementById("restoreBtn");
-  const exportBtn = document.getElementById("exportExcelBtn");
-  const restoreInput = document.getElementById("restoreFileInput");
-
-  if (backupBtn && !backupBtn.dataset.bound) {
-    backupBtn.dataset.bound = "1";
-    backupBtn.addEventListener("click", backupDataNow);
-  }
-
-  if (exportBtn && !exportBtn.dataset.bound) {
-    exportBtn.dataset.bound = "1";
-    exportBtn.addEventListener("click", exportRecordsToExcel);
-  }
-
-  if (restoreBtn && restoreInput && !restoreBtn.dataset.bound) {
-    restoreBtn.dataset.bound = "1";
-    restoreBtn.addEventListener("click", () => restoreInput.click());
-    restoreInput.addEventListener("change", () => {
-      const f = restoreInput.files && restoreInput.files[0];
-      restoreInput.value = "";
-      if (!f) return;
-      restoreFromBackupFile(f);
-    });
-  }
-}
-
-document.addEventListener("DOMContentLoaded", setupBackupRestoreExportButtons);
-</script>
+  </script>
 
   <!-- 音声入力スクリプト（メインフォーム） -->
   <script>
