@@ -52,23 +52,17 @@
     }
 
     main {
-      padding: 12px 12px 40px;
-      max-width: 1600px;
+      width: calc(100vw - 20px);
+      max-width: none;
       margin: 0 auto;
-      width: 100%;
+      padding: 18px 10px 24px;
     }
 
     .layout {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      align-items: start;
+      gap: 12px;
     }
-    /* ✅ 大画面では左右の余白を減らして、ギリギリまで広く使う */
-    @media (min-width: 1600px) {
-      main { max-width: 96vw; }
-    }
-
 
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
@@ -1814,7 +1808,7 @@ if (d0 < weekStart || d0 > today0) return false;
       if (filtered.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 7;
+        td.colSpan = 6;
         td.className = "no-records";
         td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
@@ -1833,18 +1827,24 @@ if (d0 < weekStart || d0 > today0) return false;
         tdResident.textContent = record.resident || "";
         tr.appendChild(tdResident);
 
-        const tdTime = document.createElement("td");
-        const span = document.createElement("span");
-        span.textContent = record.timeSlot || "";
-        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
-        tdTime.appendChild(span);
-        tr.appendChild(tdTime);
+        // 日中の主な支援（一覧表示：チェックした項目を表示）
+      const tdDayMain = document.createElement("td");
+      tdDayMain.className = "td-day-main";
+      const dayMain = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
+      if (dayMain.length) {
+        // チップ表示（main-chip は既存CSS）
+        dayMain.forEach((label) => {
+          const chip = document.createElement("span");
+          chip.className = "main-chip";
+          chip.textContent = label;
+          tdDayMain.appendChild(chip);
+        });
+      } else {
+        tdDayMain.textContent = "—";
+      }
+      tr.appendChild(tdDayMain);
 
-        const tdCond = document.createElement("td");
-        tdCond.innerHTML = (record.condition || "") + "<br><span class='small-text'>" + (record.mental || "") + "</span>";
-        tr.appendChild(tdCond);
-
-        const tdSupport = document.createElement("td");
+const tdSupport = document.createElement("td");
 
 // 支援内容（折りたたみ）
 const full = (record.support || "").trim();
@@ -1867,27 +1867,6 @@ if (needToggle) {
   tdSupport.appendChild(toggle);
 } else {
   tdSupport.appendChild(supportDiv);
-}
-
-
-// ✅ 日中に行った主な支援（記録一覧に表示）
-const dayMain = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems.filter(Boolean) : [];
-if (dayMain.length) {
-  const mainDiv = document.createElement("div");
-  mainDiv.className = "small-text";
-  const label = document.createElement("span");
-  label.className = "label-mini";
-  label.textContent = "日中主な支援：";
-  mainDiv.appendChild(label);
-
-  dayMain.forEach((item) => {
-    const chip = document.createElement("span");
-    chip.className = "main-chip";
-    chip.textContent = item;
-    mainDiv.appendChild(chip);
-  });
-
-  tdSupport.appendChild(mainDiv);
 }
 
 
