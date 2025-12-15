@@ -13,8 +13,6 @@
   word-break: break-word;    /* 長い文章も折り返す */
   overflow: hidden;
   max-height: 5.2em;         /* ←最初はこの高さまで（約3行） */
-
-      font-weight: 400;
 }
 .support-preview.expanded{
   max-height: none;          /* もっと見る→全文表示 */
@@ -324,7 +322,28 @@
       font-size: 11px;
     }
 
-    /* PC苦手な人向け：大きな選択ボタン */
+    
+
+    /* ✅ 記録一覧：日中に行った主な支援（チップ表示） */
+    .main-chip {
+      display: inline-block;
+      margin: 2px 6px 0 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-size: 11px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .label-mini {
+      font-size: 11px;
+      color: #374151;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+/* PC苦手な人向け：大きな選択ボタン */
     .quick-row {
       display: flex;
       gap: 8px;
@@ -1726,132 +1745,193 @@ function parseLocalISODate(iso) {
     }
 
     function renderRecords() {
-  const records = loadRecords();
-  const filtered = filterRecords(records);
+      const tbody = document.getElementById("recordTableBody");
+      const filterResident = document.getElementById("filterResident").value;
+      const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase();
 
-  const tbody = document.getElementById("recordTableBody");
-  if (!tbody) return;
+      const periodFilterElement = document.getElementById("periodFilter");
+      const periodFilter = periodFilterElement ? periodFilterElement.value : "month";
 
-  tbody.innerHTML = "";
+      const periodFromInput = document.getElementById("periodFrom");
+      const periodToInput = document.getElementById("periodTo");
+      const periodFrom = periodFromInput ? periodFromInput.value : "";
+      const periodTo = periodToInput ? periodToInput.value : "";
 
-  if (filtered.length === 0) {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 6;
-    td.style.padding = "14px";
-    td.style.color = "#6b7280";
-    td.textContent = "該当する記録がありません。";
-    tr.appendChild(td);
-    tbody.appendChild(tr);
+     const now = new Date();
+const todayStr = toLocalISODate(now);
+const today0 = parseLocalISODate(todayStr);
+const monthPrefix = todayStr.slice(0, 7);
+const yearPrefix = todayStr.slice(0, 4);
 
-    const more = document.getElementById("listMoreWrap");
-    if (more) more.style.display = "none";
-    return;
-  }
+const weekStart = new Date(today0);
+weekStart.setDate(weekStart.getDate() - 6);
 
-  // 追加読み込みボタン表示
-  const moreWrap = document.getElementById("listMoreWrap");
-  if (moreWrap) moreWrap.style.display = filtered.length > currentListLimit ? "block" : "none";
 
-  filtered.slice(0, currentListLimit).forEach((record) => {
-    const tr = document.createElement("tr");
+      tbody.innerHTML = "";
 
-    // 日付
-    const tdDate = document.createElement("td");
-    tdDate.textContent = (record.date || "") + (record.weekday ? "\n" + record.weekday : "");
-    tdDate.style.whiteSpace = "pre-line";
-    tr.appendChild(tdDate);
+      const filtered = records.filter((r) => {
+        if (filterResident && r.resident !== filterResident) return false;
 
-    // 利用者
-    const tdResident = document.createElement("td");
-    tdResident.textContent = record.resident || "";
-    tr.appendChild(tdResident);
+        const dateStr = r.date;
+        if (dateStr) {
+          if (periodFilter === "today") {
+            if (dateStr !== todayStr) return false;
+          } else if (periodFilter === "week") {
+            const d = new Date(dateStr);
+            const d0 = parseLocalISODate(dateStr);
+if (!d0) return false;
+if (d0 < weekStart || d0 > today0) return false;
+          } else if (periodFilter === "month") {
+            if (dateStr.slice(0, 7) !== monthPrefix) return false;
+          } else if (periodFilter === "year") {
+            if (dateStr.slice(0, 4) !== yearPrefix) return false;
+          } else if (periodFilter === "custom") {
+            if (periodFrom && dateStr < periodFrom) return false;
+            if (periodTo && dateStr > periodTo) return false;
+          }
+        } else {
+          if (periodFilter !== "all") return false;
+        }
 
-    // 日中の主な支援（一覧に表示）
-    const tdDaySupport = document.createElement("td");
-    const items = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
-    if (items.length) {
-      const chips = document.createElement("div");
-      chips.className = "chips";
-      items.forEach((t) => {
-        const s = document.createElement("span");
-        s.className = "chip";
-        s.textContent = t;
-        chips.appendChild(s);
+        if (keyword) {
+          const tagsText = (r.tags || []).join(" ");
+          const target = (((r.support || "") + " " + (r.note || "") + " " + (r.meal || "") + " " + tagsText)).toLowerCase();
+          if (!target.includes(keyword)) return false;
+        }
+
+        return true;
       });
-      tdDaySupport.appendChild(chips);
-    } else {
-      tdDaySupport.textContent = "—";
-      tdDaySupport.style.color = "#6b7280";
-    }
-    tr.appendChild(tdDaySupport);
 
-    // 支援内容（折りたたみ） + タグ
-    const tdSupport = document.createElement("td");
-    const support = (record.support || "").trim();
+      document.getElementById("recordCount").textContent = filtered.length + "件";
 
-    const supportDiv = document.createElement("div");
-    supportDiv.className = "support-preview";
-    supportDiv.textContent = support || "—";
-    tdSupport.appendChild(supportDiv);
+      if (filtered.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.className = "no-records";
+        td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
 
-    // タグ（任意）
-    const tags = (record.tags || "").trim();
-    if (tags) {
-      tdSupport.appendChild(createTagChips(tags));
-    }
+      filtered.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).forEach((record) => {
+        const tr = document.createElement("tr");
 
-    // もっと見る（長いときだけ）
-    const needToggle = support && support.length > 160;
-    if (needToggle) {
-      const toggle = document.createElement("button");
-      toggle.type = "button";
-      toggle.className = "link-btn";
-      toggle.textContent = "もっと見る";
-      toggle.addEventListener("click", () => {
-        const expanded = supportDiv.classList.toggle("expanded");
-        toggle.textContent = expanded ? "閉じる" : "もっと見る";
-      });
-      tdSupport.appendChild(toggle);
-    }
+        const tdDate = document.createElement("td");
+        tdDate.textContent = record.date || "";
+        tr.appendChild(tdDate);
 
-    tr.appendChild(tdSupport);
+        const tdResident = document.createElement("td");
+        tdResident.textContent = record.resident || "";
+        tr.appendChild(tdResident);
 
-    // 服薬
-    const tdMed = document.createElement("td");
-    tdMed.textContent = record.medTaken ? "服薬済み" : "";
-    tr.appendChild(tdMed);
+        const tdTime = document.createElement("td");
+        const span = document.createElement("span");
+        span.textContent = record.timeSlot || "";
+        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
+        tdTime.appendChild(span);
+        tr.appendChild(tdTime);
 
-    // 操作（詳細 / 編集 / 削除）
-    const tdActions = document.createElement("td");
-    tdActions.style.whiteSpace = "nowrap";
+        const tdCond = document.createElement("td");
+        tdCond.innerHTML = (record.condition || "") + "<br><span class='small-text'>" + (record.mental || "") + "</span>";
+        tr.appendChild(tdCond);
 
-    const viewBtn = document.createElement("button");
-    viewBtn.textContent = "詳細";
-    viewBtn.className = "btn-secondary";
-    viewBtn.style.fontSize = "12px";
-    viewBtn.onclick = () => showRecordDetail(record.id);
+        const tdSupport = document.createElement("td");
 
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "編集";
-    editBtn.className = "btn-secondary";
-    editBtn.style.fontSize = "12px";
-    editBtn.onclick = () => openEditModal(record.id);
+// 支援内容（折りたたみ）
+const full = (record.support || "").trim();
+const supportDiv = document.createElement("div");
+supportDiv.className = "support-preview";
+supportDiv.textContent = full;
 
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "削除";
-    delBtn.className = "btn-danger";
-    delBtn.style.fontSize = "12px";
-    delBtn.onclick = () => deleteRecord(record.id);
-
-    tdActions.appendChild(viewBtn);
-    tdActions.appendChild(editBtn);
-    tdActions.appendChild(delBtn);
-    tr.appendChild(tdActions);
-
-    tbody.appendChild(tr);
+// 長文だけ「もっと見る」を出す
+const needToggle = full.length > 120 || full.includes("\n");
+if (needToggle) {
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "support-toggle";
+  toggle.textContent = "もっと見る";
+  toggle.addEventListener("click", () => {
+    const expanded = supportDiv.classList.toggle("expanded");
+    toggle.textContent = expanded ? "閉じる" : "もっと見る";
   });
+  tdSupport.appendChild(supportDiv);
+  tdSupport.appendChild(toggle);
+} else {
+  tdSupport.appendChild(supportDiv);
 }
+
+
+// ✅ 日中に行った主な支援（記録一覧に表示）
+const dayMain = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems.filter(Boolean) : [];
+if (dayMain.length) {
+  const mainDiv = document.createElement("div");
+  mainDiv.className = "small-text";
+  const label = document.createElement("span");
+  label.className = "label-mini";
+  label.textContent = "日中主な支援：";
+  mainDiv.appendChild(label);
+
+  dayMain.forEach((item) => {
+    const chip = document.createElement("span");
+    chip.className = "main-chip";
+    chip.textContent = item;
+    mainDiv.appendChild(chip);
+  });
+
+  tdSupport.appendChild(mainDiv);
+}
+
+
+// タグ表示（今まで通り）
+if (record.tags && record.tags.length) {
+  const tagDiv = document.createElement("div");
+  tagDiv.className = "small-text";
+  record.tags.forEach((tag) => {
+    const spanTag = document.createElement("span");
+    spanTag.className = "tag-chip";
+    spanTag.textContent = "#" + tag;
+    tagDiv.appendChild(spanTag);
+  });
+  tdSupport.appendChild(tagDiv);
+}
+
+tr.appendChild(tdSupport);
+
+
+        const tdMed = document.createElement("td");
+        tdMed.textContent = record.medTaken ? "服薬済み" : "";
+        tr.appendChild(tdMed);
+
+        const tdActions = document.createElement("td");
+
+        const viewBtn = document.createElement("button");
+        viewBtn.textContent = "詳細";
+        viewBtn.className = "btn-secondary";
+        viewBtn.style.fontSize = "12px";
+        viewBtn.onclick = () => showRecordDetail(record.id);
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "編集";
+        editBtn.className = "btn-secondary";
+        editBtn.style.fontSize = "12px";
+        editBtn.onclick = () => openEditModal(record.id);
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "削除";
+        delBtn.className = "btn-danger";
+        delBtn.style.fontSize = "12px";
+        delBtn.onclick = () => deleteRecord(record.id);
+
+        tdActions.appendChild(viewBtn);
+        tdActions.appendChild(editBtn);
+        tdActions.appendChild(delBtn);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+      });
+    }
 
     function resetForm() {
       document.getElementById("recordForm").reset();
