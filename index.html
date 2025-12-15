@@ -1847,7 +1847,7 @@ if (d0 < weekStart || d0 > today0) return false;
       if (filtered.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 7;
+        td.colSpan = 6;
         td.className = "no-records";
         td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
@@ -1866,18 +1866,25 @@ if (d0 < weekStart || d0 > today0) return false;
         tdResident.textContent = record.resident || "";
         tr.appendChild(tdResident);
 
-        const tdTime = document.createElement("td");
-        const span = document.createElement("span");
-        span.textContent = record.timeSlot || "";
-        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
-        tdTime.appendChild(span);
-        tr.appendChild(tdTime);
-
-        const tdCond = document.createElement("td");
-        tdCond.innerHTML = (record.condition || "") + "<br><span class='small-text'>" + (record.mental || "") + "</span>";
-        tr.appendChild(tdCond);
+        const tdDayMain = document.createElement("td");
+        const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
+        if (mainItems.length) {
+          const wrap = document.createElement("div");
+          wrap.className = "list-support-tags";
+          mainItems.forEach((t) => {
+            const chip = document.createElement("span");
+            chip.className = "list-support-tag";
+            chip.textContent = t;
+            wrap.appendChild(chip);
+          });
+          tdDayMain.appendChild(wrap);
+        } else {
+          tdDayMain.innerHTML = "<span class='small-text'>（なし）</span>";
+        }
+        tr.appendChild(tdDayMain);
 
         const tdSupport = document.createElement("td");
+
 
 // 支援内容（折りたたみ）
 const full = (record.support || "").trim();
