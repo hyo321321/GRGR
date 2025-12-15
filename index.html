@@ -1422,6 +1422,8 @@
     const FAV_BY_RESIDENT_KEY = "group_home_fav_by_resident_v1";
     const RESIDENT_AUTO_TEMPLATES_KEY = "group_home_resident_auto_templates_v1";
     const DAY_SUPPORT_BY_RESIDENT_KEY = "group_home_day_support_by_resident_v1";
+    const DAY_SUPPORT_DEFAULT_KEY = "group_home_day_support_default_v1";
+    const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
 
     const DEFAULT_AUTO_ITEM_DEFS = [
       { key: "med_manage",  label: "服薬管理", defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。" },
@@ -1471,6 +1473,7 @@
     let favByResident = {};
     let residentAutoTemplates = {};
     let daySupportByResident = {};
+    let daySupportDefault = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
 
     // 編集モーダル用
     let editingRecordId = null;
@@ -1621,24 +1624,42 @@
       return st;
     }
 
-    // ===== 利用者別：日中支援チェック =====
+    // ===== 日中支援チェック（利用者別 + 共通デフォルト） =====
     function loadDaySupportByResident() { return loadJSON(DAY_SUPPORT_BY_RESIDENT_KEY, {}); }
     function saveDaySupportByResident() { saveJSON(DAY_SUPPORT_BY_RESIDENT_KEY, daySupportByResident); }
 
-    function getDaySupportForResident(resident) {
-      const st = daySupportByResident[resident];
-      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return st;
+    function loadDaySupportDefault() {
+      const st = loadJSON(DAY_SUPPORT_DEFAULT_KEY, null);
+      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return { main: st.main, reason: st.reason };
+      const init = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+      saveJSON(DAY_SUPPORT_DEFAULT_KEY, init);
+      return init;
+    }
+    function saveDaySupportDefault() { saveJSON(DAY_SUPPORT_DEFAULT_KEY, daySupportDefault); }
+
+    function getDefaultDaySupport() {
+      if (daySupportDefault && Array.isArray(daySupportDefault.main) && Array.isArray(daySupportDefault.reason)) {
+        return { main: daySupportDefault.main.slice(), reason: daySupportDefault.reason.slice() };
+      }
       return { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
     }
 
+    function getDaySupportForResident(resident) {
+      if (resident) {
+        const st = daySupportByResident[resident];
+        if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return { main: st.main.slice(), reason: st.reason.slice() };
+      }
+      return getDefaultDaySupport();
+    }
+
     function applyDaySupportListsForResident(resident) {
-      if (!resident) return;
+      // residentが空なら「共通デフォルト」を適用
 
       // 現在チェックを退避（再描画で消えるので）
       const prevMain = new Set(Array.from(document.querySelectorAll(".day-main-item:checked")).map((x) => x.value));
       const prevReason = new Set(Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value));
 
-      const conf = getDaySupportForResident(resident);
+      const conf = getDaySupportForResident(resident || "");
       DAY_SUPPORT_MAIN_LIST = conf.main.slice();
       DAY_SUPPORT_REASON_LIST = conf.reason.slice();
 
@@ -3085,51 +3106,106 @@ function handleRestoreFile(file) {
     }
 
     // ===== 日中支援チェック（利用者別）管理（下の管理カード） =====
+    function ensureDaySupportDefaultOption(sel) {
+      // 先頭：空のプレースホルダ、次に「共通デフォルト」を差し込む
+      if (!sel) return;
+      const exists = Array.from(sel.options).some((o) => o.value === DAY_SUPPORT_DEFAULT_VALUE);
+      if (exists) return;
+      const opt = document.createElement("option");
+      opt.value = DAY_SUPPORT_DEFAULT_VALUE;
+      opt.textContent = "（共通デフォルト）";
+      // index1に挿入（placeholderの次）
+      sel.insertBefore(opt, sel.options[1] || null);
+    }
+
     function renderDaySupportManager() {
       const sel = document.getElementById("dsResidentSelect");
       const mainTa = document.getElementById("dsMainList");
       const reasonTa = document.getElementById("dsReasonList");
       if (!sel || !mainTa || !reasonTa) return;
 
-      populateResidentSelect(sel);
-      const resident = sel.value || residents[0] || "";
-      if (!sel.value && resident) sel.value = resident;
+      const prev = sel.value || "";
 
-      const conf = getDaySupportForResident(resident);
-      mainTa.value = conf.main.join("\n");
-      reasonTa.value = conf.reason.join("\n");
+      populateResidentSelect(sel);
+      ensureDaySupportDefaultOption(sel);
+
+      // 選択を復元（なければデフォルト→先頭利用者の順）
+      if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
+        sel.value = prev;
+      } else if (Array.from(sel.options).some((o) => o.value === DAY_SUPPORT_DEFAULT_VALUE)) {
+        sel.value = DAY_SUPPORT_DEFAULT_VALUE;
+      } else {
+        const resident = residents[0] || "";
+        if (resident) sel.value = resident;
+      }
+
+      const val = sel.value || "";
+      const conf = (val === DAY_SUPPORT_DEFAULT_VALUE) ? getDefaultDaySupport() : getDaySupportForResident(val);
+      mainTa.value = (conf.main || []).join("\n");
+      reasonTa.value = (conf.reason || []).join("\n");
     }
 
     function saveDaySupportFromManager() {
-      const resident = document.getElementById("dsResidentSelect")?.value;
-      if (!resident) { alert("対象の利用者を選択してください"); return; }
+      const selVal = document.getElementById("dsResidentSelect")?.value || "";
+      if (!selVal) return;
 
       const mainLines = (document.getElementById("dsMainList")?.value || "")
         .split("\n").map((x) => x.trim()).filter(Boolean);
       const reasonLines = (document.getElementById("dsReasonList")?.value || "")
         .split("\n").map((x) => x.trim()).filter(Boolean);
 
+      if (selVal === DAY_SUPPORT_DEFAULT_VALUE) {
+        if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
+
+        daySupportDefault = { main: mainLines, reason: reasonLines };
+        saveDaySupportDefault();
+        renderDaySupportManager();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current); // 空ならデフォルト適用
+
+        alert("保存しました（共通デフォルト）");
+        return;
+      }
+
+      const resident = selVal;
       if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
 
       daySupportByResident[resident] = { main: mainLines, reason: reasonLines };
       saveDaySupportByResident();
 
-      const current = document.getElementById("resident")?.value;
+      const current = document.getElementById("resident")?.value || "";
       if (current === resident) applyDaySupportListsForResident(resident);
 
       alert("保存しました（フォームにも反映済み）");
     }
 
     function resetDaySupportToDefaultFromManager() {
-      const resident = document.getElementById("dsResidentSelect")?.value;
-      if (!resident) return;
+      const selVal = document.getElementById("dsResidentSelect")?.value || "";
+      if (!selVal) return;
+
+      if (selVal === DAY_SUPPORT_DEFAULT_VALUE) {
+        if (!confirm("共通デフォルトの日中支援チェックを初期状態に戻しますか？")) return;
+
+        daySupportDefault = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+        saveDaySupportDefault();
+        renderDaySupportManager();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current);
+
+        alert("初期に戻しました（共通デフォルト）");
+        return;
+      }
+
+      const resident = selVal;
       if (!confirm("この利用者の日中支援チェックを初期に戻しますか？")) return;
 
       delete daySupportByResident[resident];
       saveDaySupportByResident();
       renderDaySupportManager();
 
-      const current = document.getElementById("resident")?.value;
+      const current = document.getElementById("resident")?.value || "";
       if (current === resident) applyDaySupportListsForResident(resident);
 
       alert("初期に戻しました");
@@ -3419,46 +3495,101 @@ function handleRestoreFile(file) {
 
     // ===== 日中支援チェック（この利用者）小窓 =====
     function openDaySupportModalForCurrentResident() {
-      const resident = document.getElementById("resident")?.value;
-      if (!resident) { alert("先に利用者を選択してください。"); return; }
+      const resident = document.getElementById("resident")?.value || "";
+      const modal = document.getElementById("dsModal");
+      if (!modal) return;
 
-      document.getElementById("dsModalResidentInfo").textContent = `対象：${resident}`;
-      const conf = getDaySupportForResident(resident);
+      if (resident) {
+        modal.dataset.mode = "resident";
+        modal.dataset.resident = resident;
+        document.getElementById("dsModalResidentInfo").textContent = `対象：${resident}（利用者別）`;
+      } else {
+        modal.dataset.mode = "default";
+        modal.dataset.resident = "";
+        document.getElementById("dsModalResidentInfo").textContent = "対象：共通デフォルト（利用者未選択）";
+      }
 
-      document.getElementById("dsModalMain").value = conf.main.join("\n");
-      document.getElementById("dsModalReason").value = conf.reason.join("\n");
+      const conf = resident ? getDaySupportForResident(resident) : getDefaultDaySupport();
+      document.getElementById("dsModalMain").value = (conf.main || []).join("\n");
+      document.getElementById("dsModalReason").value = (conf.reason || []).join("\n");
 
-      document.getElementById("dsModal").classList.add("show");
+      modal.classList.add("show");
     }
 
     function saveDaySupportModal() {
-      const resident = document.getElementById("resident")?.value;
-      if (!resident) return;
+      const modal = document.getElementById("dsModal");
+      if (!modal) return;
 
-      const mainLines = (document.getElementById("dsModalMain").value || "").split("\n").map((x) => x.trim()).filter(Boolean);
-      const reasonLines = (document.getElementById("dsModalReason").value || "").split("\n").map((x) => x.trim()).filter(Boolean);
+      const mode = modal.dataset.mode || "resident";
+      const resident = modal.dataset.resident || "";
+
+      const mainLines = (document.getElementById("dsModalMain")?.value || "")
+        .split("\n").map((x) => x.trim()).filter(Boolean);
+      const reasonLines = (document.getElementById("dsModalReason")?.value || "")
+        .split("\n").map((x) => x.trim()).filter(Boolean);
+
+      if (mode === "default") {
+        if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
+
+        daySupportDefault = { main: mainLines, reason: reasonLines };
+        saveDaySupportDefault();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current); // 空ならデフォルト適用
+
+        renderDaySupportManager();
+        alert("保存しました（共通デフォルト）");
+        modal.classList.remove("show");
+        return;
+      }
+
+      if (!resident) { alert("先に利用者を選択してください。"); return; }
+      if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
 
       daySupportByResident[resident] = { main: mainLines, reason: reasonLines };
       saveDaySupportByResident();
 
-      applyDaySupportListsForResident(resident);
-      renderDaySupportManager();
+      const current = document.getElementById("resident")?.value || "";
+      if (current === resident) applyDaySupportListsForResident(resident);
 
-      document.getElementById("dsModal").classList.remove("show");
-      alert("保存しました（フォームに反映）");
+      renderDaySupportManager();
+      alert("保存しました");
+      modal.classList.remove("show");
     }
 
     function resetDaySupportModalToDefault() {
-      const resident = document.getElementById("resident")?.value;
-      if (!resident) return;
+      const modal = document.getElementById("dsModal");
+      if (!modal) return;
+
+      const mode = modal.dataset.mode || "resident";
+      const resident = modal.dataset.resident || "";
+
+      if (mode === "default") {
+        if (!confirm("共通デフォルトを初期状態に戻しますか？")) return;
+
+        daySupportDefault = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+        saveDaySupportDefault();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current);
+
+        renderDaySupportManager();
+        alert("初期に戻しました（共通デフォルト）");
+        openDaySupportModalForCurrentResident();
+        return;
+      }
+
+      if (!resident) { alert("先に利用者を選択してください。"); return; }
       if (!confirm("この利用者の日中支援チェックを初期に戻しますか？")) return;
 
       delete daySupportByResident[resident];
       saveDaySupportByResident();
 
-      applyDaySupportListsForResident(resident);
-      renderDaySupportManager();
+      const current = document.getElementById("resident")?.value || "";
+      if (current === resident) applyDaySupportListsForResident(resident);
 
+      renderDaySupportManager();
+      alert("初期に戻しました");
       openDaySupportModalForCurrentResident();
     }
 
@@ -3483,6 +3614,7 @@ function handleRestoreFile(file) {
       favByResident = loadFavByResident();
       residentAutoTemplates = loadResidentAutoTemplates();
       daySupportByResident = loadDaySupportByResident();
+      daySupportDefault = loadDaySupportDefault();
 
       renderResidentSelects();
       renderRecords();
@@ -3496,7 +3628,10 @@ function handleRestoreFile(file) {
       renderAutoItemCheckboxes();
       renderAutoItemManager();
 
-      // 初期（日中支援チェック）
+      // 初期（日中支援チェック）※利用者未選択時は「共通デフォルト」
+      const defDaySupport = getDefaultDaySupport();
+      DAY_SUPPORT_MAIN_LIST = defDaySupport.main.slice();
+      DAY_SUPPORT_REASON_LIST = defDaySupport.reason.slice();
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
 
@@ -3548,9 +3683,9 @@ if (restoreBtn && restoreFile) {
 
       // ✅ 利用者変更：よく使う項目ON / 日中支援リスト反映 / 利用者別テンプレ選択更新
       document.getElementById("resident")?.addEventListener("change", () => {
-        const r = document.getElementById("resident").value;
+        const r = document.getElementById("resident").value || "";
+        applyDaySupportListsForResident(r); // 空ならデフォルト適用
         if (!r) return;
-        applyDaySupportListsForResident(r);
         applyFavToMainCheckboxes(r);
         renderResidentTemplateSelectForForm();
       });
