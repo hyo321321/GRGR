@@ -86,6 +86,29 @@
       flex-wrap: wrap;
     }
 
+    
+    /* 記録一覧：操作ボタン（別ページ/バックアップ/復元/Excel） */
+    .record-tools{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:8px;
+      margin: 0 0 12px; /* タイトル直下に配置 */
+    }
+    .record-tools-top{
+      display:flex;
+      justify-content:flex-end;
+      width:100%;
+    }
+
+    .record-tools-bottom{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
     .card-subtitle {
       font-size: 13px;
       color: #6b7280;
@@ -842,33 +865,37 @@
       <section class="card">
         <div class="card-title">
           <span>記録一覧</span>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-  <button type="button"
-          onclick="window.open('records.html', '_blank')"
-          class="btn-secondary"
-          style="font-size:12px; padding:6px 10px;">
-    📄 別ページで開く
-  </button>
+          <span class="record-count" id="recordCount">0件</span>
+        </div>
 
-  <button type="button" class="btn-secondary" id="backupBtn"
-          style="font-size:12px; padding:6px 10px;">
-    🧷 バックアップ
-  </button>
+        <div class="record-tools">
+          <div class="record-tools-top">
+            <button type="button"
+                    onclick="window.open('records.html', '_blank')"
+                    class="btn-secondary"
+                    style="font-size:12px; padding:6px 10px;">
+              📄 別ページで開く
+            </button>
+          </div>
 
+          <div class="record-tools-bottom">
+            <button type="button" class="btn-secondary" id="backupBtn"
+                    style="font-size:12px; padding:6px 10px;">
+              🧷 バックアップ
+            </button>
 
-  <button type="button" class="btn-secondary" id="restoreBtn"
-          style="font-size:12px; padding:6px 10px;">
-    ♻ 復元
-  </button>
-  <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" />
+            <button type="button" class="btn-secondary" id="restoreBtn"
+                    style="font-size:12px; padding:6px 10px;">
+              ♻ 復元
+            </button>
+            <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" />
 
-  <button type="button" class="btn-secondary" id="exportExcelBtn"
-          style="font-size:12px; padding:6px 10px;">
-    ⬇ Excel出力
-  </button>
-
-  <span class="record-count" id="recordCount">0件</span>
-</div>
+            <button type="button" class="btn-secondary" id="exportExcelBtn"
+                    style="font-size:12px; padding:6px 10px;">
+              ⬇ Excel出力
+            </button>
+          </div>
+        </div>
 
 
         <div class="resident-select-row">
