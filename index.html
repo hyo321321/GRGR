@@ -293,6 +293,23 @@
       border-color: #f97316;
       color: #fff;
     }
+/* 記録一覧：日中の主な支援（チップ表示） */
+.list-support-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.list-support-tag{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  color:#1d4ed8;
+}
 
     .tag-chip {
       display: inline-block;
@@ -798,16 +815,27 @@
       <section class="card">
         <div class="card-title">
           <span>記録一覧</span>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button type="button"
-                    onclick="window.open('records.html', '_blank')"
-                    class="btn-secondary"
-                    style="font-size:12px; padding:6px 10px;">
-              📄 別ページで開く
-            </button>
-            <span class="record-count" id="recordCount">0件</span>
-          </div>
-        </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+  <button type="button"
+          onclick="window.open('records.html', '_blank')"
+          class="btn-secondary"
+          style="font-size:12px; padding:6px 10px;">
+    📄 別ページで開く
+  </button>
+
+  <button type="button" class="btn-secondary" id="backupBtn"
+          style="font-size:12px; padding:6px 10px;">
+    🧷 バックアップ
+  </button>
+
+  <button type="button" class="btn-secondary" id="exportExcelBtn"
+          style="font-size:12px; padding:6px 10px;">
+    ⬇ Excel出力
+  </button>
+
+  <span class="record-count" id="recordCount">0件</span>
+</div>
+
 
         <div class="resident-select-row">
           <span>表示する利用者：</span>
@@ -845,16 +873,15 @@
         <div class="table-wrapper" id="tableWrapper">
           <table>
             <thead>
-              <tr>
-                <th>日付</th>
-                <th>利用者</th>
-                <th>時間帯</th>
-                <th>体調 / 心の状態</th>
-                <th>支援内容・タグ</th>
-                <th>服薬</th>
-                <th>操作</th>
-              </tr>
-            </thead>
+  <tr>
+    <th>日付</th>
+    <th>利用者</th>
+    <th>日中の主な支援</th>
+    <th>支援内容・タグ</th>
+    <th>服薬</th>
+    <th>操作</th>
+  </tr>
+</thead>
             <tbody id="recordTableBody"></tbody>
           </table>
         </div>
@@ -3460,6 +3487,7 @@ tr.appendChild(tdSupport);
   </script>
 </body>
 </html>
+
 
 
 
