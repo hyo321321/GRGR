@@ -1999,7 +1999,7 @@ tr.appendChild(tdSupport);
       else textArea.value = newText;
     }
 
-    // 記録詳細モーダル表示
+      // 記録詳細モーダル表示
     function showRecordDetail(id) {
       const record = records.find((r) => r.id === id);
       if (!record) return;
@@ -2023,38 +2023,38 @@ tr.appendChild(tdSupport);
         content.appendChild(div);
       };
 
+      // ✅ タグ行（主な支援 / 欠席理由）
+      const addTagRow = (label, items, type = "main") => {
+        const div = document.createElement("div");
+        div.className = "detail-field detail-tagrow";
+
+        const strong = document.createElement("strong");
+        strong.textContent = label;
+        div.appendChild(strong);
+
+        const arr = Array.isArray(items) ? items : [];
+        if (arr.length === 0) {
+          const span = document.createElement("span");
+          span.textContent = "なし";
+          div.appendChild(span);
+        } else {
+          const box = document.createElement("div");
+          box.className = "support-tags";
+
+          arr.forEach((txt) => {
+            const tag = document.createElement("span");
+            tag.className = "support-tag" + (type === "reason" ? " reason" : "");
+            tag.textContent = txt;
+            box.appendChild(tag);
+          });
+
+          div.appendChild(box);
+        }
+
+        content.appendChild(div);
+      };
+
       const addMultiline = (label, value) => {
-        const addTagRow = (label, items, type = "main") => {
-  const div = document.createElement("div");
-  div.className = "detail-field detail-tagrow";
-
-  const strong = document.createElement("strong");
-  strong.textContent = label;
-
-  div.appendChild(strong);
-
-  const arr = Array.isArray(items) ? items : [];
-  if (arr.length === 0) {
-    const span = document.createElement("span");
-    span.textContent = "なし";
-    div.appendChild(span);
-  } else {
-    const box = document.createElement("div");
-    box.className = "support-tags";
-
-    arr.forEach((txt) => {
-      const tag = document.createElement("span");
-      tag.className = "support-tag" + (type === "reason" ? " reason" : "");
-      tag.textContent = txt;
-      box.appendChild(tag);
-    });
-
-    div.appendChild(box);
-  }
-
-  content.appendChild(div);
-};
-
         const wrap = document.createElement("div");
         wrap.className = "detail-multiline";
         const strong = document.createElement("strong");
@@ -2068,10 +2068,7 @@ tr.appendChild(tdSupport);
 
       const tagsText = record.tags && record.tags.length ? record.tags.map((t) => "#" + t).join(" ") : "なし";
       const medText = record.medTaken ? "服薬済み" : "未確認／未内服の可能性あり";
-
       const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + record.daySupportType : "なし";
-      const daySupportMainText = record.daySupportMainItems && record.daySupportMainItems.length ? record.daySupportMainItems.join("、") : "なし";
-      const daySupportReasonText = record.daySupportReasonItems && record.daySupportReasonItems.length ? record.daySupportReasonItems.join("、") : "なし";
 
       if (titleEl) titleEl.textContent = `${record.date || ""} ${record.resident || ""} さんの記録`;
 
@@ -2085,15 +2082,17 @@ tr.appendChild(tdSupport);
       addRow("タグ：", tagsText);
       addRow("日中支援加算区分：", daySupportTypeLabel);
       addRow("日中支援の時間帯：", record.daySupportTime || "");
-     addTagRow("主な支援：", record.daySupportMainItems, "main");
-addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
 
+      // ✅ ここがタグ表示
+      addTagRow("主な支援：", record.daySupportMainItems, "main");
+      addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
 
       addMultiline("本日の支援内容・様子：", record.support || "");
       addMultiline("特記事項：", record.note || "");
 
       modal.classList.add("show");
     }
+
 
     function closeRecordDetail() {
       const modal = document.getElementById("detailModal");
@@ -3461,6 +3460,7 @@ addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
   </script>
 </body>
 </html>
+
 
 
 
