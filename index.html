@@ -7,6 +7,35 @@
 
   <style>
     * { box-sizing: border-box; }
+/* 詳細モーダル：手書き風の赤丸 */
+.hand-circle{
+  position: relative;
+  display: inline-block;
+  padding: 2px 10px;
+  margin: 2px 6px 2px 0;
+  line-height: 1.6;
+}
+
+.hand-circle::before{
+  content:"";
+  position:absolute;
+  left:-10px; right:-10px; top:-8px; bottom:-8px;
+  border: 3px solid rgba(239, 68, 68, 0.95); /* 赤 */
+  border-radius: 9999px;
+  transform: rotate(-2.2deg);
+  pointer-events:none;
+}
+
+.hand-circle::after{
+  content:"";
+  position:absolute;
+  left:-9px; right:-11px; top:-7px; bottom:-9px;
+  border: 2px solid rgba(239, 68, 68, 0.55); /* 薄い2本目 */
+  border-radius: 9999px;
+  transform: rotate(1.4deg);
+  pointer-events:none;
+}
+
 /* 記録一覧：支援内容を“折りたたみ→もっと見る” */
 .support-preview{
   white-space: pre-wrap;     /* 改行をそのまま表示 */
@@ -2008,7 +2037,33 @@ tr.appendChild(tdSupport);
       addRow("タグ：", tagsText);
       addRow("日中支援加算区分：", daySupportTypeLabel);
       addRow("日中支援の時間帯：", record.daySupportTime || "");
-      addRow("主な支援：", daySupportMainText);
+     // 主な支援：手書き風の丸で表示
+{
+  const wrap = document.createElement("div");
+  wrap.className = "detail-field";
+
+  const strong = document.createElement("strong");
+  strong.textContent = "主な支援：";
+  wrap.appendChild(strong);
+
+  const span = document.createElement("span");
+
+  const items = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
+  if (items.length === 0) {
+    span.textContent = "なし";
+  } else {
+    items.forEach((txt) => {
+      const chip = document.createElement("span");
+      chip.className = "hand-circle";
+      chip.textContent = txt;
+      span.appendChild(chip);
+    });
+  }
+
+  wrap.appendChild(span);
+  content.appendChild(wrap);
+}
+
       addRow("欠席理由：", daySupportReasonText);
 
       addMultiline("本日の支援内容・様子：", record.support || "");
@@ -3383,6 +3438,7 @@ tr.appendChild(tdSupport);
   </script>
 </body>
 </html>
+
 
 
 
