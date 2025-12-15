@@ -855,6 +855,13 @@
     🧷 バックアップ
   </button>
 
+
+  <button type="button" class="btn-secondary" id="restoreBtn"
+          style="font-size:12px; padding:6px 10px;">
+    ♻ 復元
+  </button>
+  <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" />
+
   <button type="button" class="btn-secondary" id="exportExcelBtn"
           style="font-size:12px; padding:6px 10px;">
     ⬇ Excel出力
@@ -1971,6 +1978,143 @@ tr.appendChild(tdSupport);
       __toastTimer = setTimeout(() => el.classList.remove("show"), 1600);
     }
 
+// ===== バックアップ / 復元 =====
+function buildBackupPayload() {
+  return {
+    app: "group_home_personal_record",
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      records: Array.isArray(records) ? records : [],
+      residents: Array.isArray(residents) ? residents : [],
+      templates: Array.isArray(templates) ? templates : [],
+      autoItemDefs: Array.isArray(AUTO_ITEM_DEFS) ? AUTO_ITEM_DEFS : [],
+      tags: Array.isArray(TAG_LIST) ? TAG_LIST : [],
+      favByResident: (favByResident && typeof favByResident === "object") ? favByResident : {},
+      residentAutoTemplates: (residentAutoTemplates && typeof residentAutoTemplates === "object") ? residentAutoTemplates : {},
+      daySupportByResident: (daySupportByResident && typeof daySupportByResident === "object") ? daySupportByResident : {},
+    }
+  };
+}
+
+function yyyymmdd_hhmmss() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const da = pad(d.getDate());
+  const h = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  const s = pad(d.getSeconds());
+  return `${y}${m}${da}_${h}${mi}${s}`;
+}
+
+function downloadTextFile(filename, textContent, mime = "application/json") {
+  const blob = new Blob([textContent], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function downloadBackup(suffix = "") {
+  const payload = buildBackupPayload();
+  const filename = `group_home_backup_${yyyymmdd_hhmmss()}${suffix ? "_" + suffix : ""}.json`;
+  downloadTextFile(filename, JSON.stringify(payload, null, 2));
+  showToast("バックアップを保存しました");
+}
+
+function normalizeBackupData(parsed) {
+  // 新形式: { data: { ... } }
+  if (parsed && typeof parsed === "object" && parsed.data && typeof parsed.data === "object") return parsed.data;
+
+  // 旧形式: { records:..., residents:..., ... }
+  const keys = ["records","residents","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident"];
+  const hasAny = keys.some((k) => Object.prototype.hasOwnProperty.call(parsed || {}, k));
+  if (hasAny) {
+    return {
+      records: parsed.records,
+      residents: parsed.residents,
+      templates: parsed.templates,
+      autoItemDefs: parsed.autoItemDefs,
+      tags: parsed.tags,
+      favByResident: parsed.favByResident,
+      residentAutoTemplates: parsed.residentAutoTemplates,
+      daySupportByResident: parsed.daySupportByResident,
+    };
+  }
+  return null;
+}
+
+function applyRestoreData(data) {
+  const safeArr = (v) => Array.isArray(v) ? v : [];
+  const safeObj = (v) => (v && typeof v === "object" && !Array.isArray(v)) ? v : {};
+
+  const next = {
+    records: safeArr(data.records),
+    residents: safeArr(data.residents),
+    templates: safeArr(data.templates),
+    autoItemDefs: safeArr(data.autoItemDefs),
+    tags: safeArr(data.tags),
+    favByResident: safeObj(data.favByResident),
+    residentAutoTemplates: safeObj(data.residentAutoTemplates),
+    daySupportByResident: safeObj(data.daySupportByResident),
+  };
+
+  // localStorageへ反映（アプリの各データ）
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next.records));
+  localStorage.setItem(RESIDENTS_KEY, JSON.stringify(next.residents));
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next.templates));
+  localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(next.autoItemDefs));
+  localStorage.setItem(TAGS_KEY, JSON.stringify(next.tags));
+  localStorage.setItem(FAV_BY_RESIDENT_KEY, JSON.stringify(next.favByResident));
+  localStorage.setItem(RESIDENT_AUTO_TEMPLATES_KEY, JSON.stringify(next.residentAutoTemplates));
+  localStorage.setItem(DAY_SUPPORT_BY_RESIDENT_KEY, JSON.stringify(next.daySupportByResident));
+}
+
+function handleRestoreFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const raw = String(reader.result || "");
+      const parsed = JSON.parse(raw);
+      const data = normalizeBackupData(parsed);
+      if (!data) {
+        alert("このファイルは復元用バックアップとして認識できませんでした（JSON形式はOKですが中身が違う可能性があります）。");
+        return;
+      }
+
+      const nowCount = Array.isArray(records) ? records.length : 0;
+      const backupCount = Array.isArray(data.records) ? data.records.length : 0;
+
+      // ✅ 復元前に「現在データ」を自動バックアップ（安全）
+      downloadBackup("before_restore");
+
+      const ok = confirm(
+        `復元しますか？\n\n` +
+        `現在の記録：${nowCount}件\n` +
+        `バックアップの記録：${backupCount}件\n\n` +
+        `※復元すると、現在のデータは上書きされます。`
+      );
+      if (!ok) return;
+
+      applyRestoreData(data);
+
+      showToast("復元しました（再読み込みします）");
+      setTimeout(() => location.reload(), 450);
+    } catch (e) {
+      alert("復元に失敗しました。JSONファイルが壊れている可能性があります。\n" + (e?.message || e));
+    }
+  };
+  reader.onerror = () => alert("ファイルの読み込みに失敗しました。");
+  reader.readAsText(file, "utf-8");
+}
+
 
     function handleSubmit(event) {
       event.preventDefault();
@@ -2007,16 +2151,8 @@ tr.appendChild(tdSupport);
       };
 
       records.push(recordData);
-
-      // ✅ 保存トーストが出ない場合は、localStorage保存で例外が出て止まっている可能性があるため、ここで握って通知します
-      try {
-        saveRecords();
-        showToast("保存しました");
-      } catch (e) {
-        console.error(e);
-        alert("保存に失敗しました（ブラウザのローカル保存がブロックされている可能性があります）。");
-      }
-
+      saveRecords();
+      showToast("保存しました");
       renderRecords();
       resetForm();
     }
@@ -3349,6 +3485,21 @@ tr.appendChild(tdSupport);
         document.getElementById("searchKeyword").value = "";
         renderRecords();
       });
+
+// 🧷 バックアップ / ♻ 復元
+const backupBtn = document.getElementById("backupBtn");
+if (backupBtn) backupBtn.addEventListener("click", () => downloadBackup());
+
+const restoreBtn = document.getElementById("restoreBtn");
+const restoreFile = document.getElementById("restoreFile");
+if (restoreBtn && restoreFile) {
+  restoreBtn.addEventListener("click", () => restoreFile.click());
+  restoreFile.addEventListener("change", (e) => {
+    const file = e.target?.files?.[0];
+    e.target.value = ""; // 同じファイルを連続で選べるように
+    handleRestoreFile(file);
+  });
+}
 
       const periodFilterElement = document.getElementById("periodFilter");
       if (periodFilterElement) {
