@@ -29,6 +29,12 @@
   color: #2563eb;
 }
 
+
+/* 曜日カラー（一覧：日付） */
+.dow-sun{ color:#dc2626; font-weight:800; }
+.dow-sat{ color:#2563eb; font-weight:800; }
+
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
@@ -633,6 +639,18 @@
             </div>
           </div>
 
+
+
+            <div class="field" style="margin-top:10px; margin-bottom:0;">
+              <label for="recorder">記録者</label>
+              <select id="recorder">
+                <option value="">（選択）</option>
+                <option>職員A</option>
+                <option>職員B</option>
+                <option>職員C</option>
+                <option>職員D</option>
+              </select>
+            </div>
           <div class="field-row-3">
             <div class="field">
               <label for="timeSlot">時間帯</label>
@@ -1214,6 +1232,18 @@
           </div>
         </div>
 
+
+        <div class="field" style="margin-top:10px;">
+          <label for="editRecorder">記録者</label>
+          <select id="editRecorder">
+            <option value="">（選択）</option>
+            <option>職員A</option>
+            <option>職員B</option>
+            <option>職員C</option>
+            <option>職員D</option>
+          </select>
+        </div>
+
         <div class="field-row-3">
           <div class="field">
             <label for="editTimeSlot">時間帯</label>
@@ -1705,6 +1735,20 @@ function parseLocalISODate(iso) {
   return iso ? new Date(iso + "T00:00:00") : null; // ローカル0時
 }
 
+
+const DOW_JP = ["日","月","火","水","木","金","土"];
+function formatDateWithDow(iso) {
+  if (!iso) return { text: "", className: "" };
+  const d = parseLocalISODate(iso);
+  if (!d || isNaN(d.getTime())) return { text: iso, className: "" };
+  const dow = d.getDay();
+  const text = `${iso}（${DOW_JP[dow]}）`;
+  let className = "";
+  if (dow === 0) className = "dow-sun";
+  else if (dow === 6) className = "dow-sat";
+  return { text, className };
+}
+
     function escapeHtmlAttr(str) { return escapeHtml(str); }
 
     function populateResidentSelect(selectEl, placeholderText = "選択してください") {
@@ -1880,7 +1924,9 @@ if (d0 < weekStart || d0 > today0) return false;
         const tr = document.createElement("tr");
 
         const tdDate = document.createElement("td");
-        tdDate.textContent = record.date || "";
+        const dInfo = formatDateWithDow(record.date || "");
+        tdDate.textContent = dInfo.text;
+        if (dInfo.className) tdDate.classList.add(dInfo.className);
         tr.appendChild(tdDate);
 
         const tdResident = document.createElement("td");
@@ -2191,6 +2237,7 @@ function handleRestoreFile(file) {
         id: Date.now().toString(),
         date,
         resident,
+        recorder: document.getElementById("recorder")?.value || "",
         timeSlot: document.getElementById("timeSlot").value,
         condition: document.getElementById("condition").value,
         mental: document.getElementById("mental").value,
@@ -2340,6 +2387,7 @@ function handleRestoreFile(file) {
 
       addRow("日付：", record.date || "");
       addRow("利用者：", record.resident || "");
+      addRow("記録者：", record.recorder || "");
       addRow("時間帯：", record.timeSlot || "");
       addRow("体調：", record.condition || "");
       addRow("心の状態：", record.mental || "");
@@ -3229,7 +3277,9 @@ function handleRestoreFile(file) {
       // 入力
       document.getElementById("editDate").value = record.date || "";
       document.getElementById("editResident").value = record.resident || "";
-      document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
+      
+      const __er = document.getElementById("editRecorder");
+      if (__er) __er.value = record.recorder || "";document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
       document.getElementById("editCondition").value = record.condition || "良好";
       document.getElementById("editMental").value = record.mental || "安定";
       document.getElementById("editMeal").value = record.meal || "";
@@ -3305,6 +3355,7 @@ function handleRestoreFile(file) {
         ...records[idx],
         date,
         resident,
+        recorder: document.getElementById("editRecorder")?.value || "",
         timeSlot: document.getElementById("editTimeSlot").value,
         condition: document.getElementById("editCondition").value,
         mental: document.getElementById("editMental").value,
