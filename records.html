@@ -174,6 +174,13 @@
       font-size:11px;
       white-space:nowrap;
     }
+
+    .tag-chip-main{
+      border:1px solid #bfdbfe;
+      background:#eff6ff;
+      color:#1d4ed8;
+    }
+
     .no-records{
       padding:14px;
       font-size:13px;
@@ -307,6 +314,15 @@
     }
   }
 
+
+  function getWeekdayJP(dateStr){
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d)) return "";
+    const w = ["日","月","火","水","木","金","土"][d.getDay()];
+    return w;
+  }
+
   function renderFilters(residents) {
     const filterResident = document.getElementById("filterResident");
     filterResident.innerHTML = "";
@@ -402,7 +418,8 @@
         const tr = document.createElement("tr");
 
         const tdDate = document.createElement("td");
-        tdDate.textContent = record.date || "";
+        const w = getWeekdayJP(record.date);
+        tdDate.textContent = record.date ? (w ? `${record.date}（${w}）` : record.date) : "";
         tr.appendChild(tdDate);
 
         const tdResident = document.createElement("td");
@@ -419,7 +436,7 @@
           wrap.className = "small-text";
           mainItems.forEach(item => {
             const chip = document.createElement("span");
-            chip.className = "tag-chip";
+            chip.className = "tag-chip tag-chip-main";
             chip.textContent = item;
             wrap.appendChild(chip);
           });
@@ -431,8 +448,14 @@
 
         const tdSupport = document.createElement("td");
         tdSupport.className = "support-cell";
-        tdSupport.textContent = record.support || "";
+        let supportText = record.support || "";
+        if (record.note && String(record.note).trim()) {
+          supportText += (supportText.trim() ? "
 
+" : "") + "【特記事項】
+" + String(record.note).trim();
+        }
+        tdSupport.textContent = supportText;
         if (record.tags && record.tags.length) {
           const tagDiv = document.createElement("div");
           tagDiv.className = "small-text";
@@ -444,6 +467,14 @@
           });
           tdSupport.appendChild(document.createElement("br"));
           tdSupport.appendChild(tagDiv);
+        }
+        
+        if (record.recorder && String(record.recorder).trim()) {
+          const recDiv = document.createElement("div");
+          recDiv.className = "small-text";
+          recDiv.textContent = "記録者： " + String(record.recorder).trim();
+          tdSupport.appendChild(document.createElement("br"));
+          tdSupport.appendChild(recDiv);
         }
         tr.appendChild(tdSupport);
 
