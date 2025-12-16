@@ -7,23 +7,6 @@
 
   <style>
     * { box-sizing: border-box; }
-    /* ===== 記録一覧：文字を少し小さく＆黒を薄く ===== */
-.table-wrapper table {
-  font-size: 13px;
-  color: #374151; /* 濃すぎない黒 */
-}
-
-.table-wrapper th {
-  font-size: 13px;
-  color: #374151;
-  font-weight: 600;
-}
-
-.table-wrapper td {
-  font-size: 13px;
-  color: #4b5563; /* 本文はさらに少し薄く */
-}
-
 /* 記録一覧：支援内容を“折りたたみ→もっと見る” */
 .support-preview{
   white-space: pre-wrap;     /* 改行をそのまま表示 */
@@ -231,7 +214,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 12px;
       margin-top: 6px;
     }
 
@@ -245,6 +228,7 @@
     }
 
     th { font-weight: 600; color: #374151; white-space: nowrap; }
+    tbody td { font-weight: 400; color: #374151; }
     tbody tr:nth-child(even) { background: #f9fafb; }
 
     .table-wrapper {
@@ -624,6 +608,16 @@
                 <label for="resident">利用者</label>
                 <select id="resident" required></select>
               </div>
+
+              <div class="field" style="margin-bottom:0;">
+                <label for="recorder">記録者</label>
+                <input id="recorder" list="recorderCandidates" placeholder="選択/入力" />
+                <datalist id="recorderCandidates">
+                  <option value="職員A"></option>
+                  <option value="職員B"></option>
+                  <option value="職員C"></option>
+                </datalist>
+              </div>
             </div>
           </div>
 
@@ -872,6 +866,12 @@
     🧷 バックアップ
   </button>
 
+  <button type="button" class="btn-secondary" id="restoreBtn"
+          style="font-size:12px; padding:6px 10px;">
+    ♻ 復元
+  </button>
+  <input type="file" id="restoreFile" accept="application/json" style="display:none;" />
+
   <button type="button" class="btn-secondary" id="exportExcelBtn"
           style="font-size:12px; padding:6px 10px;">
     ⬇ Excel出力
@@ -922,7 +922,8 @@
     <th>利用者</th>
     <th>日中の主な支援</th>
     <th>支援内容・タグ</th>
-        <th>操作</th>
+    <th>服薬</th>
+    <th>操作</th>
   </tr>
 </thead>
             <tbody id="recordTableBody"></tbody>
@@ -1779,33 +1780,15 @@ function parseLocalISODate(iso) {
       const periodFrom = periodFromInput ? periodFromInput.value : "";
       const periodTo = periodToInput ? periodToInput.value : "";
 
-      const now = new Date();
-      const todayStr = toLocalISODate(now);
-      const today0 = parseLocalISODate(todayStr);
-      const monthPrefix = todayStr.slice(0, 7);
-      const yearPrefix = todayStr.slice(0, 4);
+     const now = new Date();
+const todayStr = toLocalISODate(now);
+const today0 = parseLocalISODate(todayStr);
+const monthPrefix = todayStr.slice(0, 7);
+const yearPrefix = todayStr.slice(0, 4);
 
-      const weekStart = new Date(today0);
-      weekStart.setDate(weekStart.getDate() - 6);
+const weekStart = new Date(today0);
+weekStart.setDate(weekStart.getDate() - 6);
 
-      // 日付→（曜日）を返す（例：2025-12-16 → "（火）"）
-      function getDowJP(dateStr) {
-        if (!dateStr) return "";
-        const d = parseLocalISODate(dateStr);
-        if (!d) return "";
-        const w = d.getDay(); // 0=日
-        const map = ["日", "月", "火", "水", "木", "金", "土"];
-        return "（" + map[w] + "）";
-      }
-
-      function getDowColor(dateStr) {
-        const d = parseLocalISODate(dateStr);
-        if (!d) return "";
-        const w = d.getDay();
-        if (w === 0) return "#dc2626"; // 日：赤
-        if (w === 6) return "#2563eb"; // 土：青
-        return "";
-      }
 
       tbody.innerHTML = "";
 
@@ -1817,35 +1800,37 @@ function parseLocalISODate(iso) {
           if (periodFilter === "today") {
             if (dateStr !== todayStr) return false;
           } else if (periodFilter === "week") {
-            const d = parseLocalISODate(dateStr);
-            if (!d || d < weekStart || d > today0) return false;
+            const d = new Date(dateStr);
+            const d0 = parseLocalISODate(dateStr);
+if (!d0) return false;
+if (d0 < weekStart || d0 > today0) return false;
           } else if (periodFilter === "month") {
-            if (!dateStr.startsWith(monthPrefix)) return false;
+            if (dateStr.slice(0, 7) !== monthPrefix) return false;
           } else if (periodFilter === "year") {
-            if (!dateStr.startsWith(yearPrefix)) return false;
+            if (dateStr.slice(0, 4) !== yearPrefix) return false;
           } else if (periodFilter === "custom") {
             if (periodFrom && dateStr < periodFrom) return false;
             if (periodTo && dateStr > periodTo) return false;
           }
+        } else {
+          if (periodFilter !== "all") return false;
         }
 
         if (keyword) {
-          const blob = [
-            r.date, r.resident, r.support,
-            Array.isArray(r.tags) ? r.tags.join(" ") : "",
-            Array.isArray(r.daySupportMainItems) ? r.daySupportMainItems.join(" ") : "",
-            Array.isArray(r.daySupportItems) ? r.daySupportItems.join(" ") : "",
-            r.recorder
-          ].join(" ").toLowerCase();
-          if (!blob.includes(keyword)) return false;
+          const tagsText = (r.tags || []).join(" ");
+          const target = (((r.support || "") + " " + (r.note || "") + " " + (r.meal || "") + " " + tagsText)).toLowerCase();
+          if (!target.includes(keyword)) return false;
         }
+
         return true;
       });
 
-      if (!filtered.length) {
+      document.getElementById("recordCount").textContent = filtered.length + "件";
+
+      if (filtered.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 5;
+        td.colSpan = 7;
         td.className = "no-records";
         td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
@@ -1853,142 +1838,100 @@ function parseLocalISODate(iso) {
         return;
       }
 
-      filtered
-        .slice()
-        .sort((a, b) => ((a.date || "") < (b.date || "") ? 1 : -1))
-        .forEach((record) => {
-          const tr = document.createElement("tr");
+      filtered.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).forEach((record) => {
+        const tr = document.createElement("tr");
 
-          // 日付（下に曜日）
-          const tdDate = document.createElement("td");
-          const dateText = (record.date || "").trim();
-          const dowText = getDowJP(dateText);
-          const dowColor = getDowColor(dateText);
+        const tdDate = document.createElement("td");
+        tdDate.textContent = record.date || "";
+        tr.appendChild(tdDate);
 
-          const dateDiv = document.createElement("div");
-          dateDiv.textContent = dateText;
-          tdDate.appendChild(dateDiv);
+        const tdResident = document.createElement("td");
+        tdResident.textContent = record.resident || "";
+        tr.appendChild(tdResident);
 
-          if (dowText) {
-            const dowDiv = document.createElement("div");
-            dowDiv.className = "small-text";
-            dowDiv.textContent = dowText;
-            if (dowColor) dowDiv.style.color = dowColor;
-            tdDate.appendChild(dowDiv);
-          }
-          tr.appendChild(tdDate);
+        const tdTime = document.createElement("td");
+        const span = document.createElement("span");
+        span.textContent = record.timeSlot || "";
+        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
+        tdTime.appendChild(span);
+        tr.appendChild(tdTime);
 
-          // 利用者
-          const tdResident = document.createElement("td");
-          tdResident.textContent = record.resident || "";
-          tr.appendChild(tdResident);
+        const tdCond = document.createElement("td");
+        tdCond.innerHTML = (record.condition || "") + "<br><span class='small-text'>" + (record.mental || "") + "</span>";
+        tr.appendChild(tdCond);
 
-          // 日中の主な支援（チップ）
-          const tdDayMain = document.createElement("td");
-          const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
-          const fallbackItems = Array.isArray(record.daySupportItems) ? record.daySupportItems : [];
-          const items = mainItems.length ? mainItems : fallbackItems;
+        const tdSupport = document.createElement("td");
 
-          if (items.length) {
-            const wrap = document.createElement("div");
-            wrap.className = "list-support-tags";
-            items.forEach((t) => {
-              const chip = document.createElement("span");
-              chip.className = "list-support-tag";
-              chip.textContent = t;
-              wrap.appendChild(chip);
-            });
-            tdDayMain.appendChild(wrap);
-          } else {
-            tdDayMain.innerHTML = "<span class='small-text'>（なし）</span>";
-          }
-          tr.appendChild(tdDayMain);
+// 支援内容（折りたたみ）
+const full = (record.support || "").trim();
+const supportDiv = document.createElement("div");
+supportDiv.className = "support-preview";
+supportDiv.textContent = full;
 
-          // 支援内容・タグ（全文プレビュー＋タグ＋記録者）
-          const tdSupport = document.createElement("td");
+// 長文だけ「もっと見る」を出す
+const needToggle = full.length > 120 || full.includes("\n");
+if (needToggle) {
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "support-toggle";
+  toggle.textContent = "もっと見る";
+  toggle.addEventListener("click", () => {
+    const expanded = supportDiv.classList.toggle("expanded");
+    toggle.textContent = expanded ? "閉じる" : "もっと見る";
+  });
+  tdSupport.appendChild(supportDiv);
+  tdSupport.appendChild(toggle);
+} else {
+  tdSupport.appendChild(supportDiv);
+}
 
-          const full = (record.support || "").trim();
-          const supportDiv = document.createElement("div");
-          supportDiv.className = "support-preview";
-          supportDiv.textContent = full;
+// タグ表示（今まで通り）
+if (record.tags && record.tags.length) {
+  const tagDiv = document.createElement("div");
+  tagDiv.className = "small-text";
+  record.tags.forEach((tag) => {
+    const spanTag = document.createElement("span");
+    spanTag.className = "tag-chip";
+    spanTag.textContent = "#" + tag;
+    tagDiv.appendChild(spanTag);
+  });
+  tdSupport.appendChild(tagDiv);
+}
 
-          const needToggle = full.length > 120 || full.includes("\n");
-          if (needToggle) {
-            const toggle = document.createElement("button");
-            toggle.type = "button";
-            toggle.className = "support-toggle";
-            toggle.textContent = "もっと見る";
-            toggle.addEventListener("click", () => {
-              const expanded = supportDiv.classList.toggle("expanded");
-              toggle.textContent = expanded ? "閉じる" : "もっと見る";
-            });
-            tdSupport.appendChild(supportDiv);
-            tdSupport.appendChild(toggle);
-          } else {
-            tdSupport.appendChild(supportDiv);
-          }
+tr.appendChild(tdSupport);
 
-          const tags = Array.isArray(record.tags) ? record.tags : [];
-          if (tags.length) {
-            const tagDiv = document.createElement("div");
-            tagDiv.className = "tag-container";
-            tags.forEach((tag) => {
-              const spanTag = document.createElement("span");
-              spanTag.className = "tag-chip";
-              spanTag.textContent = "#" + tag;
-              tagDiv.appendChild(spanTag);
-            });
-            tdSupport.appendChild(tagDiv);
-          }
 
-          // 記録者（タグの下に表示）
-          const rec = (record.recorder || "").toString().trim();
-          if (rec) {
-            const recLine = document.createElement("div");
-            recLine.className = "small-text";
-            recLine.style.marginTop = "6px";
-            recLine.textContent = "記録者：" + rec;
-            tdSupport.appendChild(recLine);
-          }
+        const tdMed = document.createElement("td");
+        tdMed.textContent = record.medTaken ? "服薬済み" : "";
+        tr.appendChild(tdMed);
 
-          tr.appendChild(tdSupport);
+        const tdActions = document.createElement("td");
 
-          // 操作（縦並び）
-          const tdActions = document.createElement("td");
+        const viewBtn = document.createElement("button");
+        viewBtn.textContent = "詳細";
+        viewBtn.className = "btn-secondary";
+        viewBtn.style.fontSize = "12px";
+        viewBtn.onclick = () => showRecordDetail(record.id);
 
-          const viewBtn = document.createElement("button");
-          viewBtn.textContent = "詳細";
-          viewBtn.className = "btn-secondary";
-          viewBtn.style.fontSize = "12px";
-          viewBtn.style.display = "block";
-          viewBtn.style.width = "100%";
-          viewBtn.style.marginBottom = "6px";
-          viewBtn.onclick = () => showRecordDetail(record.id);
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "編集";
+        editBtn.className = "btn-secondary";
+        editBtn.style.fontSize = "12px";
+        editBtn.onclick = () => openEditModal(record.id);
 
-          const editBtn = document.createElement("button");
-          editBtn.textContent = "編集";
-          editBtn.className = "btn-secondary";
-          editBtn.style.fontSize = "12px";
-          editBtn.style.display = "block";
-          editBtn.style.width = "100%";
-          editBtn.style.marginBottom = "6px";
-          editBtn.onclick = () => openEditModal(record.id);
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "削除";
+        delBtn.className = "btn-danger";
+        delBtn.style.fontSize = "12px";
+        delBtn.onclick = () => deleteRecord(record.id);
 
-          const delBtn = document.createElement("button");
-          delBtn.textContent = "削除";
-          delBtn.className = "btn-danger";
-          delBtn.style.fontSize = "12px";
-          delBtn.style.display = "block";
-          delBtn.style.width = "100%";
-          delBtn.onclick = () => deleteRecord(record.id);
+        tdActions.appendChild(viewBtn);
+        tdActions.appendChild(editBtn);
+        tdActions.appendChild(delBtn);
+        tr.appendChild(tdActions);
 
-          tdActions.appendChild(viewBtn);
-          tdActions.appendChild(editBtn);
-          tdActions.appendChild(delBtn);
-          tr.appendChild(tdActions);
-
-          tbody.appendChild(tr);
-        });
+        tbody.appendChild(tr);
+      });
     }
 
     function resetForm() {
@@ -3602,6 +3545,119 @@ function parseLocalISODate(iso) {
 
   <!-- 保存しました：トースト表示 -->
   <div id="saveToast" role="status" aria-live="polite"></div>
+
+
+<script>
+  // ===== バックアップ / 復元（localStorage丸ごと） =====
+  (function () {
+    const LS_KEYS = [
+      typeof STORAGE_KEY !== "undefined" ? STORAGE_KEY : "gh_records_v1",
+      typeof RESIDENTS_KEY !== "undefined" ? RESIDENTS_KEY : "gh_residents_v1",
+      typeof TEMPLATES_KEY !== "undefined" ? TEMPLATES_KEY : "gh_templates_v1",
+      typeof TAGS_KEY !== "undefined" ? TAGS_KEY : "gh_tags_v1",
+      typeof FAV_BY_RESIDENT_KEY !== "undefined" ? FAV_BY_RESIDENT_KEY : "gh_fav_by_resident_v1",
+      typeof RESIDENT_AUTO_TEMPLATES_KEY !== "undefined" ? RESIDENT_AUTO_TEMPLATES_KEY : "gh_resident_auto_templates_v1",
+      typeof AUTO_ITEM_DEFS_KEY !== "undefined" ? AUTO_ITEM_DEFS_KEY : "gh_auto_item_defs_v1",
+      typeof DAY_SUPPORT_BY_RESIDENT_KEY !== "undefined" ? DAY_SUPPORT_BY_RESIDENT_KEY : "gh_day_support_by_resident_v1",
+    ].filter(Boolean);
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+
+    function downloadBackup(suffix="backup") {
+      const items = {};
+      LS_KEYS.forEach((k) => { items[k] = localStorage.getItem(k); });
+
+      const data = {
+        app: "group_home_personal_record",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        items
+      };
+
+      const d = new Date();
+      const stamp = `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+      const filename = `gh_backup_${stamp}_${suffix}.json`;
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 500);
+    }
+
+    function normalizeBackupData(parsed) {
+      if (!parsed || typeof parsed !== "object") return null;
+      if (parsed.items && typeof parsed.items === "object") return parsed;
+      // 旧形式フォールバック：もし {localStorage:{...}} なら取り込む
+      if (parsed.localStorage && typeof parsed.localStorage === "object") {
+        return { app: parsed.app || "group_home_personal_record", version: 1, exportedAt: parsed.exportedAt || "", items: parsed.localStorage };
+      }
+      return null;
+    }
+
+    function applyRestoreData(data) {
+      const items = data.items || {};
+      // 不要キーを消したい場合はここで制御できるが、基本は「入ってるものを戻す」
+      Object.keys(items).forEach((k) => {
+        const v = items[k];
+        if (v === null || typeof v === "undefined") localStorage.removeItem(k);
+        else localStorage.setItem(k, v);
+      });
+    }
+
+    function handleRestoreFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const raw = String(reader.result || "");
+          const parsed = JSON.parse(raw);
+          const data = normalizeBackupData(parsed);
+          if (!data) {
+            alert("このファイルは復元用バックアップとして認識できませんでした。");
+            return;
+          }
+
+          // 復元前に「現在」を自動バックアップ（安全）
+          downloadBackup("before_restore");
+
+          const ok = confirm(
+            "復元しますか？\n\n※復元すると現在のデータは上書きされます。\n（復元前のデータは before_restore として自動バックアップします）"
+          );
+          if (!ok) return;
+
+          applyRestoreData(data);
+          alert("復元しました。ページを再読み込みします。");
+          location.reload();
+        } catch (e) {
+          alert("復元に失敗しました。JSONファイルが壊れている可能性があります。\n" + (e?.message || e));
+        }
+      };
+      reader.onerror = () => alert("ファイルの読み込みに失敗しました。");
+      reader.readAsText(file, "utf-8");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const backupBtn = document.getElementById("backupBtn");
+      if (backupBtn) backupBtn.addEventListener("click", () => downloadBackup("manual"));
+
+      const restoreBtn = document.getElementById("restoreBtn");
+      const restoreFile = document.getElementById("restoreFile");
+      if (restoreBtn && restoreFile) {
+        restoreBtn.addEventListener("click", () => restoreFile.click());
+        restoreFile.addEventListener("change", (e) => {
+          const f = e.target.files && e.target.files[0];
+          e.target.value = "";
+          handleRestoreFile(f);
+        });
+      }
+    });
+  })();
+</script>
 
 </body>
 </html>
