@@ -267,7 +267,17 @@
       margin-top: 10px;
     }
 
-    .badge {
+    
+    /* 記録一覧：列崩れ防止（支援内容・タグを少し狭める） */
+    .table-wrapper table { table-layout: fixed; }
+    .table-wrapper th:nth-child(1), .table-wrapper td:nth-child(1) { width: 110px; white-space: nowrap; }
+    .table-wrapper th:nth-child(2), .table-wrapper td:nth-child(2) { width: 120px; white-space: nowrap; }
+    .table-wrapper th:nth-child(3), .table-wrapper td:nth-child(3) { width: 260px; }
+    .table-wrapper th:nth-child(4), .table-wrapper td:nth-child(4) { width: 340px; }
+    .table-wrapper th:nth-child(5), .table-wrapper td:nth-child(5) { width: 110px; white-space: nowrap; }
+    .table-wrapper th:nth-child(6), .table-wrapper td:nth-child(6) { width: 180px; white-space: nowrap; }
+    .table-wrapper td:nth-child(4) { overflow-wrap: anywhere; word-break: break-word; }
+.badge {
       display: inline-block;
       padding: 3px 9px;
       border-radius: 999px;
@@ -957,7 +967,7 @@
     <th>利用者</th>
     <th>日中の主な支援</th>
     <th>支援内容・タグ</th>
-    <th>服薬</th>
+    <th>記録者</th>
     <th>操作</th>
   </tr>
 </thead>
@@ -1992,11 +2002,12 @@ if (record.tags && record.tags.length) {
 tr.appendChild(tdSupport);
 
 
-        const tdMed = document.createElement("td");
-        tdMed.textContent = record.medTaken ? "服薬済み" : "";
-        tr.appendChild(tdMed);
+        
+        const tdRecorder = document.createElement("td");
+        tdRecorder.textContent = record.recorder ? String(record.recorder) : "";
+        tr.appendChild(tdRecorder);
 
-        const tdActions = document.createElement("td");
+const tdActions = document.createElement("td");
 
         const viewBtn = document.createElement("button");
         viewBtn.textContent = "詳細";
