@@ -450,10 +450,9 @@
         tdSupport.className = "support-cell";
         let supportText = record.support || "";
         if (record.note && String(record.note).trim()) {
-          supportText += (supportText.trim() ? "
-
-" : "") + "【特記事項】
-" + String(record.note).trim();
+          
+          supportText += (supportText.trim() ? "\n\n" : "") + "【特記事項】\n" + String(record.note).trim();
+        
         }
         tdSupport.textContent = supportText;
         if (record.tags && record.tags.length) {
