@@ -454,19 +454,19 @@
 
   function parseList(str){
     return String(str || "")
-      .split(/[,
-、]/)
+      .split(/[\,\n、]/)
       .map(s => s.trim())
       .filter(Boolean);
   }
 
+
   function parseTags(str){
     return String(str || "")
-      .split(/[,\s
-、]+/)
+      .split(/[\,\s\n、]+/)
       .map(s => s.trim().replace(/^#+/, ""))
       .filter(Boolean);
   }
+
 
   function openEditModalByIdx(idx){
     const base = loadRecords();
@@ -801,4 +801,3 @@
 </script>
 </body>
 </html>
-
