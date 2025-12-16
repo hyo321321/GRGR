@@ -268,14 +268,31 @@
     }
 
     
-    /* 記録一覧：列崩れ防止（支援内容・タグを少し狭める） */
+    /* 記録一覧：列崩れ防止（横スクロールを減らす） */
     .table-wrapper table { table-layout: fixed; }
-    .table-wrapper th:nth-child(1), .table-wrapper td:nth-child(1) { width: 110px; white-space: nowrap; }
-    .table-wrapper th:nth-child(2), .table-wrapper td:nth-child(2) { width: 150px; }
-    .table-wrapper th:nth-child(3), .table-wrapper td:nth-child(3) { width: 260px; }
-    .table-wrapper th:nth-child(4), .table-wrapper td:nth-child(4) { width: 340px; }
-    .table-wrapper th:nth-child(5), .table-wrapper td:nth-child(5) { width: 180px; white-space: nowrap; }
+    /* 表ヘッダは折り返しOK（横幅を無理に広げない） */
+    .table-wrapper th { white-space: normal; }
+
+    .table-wrapper th:nth-child(1), .table-wrapper td:nth-child(1) { width: 100px; white-space: nowrap; }
+    .table-wrapper th:nth-child(2), .table-wrapper td:nth-child(2) { width: 130px; }
+    .table-wrapper th:nth-child(3), .table-wrapper td:nth-child(3) { width: 210px; }
+    .table-wrapper th:nth-child(4), .table-wrapper td:nth-child(4) { width: auto; }
+    .table-wrapper th:nth-child(5), .table-wrapper td:nth-child(5) { width: 110px; white-space: nowrap; }
+
     .table-wrapper td:nth-child(4) { overflow-wrap: anywhere; word-break: break-word; }
+
+    /* 記録一覧：操作ボタンを縦並び（横幅を節約） */
+    .op-stack{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .op-stack button{
+      width: 100%;
+      justify-content: center;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
 .badge {
       display: inline-block;
       padding: 3px 9px;
@@ -2028,9 +2045,12 @@ const tdActions = document.createElement("td");
         delBtn.style.fontSize = "12px";
         delBtn.onclick = () => deleteRecord(record.id);
 
-        tdActions.appendChild(viewBtn);
-        tdActions.appendChild(editBtn);
-        tdActions.appendChild(delBtn);
+        const actionsWrap = document.createElement("div");
+        actionsWrap.className = "op-stack";
+        actionsWrap.appendChild(viewBtn);
+        actionsWrap.appendChild(editBtn);
+        actionsWrap.appendChild(delBtn);
+        tdActions.appendChild(actionsWrap);
         tr.appendChild(tdActions);
 
         tbody.appendChild(tr);
