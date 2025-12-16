@@ -286,7 +286,16 @@
 
     .small-text { font-size: 12px; color: #6b7280; }
 
-    .no-records {
+    
+    /* 記録一覧：服薬列は“見えない”だけ（列幅/並びは維持） */
+    th.col-med, td.col-med {
+      color: transparent;      /* 文字だけ消す */
+      user-select: none;
+    }
+
+    /* 記録一覧：支援内容・タグ欄の下に「記録者」を表示 */
+    .recorder-line { margin-top: 4px; }
+.no-records {
       padding: 14px;
       font-size: 13px;
       color: #6b7280;
@@ -961,7 +970,7 @@
     <th>利用者</th>
     <th>日中の主な支援</th>
     <th>支援内容・タグ</th>
-    <th>服薬</th>
+    <th class="col-med">服薬</th>
     <th>操作</th>
   </tr>
 </thead>
@@ -2006,11 +2015,20 @@ if (record.tags && record.tags.length) {
   tdSupport.appendChild(tagDiv);
 }
 
+// 記録者（タグの下）
+if (record.recorder && String(record.recorder).trim()) {
+  const recDiv = document.createElement("div");
+  recDiv.className = "small-text recorder-line";
+  recDiv.textContent = "記録者：" + record.recorder;
+  tdSupport.appendChild(recDiv);
+}
+
 tr.appendChild(tdSupport);
 
 
         const tdMed = document.createElement("td");
-        tdMed.textContent = record.medTaken ? "服薬済み" : "";
+        tdMed.className = "col-med";
+        tdMed.textContent = ""; // 服薬は記録として保持するが、一覧では表示しない
         tr.appendChild(tdMed);
 
         const tdActions = document.createElement("td");
