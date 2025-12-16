@@ -29,6 +29,16 @@
   color: #2563eb;
 }
 
+
+/* 曜日カラー（一覧：日付） */
+.dow-sun{ color:#dc2626; font-weight:800; }
+.dow-sat{ color:#2563eb; font-weight:800; }
+    /* 日付セル：曜日を日付の下に表示（重なり防止） */
+    .date-cell { white-space: normal !important; line-height: 1.2; }
+    .date-dow { font-size: 12px; margin-top: 2px; line-height: 1; }
+
+
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
@@ -84,6 +94,29 @@
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
+    }
+
+    
+    /* 記録一覧：操作ボタン（別ページ/バックアップ/復元/Excel） */
+    .record-tools{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:8px;
+      margin: 0 0 12px; /* タイトル直下に配置 */
+    }
+    .record-tools-top{
+      display:flex;
+      justify-content:flex-end;
+      width:100%;
+    }
+
+    .record-tools-bottom{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
     }
 
     .card-subtitle {
@@ -214,7 +247,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 13px;
       margin-top: 6px;
     }
 
@@ -228,11 +261,10 @@
     }
 
     th { font-weight: 600; color: #374151; white-space: nowrap; }
-    tbody td { font-weight: 400; color: #374151; }
     tbody tr:nth-child(even) { background: #f9fafb; }
 
     .table-wrapper {
-      max-height: 520px;
+      max-height: 1050px;
       overflow: auto;
       border-radius: 14px;
       border: 1px solid #e5e7eb;
@@ -608,19 +640,21 @@
                 <label for="resident">利用者</label>
                 <select id="resident" required></select>
               </div>
-
-              <div class="field" style="margin-bottom:0;">
-                <label for="recorder">記録者</label>
-                <input id="recorder" list="recorderCandidates" placeholder="選択/入力" />
-                <datalist id="recorderCandidates">
-                  <option value="職員A"></option>
-                  <option value="職員B"></option>
-                  <option value="職員C"></option>
-                </datalist>
-              </div>
             </div>
           </div>
 
+
+
+            <div class="field" style="margin-top:10px; margin-bottom:0;">
+              <label for="recorder">記録者</label>
+              <select id="recorder">
+                <option value="">（選択）</option>
+                <option>職員A</option>
+                <option>職員B</option>
+                <option>職員C</option>
+                <option>職員D</option>
+              </select>
+            </div>
           <div class="field-row-3">
             <div class="field">
               <label for="timeSlot">時間帯</label>
@@ -853,32 +887,37 @@
       <section class="card">
         <div class="card-title">
           <span>記録一覧</span>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-  <button type="button"
-          onclick="window.open('records.html', '_blank')"
-          class="btn-secondary"
-          style="font-size:12px; padding:6px 10px;">
-    📄 別ページで開く
-  </button>
+          <span class="record-count" id="recordCount">0件</span>
+        </div>
 
-  <button type="button" class="btn-secondary" id="backupBtn"
-          style="font-size:12px; padding:6px 10px;">
-    🧷 バックアップ
-  </button>
+        <div class="record-tools">
+          <div class="record-tools-top">
+            <button type="button"
+                    onclick="window.open('records.html', '_blank')"
+                    class="btn-secondary"
+                    style="font-size:12px; padding:6px 10px;">
+              📄 別ページで開く
+            </button>
+          </div>
 
-  <button type="button" class="btn-secondary" id="restoreBtn"
-          style="font-size:12px; padding:6px 10px;">
-    ♻ 復元
-  </button>
-  <input type="file" id="restoreFile" accept="application/json" style="display:none;" />
+          <div class="record-tools-bottom">
+            <button type="button" class="btn-secondary" id="backupBtn"
+                    style="font-size:12px; padding:6px 10px;">
+              🧷 バックアップ
+            </button>
 
-  <button type="button" class="btn-secondary" id="exportExcelBtn"
-          style="font-size:12px; padding:6px 10px;">
-    ⬇ Excel出力
-  </button>
+            <button type="button" class="btn-secondary" id="restoreBtn"
+                    style="font-size:12px; padding:6px 10px;">
+              ♻ 復元
+            </button>
+            <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" />
 
-  <span class="record-count" id="recordCount">0件</span>
-</div>
+            <button type="button" class="btn-secondary" id="exportExcelBtn"
+                    style="font-size:12px; padding:6px 10px;">
+              ⬇ Excel出力
+            </button>
+          </div>
+        </div>
 
 
         <div class="resident-select-row">
@@ -1197,6 +1236,18 @@
           </div>
         </div>
 
+
+        <div class="field" style="margin-top:10px;">
+          <label for="editRecorder">記録者</label>
+          <select id="editRecorder">
+            <option value="">（選択）</option>
+            <option>職員A</option>
+            <option>職員B</option>
+            <option>職員C</option>
+            <option>職員D</option>
+          </select>
+        </div>
+
         <div class="field-row-3">
           <div class="field">
             <label for="editTimeSlot">時間帯</label>
@@ -1405,6 +1456,8 @@
     const FAV_BY_RESIDENT_KEY = "group_home_fav_by_resident_v1";
     const RESIDENT_AUTO_TEMPLATES_KEY = "group_home_resident_auto_templates_v1";
     const DAY_SUPPORT_BY_RESIDENT_KEY = "group_home_day_support_by_resident_v1";
+    const DAY_SUPPORT_DEFAULT_KEY = "group_home_day_support_default_v1";
+    const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
 
     const DEFAULT_AUTO_ITEM_DEFS = [
       { key: "med_manage",  label: "服薬管理", defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。" },
@@ -1454,6 +1507,7 @@
     let favByResident = {};
     let residentAutoTemplates = {};
     let daySupportByResident = {};
+    let daySupportDefault = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
 
     // 編集モーダル用
     let editingRecordId = null;
@@ -1604,24 +1658,42 @@
       return st;
     }
 
-    // ===== 利用者別：日中支援チェック =====
+    // ===== 日中支援チェック（利用者別 + 共通デフォルト） =====
     function loadDaySupportByResident() { return loadJSON(DAY_SUPPORT_BY_RESIDENT_KEY, {}); }
     function saveDaySupportByResident() { saveJSON(DAY_SUPPORT_BY_RESIDENT_KEY, daySupportByResident); }
 
-    function getDaySupportForResident(resident) {
-      const st = daySupportByResident[resident];
-      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return st;
+    function loadDaySupportDefault() {
+      const st = loadJSON(DAY_SUPPORT_DEFAULT_KEY, null);
+      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return { main: st.main, reason: st.reason };
+      const init = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+      saveJSON(DAY_SUPPORT_DEFAULT_KEY, init);
+      return init;
+    }
+    function saveDaySupportDefault() { saveJSON(DAY_SUPPORT_DEFAULT_KEY, daySupportDefault); }
+
+    function getDefaultDaySupport() {
+      if (daySupportDefault && Array.isArray(daySupportDefault.main) && Array.isArray(daySupportDefault.reason)) {
+        return { main: daySupportDefault.main.slice(), reason: daySupportDefault.reason.slice() };
+      }
       return { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
     }
 
+    function getDaySupportForResident(resident) {
+      if (resident) {
+        const st = daySupportByResident[resident];
+        if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return { main: st.main.slice(), reason: st.reason.slice() };
+      }
+      return getDefaultDaySupport();
+    }
+
     function applyDaySupportListsForResident(resident) {
-      if (!resident) return;
+      // residentが空なら「共通デフォルト」を適用
 
       // 現在チェックを退避（再描画で消えるので）
       const prevMain = new Set(Array.from(document.querySelectorAll(".day-main-item:checked")).map((x) => x.value));
       const prevReason = new Set(Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value));
 
-      const conf = getDaySupportForResident(resident);
+      const conf = getDaySupportForResident(resident || "");
       DAY_SUPPORT_MAIN_LIST = conf.main.slice();
       DAY_SUPPORT_REASON_LIST = conf.reason.slice();
 
@@ -1665,6 +1737,20 @@
 }
 function parseLocalISODate(iso) {
   return iso ? new Date(iso + "T00:00:00") : null; // ローカル0時
+}
+
+
+const DOW_JP = ["日","月","火","水","木","金","土"];
+function formatDateWithDow(iso) {
+  // 返り値：日付(上段)＋曜日(下段) 用
+  if (!iso) return { dateText: "", dowText: "", className: "" };
+  const d = parseLocalISODate(iso);
+  if (!d || isNaN(d.getTime())) return { dateText: iso, dowText: "", className: "" };
+  const dow = d.getDay();
+  let className = "";
+  if (dow === 0) className = "dow-sun";
+  else if (dow === 6) className = "dow-sat";
+  return { dateText: iso, dowText: `（${DOW_JP[dow]}）`, className };
 }
 
     function escapeHtmlAttr(str) { return escapeHtml(str); }
@@ -1830,7 +1916,7 @@ if (d0 < weekStart || d0 > today0) return false;
       if (filtered.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 7;
+        td.colSpan = 6;
         td.className = "no-records";
         td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
@@ -1842,25 +1928,47 @@ if (d0 < weekStart || d0 > today0) return false;
         const tr = document.createElement("tr");
 
         const tdDate = document.createElement("td");
-        tdDate.textContent = record.date || "";
+        tdDate.classList.add("date-cell");
+
+        const dInfo = formatDateWithDow(record.date || "");
+        // 上：日付 / 下：曜日（色は土=青・日=赤）
+        const dateTop = document.createElement("div");
+        dateTop.textContent = dInfo.dateText || "";
+        tdDate.appendChild(dateTop);
+
+        if (dInfo.dowText) {
+          const dateDow = document.createElement("div");
+          dateDow.className = "date-dow";
+          dateDow.textContent = dInfo.dowText;
+          if (dInfo.className) dateDow.classList.add(dInfo.className);
+          tdDate.appendChild(dateDow);
+        }
+
         tr.appendChild(tdDate);
 
         const tdResident = document.createElement("td");
         tdResident.textContent = record.resident || "";
         tr.appendChild(tdResident);
 
-        const tdTime = document.createElement("td");
-        const span = document.createElement("span");
-        span.textContent = record.timeSlot || "";
-        span.className = "badge " + getTimeBadgeClass(record.timeSlot);
-        tdTime.appendChild(span);
-        tr.appendChild(tdTime);
-
-        const tdCond = document.createElement("td");
-        tdCond.innerHTML = (record.condition || "") + "<br><span class='small-text'>" + (record.mental || "") + "</span>";
-        tr.appendChild(tdCond);
+        const tdDayMain = document.createElement("td");
+        const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
+        if (mainItems.length) {
+          const wrap = document.createElement("div");
+          wrap.className = "list-support-tags";
+          mainItems.forEach((t) => {
+            const chip = document.createElement("span");
+            chip.className = "list-support-tag";
+            chip.textContent = t;
+            wrap.appendChild(chip);
+          });
+          tdDayMain.appendChild(wrap);
+        } else {
+          tdDayMain.innerHTML = "<span class='small-text'>（なし）</span>";
+        }
+        tr.appendChild(tdDayMain);
 
         const tdSupport = document.createElement("td");
+
 
 // 支援内容（折りたたみ）
 const full = (record.support || "").trim();
@@ -1988,6 +2096,143 @@ tr.appendChild(tdSupport);
       __toastTimer = setTimeout(() => el.classList.remove("show"), 1600);
     }
 
+// ===== バックアップ / 復元 =====
+function buildBackupPayload() {
+  return {
+    app: "group_home_personal_record",
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      records: Array.isArray(records) ? records : [],
+      residents: Array.isArray(residents) ? residents : [],
+      templates: Array.isArray(templates) ? templates : [],
+      autoItemDefs: Array.isArray(AUTO_ITEM_DEFS) ? AUTO_ITEM_DEFS : [],
+      tags: Array.isArray(TAG_LIST) ? TAG_LIST : [],
+      favByResident: (favByResident && typeof favByResident === "object") ? favByResident : {},
+      residentAutoTemplates: (residentAutoTemplates && typeof residentAutoTemplates === "object") ? residentAutoTemplates : {},
+      daySupportByResident: (daySupportByResident && typeof daySupportByResident === "object") ? daySupportByResident : {},
+    }
+  };
+}
+
+function yyyymmdd_hhmmss() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const da = pad(d.getDate());
+  const h = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  const s = pad(d.getSeconds());
+  return `${y}${m}${da}_${h}${mi}${s}`;
+}
+
+function downloadTextFile(filename, textContent, mime = "application/json") {
+  const blob = new Blob([textContent], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function downloadBackup(suffix = "") {
+  const payload = buildBackupPayload();
+  const filename = `group_home_backup_${yyyymmdd_hhmmss()}${suffix ? "_" + suffix : ""}.json`;
+  downloadTextFile(filename, JSON.stringify(payload, null, 2));
+  showToast("バックアップを保存しました");
+}
+
+function normalizeBackupData(parsed) {
+  // 新形式: { data: { ... } }
+  if (parsed && typeof parsed === "object" && parsed.data && typeof parsed.data === "object") return parsed.data;
+
+  // 旧形式: { records:..., residents:..., ... }
+  const keys = ["records","residents","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident"];
+  const hasAny = keys.some((k) => Object.prototype.hasOwnProperty.call(parsed || {}, k));
+  if (hasAny) {
+    return {
+      records: parsed.records,
+      residents: parsed.residents,
+      templates: parsed.templates,
+      autoItemDefs: parsed.autoItemDefs,
+      tags: parsed.tags,
+      favByResident: parsed.favByResident,
+      residentAutoTemplates: parsed.residentAutoTemplates,
+      daySupportByResident: parsed.daySupportByResident,
+    };
+  }
+  return null;
+}
+
+function applyRestoreData(data) {
+  const safeArr = (v) => Array.isArray(v) ? v : [];
+  const safeObj = (v) => (v && typeof v === "object" && !Array.isArray(v)) ? v : {};
+
+  const next = {
+    records: safeArr(data.records),
+    residents: safeArr(data.residents),
+    templates: safeArr(data.templates),
+    autoItemDefs: safeArr(data.autoItemDefs),
+    tags: safeArr(data.tags),
+    favByResident: safeObj(data.favByResident),
+    residentAutoTemplates: safeObj(data.residentAutoTemplates),
+    daySupportByResident: safeObj(data.daySupportByResident),
+  };
+
+  // localStorageへ反映（アプリの各データ）
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next.records));
+  localStorage.setItem(RESIDENTS_KEY, JSON.stringify(next.residents));
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next.templates));
+  localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(next.autoItemDefs));
+  localStorage.setItem(TAGS_KEY, JSON.stringify(next.tags));
+  localStorage.setItem(FAV_BY_RESIDENT_KEY, JSON.stringify(next.favByResident));
+  localStorage.setItem(RESIDENT_AUTO_TEMPLATES_KEY, JSON.stringify(next.residentAutoTemplates));
+  localStorage.setItem(DAY_SUPPORT_BY_RESIDENT_KEY, JSON.stringify(next.daySupportByResident));
+}
+
+function handleRestoreFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const raw = String(reader.result || "");
+      const parsed = JSON.parse(raw);
+      const data = normalizeBackupData(parsed);
+      if (!data) {
+        alert("このファイルは復元用バックアップとして認識できませんでした（JSON形式はOKですが中身が違う可能性があります）。");
+        return;
+      }
+
+      const nowCount = Array.isArray(records) ? records.length : 0;
+      const backupCount = Array.isArray(data.records) ? data.records.length : 0;
+
+      // ✅ 復元前に「現在データ」を自動バックアップ（安全）
+      downloadBackup("before_restore");
+
+      const ok = confirm(
+        `復元しますか？\n\n` +
+        `現在の記録：${nowCount}件\n` +
+        `バックアップの記録：${backupCount}件\n\n` +
+        `※復元すると、現在のデータは上書きされます。`
+      );
+      if (!ok) return;
+
+      applyRestoreData(data);
+
+      showToast("復元しました（再読み込みします）");
+      setTimeout(() => location.reload(), 450);
+    } catch (e) {
+      alert("復元に失敗しました。JSONファイルが壊れている可能性があります。\n" + (e?.message || e));
+    }
+  };
+  reader.onerror = () => alert("ファイルの読み込みに失敗しました。");
+  reader.readAsText(file, "utf-8");
+}
+
 
     function handleSubmit(event) {
       event.preventDefault();
@@ -2009,6 +2254,7 @@ tr.appendChild(tdSupport);
         id: Date.now().toString(),
         date,
         resident,
+        recorder: document.getElementById("recorder")?.value || "",
         timeSlot: document.getElementById("timeSlot").value,
         condition: document.getElementById("condition").value,
         mental: document.getElementById("mental").value,
@@ -2158,6 +2404,7 @@ tr.appendChild(tdSupport);
 
       addRow("日付：", record.date || "");
       addRow("利用者：", record.resident || "");
+      addRow("記録者：", record.recorder || "");
       addRow("時間帯：", record.timeSlot || "");
       addRow("体調：", record.condition || "");
       addRow("心の状態：", record.mental || "");
@@ -2924,51 +3171,106 @@ tr.appendChild(tdSupport);
     }
 
     // ===== 日中支援チェック（利用者別）管理（下の管理カード） =====
+    function ensureDaySupportDefaultOption(sel) {
+      // 先頭：空のプレースホルダ、次に「共通デフォルト」を差し込む
+      if (!sel) return;
+      const exists = Array.from(sel.options).some((o) => o.value === DAY_SUPPORT_DEFAULT_VALUE);
+      if (exists) return;
+      const opt = document.createElement("option");
+      opt.value = DAY_SUPPORT_DEFAULT_VALUE;
+      opt.textContent = "（共通デフォルト）";
+      // index1に挿入（placeholderの次）
+      sel.insertBefore(opt, sel.options[1] || null);
+    }
+
     function renderDaySupportManager() {
       const sel = document.getElementById("dsResidentSelect");
       const mainTa = document.getElementById("dsMainList");
       const reasonTa = document.getElementById("dsReasonList");
       if (!sel || !mainTa || !reasonTa) return;
 
-      populateResidentSelect(sel);
-      const resident = sel.value || residents[0] || "";
-      if (!sel.value && resident) sel.value = resident;
+      const prev = sel.value || "";
 
-      const conf = getDaySupportForResident(resident);
-      mainTa.value = conf.main.join("\n");
-      reasonTa.value = conf.reason.join("\n");
+      populateResidentSelect(sel);
+      ensureDaySupportDefaultOption(sel);
+
+      // 選択を復元（なければデフォルト→先頭利用者の順）
+      if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
+        sel.value = prev;
+      } else if (Array.from(sel.options).some((o) => o.value === DAY_SUPPORT_DEFAULT_VALUE)) {
+        sel.value = DAY_SUPPORT_DEFAULT_VALUE;
+      } else {
+        const resident = residents[0] || "";
+        if (resident) sel.value = resident;
+      }
+
+      const val = sel.value || "";
+      const conf = (val === DAY_SUPPORT_DEFAULT_VALUE) ? getDefaultDaySupport() : getDaySupportForResident(val);
+      mainTa.value = (conf.main || []).join("\n");
+      reasonTa.value = (conf.reason || []).join("\n");
     }
 
     function saveDaySupportFromManager() {
-      const resident = document.getElementById("dsResidentSelect")?.value;
-      if (!resident) { alert("対象の利用者を選択してください"); return; }
+      const selVal = document.getElementById("dsResidentSelect")?.value || "";
+      if (!selVal) return;
 
       const mainLines = (document.getElementById("dsMainList")?.value || "")
         .split("\n").map((x) => x.trim()).filter(Boolean);
       const reasonLines = (document.getElementById("dsReasonList")?.value || "")
         .split("\n").map((x) => x.trim()).filter(Boolean);
 
+      if (selVal === DAY_SUPPORT_DEFAULT_VALUE) {
+        if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
+
+        daySupportDefault = { main: mainLines, reason: reasonLines };
+        saveDaySupportDefault();
+        renderDaySupportManager();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current); // 空ならデフォルト適用
+
+        alert("保存しました（共通デフォルト）");
+        return;
+      }
+
+      const resident = selVal;
       if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
 
       daySupportByResident[resident] = { main: mainLines, reason: reasonLines };
       saveDaySupportByResident();
 
-      const current = document.getElementById("resident")?.value;
+      const current = document.getElementById("resident")?.value || "";
       if (current === resident) applyDaySupportListsForResident(resident);
 
       alert("保存しました（フォームにも反映済み）");
     }
 
     function resetDaySupportToDefaultFromManager() {
-      const resident = document.getElementById("dsResidentSelect")?.value;
-      if (!resident) return;
+      const selVal = document.getElementById("dsResidentSelect")?.value || "";
+      if (!selVal) return;
+
+      if (selVal === DAY_SUPPORT_DEFAULT_VALUE) {
+        if (!confirm("共通デフォルトの日中支援チェックを初期状態に戻しますか？")) return;
+
+        daySupportDefault = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+        saveDaySupportDefault();
+        renderDaySupportManager();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current);
+
+        alert("初期に戻しました（共通デフォルト）");
+        return;
+      }
+
+      const resident = selVal;
       if (!confirm("この利用者の日中支援チェックを初期に戻しますか？")) return;
 
       delete daySupportByResident[resident];
       saveDaySupportByResident();
       renderDaySupportManager();
 
-      const current = document.getElementById("resident")?.value;
+      const current = document.getElementById("resident")?.value || "";
       if (current === resident) applyDaySupportListsForResident(resident);
 
       alert("初期に戻しました");
@@ -2992,7 +3294,9 @@ tr.appendChild(tdSupport);
       // 入力
       document.getElementById("editDate").value = record.date || "";
       document.getElementById("editResident").value = record.resident || "";
-      document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
+      
+      const __er = document.getElementById("editRecorder");
+      if (__er) __er.value = record.recorder || "";document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
       document.getElementById("editCondition").value = record.condition || "良好";
       document.getElementById("editMental").value = record.mental || "安定";
       document.getElementById("editMeal").value = record.meal || "";
@@ -3068,6 +3372,7 @@ tr.appendChild(tdSupport);
         ...records[idx],
         date,
         resident,
+        recorder: document.getElementById("editRecorder")?.value || "",
         timeSlot: document.getElementById("editTimeSlot").value,
         condition: document.getElementById("editCondition").value,
         mental: document.getElementById("editMental").value,
@@ -3258,46 +3563,101 @@ tr.appendChild(tdSupport);
 
     // ===== 日中支援チェック（この利用者）小窓 =====
     function openDaySupportModalForCurrentResident() {
-      const resident = document.getElementById("resident")?.value;
-      if (!resident) { alert("先に利用者を選択してください。"); return; }
+      const resident = document.getElementById("resident")?.value || "";
+      const modal = document.getElementById("dsModal");
+      if (!modal) return;
 
-      document.getElementById("dsModalResidentInfo").textContent = `対象：${resident}`;
-      const conf = getDaySupportForResident(resident);
+      if (resident) {
+        modal.dataset.mode = "resident";
+        modal.dataset.resident = resident;
+        document.getElementById("dsModalResidentInfo").textContent = `対象：${resident}（利用者別）`;
+      } else {
+        modal.dataset.mode = "default";
+        modal.dataset.resident = "";
+        document.getElementById("dsModalResidentInfo").textContent = "対象：共通デフォルト（利用者未選択）";
+      }
 
-      document.getElementById("dsModalMain").value = conf.main.join("\n");
-      document.getElementById("dsModalReason").value = conf.reason.join("\n");
+      const conf = resident ? getDaySupportForResident(resident) : getDefaultDaySupport();
+      document.getElementById("dsModalMain").value = (conf.main || []).join("\n");
+      document.getElementById("dsModalReason").value = (conf.reason || []).join("\n");
 
-      document.getElementById("dsModal").classList.add("show");
+      modal.classList.add("show");
     }
 
     function saveDaySupportModal() {
-      const resident = document.getElementById("resident")?.value;
-      if (!resident) return;
+      const modal = document.getElementById("dsModal");
+      if (!modal) return;
 
-      const mainLines = (document.getElementById("dsModalMain").value || "").split("\n").map((x) => x.trim()).filter(Boolean);
-      const reasonLines = (document.getElementById("dsModalReason").value || "").split("\n").map((x) => x.trim()).filter(Boolean);
+      const mode = modal.dataset.mode || "resident";
+      const resident = modal.dataset.resident || "";
+
+      const mainLines = (document.getElementById("dsModalMain")?.value || "")
+        .split("\n").map((x) => x.trim()).filter(Boolean);
+      const reasonLines = (document.getElementById("dsModalReason")?.value || "")
+        .split("\n").map((x) => x.trim()).filter(Boolean);
+
+      if (mode === "default") {
+        if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
+
+        daySupportDefault = { main: mainLines, reason: reasonLines };
+        saveDaySupportDefault();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current); // 空ならデフォルト適用
+
+        renderDaySupportManager();
+        alert("保存しました（共通デフォルト）");
+        modal.classList.remove("show");
+        return;
+      }
+
+      if (!resident) { alert("先に利用者を選択してください。"); return; }
+      if (mainLines.length === 0 && !confirm("主な支援が空です。空で保存しますか？")) return;
 
       daySupportByResident[resident] = { main: mainLines, reason: reasonLines };
       saveDaySupportByResident();
 
-      applyDaySupportListsForResident(resident);
-      renderDaySupportManager();
+      const current = document.getElementById("resident")?.value || "";
+      if (current === resident) applyDaySupportListsForResident(resident);
 
-      document.getElementById("dsModal").classList.remove("show");
-      alert("保存しました（フォームに反映）");
+      renderDaySupportManager();
+      alert("保存しました");
+      modal.classList.remove("show");
     }
 
     function resetDaySupportModalToDefault() {
-      const resident = document.getElementById("resident")?.value;
-      if (!resident) return;
+      const modal = document.getElementById("dsModal");
+      if (!modal) return;
+
+      const mode = modal.dataset.mode || "resident";
+      const resident = modal.dataset.resident || "";
+
+      if (mode === "default") {
+        if (!confirm("共通デフォルトを初期状態に戻しますか？")) return;
+
+        daySupportDefault = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+        saveDaySupportDefault();
+
+        const current = document.getElementById("resident")?.value || "";
+        applyDaySupportListsForResident(current);
+
+        renderDaySupportManager();
+        alert("初期に戻しました（共通デフォルト）");
+        openDaySupportModalForCurrentResident();
+        return;
+      }
+
+      if (!resident) { alert("先に利用者を選択してください。"); return; }
       if (!confirm("この利用者の日中支援チェックを初期に戻しますか？")) return;
 
       delete daySupportByResident[resident];
       saveDaySupportByResident();
 
-      applyDaySupportListsForResident(resident);
-      renderDaySupportManager();
+      const current = document.getElementById("resident")?.value || "";
+      if (current === resident) applyDaySupportListsForResident(resident);
 
+      renderDaySupportManager();
+      alert("初期に戻しました");
       openDaySupportModalForCurrentResident();
     }
 
@@ -3322,6 +3682,7 @@ tr.appendChild(tdSupport);
       favByResident = loadFavByResident();
       residentAutoTemplates = loadResidentAutoTemplates();
       daySupportByResident = loadDaySupportByResident();
+      daySupportDefault = loadDaySupportDefault();
 
       renderResidentSelects();
       renderRecords();
@@ -3335,7 +3696,10 @@ tr.appendChild(tdSupport);
       renderAutoItemCheckboxes();
       renderAutoItemManager();
 
-      // 初期（日中支援チェック）
+      // 初期（日中支援チェック）※利用者未選択時は「共通デフォルト」
+      const defDaySupport = getDefaultDaySupport();
+      DAY_SUPPORT_MAIN_LIST = defDaySupport.main.slice();
+      DAY_SUPPORT_REASON_LIST = defDaySupport.reason.slice();
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
 
@@ -3359,6 +3723,21 @@ tr.appendChild(tdSupport);
         renderRecords();
       });
 
+// 🧷 バックアップ / ♻ 復元
+const backupBtn = document.getElementById("backupBtn");
+if (backupBtn) backupBtn.addEventListener("click", () => downloadBackup());
+
+const restoreBtn = document.getElementById("restoreBtn");
+const restoreFile = document.getElementById("restoreFile");
+if (restoreBtn && restoreFile) {
+  restoreBtn.addEventListener("click", () => restoreFile.click());
+  restoreFile.addEventListener("change", (e) => {
+    const file = e.target?.files?.[0];
+    e.target.value = ""; // 同じファイルを連続で選べるように
+    handleRestoreFile(file);
+  });
+}
+
       const periodFilterElement = document.getElementById("periodFilter");
       if (periodFilterElement) {
         periodFilterElement.addEventListener("change", () => {
@@ -3372,9 +3751,9 @@ tr.appendChild(tdSupport);
 
       // ✅ 利用者変更：よく使う項目ON / 日中支援リスト反映 / 利用者別テンプレ選択更新
       document.getElementById("resident")?.addEventListener("change", () => {
-        const r = document.getElementById("resident").value;
+        const r = document.getElementById("resident").value || "";
+        applyDaySupportListsForResident(r); // 空ならデフォルト適用
         if (!r) return;
-        applyDaySupportListsForResident(r);
         applyFavToMainCheckboxes(r);
         renderResidentTemplateSelectForForm();
       });
@@ -3545,119 +3924,6 @@ tr.appendChild(tdSupport);
 
   <!-- 保存しました：トースト表示 -->
   <div id="saveToast" role="status" aria-live="polite"></div>
-
-
-<script>
-  // ===== バックアップ / 復元（localStorage丸ごと） =====
-  (function () {
-    const LS_KEYS = [
-      typeof STORAGE_KEY !== "undefined" ? STORAGE_KEY : "gh_records_v1",
-      typeof RESIDENTS_KEY !== "undefined" ? RESIDENTS_KEY : "gh_residents_v1",
-      typeof TEMPLATES_KEY !== "undefined" ? TEMPLATES_KEY : "gh_templates_v1",
-      typeof TAGS_KEY !== "undefined" ? TAGS_KEY : "gh_tags_v1",
-      typeof FAV_BY_RESIDENT_KEY !== "undefined" ? FAV_BY_RESIDENT_KEY : "gh_fav_by_resident_v1",
-      typeof RESIDENT_AUTO_TEMPLATES_KEY !== "undefined" ? RESIDENT_AUTO_TEMPLATES_KEY : "gh_resident_auto_templates_v1",
-      typeof AUTO_ITEM_DEFS_KEY !== "undefined" ? AUTO_ITEM_DEFS_KEY : "gh_auto_item_defs_v1",
-      typeof DAY_SUPPORT_BY_RESIDENT_KEY !== "undefined" ? DAY_SUPPORT_BY_RESIDENT_KEY : "gh_day_support_by_resident_v1",
-    ].filter(Boolean);
-
-    function pad2(n){ return String(n).padStart(2,"0"); }
-
-    function downloadBackup(suffix="backup") {
-      const items = {};
-      LS_KEYS.forEach((k) => { items[k] = localStorage.getItem(k); });
-
-      const data = {
-        app: "group_home_personal_record",
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        items
-      };
-
-      const d = new Date();
-      const stamp = `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`;
-      const filename = `gh_backup_${stamp}_${suffix}.json`;
-
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 500);
-    }
-
-    function normalizeBackupData(parsed) {
-      if (!parsed || typeof parsed !== "object") return null;
-      if (parsed.items && typeof parsed.items === "object") return parsed;
-      // 旧形式フォールバック：もし {localStorage:{...}} なら取り込む
-      if (parsed.localStorage && typeof parsed.localStorage === "object") {
-        return { app: parsed.app || "group_home_personal_record", version: 1, exportedAt: parsed.exportedAt || "", items: parsed.localStorage };
-      }
-      return null;
-    }
-
-    function applyRestoreData(data) {
-      const items = data.items || {};
-      // 不要キーを消したい場合はここで制御できるが、基本は「入ってるものを戻す」
-      Object.keys(items).forEach((k) => {
-        const v = items[k];
-        if (v === null || typeof v === "undefined") localStorage.removeItem(k);
-        else localStorage.setItem(k, v);
-      });
-    }
-
-    function handleRestoreFile(file) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const raw = String(reader.result || "");
-          const parsed = JSON.parse(raw);
-          const data = normalizeBackupData(parsed);
-          if (!data) {
-            alert("このファイルは復元用バックアップとして認識できませんでした。");
-            return;
-          }
-
-          // 復元前に「現在」を自動バックアップ（安全）
-          downloadBackup("before_restore");
-
-          const ok = confirm(
-            "復元しますか？\n\n※復元すると現在のデータは上書きされます。\n（復元前のデータは before_restore として自動バックアップします）"
-          );
-          if (!ok) return;
-
-          applyRestoreData(data);
-          alert("復元しました。ページを再読み込みします。");
-          location.reload();
-        } catch (e) {
-          alert("復元に失敗しました。JSONファイルが壊れている可能性があります。\n" + (e?.message || e));
-        }
-      };
-      reader.onerror = () => alert("ファイルの読み込みに失敗しました。");
-      reader.readAsText(file, "utf-8");
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const backupBtn = document.getElementById("backupBtn");
-      if (backupBtn) backupBtn.addEventListener("click", () => downloadBackup("manual"));
-
-      const restoreBtn = document.getElementById("restoreBtn");
-      const restoreFile = document.getElementById("restoreFile");
-      if (restoreBtn && restoreFile) {
-        restoreBtn.addEventListener("click", () => restoreFile.click());
-        restoreFile.addEventListener("change", (e) => {
-          const f = e.target.files && e.target.files[0];
-          e.target.value = "";
-          handleRestoreFile(f);
-        });
-      }
-    });
-  })();
-</script>
 
 </body>
 </html>
