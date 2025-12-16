@@ -593,7 +593,7 @@
   function renderRecords(records) {
     const tbody = document.getElementById("recordTableBody");
     const filterResident = document.getElementById("filterResident").value;
-    const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase();
+    const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase().replace(/＃/g, "#");
     const periodFilter = document.getElementById("periodFilter").value;
     const periodFrom = document.getElementById("periodFrom").value;
     const periodTo   = document.getElementById("periodTo").value;
@@ -633,12 +633,14 @@
 
       if (keyword) {
         const tagsText = (r.tags || []).join(" ");
+        const tagsTextHash = (r.tags || []).map(t => "#" + t).join(" ");
         const mainText = ((r.daySupportMainItems && r.daySupportMainItems.length) ? r.daySupportMainItems : (r.daySupportItems || [])).join(" ");
         const target = (
           (r.support || "") + " " +
           (r.note || "")    + " " +
           mainText          + " " +
-          tagsText
+          tagsText          + " " +
+          tagsTextHash
         ).toLowerCase();
         if (!target.includes(keyword)) return false;
       }
