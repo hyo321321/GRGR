@@ -179,6 +179,7 @@
       border:1px solid #bfdbfe;
       background:#eff6ff;
       color:#1d4ed8;
+      font-weight:800;
     }
 
     .no-records{
@@ -204,6 +205,93 @@
         padding:7px 9px;
       }
     }
+  
+    .op-cell{ white-space: nowrap; }
+
+    /* ==== 編集モーダル（一覧ページ内で編集） ==== */
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 60;
+    }
+    .modal-backdrop.show{ display: flex; }
+
+    .modal{
+      background:#fff;
+      border-radius:18px;
+      width: min(760px, 100%);
+      max-height: 90vh;
+      overflow:auto;
+      box-shadow:0 16px 40px rgba(15,23,42,0.22);
+      padding: 14px 14px 12px;
+    }
+    .modal-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .modal-title{
+      font-size:18px;
+      font-weight:800;
+      margin:0;
+    }
+    .modal-close{
+      border:none;
+      background:transparent;
+      font-size:18px;
+      font-weight:800;
+      cursor:pointer;
+      padding: 4px 8px;
+      border-radius:10px;
+    }
+    .modal-close:hover{ background:#f3f4f6; }
+
+    .form-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .form-col{ flex:1; min-width: 180px; }
+    .form-col label{
+      display:block;
+      font-size:12px;
+      color:#4b5563;
+      margin: 0 0 4px;
+    }
+    textarea{
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      padding: 8px 10px;
+      font-size: 14px;
+      background:#f9fafb;
+      outline:none;
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+    textarea:focus{
+      border-color:#2563eb;
+      box-shadow:0 0 0 2px rgba(37,99,235,0.25);
+      background:#fff;
+    }
+    .btn-row{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+
   </style>
 </head>
 <body>
@@ -212,7 +300,7 @@
   <main>
     <section class="card">
       <div class="card-title">
-        <span>記録一覧（読み取り専用）</span>
+        <span>記録一覧（編集できます）</span>
         <div class="title-right">
           <span class="record-count" id="recordCount">0件</span>
           <button type="button" id="backIndex" class="btn-secondary btn-small">↩ 個人記録に戻る</button>
@@ -221,7 +309,7 @@
 
       <div class="card-subtitle">
         入力ページ（index.html）で保存した記録を、<strong>大きな画面で一覧表示</strong>するページです。<br>
-        ここでは編集・削除はできず、「見る専用」です。
+        ここでも編集ができます（保存すると記録が更新されます）。
       </div>
 
       <div class="control-row">
@@ -264,6 +352,7 @@
               <th>利用者</th>
               <th>【日中に行った主な支援】</th>
               <th>支援内容（全文）</th>
+            <th>操作</th>
             </tr>
           </thead>
           <tbody id="recordTableBody">
@@ -274,9 +363,170 @@
     </section>
   </main>
 
+  <!-- ===== 編集モーダル ===== -->
+  <div id="editBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+      <div class="modal-header">
+        <h3 class="modal-title" id="editModalTitle">記録を編集</h3>
+        <button type="button" class="modal-close" id="editClose" aria-label="閉じる">✕</button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col">
+          <label for="editDate">日付</label>
+          <input type="date" id="editDate">
+        </div>
+        <div class="form-col">
+          <label for="editResident">利用者</label>
+          <input type="text" id="editResident" placeholder="例：山田 太郎">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col" style="min-width:260px;">
+          <label for="editDayMain">日中に行った主な支援（カンマ/改行/、区切り）</label>
+          <input type="text" id="editDayMain" placeholder="例：清潔保持, 通院同行, 見守り">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col" style="min-width:260px;">
+          <label for="editSupport">支援内容（全文）</label>
+          <textarea id="editSupport" placeholder="支援内容を入力"></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col" style="min-width:260px;">
+          <label for="editNote">特記事項</label>
+          <textarea id="editNote" placeholder="特記事項があれば入力"></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-col" style="min-width:260px;">
+          <label for="editTags">タグ（スペース/カンマ/、区切り、#は任意）</label>
+          <input type="text" id="editTags" placeholder="#体調不良 #通院 など">
+        </div>
+        <div class="form-col">
+          <label for="editRecorder">記録者</label>
+          <input type="text" id="editRecorder" placeholder="例：職員名">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-secondary" id="editCancel">キャンセル</button>
+        <button type="button" class="btn-primary" id="editSave">保存</button>
+      </div>
+
+      <div class="small-text" style="margin-top:8px;">
+        ※保存すると localStorage の記録が更新され、index.html 側の記録にも反映されます。
+      </div>
+    </div>
+  </div>
+
+
 <script>
   const STORAGE_KEY   = "group_home_records_v1";
   const RESIDENTS_KEY = "group_home_residents_v1";
+
+
+  // ===== 一覧ページ内編集用 =====
+  let currentEditIdx = null;
+
+  function buildRecordsWithIdx(base){
+    const arr = Array.isArray(base) ? base : [];
+    return arr.map((r, idx) => Object.assign({_idx: idx}, r));
+  }
+
+  function optionExists(selectEl, value){
+    if (!selectEl) return false;
+    return Array.from(selectEl.options || []).some(o => o.value === value);
+  }
+
+  function updateResidentFilterOptions(baseRecords){
+    const sel = document.getElementById("filterResident");
+    const prev = sel ? sel.value : "";
+    renderFilters(loadResidents(baseRecords || []));
+    if (sel && optionExists(sel, prev)) sel.value = prev;
+    else if (sel) sel.value = "";
+  }
+
+  function parseList(str){
+    return String(str || "")
+      .split(/[,
+、]/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  function parseTags(str){
+    return String(str || "")
+      .split(/[,\s
+、]+/)
+      .map(s => s.trim().replace(/^#+/, ""))
+      .filter(Boolean);
+  }
+
+  function openEditModalByIdx(idx){
+    const base = loadRecords();
+    const r = base[idx];
+    if (!r) return;
+    currentEditIdx = idx;
+
+    const mainItems = (r.daySupportMainItems && r.daySupportMainItems.length)
+      ? r.daySupportMainItems
+      : (r.daySupportItems || []);
+
+    document.getElementById("editDate").value = r.date || "";
+    document.getElementById("editResident").value = r.resident || "";
+    document.getElementById("editDayMain").value = (mainItems || []).join(", ");
+    document.getElementById("editSupport").value = r.support || "";
+    document.getElementById("editNote").value = r.note || "";
+    document.getElementById("editTags").value = (r.tags || []).map(t => "#" + t).join(" ");
+    document.getElementById("editRecorder").value = r.recorder || "";
+
+    const backdrop = document.getElementById("editBackdrop");
+    backdrop.classList.add("show");
+    backdrop.setAttribute("aria-hidden", "false");
+  }
+
+  function closeEditModal(){
+    currentEditIdx = null;
+    const backdrop = document.getElementById("editBackdrop");
+    if (!backdrop) return;
+    backdrop.classList.remove("show");
+    backdrop.setAttribute("aria-hidden", "true");
+  }
+
+  function saveEditModal(){
+    if (currentEditIdx === null || currentEditIdx === undefined) return;
+
+    const base = loadRecords();
+    const old = base[currentEditIdx] || {};
+    const updated = Object.assign({}, old);
+
+    updated.date = document.getElementById("editDate").value || "";
+    updated.resident = (document.getElementById("editResident").value || "").trim();
+
+    const main = parseList(document.getElementById("editDayMain").value);
+    updated.daySupportMainItems = main;
+    updated.daySupportItems = main; // 互換用（古い表示にも対応）
+
+    updated.support = document.getElementById("editSupport").value || "";
+    updated.note = document.getElementById("editNote").value || "";
+    updated.tags = parseTags(document.getElementById("editTags").value);
+    updated.recorder = (document.getElementById("editRecorder").value || "").trim();
+
+    base[currentEditIdx] = updated;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(base));
+
+    closeEditModal();
+
+    // 一覧を更新（フィルタ選択は保持）
+    updateResidentFilterOptions(base);
+    renderRecords(buildRecordsWithIdx(base));
+  }
 
   function loadRecords() {
     try {
@@ -402,7 +652,7 @@
     if (filtered.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 4;
+      td.colSpan = 5;
       td.className = "no-records";
       td.textContent =
         "該当する記録がありません。利用者・期間・キーワードを確認してください。";
@@ -477,26 +727,45 @@
         }
         tr.appendChild(tdSupport);
 
+        const tdOp = document.createElement("td");
+        tdOp.className = "op-cell";
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "btn-secondary btn-small";
+        editBtn.textContent = "編集";
+        editBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openEditModalByIdx(record._idx);
+        });
+        tdOp.appendChild(editBtn);
+        tr.appendChild(tdOp);
+
         tbody.appendChild(tr);
       });
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    const records = loadRecords();
-    const residents = loadResidents(records);
-    renderFilters(residents);
-    renderRecords(records);
+    // 初期表示
+    const baseInit = loadRecords();
+    updateResidentFilterOptions(baseInit);
+    renderRecords(buildRecordsWithIdx(baseInit));
+
+    // 再描画（フィルタ/検索の状態はDOMから取得するので、そのまま反映されます）
+    function rerender(){
+      const base = loadRecords();
+      renderRecords(buildRecordsWithIdx(base));
+    }
 
     document.getElementById("filterResident")
-      .addEventListener("change", () => renderRecords(records));
+      .addEventListener("change", () => rerender());
 
     document.getElementById("searchKeyword")
-      .addEventListener("input", () => renderRecords(records));
+      .addEventListener("input", () => rerender());
 
     document.getElementById("searchClearButton")
       .addEventListener("click", () => {
         document.getElementById("searchKeyword").value = "";
-        renderRecords(records);
+        rerender();
       });
 
     const periodFilterEl = document.getElementById("periodFilter");
@@ -504,16 +773,30 @@
     periodFilterEl.addEventListener("change", () => {
       const v = periodFilterEl.value;
       customRow.style.display = v === "custom" ? "flex" : "none";
-      if (v !== "custom") renderRecords(records);
+      if (v !== "custom") rerender();
     });
 
     document.getElementById("applyCustomPeriod")
-      .addEventListener("click", () => renderRecords(records));
+      .addEventListener("click", () => rerender());
 
     document.getElementById("backIndex")
       .addEventListener("click", () => {
         window.location.href = "./index.html";
       });
+
+    // モーダル操作
+    document.getElementById("editClose").addEventListener("click", closeEditModal);
+    document.getElementById("editCancel").addEventListener("click", closeEditModal);
+    document.getElementById("editSave").addEventListener("click", saveEditModal);
+
+    const backdrop = document.getElementById("editBackdrop");
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeEditModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeEditModal();
+    });
   });
 </script>
 </body>
