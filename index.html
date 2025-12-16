@@ -271,11 +271,10 @@
     /* 記録一覧：列崩れ防止（支援内容・タグを少し狭める） */
     .table-wrapper table { table-layout: fixed; }
     .table-wrapper th:nth-child(1), .table-wrapper td:nth-child(1) { width: 110px; white-space: nowrap; }
-    .table-wrapper th:nth-child(2), .table-wrapper td:nth-child(2) { width: 120px; white-space: nowrap; }
+    .table-wrapper th:nth-child(2), .table-wrapper td:nth-child(2) { width: 150px; }
     .table-wrapper th:nth-child(3), .table-wrapper td:nth-child(3) { width: 260px; }
     .table-wrapper th:nth-child(4), .table-wrapper td:nth-child(4) { width: 340px; }
-    .table-wrapper th:nth-child(5), .table-wrapper td:nth-child(5) { width: 110px; white-space: nowrap; }
-    .table-wrapper th:nth-child(6), .table-wrapper td:nth-child(6) { width: 180px; white-space: nowrap; }
+    .table-wrapper th:nth-child(5), .table-wrapper td:nth-child(5) { width: 180px; white-space: nowrap; }
     .table-wrapper td:nth-child(4) { overflow-wrap: anywhere; word-break: break-word; }
 .badge {
       display: inline-block;
@@ -967,7 +966,6 @@
     <th>利用者</th>
     <th>日中の主な支援</th>
     <th>支援内容・タグ</th>
-    <th>記録者</th>
     <th>操作</th>
   </tr>
 </thead>
@@ -1922,7 +1920,7 @@ if (d0 < weekStart || d0 > today0) return false;
       if (filtered.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 6;
+        td.colSpan = 5;
         td.className = "no-records";
         td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
@@ -1940,10 +1938,20 @@ if (d0 < weekStart || d0 > today0) return false;
         tr.appendChild(tdDate);
 
         const tdResident = document.createElement("td");
-        tdResident.textContent = record.resident || "";
-        tr.appendChild(tdResident);
+        const nameDiv = document.createElement("div");
+        nameDiv.textContent = record.resident || "";
+        tdResident.appendChild(nameDiv);
 
-        const tdDayMain = document.createElement("td");
+        const rec = (record.recorder || "").toString().trim();
+        if (rec) {
+          const recDiv = document.createElement("div");
+          recDiv.className = "small-text";
+          recDiv.textContent = "記録者：" + rec;
+          tdResident.appendChild(recDiv);
+        }
+
+        tr.appendChild(tdResident);
+const tdDayMain = document.createElement("td");
         const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
         if (mainItems.length) {
           const wrap = document.createElement("div");
@@ -2000,13 +2008,6 @@ if (record.tags && record.tags.length) {
 }
 
 tr.appendChild(tdSupport);
-
-
-        
-        const tdRecorder = document.createElement("td");
-        tdRecorder.textContent = record.recorder ? String(record.recorder) : "";
-        tr.appendChild(tdRecorder);
-
 const tdActions = document.createElement("td");
 
         const viewBtn = document.createElement("button");
