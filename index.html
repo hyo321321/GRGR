@@ -33,6 +33,10 @@
 /* 曜日カラー（一覧：日付） */
 .dow-sun{ color:#dc2626; font-weight:800; }
 .dow-sat{ color:#2563eb; font-weight:800; }
+    /* 日付セル：曜日を日付の下に表示（重なり防止） */
+    .date-cell { white-space: normal !important; line-height: 1.2; }
+    .date-dow { font-size: 12px; margin-top: 2px; line-height: 1; }
+
 
 
     body {
@@ -267,39 +271,7 @@
       margin-top: 10px;
     }
 
-    
-    /* 記録一覧：列崩れ防止（横スクロールを減らす） */
-    .table-wrapper table { table-layout: fixed; }
-    /* 表ヘッダは折り返しOK（横幅を無理に広げない） */
-    .table-wrapper th { white-space: normal; }
-
-    /* 列幅（横スクロールが出にくい比率） */
-    .table-wrapper th:nth-child(1), .table-wrapper td:nth-child(1) { width: 16%; white-space: nowrap; }
-    .table-wrapper th:nth-child(2), .table-wrapper td:nth-child(2) { width: 18%; }
-    .table-wrapper th:nth-child(3), .table-wrapper td:nth-child(3) { width: 22%; }
-    .table-wrapper th:nth-child(4), .table-wrapper td:nth-child(4) { width: 32%; }
-    .table-wrapper th:nth-child(5), .table-wrapper td:nth-child(5) { width: 12%; white-space: nowrap; }
-
-    .table-wrapper td:nth-child(4) { overflow-wrap: anywhere; word-break: break-word; }
-/* 記録一覧：操作ボタンを縦並び（横幅を節約） */
-    .op-stack{
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .op-stack button{
-      width: 100%;
-      justify-content: center;
-      padding: 8px 10px;
-    }
-
-    .op-stack button{
-      width: 100%;
-      justify-content: center;
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-.badge {
+    .badge {
       display: inline-block;
       padding: 3px 9px;
       border-radius: 999px;
@@ -989,6 +961,7 @@
     <th>利用者</th>
     <th>日中の主な支援</th>
     <th>支援内容・タグ</th>
+    <th>服薬</th>
     <th>操作</th>
   </tr>
 </thead>
@@ -1769,15 +1742,15 @@ function parseLocalISODate(iso) {
 
 const DOW_JP = ["日","月","火","水","木","金","土"];
 function formatDateWithDow(iso) {
-  if (!iso) return { text: "", className: "" };
+  // 返り値：日付(上段)＋曜日(下段) 用
+  if (!iso) return { dateText: "", dowText: "", className: "" };
   const d = parseLocalISODate(iso);
-  if (!d || isNaN(d.getTime())) return { text: iso, className: "" };
+  if (!d || isNaN(d.getTime())) return { dateText: iso, dowText: "", className: "" };
   const dow = d.getDay();
-  const text = `${iso}（${DOW_JP[dow]}）`;
   let className = "";
   if (dow === 0) className = "dow-sun";
   else if (dow === 6) className = "dow-sat";
-  return { text, className };
+  return { dateText: iso, dowText: `（${DOW_JP[dow]}）`, className };
 }
 
     function escapeHtmlAttr(str) { return escapeHtml(str); }
@@ -1943,7 +1916,7 @@ if (d0 < weekStart || d0 > today0) return false;
       if (filtered.length === 0) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 5;
+        td.colSpan = 6;
         td.className = "no-records";
         td.textContent = "まだ記録がありません。左のフォームから登録するか、期間・利用者の条件を変えてみてください。";
         tr.appendChild(td);
@@ -1955,26 +1928,29 @@ if (d0 < weekStart || d0 > today0) return false;
         const tr = document.createElement("tr");
 
         const tdDate = document.createElement("td");
+        tdDate.classList.add("date-cell");
+
         const dInfo = formatDateWithDow(record.date || "");
-        tdDate.textContent = dInfo.text;
-        if (dInfo.className) tdDate.classList.add(dInfo.className);
+        // 上：日付 / 下：曜日（色は土=青・日=赤）
+        const dateTop = document.createElement("div");
+        dateTop.textContent = dInfo.dateText || "";
+        tdDate.appendChild(dateTop);
+
+        if (dInfo.dowText) {
+          const dateDow = document.createElement("div");
+          dateDow.className = "date-dow";
+          dateDow.textContent = dInfo.dowText;
+          if (dInfo.className) dateDow.classList.add(dInfo.className);
+          tdDate.appendChild(dateDow);
+        }
+
         tr.appendChild(tdDate);
 
         const tdResident = document.createElement("td");
-        const nameDiv = document.createElement("div");
-        nameDiv.textContent = record.resident || "";
-        tdResident.appendChild(nameDiv);
-
-        const rec = (record.recorder || "").toString().trim();
-        if (rec) {
-          const recDiv = document.createElement("div");
-          recDiv.className = "small-text";
-          recDiv.textContent = "記録者：" + rec;
-          tdResident.appendChild(recDiv);
-        }
-
+        tdResident.textContent = record.resident || "";
         tr.appendChild(tdResident);
-const tdDayMain = document.createElement("td");
+
+        const tdDayMain = document.createElement("td");
         const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
         if (mainItems.length) {
           const wrap = document.createElement("div");
@@ -2031,7 +2007,13 @@ if (record.tags && record.tags.length) {
 }
 
 tr.appendChild(tdSupport);
-const tdActions = document.createElement("td");
+
+
+        const tdMed = document.createElement("td");
+        tdMed.textContent = record.medTaken ? "服薬済み" : "";
+        tr.appendChild(tdMed);
+
+        const tdActions = document.createElement("td");
 
         const viewBtn = document.createElement("button");
         viewBtn.textContent = "詳細";
@@ -2051,12 +2033,9 @@ const tdActions = document.createElement("td");
         delBtn.style.fontSize = "12px";
         delBtn.onclick = () => deleteRecord(record.id);
 
-        const actionsWrap = document.createElement("div");
-        actionsWrap.className = "op-stack";
-        actionsWrap.appendChild(viewBtn);
-        actionsWrap.appendChild(editBtn);
-        actionsWrap.appendChild(delBtn);
-        tdActions.appendChild(actionsWrap);
+        tdActions.appendChild(viewBtn);
+        tdActions.appendChild(editBtn);
+        tdActions.appendChild(delBtn);
         tr.appendChild(tdActions);
 
         tbody.appendChild(tr);
