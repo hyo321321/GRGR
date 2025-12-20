@@ -600,6 +600,8 @@
     }
 
 </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -3672,8 +3674,144 @@ function handleRestoreFile(file) {
     }
 
     // ===== 起動 =====
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("date").value = toLocalISODate();
+    
+// ===== Excel(.xlsx) 出力（セル統合・折り返し・游ゴシック・D列幅45.5） =====
+function getWeekdayJa(dateStr) {
+  // dateStr: "YYYY-MM-DD"
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  const w = ["日","月","火","水","木","金","土"];
+  return w[d.getDay()] || "";
+}
+
+function exportExcelXlsxMerged() {
+  try {
+    if (typeof XLSX === "undefined") {
+      alert("Excelライブラリが読み込まれていません。インターネット接続をご確認ください。");
+      return;
+    }
+
+    const records = (typeof loadRecords === "function") ? loadRecords() : [];
+    if (!records || records.length === 0) {
+      alert("出力する記録がありません。");
+      return;
+    }
+
+    // ✅ ヘッダー（この順番のまま出力）
+    // A:日付 / B:曜日 / C:利用者 / D:支援内容・様子（長文） / E:記録者
+    const header = ["日付", "曜日", "利用者", "支援内容・様子", "記録者"];
+    const wsData = [header];
+
+    // 1レコードあたり「3行」構成（上：主な支援 / 中：支援内容 / 下：特記事項）
+    // D列を縦にセル結合し、全文折り返し表示
+    const ROWS_PER_RECORD = 3;
+
+    const merges = [];
+    const now = new Date();
+    const fileDate = now.toISOString().slice(0, 10);
+
+    records.forEach((r, idx) => {
+      const date = r?.date || "";
+      const youbi = getWeekdayJa(date);
+      const resident = r?.resident || "";
+      const recorder = r?.recorder || "";
+
+      const daySupport = (r?.daySupport || "").trim();             // 日中に行った主な支援
+      const support = (r?.support || "").trim();                   // 支援内容・様子
+      const tags = Array.isArray(r?.tags) ? r.tags.join(" ") : (r?.tags || "");
+      const notes = (r?.notes || "").trim();
+
+      const rowBase = 1 + idx * ROWS_PER_RECORD; // ヘッダーの次から開始（0-basedでなくExcel行）
+
+      // 上段：主な支援
+      wsData.push([date, youbi, resident, daySupport ? `【日中に行った主な支援】\n${daySupport}` : "【日中に行った主な支援】", recorder]);
+
+      // 中段：支援内容・様子（＋タグ）
+      const midTextParts = [];
+      midTextParts.push("【支援内容・様子】");
+      if (support) midTextParts.push(support);
+      if (tags) midTextParts.push(`\n【タグ】\n${tags}`);
+      wsData.push(["", "", "", midTextParts.join("\n"), ""]);
+
+      // 下段：特記事項
+      wsData.push(["", "", "", notes ? `【特記事項】\n${notes}` : "【特記事項】", ""]);
+
+      // D列（支援内容・様子）の縦結合（上～下 3行）
+      // Excelのrangeは0-based
+      const r0 = rowBase;                 // 1行目（ヘッダー=0）
+      const r1 = rowBase + ROWS_PER_RECORD - 1;
+      merges.push({ s: { r: r0, c: 3 }, e: { r: r1, c: 3 } });
+
+      // A～C, E列は「上段だけ値を残す」想定（中・下は空）
+      // A列も縦結合したい場合は以下を有効化（必要なら後で）
+      merges.push({ s: { r: r0, c: 0 }, e: { r: r1, c: 0 } });
+      merges.push({ s: { r: r0, c: 1 }, e: { r: r1, c: 1 } });
+      merges.push({ s: { r: r0, c: 2 }, e: { r: r1, c: 2 } });
+      merges.push({ s: { r: r0, c: 4 }, e: { r: r1, c: 4 } });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws["!merges"] = merges;
+
+    // ✅ 列幅（D列=45.5）
+    ws["!cols"] = [
+      { wch: 12 },  // A 日付
+      { wch: 6 },   // B 曜日
+      { wch: 12 },  // C 利用者
+      { wch: 46 },  // D 支援内容・様子（≒45.5）
+      { wch: 12 },  // E 記録者
+    ];
+      // ✅ 全セル：フォントだけ「游ゴシック（標準）」に統一（※配置は触らない）
+      Object.keys(ws).forEach((addr) => {
+        if (addr[0] === "!") return;
+        const cell = ws[addr];
+        if (!cell) return;
+        cell.s = cell.s || {};
+        cell.s.font = { name: "游ゴシック", sz: 11 };
+      });
+
+      // ✅ セル統合した部分：左揃え＋上揃え＋折り返して全文表示
+      (merges || []).forEach((mg) => {
+        for (let r = mg.s.r; r <= mg.e.r; r++) {
+          for (let c = mg.s.c; c <= mg.e.c; c++) {
+            const a = XLSX.utils.encode_cell({ r, c });
+            if (!ws[a]) ws[a] = { t: "s", v: "" }; // 念のため
+            ws[a].s = ws[a].s || {};
+            ws[a].s.font = ws[a].s.font || { name: "游ゴシック", sz: 11 };
+            ws[a].s.alignment = Object.assign({}, ws[a].s.alignment || {}, {
+              horizontal: "left",
+              vertical: "top",
+              wrapText: true
+            });
+          }
+        }
+      });
+
+      // ✅ ヘッダーだけ太字＆中央寄せ
+
+    for (let c = 0; c < header.length; c++) {
+      const a = XLSX.utils.encode_cell({ r: 0, c });
+      if (!ws[a]) continue;
+      ws[a].s = ws[a].s || {};
+      ws[a].s.font = { name: "游ゴシック", sz: 11, bold: true };
+      ws[a].s.alignment = { vertical: "center", horizontal: "center", wrapText: true };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "記録一覧");
+
+    const fname = `記録一覧_${fileDate}.xlsx`;
+    XLSX.writeFile(wb, fname);
+  } catch (e) {
+    alert("Excel出力でエラーが発生しました: " + (e?.message || e));
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+      
+  // Excel出力
+  document.getElementById("exportExcelBtn")?.addEventListener("click", exportExcelXlsxMerged);
+document.getElementById("date").value = toLocalISODate();
 
       records = loadRecords();
       residents = loadResidents();
