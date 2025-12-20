@@ -3843,7 +3843,7 @@ function exportExcelXlsxMerged() {
     needed += Math.max(1, Math.ceil(len / CHARS_PER_LINE));
   }
 
-  return Math.min(40, Math.max(3, needed));
+  return Math.min(40, Math.max(3, needed + 1));
 }
 
 
@@ -3879,6 +3879,10 @@ function exportExcelXlsxMerged() {
         curRow += rowsForThis;
       });
       const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // ✅ 行高を固定（長文が隠れにくく、見た目が揃う）
+      // ヘッダー=少し高め、データ行=標準
+      ws["!rows"] = wsData.map((_, ri) => (ri === 0 ? { hpt: 17.65 } : { hpt: 14.25 }));
 
 
 
