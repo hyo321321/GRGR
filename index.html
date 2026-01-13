@@ -1544,11 +1544,12 @@
     const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
 
     const DEFAULT_AUTO_ITEM_DEFS = [
-      { key: "med_manage",  label: "服薬管理", defaultText: "【服薬管理】処方薬は事務所にて一括管理し、服薬時に職員が手渡し対応を行った。" },
-      { key: "oral_check",  label: "内服確認", defaultText: "【内服確認】服薬時は職員が手渡し、目の前で飲んで頂き内服確認を行った。" },
-      { key: "bathing",     label: "入浴",     defaultText: "【入浴】入浴の声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。" },
-      { key: "day_support", label: "日中支援加算", defaultText: "【日中支援加算】{{daySupportTypeLabel}}の対象として、日中もグループホーム内で見守り・声かけ・誘導等の支援を継続して実施した。" }
-    ];
+  { key: "med_manage",  label: "服薬管理", defaultText: "服薬管理：処方薬は事務所で一括管理し、服薬時に職員が手渡し対応を行った。" },
+  { key: "oral_check",  label: "内服確認", defaultText: "内服確認：服薬時は職員が手渡し、目の前で内服したことを確認した。" },
+  { key: "bathing",     label: "入浴",     defaultText: "【入浴】入浴の声かけと準備の一部介助を行い、本人のペースを尊重しながら見守った。" },
+  { key: "day_support", label: "日中支援加算", defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
+  { key: "clean_keep",  label: "清潔保持", defaultText: "清潔保持：清潔保持のため、着替えについて声かけを行った。" }
+];
 
     const DEFAULT_TAG_LIST = [
       "服薬","通院","入浴","外出","体調不良","相談","仕事","掃除","金銭","夜間対応"
@@ -1622,18 +1623,55 @@
     function saveTags() { saveJSON(TAGS_KEY, TAG_LIST); }
 
     function loadAutoItemDefs() {
-      const raw = localStorage.getItem(AUTO_ITEM_DEFS_KEY);
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) return parsed;
-        } catch {}
-      }
-      localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(DEFAULT_AUTO_ITEM_DEFS));
-      return DEFAULT_AUTO_ITEM_DEFS.slice();
-    }
+  const raw = localStorage.getItem(AUTO_ITEM_DEFS_KEY);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        // 既存データの互換調整（表示文言のみ。判定ロジックは変更しない）
+        let changed = false;
 
-    function saveAutoItemDefs() {
+        const updated = parsed.map((d) => {
+          if (!d || typeof d !== "object") return d;
+
+          const t = (typeof d.defaultText === "string") ? d.defaultText : "";
+
+          // 旧デフォルト（【】形式）だけを新形式へ移行
+          if (d.key === "med_manage" && t.includes("【服薬管理】")) {
+            changed = true;
+            return { ...d, defaultText: "服薬管理：処方薬は事務所で一括管理し、服薬時に職員が手渡し対応を行った。" };
+          }
+          if (d.key === "oral_check" && t.includes("【内服確認】")) {
+            changed = true;
+            return { ...d, defaultText: "内服確認：服薬時は職員が手渡し、目の前で内服したことを確認した。" };
+          }
+          if (d.key === "day_support") {
+            // 旧文（【】形式）だけ更新（ユーザーが編集した文章は上書きしない）
+            if (t.includes("【日中支援加算】")) {
+              changed = true;
+              return { ...d, defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" };
+            }
+          }
+          return d;
+        });
+
+        // 清潔保持が無ければ追加（表示用テンプレのみ）
+        const hasClean = updated.some((d) => d && typeof d === "object" && d.key === "clean_keep");
+        if (!hasClean) {
+          updated.push({ key: "clean_keep", label: "清潔保持", defaultText: "清潔保持：清潔保持のため、着替えについて声かけを行った。" });
+          changed = true;
+        }
+
+        if (changed) localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(updated));
+        return updated;
+      }
+    } catch {}
+  }
+  localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(DEFAULT_AUTO_ITEM_DEFS));
+  return DEFAULT_AUTO_ITEM_DEFS.slice();
+}
+
+function saveAutoItemDefs() {
       localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(AUTO_ITEM_DEFS));
     }
 
