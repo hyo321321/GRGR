@@ -954,7 +954,7 @@
           </div>
 
           <div class="field">
-            <label for="note">特記事項（事故・トラブル・受診・相談など）</label>
+            <label for="note">業務日誌・利用者の活動状況（特記事項含む）</label>
             <textarea id="note" rows="4" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
           </div>
 
@@ -1421,7 +1421,7 @@
         </div>
 
         <div class="field">
-          <label for="editNote">特記事項</label>
+          <label for="editNote">業務日誌・利用者の活動状況（特記事項含む）</label>
           <textarea id="editNote" rows="4"></textarea>
         </div>
 
@@ -1849,6 +1849,10 @@ function saveAutoItemDefs() {
       // 退避したチェックを復元（存在するものだけ）
       document.querySelectorAll(".day-main-item").forEach((x) => { x.checked = prevMain.has(x.value); });
       document.querySelectorAll(".day-reason-item").forEach((x) => { x.checked = prevReason.has(x.value); });
+
+
+      // チェック内容の自動反映（業務日誌欄）
+      updateAutoNoteMain();
     }
 
     // ===== テンプレ（共通） =====
@@ -2571,7 +2575,7 @@ function handleRestoreFile(file) {
       addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
 
       addMultiline("本日の支援内容・様子：", record.support || "");
-      addMultiline("特記事項：", record.note || "");
+      addMultiline("業務日誌・利用者の活動状況（特記事項含む）：", record.note || "");
 
       modal.classList.add("show");
     }
@@ -2946,6 +2950,87 @@ function handleRestoreFile(file) {
         wrap.appendChild(label);
       });
     }
+
+    // ===== 日中活動 / 欠席理由 → 業務日誌欄へ自動反映 =====
+    const AUTO_NOTE_ACTIVITY_PREFIX = "日中活動：";
+    const AUTO_NOTE_REASON_PREFIX   = "【日中活動に行けなかった理由】：";
+
+    function stripAutoNoteLines(raw) {
+      const lines = (raw || "").split(/\r?\n/);
+      const filtered = lines.filter((l) => {
+        return !l.startsWith(AUTO_NOTE_ACTIVITY_PREFIX) && !l.startsWith(AUTO_NOTE_REASON_PREFIX);
+      });
+      // 先頭の空行を削る（見た目を整える）
+      while (filtered.length && filtered[0].trim() === "") filtered.shift();
+      return filtered.join("\n");
+    }
+
+    function applyAutoNoteLines(textarea, activityArr, reasonArr) {
+      if (!textarea) return;
+
+      const userText = stripAutoNoteLines(textarea.value);
+
+      const autoLines = [];
+      if (Array.isArray(activityArr) && activityArr.length) {
+        autoLines.push(AUTO_NOTE_ACTIVITY_PREFIX + " " + activityArr.join(" / "));
+      }
+      if (Array.isArray(reasonArr) && reasonArr.length) {
+        autoLines.push(AUTO_NOTE_REASON_PREFIX + " " + reasonArr.join(" / "));
+      }
+
+      if (autoLines.length === 0) {
+        textarea.value = userText;
+      } else {
+        textarea.value = autoLines.join("\n") + (userText.trim() ? "\n\n" + userText : "");
+      }
+    }
+
+    function updateAutoNoteMain() {
+      const ta = document.getElementById("note");
+      if (!ta) return;
+      const activity = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((x) => x.value);
+      const reasons  = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value);
+      applyAutoNoteLines(ta, activity, reasons);
+    }
+
+    function setupAutoNoteMain() {
+      const actWrap = document.getElementById("dayActivityCheckboxes");
+      const reaWrap = document.getElementById("daySupportReasonCheckboxes");
+
+      // イベント委譲（再描画されてもOK）
+      if (actWrap) actWrap.addEventListener("change", (e) => {
+        if (e?.target?.classList?.contains("day-activity-item")) updateAutoNoteMain();
+      });
+      if (reaWrap) reaWrap.addEventListener("change", (e) => {
+        if (e?.target?.classList?.contains("day-reason-item")) updateAutoNoteMain();
+      });
+
+      // 初期反映（今のチェック状態を業務日誌欄へ）
+      updateAutoNoteMain();
+    }
+
+    function updateAutoNoteEdit() {
+      const ta = document.getElementById("editNote");
+      if (!ta) return;
+      const activity = Array.from(document.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
+      const reasons  = Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((x) => x.value);
+      applyAutoNoteLines(ta, activity, reasons);
+    }
+
+    function setupAutoNoteEdit() {
+      const actWrap = document.getElementById("editDayActivityCheckboxes");
+      const reaWrap = document.getElementById("editDaySupportReasonCheckboxes");
+
+      if (actWrap) actWrap.addEventListener("change", (e) => {
+        if (e?.target?.classList?.contains("edit-day-activity-item")) updateAutoNoteEdit();
+      });
+      if (reaWrap) reaWrap.addEventListener("change", (e) => {
+        if (e?.target?.classList?.contains("edit-day-reason-item")) updateAutoNoteEdit();
+      });
+
+      // ★ 編集モーダルは「開いた瞬間に勝手に書き換えない」ため、初回反映はしない
+    }
+
 
     // ===== 支援項目管理UI =====
     function renderAutoItemManager() {
@@ -4162,6 +4247,11 @@ document.getElementById("date").value = toLocalISODate();
       renderDayActivityCheckboxes();
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
+
+      // 日中活動 / 欠席理由 のチェック → 業務日誌欄へ自動反映
+      setupAutoNoteMain();
+      setupAutoNoteEdit();
+
 
       const templateScopeEl = document.getElementById("templateScope");
       if (templateScopeEl) {
