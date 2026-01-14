@@ -158,6 +158,11 @@
 
     textarea { min-height: 80px; resize: vertical; }
 
+    /* 業務日誌・活動状況（特記事項含む）：少し大きめ */
+    #note, #editNote { min-height: 220px; }
+    @media (max-width: 900px) { #note, #editNote { min-height: 180px; } }
+
+
     .field-row {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -886,7 +891,7 @@
               <div class="field">
                 <label for="templateNameInput" class="small-text">テンプレート名</label>
                 <input type="text" id="templateNameInput" placeholder="例：服薬管理・安定パターン" />
-                <div class="small-text">今の「本日の支援内容・様子」を、この名前・対象項目のテンプレとして保存します。</div>
+                <div class="small-text">今の「本日の支援内容 (職員側)」を、この名前・対象項目のテンプレとして保存します。</div>
               </div>
             </div>
 
@@ -928,10 +933,15 @@
           </div>
 
           <div class="field">
-            <label for="support">本日の支援内容・様子</label>
+            <label for="support">本日の支援内容 (職員側)</label>
+            <div class="small-text">
+              ※職員側の記入欄：普段同じ内容でもOK。日中の様子と行った支援を簡潔に記入してください。<br>
+              「✨ 自動」を使うと、利用者別テンプレ＋選択テンプレ＋チェックした支援項目が下に追記されます。<br>
+              事故・トラブル・受診・相談など重要事項は下の「業務日誌・利用者の活動状況（特記事項含む）」へ。</div>
             <textarea id="support" rows="8" placeholder="【標準の書き方例】
-日中は落ち着いて穏やかに過ごされる。食事・服薬ともに見守り中心で実施。
-必要時のみ声かけ・介助を行った。"></textarea>
+① 日中の様子：落ち着いて穏やかに過ごされる。表情は安定。
+② 支援項目（自動）：✨自動／チェックした支援項目がここに追記されます。
+③ 対応：必要時のみ声かけ・見守り・介助を行った。"></textarea>
           </div>
 
           <!-- ★自動ボタン（初心者OK） -->
@@ -955,7 +965,7 @@
 
           <div class="field">
             <label for="note">業務日誌・利用者の活動状況（特記事項含む）</label>
-            <textarea id="note" rows="4" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
+            <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
           </div>
 
           <!-- ★保存（初心者OK） -->
@@ -1416,13 +1426,13 @@
         </div>
 
         <div class="field">
-          <label for="editSupport">本日の支援内容・様子</label>
+          <label for="editSupport">本日の支援内容 (職員側)</label>
           <textarea id="editSupport" rows="8"></textarea>
         </div>
 
         <div class="field">
           <label for="editNote">業務日誌・利用者の活動状況（特記事項含む）</label>
-          <textarea id="editNote" rows="4"></textarea>
+          <textarea id="editNote" rows="10"></textarea>
         </div>
 
         <div class="btn-row" style="margin-top:10px;">
@@ -2574,7 +2584,7 @@ function handleRestoreFile(file) {
       addTagRow("主な支援：", record.daySupportMainItems, "main");
       addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
 
-      addMultiline("本日の支援内容・様子：", record.support || "");
+      addMultiline("本日の支援内容 (職員側)：", record.support || "");
       addMultiline("業務日誌・利用者の活動状況（特記事項含む）：", record.note || "");
 
       modal.classList.add("show");
@@ -2841,7 +2851,7 @@ function handleRestoreFile(file) {
       const text = support.value;
 
       if (!text.trim()) {
-        const ok = confirm("『本日の支援内容・様子』が空ですが、このままテンプレートとして保存しますか？");
+        const ok = confirm("『本日の支援内容 (職員側)』が空ですが、このままテンプレートとして保存しますか？");
         if (!ok) return;
       }
 
