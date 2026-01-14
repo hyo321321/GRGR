@@ -606,6 +606,24 @@
 
 
     /* ===== 特記事項あり（バッジ/強調） ===== */
+    /* ===== 特記事項フィルタ（一覧） ===== */
+    .special-filter{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border:1px solid #ddd;
+      border-radius:999px;
+      background:#fafafa;
+      cursor:pointer;
+      user-select:none;
+    }
+    .special-filter input{ transform: translateY(1px); }
+    .special-filter-on{
+      border-color:#fca5a5;
+      background:#fff1f2;
+    }
+
     .special-flag{
       display:inline-flex;
       align-items:center;
@@ -644,6 +662,61 @@
       box-shadow:0 0 0 2px rgba(220,38,38,.15) !important;
     }
     /* ===== ここまで：特記事項あり ===== */
+
+
+    /* ===== アップデート通知バナー ===== */
+    .update-banner{
+      max-width:1280px;
+      margin:10px auto 0;
+      padding:12px 14px;
+      border:1px solid #fde68a;
+      background:#fffbeb;
+      color:#92400e;
+      border-radius:12px;
+      display:none;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+    .update-banner.show{ display:flex; }
+    .update-banner .left{ flex:1; min-width:0; }
+    .update-banner .title{
+      font-weight:900;
+      margin-bottom:6px;
+      font-size:14px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .update-banner .meta{
+      font-weight:700;
+      font-size:12px;
+      opacity:.85;
+      border:1px solid #fcd34d;
+      background:#fff7ed;
+      padding:2px 8px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .update-banner ul{
+      margin:0;
+      padding-left:18px;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .update-banner .close{
+      border:none;
+      background:#f59e0b;
+      color:white;
+      padding:8px 10px;
+      border-radius:10px;
+      font-weight:800;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .update-banner .close:hover{ filter:brightness(.95); }
+    /* ===== ここまで：アップデート通知 ===== */
 
 </style>
 
@@ -685,6 +758,21 @@
   <input type="file" id="xlsxLocalFile" accept=".js" style="margin-top:8px;">
   <div id="xlsxLocalStatus" style="margin-top:6px; font-size:13px;"></div>
 </div>
+
+
+<!-- 🆕 アップデート通知（新しい更新があった時だけ表示） -->
+<div id="updateBanner" class="update-banner" aria-live="polite">
+  <div class="left">
+    <div class="title">
+      🆕 アップデートしました
+      <span class="meta" id="updateBannerMeta"></span>
+    </div>
+    <ul id="updateBannerList"></ul>
+  </div>
+  <button type="button" class="close" id="updateBannerClose">閉じる</button>
+</div>
+
+
 
 <script>
   // 画面表示後に、CDN読込失敗ならローカル読込UIを表示
@@ -1103,6 +1191,15 @@
           <input type="text" id="searchKeyword" placeholder="例：通院, 夜間, #体調不良 など" style="flex:1; min-width:180px;" />
           <button type="button" class="btn-secondary" id="searchClearButton">クリア</button>
         </div>
+
+        <div class="resident-select-row">
+          <label class="special-filter" id="specialFilterLabel" title="「特記事項あり」にチェックが付いた記録だけを表示します">
+            <input type="checkbox" id="filterSpecialOnly">
+            <span>特記事項ありのみ表示</span>
+          </label>
+          <span class="small-text" id="specialOnlyCount" style="margin-left:8px;"></span>
+        </div>
+
 
         <div class="table-wrapper" id="tableWrapper">
           <table>
@@ -2077,6 +2174,12 @@ function formatDateWithDow(iso) {
       const filterResident = document.getElementById("filterResident").value;
       const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase().replace(/＃/g, "#");
 
+      const specialOnlyCb = document.getElementById("filterSpecialOnly");
+      const specialOnly = !!specialOnlyCb?.checked;
+      const specialCountEl = document.getElementById("specialOnlyCount");
+      const specialLabelEl = document.getElementById("specialFilterLabel");
+
+
       const periodFilterElement = document.getElementById("periodFilter");
       const periodFilter = periodFilterElement ? periodFilterElement.value : "month";
 
@@ -2097,7 +2200,7 @@ weekStart.setDate(weekStart.getDate() - 6);
 
       tbody.innerHTML = "";
 
-      const filtered = records.filter((r) => {
+      const filteredBase = records.filter((r) => {
         if (filterResident && r.resident !== filterResident) return false;
 
         const dateStr = r.date;
@@ -2131,7 +2234,14 @@ if (d0 < weekStart || d0 > today0) return false;
         return true;
       });
 
-      document.getElementById("recordCount").textContent = filtered.length + "件";
+ 
+      const specialCount = filteredBase.filter((r) => !!r.hasSpecialNote).length;
+      if (specialCountEl) specialCountEl.textContent = `特記事項あり：${specialCount}件`;
+      if (specialLabelEl) specialLabelEl.classList.toggle("special-filter-on", specialOnly);
+
+      const filtered = specialOnly ? filteredBase.filter((r) => !!r.hasSpecialNote) : filteredBase;
+
+     document.getElementById("recordCount").textContent = filtered.length + "件";
 
       if (filtered.length === 0) {
         const tr = document.createElement("tr");
@@ -4392,6 +4502,19 @@ getElementById("resetButton").addEventListener("click", resetForm);
 
 
       document.getElementById("filterResident").addEventListener("change", renderRecords);
+      const __specialFilterCb = document.getElementById("filterSpecialOnly");
+      if (__specialFilterCb) {
+        // 前回状態の復元
+        try {
+          const saved = localStorage.getItem("filterSpecialOnly");
+          if (saved !== null) __specialFilterCb.checked = (saved === "1");
+        } catch(e){}
+        __specialFilterCb.addEventListener("change", () => {
+          try { localStorage.setItem("filterSpecialOnly", __specialFilterCb.checked ? "1" : "0"); } catch(e){}
+          renderRecords();
+        });
+      }
+
       document.getElementById("searchKeyword").addEventListener("input", renderRecords);
       document.getElementById("searchClearButton").addEventListener("click", () => {
         document.getElementById("searchKeyword").value = "";
@@ -4597,7 +4720,66 @@ if (restoreBtn && restoreFile) {
     });
   </script>
 
-  <!-- 保存しました：トースト表示 -->
+  
+  <!-- 🆕 アップデート通知スクリプト -->
+  <script>
+    (function(){
+      const UPDATE_VERSION = "2026-01-15_v8";
+      const UPDATE_DATE = "2026-01-15";
+      const UPDATE_ITEMS = [
+        "日中活動（A型/ B型：通所・欠席）チェック追加",
+        "日中活動・欠席理由のチェック内容を、業務日誌へ自動記入（自動/手入力を区切り表示）",
+        "「特記事項あり」チェック追加（一覧でバッジ表示）",
+        "一覧に「特記事項ありのみ表示」フィルタ追加"
+      ];
+      const STORAGE_KEY = "plusR_update_seen";
+
+      function el(id){ return document.getElementById(id); }
+
+      function renderBanner(){
+        const banner = el("updateBanner");
+        if(!banner) return;
+
+        const meta = el("updateBannerMeta");
+        const list = el("updateBannerList");
+        if(meta) meta.textContent = "更新日：" + UPDATE_DATE;
+
+        if(list){
+          list.innerHTML = UPDATE_ITEMS.map(t => "<li>" + String(t) + "</li>").join("");
+        }
+
+        const closeBtn = el("updateBannerClose");
+        if(closeBtn){
+          closeBtn.addEventListener("click", () => {
+            banner.classList.remove("show");
+            try{ localStorage.setItem(STORAGE_KEY, UPDATE_VERSION); }catch(e){}
+          });
+        }
+      }
+
+      function shouldShow(){
+        try{
+          const seen = localStorage.getItem(STORAGE_KEY);
+          return seen !== UPDATE_VERSION;
+        }catch(e){
+          return true; // localStorage使えない場合は毎回表示
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        renderBanner();
+        const banner = el("updateBanner");
+        if(!banner) return;
+
+        if(shouldShow()){
+          banner.classList.add("show");
+        }
+      });
+    })();
+  </script>
+
+
+<!-- 保存しました：トースト表示 -->
   <div id="saveToast" role="status" aria-live="polite"></div>
 
 </body>
