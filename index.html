@@ -846,6 +846,13 @@
             <div class="checkbox-row" id="daySupportMainCheckboxes" style="margin-top:8px;"></div>
           </div>
 
+          <!-- 日中活動（通所/欠席） -->
+          <div class="field">
+            <label>日中活動</label>
+            <div class="checkbox-row" id="dayActivityCheckboxes"></div>
+          </div>
+
+
           <!-- 日中支援：理由（任意/上級） -->
           <div class="field">
             <label>【日中活動に行けなかった理由】（任意）</label>
@@ -1393,6 +1400,12 @@
         </div>
 
         <div class="field">
+          <label>日中活動</label>
+          <div class="checkbox-row" id="editDayActivityCheckboxes"></div>
+        </div>
+
+
+        <div class="field">
           <label>【日中に行った主な支援】</label>
           <div class="checkbox-row" id="editDaySupportMainCheckboxes"></div>
         </div>
@@ -1574,6 +1587,16 @@
       "障害特性・行動面の不安で日中活動利用が困難",
       "医師の指示で外出・通所を控えている"
     ];
+
+    // ★日中活動（通所 / 欠席） ※固定（利用者別編集の対象外）
+    const DAY_ACTIVITY_LIST = [
+      "A型事業所通所",
+      "A型事業所欠席",
+      "B型事業所通所",
+      "B型事業所欠席"
+    ];
+
+
 
     let records = [];
     let residents = [];
@@ -1819,6 +1842,7 @@ function saveAutoItemDefs() {
       DAY_SUPPORT_MAIN_LIST = conf.main.slice();
       DAY_SUPPORT_REASON_LIST = conf.reason.slice();
 
+      renderDayActivityCheckboxes();
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
 
@@ -2190,6 +2214,7 @@ tr.appendChild(tdSupport);
       document.querySelectorAll(".auto-item").forEach((el) => { el.checked = false; });
 
       // 日中支援チェックリセット
+      document.querySelectorAll(".day-activity-item").forEach((el) => { el.checked = false; });
       document.querySelectorAll(".day-main-item").forEach((el) => { el.checked = false; });
       document.querySelectorAll(".day-reason-item").forEach((el) => { el.checked = false; });
 
@@ -2370,6 +2395,8 @@ function handleRestoreFile(file) {
       const daySupportType = document.getElementById("daySupportType")?.value || "";
       const daySupportTime = document.getElementById("daySupportTime")?.value || "";
 
+      const dayActivityItems = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((el) => el.value);
+
       const daySupportMainItems = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
       const daySupportReasonItems = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
 
@@ -2388,6 +2415,7 @@ function handleRestoreFile(file) {
         tags: [...currentTags],
         daySupportType,
         daySupportTime,
+        dayActivityItems,
         daySupportMainItems,
         daySupportReasonItems,
       };
@@ -2538,6 +2566,7 @@ function handleRestoreFile(file) {
       addRow("日中支援の時間帯：", record.daySupportTime || "");
 
       // ✅ ここがタグ表示
+      addTagRow("日中活動：", record.dayActivityItems, "activity");
       addTagRow("主な支援：", record.daySupportMainItems, "main");
       addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
 
@@ -2860,6 +2889,38 @@ function handleRestoreFile(file) {
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="auto-item" value="${def.key}"> ${escapeHtml(def.label)}`;
         wrap.appendChild(label);
+      });
+    }
+
+
+    // ===== 日中活動（フォーム）チェック生成 =====
+    function renderDayActivityCheckboxes() {
+      const wrap = document.getElementById("dayActivityCheckboxes");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+
+      const conflict = {
+        "A型事業所通所": "A型事業所欠席",
+        "A型事業所欠席": "A型事業所通所",
+        "B型事業所通所": "B型事業所欠席",
+        "B型事業所欠席": "B型事業所通所",
+      };
+
+      DAY_ACTIVITY_LIST.forEach((text) => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="day-activity-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
+        wrap.appendChild(label);
+      });
+
+      // 同一事業所の「通所」と「欠席」は同時にチェックできないようにする（矛盾防止）
+      wrap.querySelectorAll(".day-activity-item").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          if (!cb.checked) return;
+          const other = conflict[cb.value];
+          if (!other) return;
+          const otherCb = wrap.querySelector(`.day-activity-item[value="${CSS.escape(other)}"]`);
+          if (otherCb) otherCb.checked = false;
+        });
       });
     }
 
@@ -3433,6 +3494,9 @@ function handleRestoreFile(file) {
       editTags = Array.isArray(record.tags) ? [...record.tags] : [];
       renderEditTagButtons();
 
+      // 日中活動チェック
+      renderEditDayActivityCheckboxes(record.dayActivityItems || []);
+
       // 日中支援チェック（この記録の利用者に合わせる）
       renderEditDaySupportCheckboxes(record.resident, record.daySupportMainItems || [], record.daySupportReasonItems || []);
 
@@ -3479,6 +3543,39 @@ function handleRestoreFile(file) {
       });
     }
 
+    function renderEditDayActivityCheckboxes(checkedArr) {
+      const wrap = document.getElementById("editDayActivityCheckboxes");
+      if (!wrap) return;
+      const checked = new Set(Array.isArray(checkedArr) ? checkedArr : []);
+      wrap.innerHTML = "";
+
+      const conflict = {
+        "A型事業所通所": "A型事業所欠席",
+        "A型事業所欠席": "A型事業所通所",
+        "B型事業所通所": "B型事業所欠席",
+        "B型事業所欠席": "B型事業所通所",
+      };
+
+      DAY_ACTIVITY_LIST.forEach((v) => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="edit-day-activity-item" value="${escapeHtmlAttr(v)}"> ${escapeHtml(v)}`;
+        wrap.appendChild(label);
+      });
+
+      wrap.querySelectorAll(".edit-day-activity-item").forEach((cb) => {
+        cb.checked = checked.has(cb.value);
+        cb.addEventListener("change", () => {
+          if (!cb.checked) return;
+          const other = conflict[cb.value];
+          if (!other) return;
+          const otherCb = wrap.querySelector(`.edit-day-activity-item[value="${CSS.escape(other)}"]`);
+          if (otherCb) otherCb.checked = false;
+        });
+      });
+    }
+
+
+
     function saveEditModal() {
       if (!editingRecordId) return;
       const idx = records.findIndex((r) => r.id === editingRecordId);
@@ -3488,6 +3585,7 @@ function handleRestoreFile(file) {
       const date = document.getElementById("editDate").value;
       if (!resident || !date) { alert("日付と利用者は必須です"); return; }
 
+      const activityItems = Array.from(document.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
       const mainItems = Array.from(document.querySelectorAll(".edit-day-main-item:checked")).map((x) => x.value);
       const reasonItems = Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((x) => x.value);
 
@@ -3506,6 +3604,7 @@ function handleRestoreFile(file) {
         tags: [...editTags],
         daySupportType: document.getElementById("editDaySupportType").value,
         daySupportTime: document.getElementById("editDaySupportTime").value,
+        dayActivityItems: activityItems,
         daySupportMainItems: mainItems,
         daySupportReasonItems: reasonItems,
       };
@@ -4060,6 +4159,7 @@ document.getElementById("date").value = toLocalISODate();
       const defDaySupport = getDefaultDaySupport();
       DAY_SUPPORT_MAIN_LIST = defDaySupport.main.slice();
       DAY_SUPPORT_REASON_LIST = defDaySupport.reason.slice();
+      renderDayActivityCheckboxes();
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
 
