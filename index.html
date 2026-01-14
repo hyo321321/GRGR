@@ -604,6 +604,47 @@
       transform: translateX(-50%) translateY(-6px);
     }
 
+
+    /* ===== 特記事項あり（バッジ/強調） ===== */
+    .special-flag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-weight:800;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #fecaca;
+      background:#fff1f2;
+      color:#991b1b;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .special-flag input{ transform: translateY(1px); }
+    .special-flag-help{
+      margin-top:6px;
+      margin-bottom:6px;
+    }
+    .special-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid #fecaca;
+      background:#fff1f2;
+      color:#991b1b;
+      margin-left:8px;
+      white-space:nowrap;
+    }
+    .special-note-on{
+      border-color:#dc2626 !important;
+      box-shadow:0 0 0 2px rgba(220,38,38,.15) !important;
+    }
+    /* ===== ここまで：特記事項あり ===== */
+
 </style>
 
 <!-- Excelライブラリ（スタイル対応：xlsx-js-style）ローダー -->
@@ -963,10 +1004,19 @@
             <div class="small-text" id="voiceStatus" style="margin-top:4px;"></div>
           </div>
 
-          <div class="field">
-            <label for="note">業務日誌・利用者の活動状況（特記事項含む）</label>
-            <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
-          </div>
+          <div class="field" id="noteField">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <label for="note" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
+                <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
+                  <input type="checkbox" id="hasSpecialNote">
+                  <span>特記事項あり</span>
+                </label>
+              </div>
+              <div class="small-text special-flag-help">
+                ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
+              </div>
+              <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
+            </div>
 
           <!-- ★保存（初心者OK） -->
           <div class="beginner-zone">
@@ -1430,8 +1480,17 @@
           <textarea id="editSupport" rows="8"></textarea>
         </div>
 
-        <div class="field">
-          <label for="editNote">業務日誌・利用者の活動状況（特記事項含む）</label>
+        <div class="field" id="editNoteField">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <label for="editNote" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
+            <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
+              <input type="checkbox" id="editHasSpecialNote">
+              <span>特記事項あり</span>
+            </label>
+          </div>
+          <div class="small-text special-flag-help">
+            ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
+          </div>
           <textarea id="editNote" rows="10"></textarea>
         </div>
 
@@ -2107,11 +2166,21 @@ if (d0 < weekStart || d0 > today0) return false;
 
         tr.appendChild(tdDate);
 
-        const tdResident = document.createElement("td");
-        tdResident.textContent = record.resident || "";
-        tr.appendChild(tdResident);
+        
+const tdResident = document.createElement("td");
+const nameSpan = document.createElement("span");
+nameSpan.textContent = record.resident || "";
+tdResident.appendChild(nameSpan);
 
-        const tdDayMain = document.createElement("td");
+if (record.hasSpecialNote) {
+  const badge = document.createElement("span");
+  badge.className = "special-badge";
+  badge.textContent = "特記事項";
+  tdResident.appendChild(badge);
+}
+
+tr.appendChild(tdResident);
+const tdDayMain = document.createElement("td");
         const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
         if (mainItems.length) {
           const wrap = document.createElement("div");
@@ -2238,6 +2307,13 @@ tr.appendChild(tdSupport);
 
       // 利用者別テンプレの選択も更新
       renderResidentTemplateSelectForForm();
+
+      // 特記事項あり：強調解除
+      const __scb = document.getElementById("hasSpecialNote");
+      if (__scb) __scb.checked = false;
+      const __nta = document.getElementById("note");
+      if (__nta) __nta.classList.remove("special-note-on");
+
     }
 
     function deleteRecord(id) {
@@ -2426,6 +2502,7 @@ function handleRestoreFile(file) {
         medTaken: document.getElementById("medTaken").checked,
         support: document.getElementById("support").value,
         note: document.getElementById("note").value,
+        hasSpecialNote: !!document.getElementById("hasSpecialNote")?.checked,
         tags: [...currentTags],
         daySupportType,
         daySupportTime,
@@ -2583,9 +2660,10 @@ function handleRestoreFile(file) {
       addTagRow("日中活動：", record.dayActivityItems, "activity");
       addTagRow("主な支援：", record.daySupportMainItems, "main");
       addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
-
+      // 特記事項あり（一覧から一瞬で分かるように）
+      addRow("特記事項：", record.hasSpecialNote ? "あり" : "なし");
       addMultiline("本日の支援内容 (職員側)：", record.support || "");
-      addMultiline("業務日誌・利用者の活動状況（特記事項含む）：", record.note || "");
+addMultiline("業務日誌・利用者の活動状況（特記事項含む）：", record.note || "");
 
       modal.classList.add("show");
     }
@@ -2964,11 +3042,18 @@ function handleRestoreFile(file) {
     // ===== 日中活動 / 欠席理由 → 業務日誌欄へ自動反映 =====
     const AUTO_NOTE_ACTIVITY_PREFIX = "日中活動：";
     const AUTO_NOTE_REASON_PREFIX   = "【日中活動に行けなかった理由】：";
+    const AUTO_NOTE_HEADER        = "▼自動入力（チェック連動）";
+    const AUTO_NOTE_SEPARATOR     = "────────────────";
+    const AUTO_NOTE_MANUAL_HEADER = "▼職員メモ（ここから手入力）";
 
     function stripAutoNoteLines(raw) {
       const lines = (raw || "").split(/\r?\n/);
       const filtered = lines.filter((l) => {
-        return !l.startsWith(AUTO_NOTE_ACTIVITY_PREFIX) && !l.startsWith(AUTO_NOTE_REASON_PREFIX);
+        return !l.startsWith(AUTO_NOTE_ACTIVITY_PREFIX)
+          && !l.startsWith(AUTO_NOTE_REASON_PREFIX)
+          && l.trim() !== AUTO_NOTE_HEADER
+          && l.trim() !== AUTO_NOTE_SEPARATOR
+          && l.trim() !== AUTO_NOTE_MANUAL_HEADER;
       });
       // 先頭の空行を削る（見た目を整える）
       while (filtered.length && filtered[0].trim() === "") filtered.shift();
@@ -2991,7 +3076,15 @@ function handleRestoreFile(file) {
       if (autoLines.length === 0) {
         textarea.value = userText;
       } else {
-        textarea.value = autoLines.join("\n") + (userText.trim() ? "\n\n" + userText : "");
+        const blockLines = [
+          AUTO_NOTE_HEADER,
+          ...autoLines,
+          AUTO_NOTE_SEPARATOR,
+          AUTO_NOTE_MANUAL_HEADER,
+          ""
+        ];
+        const cleanedUser = (userText || "").replace(/^\s+/, "");
+        textarea.value = blockLines.join("\n") + cleanedUser;
       }
     }
 
@@ -3582,7 +3675,13 @@ function handleRestoreFile(file) {
       document.getElementById("editMedTaken").checked = !!record.medTaken;
       document.getElementById("editSupport").value = record.support || "";
       document.getElementById("editNote").value = record.note || "";
-      document.getElementById("editDaySupportType").value = record.daySupportType || "";
+      
+      const __sh = document.getElementById("editHasSpecialNote");
+      if (__sh) __sh.checked = !!record.hasSpecialNote;
+      
+      const __en = document.getElementById("editNote");
+      if (__en) __en.classList.toggle("special-note-on", !!record.hasSpecialNote);
+document.getElementById("editDaySupportType").value = record.daySupportType || "";
       document.getElementById("editDaySupportTime").value = record.daySupportTime || "";
 
       // タグ
@@ -3696,6 +3795,7 @@ function handleRestoreFile(file) {
         medTaken: document.getElementById("editMedTaken").checked,
         support: document.getElementById("editSupport").value,
         note: document.getElementById("editNote").value,
+        hasSpecialNote: !!document.getElementById("editHasSpecialNote")?.checked,
         tags: [...editTags],
         daySupportType: document.getElementById("editDaySupportType").value,
         daySupportTime: document.getElementById("editDaySupportTime").value,
@@ -4274,7 +4374,22 @@ document.getElementById("date").value = toLocalISODate();
 
       // ===== 基本イベント =====
       document.getElementById("recordForm").addEventListener("submit", handleSubmit);
-      document.getElementById("resetButton").addEventListener("click", resetForm);
+      document.
+getElementById("resetButton").addEventListener("click", resetForm);
+
+      // 特記事項あり（フォーム/編集モーダルの見た目強調）
+      const __specialCb = document.getElementById("hasSpecialNote");
+      const __noteTa = document.getElementById("note");
+      const __syncSpecial = () => { if (__specialCb && __noteTa) __noteTa.classList.toggle("special-note-on", !!__specialCb.checked); };
+      if (__specialCb) __specialCb.addEventListener("change", __syncSpecial);
+      __syncSpecial();
+
+      const __editSpecialCb = document.getElementById("editHasSpecialNote");
+      const __editNoteTa = document.getElementById("editNote");
+      const __syncEditSpecial = () => { if (__editSpecialCb && __editNoteTa) __editNoteTa.classList.toggle("special-note-on", !!__editSpecialCb.checked); };
+      if (__editSpecialCb) __editSpecialCb.addEventListener("change", __syncEditSpecial);
+      __syncEditSpecial();
+
 
       document.getElementById("filterResident").addEventListener("change", renderRecords);
       document.getElementById("searchKeyword").addEventListener("input", renderRecords);
