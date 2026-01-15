@@ -1060,8 +1060,7 @@
                 <label for="templateScope" class="small-text">テンプレの対象項目</label>
                 <select id="templateScope">
                   <option value="common">共通（どの項目でも）</option>
-                  <option value="med_manage">服薬管理</option>
-                  <option value="oral_check">内服確認</option>
+                  <option value="med_combo">服薬対応（管理・確認）</option>
                   <option value="bathing">入浴</option>
                   <option value="day_support">日中支援加算</option>
                 </select>
@@ -1773,16 +1772,18 @@
     const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
 
     const DEFAULT_AUTO_ITEM_DEFS = [
-  { key: "med_manage",  label: "服薬管理", defaultText: "服薬管理：処方薬は事務所で一括管理し、服薬時に職員が手渡し対応を行った。" },
-  { key: "oral_check",  label: "内服確認", defaultText: "内服確認：服薬時は職員が手渡し、目の前で内服したことを確認した。" },
-  { key: "bathing",     label: "入浴対応",     defaultText: "入浴対応：声かけを実施。" },
-  { key: "day_support", label: "日中支援加算", defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
-  { key: "clean_keep",  label: "清潔保持", defaultText: "清潔保持：清潔保持のため、着替えについて声かけを行った。" }
+  { key: "med_combo",   label: "服薬対応（管理・確認）", defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。" },
+  { key: "bathing",     label: "入浴対応",               defaultText: "入浴対応：声かけ・見守り・介助を実施。" },
+  { key: "day_support", label: "日中支援加算",           defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
+  { key: "clean_keep",  label: "清潔保持",               defaultText: "清潔保持：清潔保持のため、着替えについて声かけを行った。" }
 ];
 
     const DEFAULT_TAG_LIST = [
       "服薬","通院","入浴","外出","体調不良","相談","仕事","掃除","金銭","夜間対応"
     ];
+
+    // ★利用者別「よく使う項目」未設定時のデフォルト（② 自動入力）
+    const DEFAULT_FAV_AUTO_KEYS = ["med_combo", "bathing"];
 
     // ★日中支援：主な支援（初期）
     const DEFAULT_DAY_SUPPORT_MAIN = [
@@ -1791,6 +1792,7 @@
       "服薬管理・内服確認",
       "水分・トイレの声かけ・介助",
       "入浴・清潔保持の支援",
+      "入浴対応",
       "行動や安全面の見守り",
       "心理面の支援や相談",
       "日中の活動支援・生活リズムの調整",
@@ -1798,6 +1800,9 @@
       "予定変更への対応（説明・納得支援・代替活動）",
       "行動面の安定化（クールダウン、刺激調整、環境調整）",
       "余暇活動支援（散歩、創作、趣味、社会参加の支援）",
+      "家事・生活環境の支援（掃除・洗濯・片付けなど）",
+      "金銭管理・買い物支援（支払い・管理など）",
+      "関係機関連絡・調整（家族・相談支援・通所先など）",
     ];
 
     // ★日中支援：理由（初期）
@@ -1976,25 +1981,45 @@
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        // 既存データの互換調整（表示文言のみ。判定ロジックは変更しない）
         let changed = false;
 
-        const updated = parsed.map((d) => {
-          if (!d || typeof d !== "object") return d;
+        // ① 形を正規化（不正データは弾く）
+        let updated = parsed.filter((d) => d && typeof d === "object" && typeof d.key === "string")
+          .map((d) => ({
+            ...d,
+            label: (typeof d.label === "string") ? d.label : "",
+            defaultText: (typeof d.defaultText === "string") ? d.defaultText : "",
+          }));
 
-          const t = (typeof d.defaultText === "string") ? d.defaultText : "";
+        const hasKey = (k) => updated.some((d) => d.key === k);
 
-          // 旧デフォルト（【】形式）だけを新形式へ移行
-          if (d.key === "med_manage" && t.includes("【服薬管理】")) {
-            changed = true;
-            return { ...d, defaultText: "服薬管理：処方薬は事務所で一括管理し、服薬時に職員が手渡し対応を行った。" };
-          }
-          if (d.key === "oral_check" && t.includes("【内服確認】")) {
-            changed = true;
-            return { ...d, defaultText: "内服確認：服薬時は職員が手渡し、目の前で内服したことを確認した。" };
+        // ② 旧キー（服薬管理 / 内服確認）→ 新キー（服薬対応）へ移行
+        const hasOldMed = hasKey("med_manage") || hasKey("oral_check");
+        if (hasOldMed && !hasKey("med_combo")) {
+          updated = updated.filter((d) => d.key !== "med_manage" && d.key !== "oral_check");
+          updated.unshift({
+            key: "med_combo",
+            label: "服薬対応（管理・確認）",
+            defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。"
+          });
+          changed = true;
+        }
+
+        // ③ 入浴対応：旧文言だけ補正（ユーザー編集は上書きしない）
+        updated = updated.map((d) => {
+          if (d.key === "bathing") {
+            const t = (d.defaultText || "").trim();
+            if (t === "入浴対応：声かけを実施。") {
+              changed = true;
+              return { ...d, label: d.label || "入浴対応", defaultText: "入浴対応：声かけ・見守り・介助を実施。" };
+            }
+            if (!d.label) {
+              changed = true;
+              return { ...d, label: "入浴対応" };
+            }
           }
           if (d.key === "day_support") {
-            // 旧文（【】形式）だけ更新（ユーザーが編集した文章は上書きしない）
+            const t = (d.defaultText || "");
             if (t.includes("【日中支援加算】")) {
               changed = true;
               return { ...d, defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" };
@@ -2003,12 +2028,32 @@
           return d;
         });
 
-        // 清潔保持が無ければ追加（表示用テンプレのみ）
-        const hasClean = updated.some((d) => d && typeof d === "object" && d.key === "clean_keep");
-        if (!hasClean) {
+        // ④ 必須項目の補完（存在しない場合のみ追加）
+        if (!hasKey("med_combo")) {
+          updated.unshift({
+            key: "med_combo",
+            label: "服薬対応（管理・確認）",
+            defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。"
+          });
+          changed = true;
+        }
+        if (!hasKey("clean_keep")) {
           updated.push({ key: "clean_keep", label: "清潔保持", defaultText: "清潔保持：清潔保持のため、着替えについて声かけを行った。" });
           changed = true;
         }
+        if (!hasKey("day_support")) {
+          updated.push({ key: "day_support", label: "日中支援加算", defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" });
+          changed = true;
+        }
+        if (!hasKey("bathing")) {
+          updated.push({ key: "bathing", label: "入浴対応", defaultText: "入浴対応：声かけ・見守り・介助を実施。" });
+          changed = true;
+        }
+
+        // ⑤ 旧キーが残っていれば削除（重複防止）
+        const beforeLen = updated.length;
+        updated = updated.filter((d) => d.key !== "med_manage" && d.key !== "oral_check");
+        if (updated.length !== beforeLen) changed = true;
 
         if (changed) localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(updated));
         return updated;
@@ -2060,15 +2105,24 @@ function saveAutoItemDefs() {
       const out = { ...(obj || {}) };
       Object.keys(out).forEach((name) => {
         const v = out[name];
+
+        const mapAutoKeys = (arr) => {
+          const a = Array.isArray(arr) ? arr.slice() : [];
+          // 旧キー → 新キーへ移行
+          const mapped = a.map((k) => (k === "med_manage" || k === "oral_check") ? "med_combo" : k);
+          // 重複除去
+          return Array.from(new Set(mapped));
+        };
+
         // 旧形式：配列（autoKeysのみ）→ 新形式へ変換
         if (Array.isArray(v)) {
-          out[name] = { autoKeys: v, dayMain: [] };
+          out[name] = { autoKeys: mapAutoKeys(v), dayMain: [] };
           return;
         }
         // 新形式：オブジェクト
         if (v && typeof v === "object") {
           out[name] = {
-            autoKeys: Array.isArray(v.autoKeys) ? v.autoKeys : [],
+            autoKeys: mapAutoKeys(v.autoKeys),
             dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
           };
           return;
@@ -2088,18 +2142,30 @@ function saveAutoItemDefs() {
 
     function getFavForResident(name) {
       const v = favByResident[name];
-      if (Array.isArray(v)) return { autoKeys: v, dayMain: [] }; // 旧形式対策
+
+      const mapAutoKeys = (arr) => {
+        const a = Array.isArray(arr) ? arr.slice() : [];
+        const mapped = a.map((k) => (k === "med_manage" || k === "oral_check") ? "med_combo" : k);
+        return Array.from(new Set(mapped));
+      };
+
+      if (Array.isArray(v)) return { autoKeys: mapAutoKeys(v), dayMain: [] }; // 旧形式対策
       if (v && typeof v === "object") {
         return {
-          autoKeys: Array.isArray(v.autoKeys) ? v.autoKeys : [],
+          autoKeys: mapAutoKeys(v.autoKeys),
           dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
         };
       }
-      return { autoKeys: [], dayMain: [] };
+
+      // 未設定ならデフォルト（② 自動入力の初期ON）
+      return { autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice(), dayMain: [] };
     }
 
     function applyFavToMainCheckboxes(name) {
       const fav = getFavForResident(name);
+
+      // この利用者に「よく使う項目」が保存されているか（未設定ならデフォルト扱い）
+      const hasStored = !!(name && Object.prototype.hasOwnProperty.call(favByResident || {}, name));
 
       // 自動入力（支援項目）
       const autoSet = new Set(fav.autoKeys);
@@ -2107,11 +2173,19 @@ function saveAutoItemDefs() {
         cb.checked = autoSet.has(cb.value);
       });
 
-      
       // 入浴（② 自動入力）複合チェックの有効/無効を同期（利用者切替で親が自動ONになるため）
       setupAutoBathCompound();
 
-// 日中支援：主な支援
+      // ★デフォルト時：入浴対応は「声かけ・見守り・介助」を初期ON
+      if (!hasStored && autoSet.has("bathing")) {
+        const wrap = document.getElementById("autoItemCheckboxes");
+        if (wrap) {
+          const subs = Array.from(wrap.querySelectorAll(".auto-bath-sub"));
+          if (subs.length) subs.forEach((cb) => { cb.checked = true; });
+        }
+      }
+
+      // 日中支援：主な支援
       const daySet = new Set(fav.dayMain);
       document.querySelectorAll(".day-main-item").forEach((cb) => {
         cb.checked = daySet.has(cb.value);
@@ -3234,7 +3308,9 @@ function closeRecordDetail() {
       const select = document.getElementById("templateSelect");
       const scopeSelect = document.getElementById("templateScope");
       if (!select || !scopeSelect) return;
+
       const currentScope = scopeSelect.value || "common";
+      const currentScopeNorm = (currentScope === "med_manage" || currentScope === "oral_check") ? "med_combo" : currentScope;
 
       select.innerHTML = "";
       const placeholder = document.createElement("option");
@@ -3244,7 +3320,8 @@ function closeRecordDetail() {
 
       templates.forEach((tpl, index) => {
         const scope = tpl.scope || "common";
-        if (scope !== currentScope) return;
+        const scopeNorm = (scope === "med_manage" || scope === "oral_check") ? "med_combo" : scope;
+        if (scopeNorm !== currentScopeNorm) return;
         const opt = document.createElement("option");
         opt.value = String(index);
         opt.textContent = tpl.name;
