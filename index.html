@@ -1743,7 +1743,11 @@
       "入浴・清潔保持の支援",
       "行動や安全面の見守り",
       "心理面の支援や相談",
-      "日中の活動支援・生活リズムの調整"
+      "日中の活動支援・生活リズムの調整",
+      "外出・通院同行、受診付き添い（医療連携）",
+      "予定変更への対応（説明・納得支援・代替活動）",
+      "行動面の安定化（クールダウン、刺激調整、環境調整）",
+      "余暇活動支援（散歩、創作、趣味、社会参加の支援）",
     ];
 
     // ★日中支援：理由（初期）
@@ -1970,12 +1974,61 @@ function saveAutoItemDefs() {
     }
 
     // ===== 日中支援チェック（利用者別 + 共通デフォルト） =====
-    function loadDaySupportByResident() { return loadJSON(DAY_SUPPORT_BY_RESIDENT_KEY, {}); }
+    function mergeListUnique(list, additions) {
+      if (!Array.isArray(list)) return false;
+      let changed = false;
+      const set = new Set(list);
+      for (const s of additions) {
+        if (!set.has(s)) {
+          list.push(s);
+          set.add(s);
+          changed = true;
+        }
+      }
+      return changed;
+    }
+
+    function loadDaySupportByResident() {
+      const st = loadJSON(DAY_SUPPORT_BY_RESIDENT_KEY, {});
+      if (!st || typeof st !== "object") return {};
+      let changed = false;
+
+      for (const key of Object.keys(st)) {
+        const v = st[key];
+        if (!v || typeof v !== "object") continue;
+
+        if (!Array.isArray(v.main)) { v.main = []; changed = true; }
+        if (!Array.isArray(v.reason)) { v.reason = []; changed = true; }
+
+        // 既存の並びは維持しつつ、不足分だけ末尾に追加
+        changed = mergeListUnique(v.main, DEFAULT_DAY_SUPPORT_MAIN) || changed;
+        changed = mergeListUnique(v.reason, DEFAULT_DAY_SUPPORT_REASON) || changed;
+      }
+
+      if (changed) saveJSON(DAY_SUPPORT_BY_RESIDENT_KEY, st);
+      return st;
+    }
     function saveDaySupportByResident() { saveJSON(DAY_SUPPORT_BY_RESIDENT_KEY, daySupportByResident); }
 
     function loadDaySupportDefault() {
       const st = loadJSON(DAY_SUPPORT_DEFAULT_KEY, null);
-      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return { main: st.main, reason: st.reason };
+
+      // 既存ユーザーのデータがあっても、追加されたデフォルト項目は自動で末尾に補完
+      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) {
+        const main = st.main.slice();
+        const reason = st.reason.slice();
+
+        const changedMain = mergeListUnique(main, DEFAULT_DAY_SUPPORT_MAIN);
+        const changedReason = mergeListUnique(reason, DEFAULT_DAY_SUPPORT_REASON);
+
+        if (changedMain || changedReason) {
+          const merged = { main, reason };
+          saveJSON(DAY_SUPPORT_DEFAULT_KEY, merged);
+          return merged;
+        }
+        return { main, reason };
+      }
+
       const init = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
       saveJSON(DAY_SUPPORT_DEFAULT_KEY, init);
       return init;
@@ -4724,13 +4777,14 @@ if (restoreBtn && restoreFile) {
   <!-- 🆕 アップデート通知スクリプト -->
   <script>
     (function(){
-      const UPDATE_VERSION = "2026-01-15_v8";
+      const UPDATE_VERSION = "2026-01-15_v9";
       const UPDATE_DATE = "2026-01-15";
       const UPDATE_ITEMS = [
         "日中活動（A型/ B型：通所・欠席）チェック追加",
         "日中活動・欠席理由のチェック内容を、業務日誌へ自動記入（自動/手入力を区切り表示）",
         "「特記事項あり」チェック追加（一覧でバッジ表示）",
-        "一覧に「特記事項ありのみ表示」フィルタ追加"
+        "一覧に「特記事項ありのみ表示」フィルタ追加",
+        "③主な支援に「外出・通院同行」等を追加"
       ];
       const STORAGE_KEY = "plusR_update_seen";
 
