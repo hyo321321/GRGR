@@ -2190,6 +2190,9 @@ function saveAutoItemDefs() {
       document.querySelectorAll(".day-main-item").forEach((cb) => {
         cb.checked = daySet.has(cb.value);
       });
+
+      // ② 自動入力（支援項目）→ 本日の支援内容へ反映
+      syncAutoItemsToSupport();
     }
 
     // ===== 利用者別：自動テンプレ =====
@@ -2695,6 +2698,10 @@ tr.appendChild(tdSupport);
       document.getElementById("saveButton").textContent = "💾 記録を保存";
 
       document.querySelectorAll(".auto-item").forEach((el) => { el.checked = false; });
+      // 入浴（② 自動入力）サブチェックもリセット
+      document.querySelectorAll(".auto-bath-sub").forEach((el) => { el.checked = false; });
+      setupAutoBathCompound();
+      syncAutoItemsToSupport();
 
       // 日中支援チェックリセット
       document.querySelectorAll(".day-activity-item").forEach((el) => { el.checked = false; });
@@ -2948,26 +2955,29 @@ function handleRestoreFile(file) {
       }
 
       // 3) チェック項目
-      const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
-      if (checkedKeys.length > 0) {
-        const daySupportType = document.getElementById("daySupportType")?.value || "";
-        const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
+      // ②チェック連動の「完全自動」ブロックが既にある場合は、ここで重複追記しない
+      if (!hasAutoSupportBlock(textArea?.value || "")) {
+        const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
+        if (checkedKeys.length > 0) {
+          const daySupportType = document.getElementById("daySupportType")?.value || "";
+          const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
 
-        checkedKeys.forEach((key) => {
-          // 入浴だけは複合チェックから文章生成
-          if (key === "bathing") {
-            const t = buildAutoBathSentence();
-            if (t) parts.push(t);
-            return;
-          }
+          checkedKeys.forEach((key) => {
+            // 入浴だけは複合チェックから文章生成
+            if (key === "bathing") {
+              const t = buildAutoBathSentence();
+              if (t) parts.push(t);
+              return;
+            }
 
-          const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
-          if (!def) return;
-          let text = (def.defaultText || "").trim();
-          if (!text) return;
-          text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
-          parts.push(text);
-        });
+            const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
+            if (!def) return;
+            let text = (def.defaultText || "").trim();
+            if (!text) return;
+            text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
+            parts.push(text);
+          });
+        }
       }
 
       if (parts.length === 0) {
@@ -3426,6 +3436,9 @@ function closeRecordDetail() {
       });
 
       setupAutoBathCompound();
+      // ②のチェック操作だけで「本日の支援内容」を常に最新にする（ボタン無しの完全自動）
+      setupAutoSupportAutoSync();
+      syncAutoItemsToSupport();
     }
 
     // 入浴（② 自動入力）複合チェック：親OFFならサブ無効＆OFF／サブONなら親ON
@@ -3485,6 +3498,109 @@ function buildAutoBathSentence() {
       }
 
       return `入浴対応：${picked.join("・")}を実施。`;
+    }
+
+
+    // ===== ② 自動入力（支援項目）→ 本日の支援内容へ完全自動反映 =====
+    // ※表示用テキストに【② 自動入力】/【/② 自動入力】を出さないよう、不可視タグで内部管理します
+    const LEGACY_AUTO_SUPPORT_BLOCK_START = "【② 自動入力】";
+    const LEGACY_AUTO_SUPPORT_BLOCK_END   = "【/② 自動入力】";
+    const AUTO_SUPPORT_BLOCK_START = "\u200B"; // zero-width space
+    const AUTO_SUPPORT_BLOCK_END   = "\u200C"; // zero-width non-joiner
+
+    function hasAutoSupportBlock(text) {
+      if (typeof text !== "string") return false;
+      const s = text.indexOf(AUTO_SUPPORT_BLOCK_START);
+      const e = text.indexOf(AUTO_SUPPORT_BLOCK_END);
+      return s !== -1 && e !== -1 && e > s;
+    }
+
+    function buildAutoItemsTextForSupport() {
+      const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
+      if (!checkedKeys.length) return "";
+
+      const daySupportType = document.getElementById("daySupportType")?.value || "";
+      const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
+
+      const lines = [];
+      checkedKeys.forEach((key) => {
+        if (key === "bathing") {
+          const t = buildAutoBathSentence();
+          if (t) lines.push(t);
+          return;
+        }
+        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
+        if (!def) return;
+        let text = (def.defaultText || "").trim();
+        if (!text) return;
+        text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
+        lines.push(text);
+      });
+      return lines.join("\n").trim();
+    }
+
+    function upsertAutoSupportBlock(currentText, innerText) {
+      const full = String(currentText || "");
+      const inner = String(innerText || "").trim();
+
+      const s = full.indexOf(AUTO_SUPPORT_BLOCK_START);
+      const e = full.indexOf(AUTO_SUPPORT_BLOCK_END);
+
+      // 既存ブロックがある
+      if (s !== -1 && e !== -1 && e > s) {
+        const before = full.slice(0, s).replace(/\s*$/, "");
+        const after  = full.slice(e + AUTO_SUPPORT_BLOCK_END.length).replace(/^\s*/, "");
+
+        if (!inner) {
+          // ブロック削除
+          if (before && after) return (before + "\n" + after).trimEnd();
+          return (before || after || "").trimEnd();
+        }
+
+        const block = `${AUTO_SUPPORT_BLOCK_START}${inner}${AUTO_SUPPORT_BLOCK_END}`;
+        let out = before ? (before + "\n\n" + block) : block;
+        if (after) out = out + "\n\n" + after;
+        return out.trimEnd();
+      }
+
+      // 既存ブロックなし → 追記
+      if (!inner) return full;
+      const block = `${AUTO_SUPPORT_BLOCK_START}${inner}${AUTO_SUPPORT_BLOCK_END}`;
+      if (full.trim()) return full.replace(/\s*$/, "") + "\n\n" + block;
+      return block;
+    }
+
+    function syncAutoItemsToSupport() {
+      const textArea = document.getElementById("support");
+      if (!textArea) return;
+
+      // 旧版の可視タグ（【② 自動入力】/【/② 自動入力】）が残っている場合は不可視タグへ置換
+      textArea.value = String(textArea.value || "")
+        .replaceAll(LEGACY_AUTO_SUPPORT_BLOCK_START, AUTO_SUPPORT_BLOCK_START)
+        .replaceAll(LEGACY_AUTO_SUPPORT_BLOCK_END, AUTO_SUPPORT_BLOCK_END);
+
+      const inner = buildAutoItemsTextForSupport();
+      textArea.value = upsertAutoSupportBlock(textArea.value, inner);
+    }
+
+    function setupAutoSupportAutoSync() {
+      const wrap = document.getElementById("autoItemCheckboxes");
+      if (wrap && wrap.dataset.autoSupportWired !== "1") {
+        wrap.dataset.autoSupportWired = "1";
+        wrap.addEventListener("change", (e) => {
+          const t = e?.target;
+          if (!t || !t.classList) return;
+          if (t.classList.contains("auto-item") || t.classList.contains("auto-bath-sub")) {
+            syncAutoItemsToSupport();
+          }
+        });
+      }
+
+      const ds = document.getElementById("daySupportType");
+      if (ds && ds.dataset.autoSupportWired !== "1") {
+        ds.dataset.autoSupportWired = "1";
+        ds.addEventListener("change", syncAutoItemsToSupport);
+      }
     }
 
 
