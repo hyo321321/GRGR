@@ -884,7 +884,7 @@
         <div class="beginner-guide">
           <div class="title">✅ 初心者は「緑の枠だけ」でOK</div>
           <div class="steps">
-            ① 日付・利用者 → ② よく使う項目チェック → ③【日中に行った主な支援】 → ④ 自動 → ⑤ 記録を保存
+            ① 日付・利用者 → ② よく使う項目チェック → ③【日中に行った主な支援】 → 💾 記録を保存
           </div>
         </div>
 
@@ -1076,9 +1076,9 @@
             <div class="field" style="margin-top:8px;">
               <select id="templateSelect"><option value="">選択してください</option></select>
               <div class="small-text">
-                ・「テンプレ挿入」：選んだテンプレだけを追記します。<br>
-                ・「✨ 自動」：利用者別テンプレ（あれば）＋選んだテンプレ（あれば）＋チェック項目（あれば）をまとめて追記します。<br>
-                ※どれも「下に追記」なので、既存の文章は消えません。
+                ・「テンプレ挿入」：選んだテンプレを「本日の支援内容」へ追記します。<br>
+
+                ※追記なので、既存の文章は消えません。
               </div>
             </div>
 
@@ -1114,51 +1114,35 @@
             <label for="support">本日の支援内容 (職員側)</label>
             <div class="small-text">
               ※職員側の記入欄：普段同じ内容でもOK。日中の様子と行った支援を簡潔に記入してください。<br>
-              「✨ 自動」を使うと、利用者別テンプレ＋選択テンプレ＋チェックした支援項目が下に追記されます。<br>
+              ②のチェック内容はこの欄に自動反映されます。必要に応じて「テンプレ挿入」で文章を追記できます。<br>
               事故・トラブル・受診・相談など重要事項は下の「業務日誌・利用者の活動状況（特記事項含む）」へ。</div>
             <textarea id="support" rows="8" placeholder="【標準の書き方例】
 ① 日中の様子：落ち着いて穏やかに過ごされる。表情は安定。
-② 支援項目（自動）：✨自動／チェックした支援項目がここに追記されます。
+② 支援項目（自動）：②のチェック内容がここに自動反映されます。
 ③ 対応：必要時のみ声かけ・見守り・介助を行った。"></textarea>
           </div>
-
-          <!-- ★自動ボタン（初心者OK） -->
-          <div class="beginner-zone">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#166534;">④ 自動（文章を追記） <span class="beginner-badge">ここだけOK</span></div>
-              <div class="beginner-hint">※文章は「消えずに下に追記」されます</div>
-            </div>
-
-            <div class="btn-row" style="margin-top:10px;">
-              <button type="button" class="btn-beginner" id="autoSupportBtn">✨ 自動</button>
-              <button type="button" class="btn-secondary" id="voiceSupportBtn">🎙 音声入力</button>
-              <span class="small-text">
-                ・利用者別テンプレ（選択） → 追記<br>
-                ・共通テンプレ（選択） → 追記<br>
-                ・チェックした項目 → 追記<br>
-              </span>
-            </div>
-            <div class="small-text" id="voiceStatus" style="margin-top:4px;"></div>
-          </div>
-
           <div class="field" id="noteField">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
                 <label for="note" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
-                <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="btn-secondary" id="voiceNoteBtn" style="padding:6px 10px; font-size:12px;">🎙 音声入力</button>
+                  <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
                   <input type="checkbox" id="hasSpecialNote">
                   <span>特記事項あり</span>
                 </label>
+                </div>
               </div>
               <div class="small-text special-flag-help">
                 ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
               </div>
+              <div class="small-text" id="voiceNoteStatus" style="margin-top:4px;"></div>
               <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
             </div>
 
           <!-- ★保存（初心者OK） -->
           <div class="beginner-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#166534;">⑤ 記録を保存 <span class="beginner-badge">ここだけOK</span></div>
+              <div style="font-weight:800; color:#166534;">④ 記録を保存 <span class="beginner-badge">ここだけOK</span></div>
               <div class="beginner-hint">※終わったら保存。</div>
             </div>
 
@@ -1629,14 +1613,18 @@
         <div class="field" id="editNoteField">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
             <label for="editNote" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
-            <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn-secondary" id="voiceEditNoteBtn" style="padding:6px 10px; font-size:12px;">🎙 音声入力</button>
+              <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
               <input type="checkbox" id="editHasSpecialNote">
               <span>特記事項あり</span>
             </label>
+            </div>
           </div>
           <div class="small-text special-flag-help">
             ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
           </div>
+          <div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
           <textarea id="editNote" rows="10"></textarea>
         </div>
 
@@ -2116,7 +2104,7 @@ function saveAutoItemDefs() {
 
         // 旧形式：配列（autoKeysのみ）→ 新形式へ変換
         if (Array.isArray(v)) {
-          out[name] = { autoKeys: mapAutoKeys(v), dayMain: [] };
+          out[name] = { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [] };
           return;
         }
         // 新形式：オブジェクト
@@ -2124,10 +2112,11 @@ function saveAutoItemDefs() {
           out[name] = {
             autoKeys: mapAutoKeys(v.autoKeys),
             dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
+            autoBathSubs: Array.isArray(v.autoBathSubs) ? v.autoBathSubs : [],
           };
           return;
         }
-        out[name] = { autoKeys: [], dayMain: [] };
+        out[name] = { autoKeys: [], dayMain: [], autoBathSubs: [] };
       });
       return out;
     }
@@ -2149,16 +2138,17 @@ function saveAutoItemDefs() {
         return Array.from(new Set(mapped));
       };
 
-      if (Array.isArray(v)) return { autoKeys: mapAutoKeys(v), dayMain: [] }; // 旧形式対策
+      if (Array.isArray(v)) return { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [] }; // 旧形式対策
       if (v && typeof v === "object") {
         return {
           autoKeys: mapAutoKeys(v.autoKeys),
           dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
+          autoBathSubs: Array.isArray(v.autoBathSubs) ? v.autoBathSubs : [],
         };
       }
 
       // 未設定ならデフォルト（② 自動入力の初期ON）
-      return { autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice(), dayMain: [] };
+      return { autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice(), dayMain: [], autoBathSubs: [] };
     }
 
     function applyFavToMainCheckboxes(name) {
@@ -2176,12 +2166,24 @@ function saveAutoItemDefs() {
       // 入浴（② 自動入力）複合チェックの有効/無効を同期（利用者切替で親が自動ONになるため）
       setupAutoBathCompound();
 
-      // ★デフォルト時：入浴対応は「声かけ・見守り・介助」を初期ON
-      if (!hasStored && autoSet.has("bathing")) {
-        const wrap = document.getElementById("autoItemCheckboxes");
-        if (wrap) {
-          const subs = Array.from(wrap.querySelectorAll(".auto-bath-sub"));
-          if (subs.length) subs.forEach((cb) => { cb.checked = true; });
+      // 入浴（② 自動入力）サブチェック：利用者別に復元（未設定ならデフォルト）
+      const __autoWrap = document.getElementById("autoItemCheckboxes");
+      if (__autoWrap) {
+        const subs = Array.from(__autoWrap.querySelectorAll(".auto-bath-sub"));
+        if (autoSet.has("bathing")) {
+          if (hasStored) {
+            const saved = Array.isArray(fav.autoBathSubs) ? fav.autoBathSubs : [];
+            if (saved.length) {
+              subs.forEach((cb) => { cb.checked = saved.includes(cb.dataset.sub); });
+            } else {
+              subs.forEach((cb) => { cb.checked = false; });
+            }
+          } else {
+            // ★デフォルト時：入浴対応は「声かけ・見守り・介助」を初期ON
+            if (subs.length) subs.forEach((cb) => { cb.checked = true; });
+          }
+        } else {
+          subs.forEach((cb) => { cb.checked = false; });
         }
       }
 
@@ -4465,14 +4467,73 @@ reasonWrap.innerHTML = "";
       // 自動入力
       const autoWrap = document.getElementById("favModalCheckboxes");
       autoWrap.innerHTML = "";
+
+      const savedBathSubs = Array.isArray(fav.autoBathSubs) ? fav.autoBathSubs : [];
+
       AUTO_ITEM_DEFS.forEach((def) => {
+        // 入浴だけ：複合チェック（声かけ/見守り/介助）をモーダルでも選択可にする
+        if (def.key === "bathing") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="fav-modal-item fav-modal-bathing-parent" value="bathing"> ${escapeHtml(def.label || "入浴対応")}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="fav-modal-auto-bath-sub" data-sub="prompt" data-label="声かけ">声かけ</label>
+              <label><input type="checkbox" class="fav-modal-auto-bath-sub" data-sub="watch" data-label="見守り">見守り</label>
+              <label><input type="checkbox" class="fav-modal-auto-bath-sub" data-sub="assist" data-label="介助">介助</label>
+            </span>
+          `;
+          autoWrap.appendChild(box);
+          return;
+        }
+
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="fav-modal-item" value="${def.key}"> ${escapeHtml(def.label)}`;
         autoWrap.appendChild(label);
       });
+
+      // チェック復元
       autoWrap.querySelectorAll(".fav-modal-item").forEach((cb) => {
         cb.checked = autoSet.has(cb.value);
       });
+
+      // 入浴サブ（この利用者）
+      const bathParent = autoWrap.querySelector('.fav-modal-item[value="bathing"]');
+      if (bathParent && savedBathSubs.length && !bathParent.checked) bathParent.checked = true;
+
+      autoWrap.querySelectorAll(".fav-modal-auto-bath-sub").forEach((cb) => {
+        cb.checked = savedBathSubs.includes(cb.dataset.sub);
+      });
+
+      // 入浴（モーダル）複合チェックの同期：親OFFならサブ無効＆OFF／サブONなら親ON
+      (function setupFavModalBathCompound(){
+        const parent = autoWrap.querySelector('.fav-modal-item[value="bathing"]');
+        const subs = Array.from(autoWrap.querySelectorAll('.fav-modal-auto-bath-sub'));
+        if (!parent || subs.length === 0) return;
+
+        const sync = () => {
+          const on = !!parent.checked;
+          subs.forEach((cb) => {
+            cb.disabled = !on;
+            const lbl = cb.closest("label");
+            if (lbl) lbl.style.opacity = on ? "1" : "0.55";
+            if (!on) cb.checked = false;
+          });
+        };
+
+        if (parent.dataset.wired === "1") { sync(); return; }
+        parent.dataset.wired = "1";
+
+        parent.addEventListener("change", sync);
+        subs.forEach((cb) => {
+          cb.addEventListener("change", () => {
+            if (cb.checked && !parent.checked) parent.checked = true;
+            sync();
+          });
+        });
+
+        sync();
+      })();
 
       // 日中支援：主な支援（利用者別リスト）
       const dayWrap = document.getElementById("favModalDaySupportMainCheckboxes");
@@ -4500,7 +4561,15 @@ reasonWrap.innerHTML = "";
       const dayMain = Array.from(document.querySelectorAll("#favModalDaySupportMainCheckboxes .fav-modal-day-main-item:checked"))
         .map((x) => x.value);
 
-      favByResident[resident] = { autoKeys, dayMain };
+      let autoBathSubs = [];
+
+      const bathParent = document.querySelector('#favModalCheckboxes .fav-modal-item[value="bathing"]');
+      if (bathParent && bathParent.checked) {
+        autoBathSubs = Array.from(document.querySelectorAll('#favModalCheckboxes .fav-modal-auto-bath-sub:checked')).map((x) => x.dataset.sub);
+        if (autoBathSubs.length === 0) autoBathSubs = ["prompt"];
+      }
+
+      favByResident[resident] = { autoKeys, dayMain, autoBathSubs };
       saveFavByResident();
 
       // 反映（フォーム側）
@@ -5087,7 +5156,10 @@ if (restoreBtn && restoreFile) {
       });
 
       // 自動
-      document.getElementById("autoSupportBtn").addEventListener("click", generateSupportText);
+            {
+        const autoBtn = document.getElementById("autoSupportBtn");
+        if(autoBtn) autoBtn.addEventListener("click", generateSupportText);
+      }
 
       // テンプレ（共通）
       document.getElementById("templateApplyButton").addEventListener("click", handleTemplateApply);
@@ -5186,67 +5258,73 @@ if (restoreBtn && restoreFile) {
     });
   </script>
 
-  <!-- 音声入力スクリプト（メインフォーム） -->
+  <!-- 音声入力スクリプト（業務日誌：メイン＋編集モーダル） -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const voiceBtn = document.getElementById("voiceSupportBtn");
-      const voiceStatus = document.getElementById("voiceStatus");
-      const support = document.getElementById("support");
-
-      if (!voiceBtn || !voiceStatus || !support) return;
-
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-      if (!SpeechRecognition) {
-        voiceBtn.disabled = true;
-        voiceStatus.textContent = "※ このブラウザでは音声入力が使えません（Chrome / Edge 推奨）";
-        return;
+      function attachVoice(buttonId, statusId, textareaId){
+        const btn = document.getElementById(buttonId);
+        const status = document.getElementById(statusId);
+        const ta = document.getElementById(textareaId);
+        if(!btn || !status || !ta) return;
+
+        if(!SpeechRecognition){
+          btn.disabled = true;
+          status.textContent = "※ このブラウザでは音声入力が使えません（Chrome / Edge 推奨）";
+          return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ja-JP";
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        let recognizing = false;
+
+        btn.addEventListener("click", () => {
+          if(!recognizing){
+            try { recognition.start(); } catch(e) {}
+          }else{
+            recognition.stop();
+          }
+        });
+
+        recognition.addEventListener("start", () => {
+          recognizing = true;
+          btn.textContent = "■ 停止";
+          status.textContent = "音声入力中… 話し終わったらもう一度ボタンを押して停止してください。";
+        });
+
+        recognition.addEventListener("end", () => {
+          recognizing = false;
+          btn.textContent = "🎙 音声入力";
+          status.textContent = "";
+        });
+
+        recognition.addEventListener("result", (event) => {
+          let finalText = "";
+          for(let i = event.resultIndex; i < event.results.length; i++){
+            const res = event.results[i];
+            if(res.isFinal) finalText += res[0].transcript;
+          }
+          if(!finalText) return;
+
+          if(ta.value.trim()) ta.value = ta.value.replace(/\s*$/, "") + "\n" + finalText;
+          else ta.value = finalText;
+        });
+
+        recognition.addEventListener("error", (e) => {
+          recognizing = false;
+          btn.textContent = "🎙 音声入力";
+          status.textContent = "音声入力エラー：" + e.error;
+        });
       }
 
-      const recognition = new SpeechRecognition();
-      recognition.lang = "ja-JP";
-      recognition.interimResults = true;
-      recognition.continuous = true;
-
-      let recognizing = false;
-
-      voiceBtn.addEventListener("click", () => {
-        if (!recognizing) {
-          try { recognition.start(); } catch (e) {}
-        } else {
-          recognition.stop();
-        }
-      });
-
-      recognition.addEventListener("start", () => {
-        recognizing = true;
-        voiceBtn.textContent = "■ 停止";
-        voiceStatus.textContent = "音声入力中… 話し終わったらもう一度ボタンを押して停止してください。";
-      });
-
-      recognition.addEventListener("end", () => {
-        recognizing = false;
-        voiceBtn.textContent = "🎙 音声入力";
-        voiceStatus.textContent = "";
-      });
-
-      recognition.addEventListener("result", (event) => {
-        let finalText = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const res = event.results[i];
-          if (res.isFinal) finalText += res[0].transcript;
-        }
-        if (!finalText) return;
-
-        if (support.value.trim()) support.value = support.value.replace(/\s*$/, "") + "\n" + finalText;
-        else support.value = finalText;
-      });
-
-      recognition.addEventListener("error", (e) => {
-        recognizing = false;
-        voiceBtn.textContent = "🎙 音声入力";
-        voiceStatus.textContent = "音声入力エラー：" + e.error;
-      });
+      // メインフォームの業務日誌
+      attachVoice("voiceNoteBtn", "voiceNoteStatus", "note");
+      // 編集モーダルの業務日誌
+      attachVoice("voiceEditNoteBtn", "voiceEditNoteStatus", "editNote");
     });
   </script>
 
