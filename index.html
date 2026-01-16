@@ -1136,6 +1136,26 @@
                 ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
               </div>
               <div class="small-text" id="voiceNoteStatus" style="margin-top:4px;"></div>
+              <div class="field" id="abnormalVitalsBox" style="margin-top:10px;">
+                <div class="checkbox-row" style="margin-bottom:6px;">
+                  <label><input type="checkbox" id="abnormalVitalsOn"> 異常があった時の体重・血圧を記録</label>
+                </div>
+                <div class="field-row-3" id="abnormalVitalsInputs" style="display:none; align-items:end;">
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalWeight">体重（kg）</label>
+                    <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalBPsys">血圧（上 / mmHg）</label>
+                    <input type="text" id="abnormalBPsys" placeholder="例：120" inputmode="numeric" />
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalBPdia">血圧（下 / mmHg）</label>
+                    <input type="text" id="abnormalBPdia" placeholder="例：80" inputmode="numeric" />
+                  </div>
+                </div>
+                <div class="small-text" style="margin-top:6px;">※異常時のみ。入力すると、業務日誌の自動欄にも反映されます。</div>
+              </div>
               <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
             </div>
 
@@ -1625,6 +1645,26 @@
             ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
           </div>
           <div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
+          <div class="field" id="editAbnormalVitalsBox" style="margin-top:10px;">
+            <div class="checkbox-row" style="margin-bottom:6px;">
+              <label><input type="checkbox" id="editAbnormalVitalsOn"> 異常があった時の体重・血圧を記録</label>
+            </div>
+            <div class="field-row-3" id="editAbnormalVitalsInputs" style="display:none; align-items:end;">
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalWeight">体重（kg）</label>
+                <input type="text" id="editAbnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalBPsys">血圧（上 / mmHg）</label>
+                <input type="text" id="editAbnormalBPsys" placeholder="例：120" inputmode="numeric" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalBPdia">血圧（下 / mmHg）</label>
+                <input type="text" id="editAbnormalBPdia" placeholder="例：80" inputmode="numeric" />
+              </div>
+            </div>
+            <div class="small-text" style="margin-top:6px;">※異常時のみ。入力すると、業務日誌の自動欄にも反映されます。</div>
+          </div>
           <textarea id="editNote" rows="10"></textarea>
         </div>
 
@@ -2725,6 +2765,18 @@ tr.appendChild(tdSupport);
       const __nta = document.getElementById("note");
       if (__nta) __nta.classList.remove("special-note-on");
 
+      // 異常時バイタル（体重・血圧）
+      const __vOn = document.getElementById("abnormalVitalsOn");
+      const __vW  = document.getElementById("abnormalWeight");
+      const __vS  = document.getElementById("abnormalBPsys");
+      const __vD  = document.getElementById("abnormalBPdia");
+      if (__vOn) __vOn.checked = false;
+      if (__vW) __vW.value = "";
+      if (__vS) __vS.value = "";
+      if (__vD) __vD.value = "";
+      syncAbnormalVitalsUI("main");
+      updateAutoNoteMain();
+
     }
 
     function deleteRecord(id) {
@@ -2921,6 +2973,10 @@ function handleRestoreFile(file) {
         daySupportMainItems,
         daySupportReasonItems,
         daySupportBathingSubItems: getBathingSubSelected("main"),
+        abnormalVitalsOn: !!document.getElementById("abnormalVitalsOn")?.checked,
+        abnormalWeight: (document.getElementById("abnormalWeight")?.value || "").trim(),
+        abnormalBPsys: (document.getElementById("abnormalBPsys")?.value || "").trim(),
+        abnormalBPdia: (document.getElementById("abnormalBPdia")?.value || "").trim(),
       };
 
       records.push(recordData);
@@ -3074,6 +3130,13 @@ function handleRestoreFile(file) {
       addRow("心の状態：", record.mental || "");
       addRow("食事の様子：", record.meal || "");
       addRow("服薬：", medText);
+      // 異常時バイタル（体重・血圧）
+      if ((record.abnormalVitalsOn || record.abnormalWeight || record.abnormalBPsys || record.abnormalBPdia)) {
+        const parts = [];
+        if (record.abnormalWeight) parts.push(`体重 ${record.abnormalWeight}kg`);
+        if (record.abnormalBPsys || record.abnormalBPdia) parts.push(`血圧 ${(record.abnormalBPsys || "")}/${(record.abnormalBPdia || "")}mmHg`);
+        addRow("異常時バイタル：", parts.join("、"));
+      }
       addRow("タグ：", tagsText);
       addRow("日中支援加算区分：", daySupportTypeLabel);
       addRow("日中支援の時間帯：", record.daySupportTime || "");
@@ -3671,6 +3734,7 @@ function buildAutoBathSentence() {
     // ===== 日中活動 / 欠席理由 → 業務日誌欄へ自動反映 =====
     const AUTO_NOTE_ACTIVITY_PREFIX = "日中活動：";
     const AUTO_NOTE_REASON_PREFIX   = "【日中活動に行けなかった理由】：";
+    const AUTO_NOTE_VITAL_PREFIX    = "異常時バイタル：";
     const AUTO_NOTE_HEADER        = "▼自動入力（チェック連動）";
     const AUTO_NOTE_SEPARATOR     = "────────────────";
     const AUTO_NOTE_MANUAL_HEADER = "▼職員メモ（ここから手入力）";
@@ -3680,6 +3744,7 @@ function buildAutoBathSentence() {
       const filtered = lines.filter((l) => {
         return !l.startsWith(AUTO_NOTE_ACTIVITY_PREFIX)
           && !l.startsWith(AUTO_NOTE_REASON_PREFIX)
+          && !l.startsWith(AUTO_NOTE_VITAL_PREFIX)
           && l.trim() !== AUTO_NOTE_HEADER
           && l.trim() !== AUTO_NOTE_SEPARATOR
           && l.trim() !== AUTO_NOTE_MANUAL_HEADER;
@@ -3689,7 +3754,7 @@ function buildAutoBathSentence() {
       return filtered.join("\n");
     }
 
-    function applyAutoNoteLines(textarea, activityArr, reasonArr) {
+    function applyAutoNoteLines(textarea, activityArr, reasonArr, vitalObj) {
       if (!textarea) return;
 
       const userText = stripAutoNoteLines(textarea.value);
@@ -3701,6 +3766,18 @@ function buildAutoBathSentence() {
       if (Array.isArray(reasonArr) && reasonArr.length) {
         autoLines.push(AUTO_NOTE_REASON_PREFIX + " " + reasonArr.join(" / "));
       }
+      if (vitalObj && vitalObj.enabled) {
+        const w = (vitalObj.weight || "").toString().trim();
+        const s = (vitalObj.bpSys || "").toString().trim();
+        const d = (vitalObj.bpDia || "").toString().trim();
+        if (w || s || d) {
+          const parts = [];
+          if (w) parts.push(`体重 ${w}kg`);
+          if (s || d) parts.push(`血圧 ${s}/${d}mmHg`);
+          autoLines.push(AUTO_NOTE_VITAL_PREFIX + " " + parts.join("、"));
+        }
+      }
+
 
       if (autoLines.length === 0) {
         textarea.value = userText;
@@ -3717,12 +3794,38 @@ function buildAutoBathSentence() {
       }
     }
 
+    function syncAbnormalVitalsUI(scope) {
+      const isEdit = (scope === "edit");
+      const onEl = document.getElementById(isEdit ? "editAbnormalVitalsOn" : "abnormalVitalsOn");
+      const inputsWrap = document.getElementById(isEdit ? "editAbnormalVitalsInputs" : "abnormalVitalsInputs");
+      const wEl = document.getElementById(isEdit ? "editAbnormalWeight" : "abnormalWeight");
+      const sEl = document.getElementById(isEdit ? "editAbnormalBPsys" : "abnormalBPsys");
+      const dEl = document.getElementById(isEdit ? "editAbnormalBPdia" : "abnormalBPdia");
+
+      if (!onEl || !inputsWrap) return;
+      inputsWrap.style.display = onEl.checked ? "grid" : "none";
+
+      // OFFにしたら値もクリア（誤保存防止）
+      if (!onEl.checked) {
+        if (wEl) wEl.value = "";
+        if (sEl) sEl.value = "";
+        if (dEl) dEl.value = "";
+      }
+    }
+
+
     function updateAutoNoteMain() {
       const ta = document.getElementById("note");
       if (!ta) return;
       const activity = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((x) => x.value);
       const reasons  = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value);
-      applyAutoNoteLines(ta, activity, reasons);
+      const vital = {
+        enabled: !!document.getElementById("abnormalVitalsOn")?.checked,
+        weight: document.getElementById("abnormalWeight")?.value || "",
+        bpSys: document.getElementById("abnormalBPsys")?.value || "",
+        bpDia: document.getElementById("abnormalBPdia")?.value || "",
+      };
+      applyAutoNoteLines(ta, activity, reasons, vital);
     }
 
     function setupAutoNoteMain() {
@@ -3737,6 +3840,21 @@ function buildAutoBathSentence() {
         if (e?.target?.classList?.contains("day-reason-item")) updateAutoNoteMain();
       });
 
+      // 異常時バイタル（体重・血圧）
+      const __vOn = document.getElementById("abnormalVitalsOn");
+      const __vW  = document.getElementById("abnormalWeight");
+      const __vS  = document.getElementById("abnormalBPsys");
+      const __vD  = document.getElementById("abnormalBPdia");
+      if (__vOn) __vOn.addEventListener("change", () => { syncAbnormalVitalsUI("main"); updateAutoNoteMain(); });
+      [__vW, __vS, __vD].forEach((el) => {
+        if (!el) return;
+        el.addEventListener("input", () => {
+          if (document.getElementById("abnormalVitalsOn")?.checked) updateAutoNoteMain();
+        });
+      });
+      // 初期UI（非表示/表示）
+      syncAbnormalVitalsUI("main");
+
       // 初期反映（今のチェック状態を業務日誌欄へ）
       updateAutoNoteMain();
     }
@@ -3746,7 +3864,13 @@ function buildAutoBathSentence() {
       if (!ta) return;
       const activity = Array.from(document.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
       const reasons  = Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((x) => x.value);
-      applyAutoNoteLines(ta, activity, reasons);
+      const vital = {
+        enabled: !!document.getElementById("editAbnormalVitalsOn")?.checked,
+        weight: document.getElementById("editAbnormalWeight")?.value || "",
+        bpSys: document.getElementById("editAbnormalBPsys")?.value || "",
+        bpDia: document.getElementById("editAbnormalBPdia")?.value || "",
+      };
+      applyAutoNoteLines(ta, activity, reasons, vital);
     }
 
     function setupAutoNoteEdit() {
@@ -3759,6 +3883,21 @@ function buildAutoBathSentence() {
       if (reaWrap) reaWrap.addEventListener("change", (e) => {
         if (e?.target?.classList?.contains("edit-day-reason-item")) updateAutoNoteEdit();
       });
+
+      // 異常時バイタル（体重・血圧）
+      const __evOn = document.getElementById("editAbnormalVitalsOn");
+      const __evW  = document.getElementById("editAbnormalWeight");
+      const __evS  = document.getElementById("editAbnormalBPsys");
+      const __evD  = document.getElementById("editAbnormalBPdia");
+      if (__evOn) __evOn.addEventListener("change", () => { syncAbnormalVitalsUI("edit"); updateAutoNoteEdit(); });
+      [__evW, __evS, __evD].forEach((el) => {
+        if (!el) return;
+        el.addEventListener("input", () => {
+          if (document.getElementById("editAbnormalVitalsOn")?.checked) updateAutoNoteEdit();
+        });
+      });
+      // 初期UI（非表示/表示）だけ反映
+      syncAbnormalVitalsUI("edit");
 
       // ★ 編集モーダルは「開いた瞬間に勝手に書き換えない」ため、初回反映はしない
     }
@@ -4304,6 +4443,17 @@ function buildAutoBathSentence() {
       document.getElementById("editMedTaken").checked = !!record.medTaken;
       document.getElementById("editSupport").value = record.support || "";
       document.getElementById("editNote").value = record.note || "";
+
+      // 異常時バイタル（体重・血圧）
+      const __evOn = document.getElementById("editAbnormalVitalsOn");
+      const __evW  = document.getElementById("editAbnormalWeight");
+      const __evS  = document.getElementById("editAbnormalBPsys");
+      const __evD  = document.getElementById("editAbnormalBPdia");
+      if (__evOn) __evOn.checked = !!record.abnormalVitalsOn;
+      if (__evW) __evW.value = record.abnormalWeight || "";
+      if (__evS) __evS.value = record.abnormalBPsys || "";
+      if (__evD) __evD.value = record.abnormalBPdia || "";
+      syncAbnormalVitalsUI("edit");
       
       const __sh = document.getElementById("editHasSpecialNote");
       if (__sh) __sh.checked = !!record.hasSpecialNote;
@@ -4444,6 +4594,10 @@ reasonWrap.innerHTML = "";
         daySupportMainItems: mainItems,
         daySupportReasonItems: reasonItems,
         daySupportBathingSubItems: getBathingSubSelected("edit"),
+        abnormalVitalsOn: !!document.getElementById("editAbnormalVitalsOn")?.checked,
+        abnormalWeight: (document.getElementById("editAbnormalWeight")?.value || "").trim(),
+        abnormalBPsys: (document.getElementById("editAbnormalBPsys")?.value || "").trim(),
+        abnormalBPdia: (document.getElementById("editAbnormalBPdia")?.value || "").trim(),
       };
 
       records[idx] = updated;
