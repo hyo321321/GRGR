@@ -175,6 +175,16 @@
       gap: 12px;
     }
 
+    .field-row-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .field-row-4 { grid-template-columns: 1fr; }
+    }
+
     @media (max-width: 900px) {
       .field-row-3 { grid-template-columns: 1fr; }
     }
@@ -884,7 +894,7 @@
         <div class="beginner-guide">
           <div class="title">✅ 初心者は「緑の枠だけ」でOK</div>
           <div class="steps">
-            ① 日付・利用者 → ② よく使う項目チェック → ③【日中に行った主な支援】 → 💾 記録を保存
+            ① 日付・利用者・記録者 → ② よく使う項目チェック → ③【日中に行った主な支援】 → 💾 記録を保存
           </div>
         </div>
 
@@ -893,11 +903,11 @@
           <!-- ★日付・利用者（初心者OK） -->
           <div class="beginner-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#166534;">① 日付・利用者 <span class="beginner-badge">ここだけOK</span></div>
+              <div style="font-weight:800; color:#166534;">① 日付・利用者・記録者 <span class="beginner-badge">ここだけOK</span></div>
               <div class="beginner-hint">※利用者を選ぶと「よく使う項目」が自動でONになります。</div>
             </div>
 
-            <div class="field-row" style="margin-top:10px;">
+            <div class="field-row-3" style="margin-top:10px;">
               <div class="field" style="margin-bottom:0;">
                 <label for="date">日付</label>
                 <input type="date" id="date" required />
@@ -906,23 +916,13 @@
                 <label for="resident">利用者</label>
                 <select id="resident" required></select>
               </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="recorder">記録者</label>
+                <select id="recorder"></select>
+              </div>
             </div>
           </div>
 
-
-
-            <div class="field" style="margin-top:10px; margin-bottom:0;">
-              <label for="recorder">記録者</label>
-              <select id="recorder">
-                <option value="">（選択）</option>
-                <option>職員A</option>
-                <option>職員B</option>
-                <option>職員C</option>
-                <option>職員D</option>
-                <option>職員E</option>
-                <option>職員F</option>
-              </select>
-            </div>
           <div class="field-row-3">
             <div class="field">
               <label for="timeSlot">時間帯</label>
@@ -1137,10 +1137,8 @@
               </div>
               <div class="small-text" id="voiceNoteStatus" style="margin-top:4px;"></div>
               <div class="field" id="abnormalVitalsBox" style="margin-top:10px;">
-                <div class="checkbox-row" style="margin-bottom:6px;">
-                  <label><input type="checkbox" id="abnormalVitalsOn"> 異常があった時の体重・血圧を記録</label>
-                </div>
-                <div class="field-row-3" id="abnormalVitalsInputs" style="display:none; align-items:end;">
+                <div style="font-weight:700; margin-bottom:6px;">体重・血圧・脈拍（任意）</div>
+                <div class="field-row-4" id="abnormalVitalsInputs" style="align-items:end;">
                   <div class="field" style="margin-bottom:0;">
                     <label for="abnormalWeight">体重（kg）</label>
                     <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
@@ -1153,8 +1151,12 @@
                     <label for="abnormalBPdia">血圧（下 / mmHg）</label>
                     <input type="text" id="abnormalBPdia" placeholder="例：80" inputmode="numeric" />
                   </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalPulse">脈拍（回/分）</label>
+                    <input type="text" id="abnormalPulse" placeholder="例：72" inputmode="numeric" />
+                  </div>
                 </div>
-                <div class="small-text" style="margin-top:6px;">※異常時のみ。入力すると、業務日誌の自動欄にも反映されます。</div>
+                <div class="small-text" style="margin-top:6px;">※入力すると、業務日誌の自動欄にも反映されます。</div>
               </div>
               <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
             </div>
@@ -1303,6 +1305,37 @@
       </div>
 
       <div class="admin-note">※削除すると、その利用者のすべての記録も削除されます。</div>
+    </section>
+
+    <!-- 記録者管理 -->
+    <section class="card admin-card">
+      <div class="card-title">
+        <span>記録者管理</span>
+        <span class="admin-pill">管理（慣れた人向け）</span>
+        <span class="record-count" id="recorderCount">0名</span>
+      </div>
+      <div class="card-subtitle">
+        記録者（職員名）の追加・変更・削除を行います。ここで変更すると、フォームの「記録者」候補にも反映されます。
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="recorderManageSelect">対象の記録者</label>
+          <select id="recorderManageSelect"></select>
+        </div>
+        <div class="field">
+          <label for="recorderNameInput">名前（追加・変更後）</label>
+          <input type="text" id="recorderNameInput" placeholder="例：職員A" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="recorderAddButton">＋ 新しく追加</button>
+        <button type="button" class="btn-secondary" id="recorderRenameButton">✏️ 選択をこの名前に変更</button>
+        <button type="button" class="btn-danger" id="recorderDeleteButton">🗑️ 記録者を削除</button>
+      </div>
+
+      <div class="admin-note">※削除しても過去の記録データは消えません（表示候補から外れるだけです）。</div>
     </section>
 
     <!-- 自動入力項目 管理 -->
@@ -1540,13 +1573,7 @@
 
         <div class="field" style="margin-top:10px;">
           <label for="editRecorder">記録者</label>
-          <select id="editRecorder">
-            <option value="">（選択）</option>
-            <option>職員A</option>
-            <option>職員B</option>
-            <option>職員C</option>
-            <option>職員D</option>
-          </select>
+          <select id="editRecorder"></select>
         </div>
 
         <div class="field-row-3">
@@ -1646,10 +1673,8 @@
           </div>
           <div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
           <div class="field" id="editAbnormalVitalsBox" style="margin-top:10px;">
-            <div class="checkbox-row" style="margin-bottom:6px;">
-              <label><input type="checkbox" id="editAbnormalVitalsOn"> 異常があった時の体重・血圧を記録</label>
-            </div>
-            <div class="field-row-3" id="editAbnormalVitalsInputs" style="display:none; align-items:end;">
+            <div style="font-weight:700; margin-bottom:6px;">体重・血圧・脈拍（任意）</div>
+            <div class="field-row-4" id="editAbnormalVitalsInputs" style="align-items:end;">
               <div class="field" style="margin-bottom:0;">
                 <label for="editAbnormalWeight">体重（kg）</label>
                 <input type="text" id="editAbnormalWeight" placeholder="例：56.2" inputmode="decimal" />
@@ -1662,8 +1687,12 @@
                 <label for="editAbnormalBPdia">血圧（下 / mmHg）</label>
                 <input type="text" id="editAbnormalBPdia" placeholder="例：80" inputmode="numeric" />
               </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalPulse">脈拍（回/分）</label>
+                <input type="text" id="editAbnormalPulse" placeholder="例：72" inputmode="numeric" />
+              </div>
             </div>
-            <div class="small-text" style="margin-top:6px;">※異常時のみ。入力すると、業務日誌の自動欄にも反映されます。</div>
+            <div class="small-text" style="margin-top:6px;">※入力すると、業務日誌の自動欄にも反映されます。</div>
           </div>
           <textarea id="editNote" rows="10"></textarea>
         </div>
@@ -1784,6 +1813,7 @@
   <script>
     const STORAGE_KEY   = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
+    const RECORDERS_KEY = "group_home_recorders_v1";
     const TEMPLATES_KEY = "group_home_support_templates_v1";
 
     // 自動入力（支援項目）
@@ -1809,6 +1839,8 @@
     const DEFAULT_TAG_LIST = [
       "服薬","通院","入浴","外出","体調不良","相談","仕事","掃除","金銭","夜間対応"
     ];
+
+    const DEFAULT_RECORDER_LIST = ["職員A","職員B","職員C","職員D","職員E","職員F"];
 
     // ★利用者別「よく使う項目」未設定時のデフォルト（② 自動入力）
     const DEFAULT_FAV_AUTO_KEYS = ["med_combo", "bathing"];
@@ -1958,6 +1990,7 @@
 
     let records = [];
     let residents = [];
+    let recorders = [];
     let currentTags = [];
     let templates = [];
 
@@ -2127,6 +2160,24 @@ function saveAutoItemDefs() {
     }
 
     function saveResidents() { localStorage.setItem(RESIDENTS_KEY, JSON.stringify(residents)); }
+
+    function loadRecorders() {
+      try {
+        const raw = localStorage.getItem(RECORDERS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        console.error("load recorders error", e);
+      }
+      const fromRecords = Array.from(new Set(records.map((r) => r.recorder).filter(Boolean)));
+      if (fromRecords.length > 0) return fromRecords;
+      return (typeof DEFAULT_RECORDER_LIST !== "undefined" && Array.isArray(DEFAULT_RECORDER_LIST) && DEFAULT_RECORDER_LIST.length) ? DEFAULT_RECORDER_LIST.slice() : ["職員A"];
+    }
+
+    function saveRecorders() { localStorage.setItem(RECORDERS_KEY, JSON.stringify(recorders)); }
+
 
     // ===== 利用者別：よく使う項目（旧データ対策あり） =====
     function normalizeFavStore(obj) {
@@ -2423,6 +2474,49 @@ function formatDateWithDow(iso) {
       selectEl.value = (cur && residents.includes(cur)) ? cur : "";
     }
 
+
+
+    function populateRecorderSelect(selectEl, placeholderText = "（選択）") {
+      if (!selectEl) return;
+      const cur = selectEl.value;
+      selectEl.innerHTML = "";
+      const ph = document.createElement("option");
+      ph.value = "";
+      ph.textContent = placeholderText;
+      selectEl.appendChild(ph);
+      (recorders || []).forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        selectEl.appendChild(opt);
+      });
+      selectEl.value = (cur && (recorders || []).includes(cur)) ? cur : "";
+    }
+
+    function ensureSelectHasValue(selectEl, value) {
+      if (!selectEl) return;
+      const v = (value || "").trim();
+      if (!v) return;
+      const exists = Array.from(selectEl.options).some((o) => o.value === v);
+      if (exists) return;
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      selectEl.appendChild(opt);
+    }
+
+    function renderRecorderSelects() {
+      const recorderSelect = document.getElementById("recorder");
+      const editSelect = document.getElementById("editRecorder");
+      const manageSelect = document.getElementById("recorderManageSelect");
+      const recorderCountLabel = document.getElementById("recorderCount");
+
+      if (recorderCountLabel) recorderCountLabel.textContent = (recorders || []).length + "名";
+
+      populateRecorderSelect(recorderSelect, "（選択）");
+      populateRecorderSelect(editSelect, "（選択）");
+      populateRecorderSelect(manageSelect, "選択してください");
+    }
     function renderResidentSelects() {
       const residentSelect = document.getElementById("resident");
       const filterSelect = document.getElementById("filterResident");
@@ -2765,15 +2859,15 @@ tr.appendChild(tdSupport);
       const __nta = document.getElementById("note");
       if (__nta) __nta.classList.remove("special-note-on");
 
-      // 異常時バイタル（体重・血圧）
-      const __vOn = document.getElementById("abnormalVitalsOn");
+      // バイタル（体重・血圧・脈拍）
       const __vW  = document.getElementById("abnormalWeight");
       const __vS  = document.getElementById("abnormalBPsys");
       const __vD  = document.getElementById("abnormalBPdia");
-      if (__vOn) __vOn.checked = false;
+      const __vP  = document.getElementById("abnormalPulse");
       if (__vW) __vW.value = "";
       if (__vS) __vS.value = "";
       if (__vD) __vD.value = "";
+      if (__vP) __vP.value = "";
       syncAbnormalVitalsUI("main");
       updateAutoNoteMain();
 
@@ -2806,6 +2900,7 @@ function buildBackupPayload() {
     data: {
       records: Array.isArray(records) ? records : [],
       residents: Array.isArray(residents) ? residents : [],
+      recorders: Array.isArray(recorders) ? recorders : [],
       templates: Array.isArray(templates) ? templates : [],
       autoItemDefs: Array.isArray(AUTO_ITEM_DEFS) ? AUTO_ITEM_DEFS : [],
       tags: Array.isArray(TAG_LIST) ? TAG_LIST : [],
@@ -2852,12 +2947,13 @@ function normalizeBackupData(parsed) {
   if (parsed && typeof parsed === "object" && parsed.data && typeof parsed.data === "object") return parsed.data;
 
   // 旧形式: { records:..., residents:..., ... }
-  const keys = ["records","residents","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident"];
+  const keys = ["records","residents","recorders","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident"];
   const hasAny = keys.some((k) => Object.prototype.hasOwnProperty.call(parsed || {}, k));
   if (hasAny) {
     return {
       records: parsed.records,
       residents: parsed.residents,
+      recorders: parsed.recorders,
       templates: parsed.templates,
       autoItemDefs: parsed.autoItemDefs,
       tags: parsed.tags,
@@ -2876,6 +2972,7 @@ function applyRestoreData(data) {
   const next = {
     records: safeArr(data.records),
     residents: safeArr(data.residents),
+    recorders: safeArr(data.recorders),
     templates: safeArr(data.templates),
     autoItemDefs: safeArr(data.autoItemDefs),
     tags: safeArr(data.tags),
@@ -2887,6 +2984,7 @@ function applyRestoreData(data) {
   // localStorageへ反映（アプリの各データ）
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next.records));
   localStorage.setItem(RESIDENTS_KEY, JSON.stringify(next.residents));
+  localStorage.setItem(RECORDERS_KEY, JSON.stringify(next.recorders));
   localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next.templates));
   localStorage.setItem(AUTO_ITEM_DEFS_KEY, JSON.stringify(next.autoItemDefs));
   localStorage.setItem(TAGS_KEY, JSON.stringify(next.tags));
@@ -2973,10 +3071,11 @@ function handleRestoreFile(file) {
         daySupportMainItems,
         daySupportReasonItems,
         daySupportBathingSubItems: getBathingSubSelected("main"),
-        abnormalVitalsOn: !!document.getElementById("abnormalVitalsOn")?.checked,
+        abnormalVitalsOn: !!((document.getElementById("abnormalWeight")?.value || "").trim() || (document.getElementById("abnormalBPsys")?.value || "").trim() || (document.getElementById("abnormalBPdia")?.value || "").trim() || (document.getElementById("abnormalPulse")?.value || "").trim()),
         abnormalWeight: (document.getElementById("abnormalWeight")?.value || "").trim(),
         abnormalBPsys: (document.getElementById("abnormalBPsys")?.value || "").trim(),
         abnormalBPdia: (document.getElementById("abnormalBPdia")?.value || "").trim(),
+        abnormalPulse: (document.getElementById("abnormalPulse")?.value || "").trim(),
       };
 
       records.push(recordData);
@@ -3130,12 +3229,15 @@ function handleRestoreFile(file) {
       addRow("心の状態：", record.mental || "");
       addRow("食事の様子：", record.meal || "");
       addRow("服薬：", medText);
-      // 異常時バイタル（体重・血圧）
-      if ((record.abnormalVitalsOn || record.abnormalWeight || record.abnormalBPsys || record.abnormalBPdia)) {
+      // バイタル（体重・血圧・脈拍）
+      if ((record.abnormalVitalsOn || record.abnormalWeight || record.abnormalBPsys || record.abnormalBPdia || record.abnormalPulse)) {
         const parts = [];
         if (record.abnormalWeight) parts.push(`体重 ${record.abnormalWeight}kg`);
-        if (record.abnormalBPsys || record.abnormalBPdia) parts.push(`血圧 ${(record.abnormalBPsys || "")}/${(record.abnormalBPdia || "")}mmHg`);
-        addRow("異常時バイタル：", parts.join("、"));
+        if (record.abnormalBPsys && record.abnormalBPdia) parts.push(`血圧 ${record.abnormalBPsys}/${record.abnormalBPdia}mmHg`);
+        else if (record.abnormalBPsys) parts.push(`血圧 上${record.abnormalBPsys}mmHg`);
+        else if (record.abnormalBPdia) parts.push(`血圧 下${record.abnormalBPdia}mmHg`);
+        if (record.abnormalPulse) parts.push(`脈拍 ${record.abnormalPulse}回/分`);
+        addRow("バイタル：", parts.join("、"));
       }
       addRow("タグ：", tagsText);
       addRow("日中支援加算区分：", daySupportTypeLabel);
@@ -3302,6 +3404,7 @@ function closeRecordDetail() {
       residents.push(name);
       saveResidents();
       renderResidentSelects();
+      renderRecorderSelects();
       renderAllResidentScopedUIs();
       nameInput.value = "";
       alert("利用者を追加しました。");
@@ -3342,6 +3445,7 @@ function closeRecordDetail() {
       saveResidents();
       saveRecords();
       renderResidentSelects();
+      renderRecorderSelects();
       renderRecords();
       renderAllResidentScopedUIs();
 
@@ -3371,6 +3475,7 @@ function closeRecordDetail() {
       saveResidents();
       saveRecords();
       renderResidentSelects();
+      renderRecorderSelects();
       renderRecords();
       renderAllResidentScopedUIs();
 
@@ -3378,6 +3483,66 @@ function closeRecordDetail() {
       alert("削除しました。");
     }
 
+
+
+    // ===== 記録者管理 =====
+    function handleRecorderAdd() {
+      const nameInput = document.getElementById("recorderNameInput");
+      const name = (nameInput?.value || "").trim();
+      if (!name) { alert("追加する名前を入力してください。"); return; }
+      if ((recorders || []).includes(name)) { alert("同じ名前の記録者がすでに存在します。"); return; }
+      recorders.push(name);
+      saveRecorders();
+      renderRecorderSelects();
+      if (nameInput) nameInput.value = "";
+      alert("記録者を追加しました。");
+    }
+
+    function handleRecorderRename() {
+      const manageSelect = document.getElementById("recorderManageSelect");
+      const oldName = manageSelect?.value || "";
+      const nameInput = document.getElementById("recorderNameInput");
+      const newName = (nameInput?.value || "").trim();
+
+      if (!oldName) { alert("変更する記録者を選択してください。"); return; }
+      if (!newName) { alert("新しい名前を入力してください。"); return; }
+      if (oldName === newName) { alert("同じ名前です。"); return; }
+
+      if ((recorders || []).includes(newName)) {
+        const ok = confirm("同じ名前の記録者がすでに存在します。統合しますか？");
+        if (!ok) return;
+      }
+
+      // 候補リスト
+      recorders = (recorders || []).map((n) => (n === oldName ? newName : n));
+      // 記録データ（過去分も置換）
+      records = (records || []).map((r) => (r.recorder === oldName ? { ...r, recorder: newName } : r));
+
+      saveRecorders();
+      saveRecords();
+      renderRecorderSelects();
+      renderRecords();
+
+      if (nameInput) nameInput.value = "";
+      alert("記録者名を変更しました。");
+    }
+
+    function handleRecorderDelete() {
+      const manageSelect = document.getElementById("recorderManageSelect");
+      const target = manageSelect?.value || "";
+      if (!target) { alert("削除する記録者を選択してください。"); return; }
+
+      const ok = confirm(target + " を候補から削除しますか？\n※過去の記録データは消えません。\n（編集時はその記録の記録者名も保持されます）");
+      if (!ok) return;
+
+      recorders = (recorders || []).filter((n) => n !== target);
+      saveRecorders();
+      renderRecorderSelects();
+
+      const nameInput = document.getElementById("recorderNameInput");
+      if (nameInput) nameInput.value = "";
+      alert("削除しました。");
+    }
     // ===== 共通テンプレ（scope） =====
     function renderTemplateSelect() {
       const select = document.getElementById("templateSelect");
@@ -3734,7 +3899,8 @@ function buildAutoBathSentence() {
     // ===== 日中活動 / 欠席理由 → 業務日誌欄へ自動反映 =====
     const AUTO_NOTE_ACTIVITY_PREFIX = "日中活動：";
     const AUTO_NOTE_REASON_PREFIX   = "【日中活動に行けなかった理由】：";
-    const AUTO_NOTE_VITAL_PREFIX    = "異常時バイタル：";
+    const AUTO_NOTE_VITAL_PREFIX    = "バイタル：";
+    const AUTO_NOTE_VITAL_PREFIX_OLD = "異常時バイタル：";
     const AUTO_NOTE_HEADER        = "▼自動入力（チェック連動）";
     const AUTO_NOTE_SEPARATOR     = "────────────────";
     const AUTO_NOTE_MANUAL_HEADER = "▼職員メモ（ここから手入力）";
@@ -3745,6 +3911,7 @@ function buildAutoBathSentence() {
         return !l.startsWith(AUTO_NOTE_ACTIVITY_PREFIX)
           && !l.startsWith(AUTO_NOTE_REASON_PREFIX)
           && !l.startsWith(AUTO_NOTE_VITAL_PREFIX)
+          && !l.startsWith(AUTO_NOTE_VITAL_PREFIX_OLD)
           && l.trim() !== AUTO_NOTE_HEADER
           && l.trim() !== AUTO_NOTE_SEPARATOR
           && l.trim() !== AUTO_NOTE_MANUAL_HEADER;
@@ -3766,18 +3933,21 @@ function buildAutoBathSentence() {
       if (Array.isArray(reasonArr) && reasonArr.length) {
         autoLines.push(AUTO_NOTE_REASON_PREFIX + " " + reasonArr.join(" / "));
       }
-      if (vitalObj && vitalObj.enabled) {
+      if (vitalObj) {
         const w = (vitalObj.weight || "").toString().trim();
         const s = (vitalObj.bpSys || "").toString().trim();
         const d = (vitalObj.bpDia || "").toString().trim();
-        if (w || s || d) {
+        const p = (vitalObj.pulse || "").toString().trim();
+        if (w || s || d || p) {
           const parts = [];
           if (w) parts.push(`体重 ${w}kg`);
-          if (s || d) parts.push(`血圧 ${s}/${d}mmHg`);
+          if (s && d) parts.push(`血圧 ${s}/${d}mmHg`);
+          else if (s) parts.push(`血圧 上${s}mmHg`);
+          else if (d) parts.push(`血圧 下${d}mmHg`);
+          if (p) parts.push(`脈拍 ${p}回/分`);
           autoLines.push(AUTO_NOTE_VITAL_PREFIX + " " + parts.join("、"));
         }
       }
-
 
       if (autoLines.length === 0) {
         textarea.value = userText;
@@ -3796,22 +3966,12 @@ function buildAutoBathSentence() {
 
     function syncAbnormalVitalsUI(scope) {
       const isEdit = (scope === "edit");
-      const onEl = document.getElementById(isEdit ? "editAbnormalVitalsOn" : "abnormalVitalsOn");
       const inputsWrap = document.getElementById(isEdit ? "editAbnormalVitalsInputs" : "abnormalVitalsInputs");
-      const wEl = document.getElementById(isEdit ? "editAbnormalWeight" : "abnormalWeight");
-      const sEl = document.getElementById(isEdit ? "editAbnormalBPsys" : "abnormalBPsys");
-      const dEl = document.getElementById(isEdit ? "editAbnormalBPdia" : "abnormalBPdia");
-
-      if (!onEl || !inputsWrap) return;
-      inputsWrap.style.display = onEl.checked ? "grid" : "none";
-
-      // OFFにしたら値もクリア（誤保存防止）
-      if (!onEl.checked) {
-        if (wEl) wEl.value = "";
-        if (sEl) sEl.value = "";
-        if (dEl) dEl.value = "";
-      }
+      if (!inputsWrap) return;
+      // いつでも表示（チェック式は廃止）
+      inputsWrap.style.display = "grid";
     }
+
 
 
     function updateAutoNoteMain() {
@@ -3820,10 +3980,10 @@ function buildAutoBathSentence() {
       const activity = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((x) => x.value);
       const reasons  = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value);
       const vital = {
-        enabled: !!document.getElementById("abnormalVitalsOn")?.checked,
         weight: document.getElementById("abnormalWeight")?.value || "",
         bpSys: document.getElementById("abnormalBPsys")?.value || "",
         bpDia: document.getElementById("abnormalBPdia")?.value || "",
+        pulse: document.getElementById("abnormalPulse")?.value || "",
       };
       applyAutoNoteLines(ta, activity, reasons, vital);
     }
@@ -3840,19 +4000,16 @@ function buildAutoBathSentence() {
         if (e?.target?.classList?.contains("day-reason-item")) updateAutoNoteMain();
       });
 
-      // 異常時バイタル（体重・血圧）
-      const __vOn = document.getElementById("abnormalVitalsOn");
+      // バイタル（体重・血圧・脈拍）
       const __vW  = document.getElementById("abnormalWeight");
       const __vS  = document.getElementById("abnormalBPsys");
       const __vD  = document.getElementById("abnormalBPdia");
-      if (__vOn) __vOn.addEventListener("change", () => { syncAbnormalVitalsUI("main"); updateAutoNoteMain(); });
-      [__vW, __vS, __vD].forEach((el) => {
+      const __vP  = document.getElementById("abnormalPulse");
+      [__vW, __vS, __vD, __vP].forEach((el) => {
         if (!el) return;
-        el.addEventListener("input", () => {
-          if (document.getElementById("abnormalVitalsOn")?.checked) updateAutoNoteMain();
-        });
+        el.addEventListener("input", () => { updateAutoNoteMain(); });
       });
-      // 初期UI（非表示/表示）
+      // 初期UI（常時表示）
       syncAbnormalVitalsUI("main");
 
       // 初期反映（今のチェック状態を業務日誌欄へ）
@@ -3865,10 +4022,10 @@ function buildAutoBathSentence() {
       const activity = Array.from(document.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
       const reasons  = Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((x) => x.value);
       const vital = {
-        enabled: !!document.getElementById("editAbnormalVitalsOn")?.checked,
         weight: document.getElementById("editAbnormalWeight")?.value || "",
         bpSys: document.getElementById("editAbnormalBPsys")?.value || "",
         bpDia: document.getElementById("editAbnormalBPdia")?.value || "",
+        pulse: document.getElementById("editAbnormalPulse")?.value || "",
       };
       applyAutoNoteLines(ta, activity, reasons, vital);
     }
@@ -3884,19 +4041,16 @@ function buildAutoBathSentence() {
         if (e?.target?.classList?.contains("edit-day-reason-item")) updateAutoNoteEdit();
       });
 
-      // 異常時バイタル（体重・血圧）
-      const __evOn = document.getElementById("editAbnormalVitalsOn");
+      // バイタル（体重・血圧・脈拍）
       const __evW  = document.getElementById("editAbnormalWeight");
       const __evS  = document.getElementById("editAbnormalBPsys");
       const __evD  = document.getElementById("editAbnormalBPdia");
-      if (__evOn) __evOn.addEventListener("change", () => { syncAbnormalVitalsUI("edit"); updateAutoNoteEdit(); });
-      [__evW, __evS, __evD].forEach((el) => {
+      const __evP  = document.getElementById("editAbnormalPulse");
+      [__evW, __evS, __evD, __evP].forEach((el) => {
         if (!el) return;
-        el.addEventListener("input", () => {
-          if (document.getElementById("editAbnormalVitalsOn")?.checked) updateAutoNoteEdit();
-        });
+        el.addEventListener("input", () => { updateAutoNoteEdit(); });
       });
-      // 初期UI（非表示/表示）だけ反映
+      // 初期UI（常時表示）だけ反映
       syncAbnormalVitalsUI("edit");
 
       // ★ 編集モーダルは「開いた瞬間に勝手に書き換えない」ため、初回反映はしない
@@ -4428,15 +4582,19 @@ function buildAutoBathSentence() {
         residents.push(record.resident);
         saveResidents();
         renderResidentSelects();
+      renderRecorderSelects();
         renderAllResidentScopedUIs();
       }
 
       // 入力
       document.getElementById("editDate").value = record.date || "";
       document.getElementById("editResident").value = record.resident || "";
-      
       const __er = document.getElementById("editRecorder");
-      if (__er) __er.value = record.recorder || "";document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
+      if (__er) {
+        ensureSelectHasValue(__er, record.recorder || "");
+        __er.value = record.recorder || "";
+      }
+      document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
       document.getElementById("editCondition").value = record.condition || "良好";
       document.getElementById("editMental").value = record.mental || "安定";
       document.getElementById("editMeal").value = record.meal || "";
@@ -4444,15 +4602,15 @@ function buildAutoBathSentence() {
       document.getElementById("editSupport").value = record.support || "";
       document.getElementById("editNote").value = record.note || "";
 
-      // 異常時バイタル（体重・血圧）
-      const __evOn = document.getElementById("editAbnormalVitalsOn");
+      // バイタル（体重・血圧・脈拍）
       const __evW  = document.getElementById("editAbnormalWeight");
       const __evS  = document.getElementById("editAbnormalBPsys");
       const __evD  = document.getElementById("editAbnormalBPdia");
-      if (__evOn) __evOn.checked = !!record.abnormalVitalsOn;
+      const __evP  = document.getElementById("editAbnormalPulse");
       if (__evW) __evW.value = record.abnormalWeight || "";
       if (__evS) __evS.value = record.abnormalBPsys || "";
       if (__evD) __evD.value = record.abnormalBPdia || "";
+      if (__evP) __evP.value = record.abnormalPulse || "";
       syncAbnormalVitalsUI("edit");
       
       const __sh = document.getElementById("editHasSpecialNote");
@@ -4594,10 +4752,11 @@ reasonWrap.innerHTML = "";
         daySupportMainItems: mainItems,
         daySupportReasonItems: reasonItems,
         daySupportBathingSubItems: getBathingSubSelected("edit"),
-        abnormalVitalsOn: !!document.getElementById("editAbnormalVitalsOn")?.checked,
+        abnormalVitalsOn: !!((document.getElementById("editAbnormalWeight")?.value || "").trim() || (document.getElementById("editAbnormalBPsys")?.value || "").trim() || (document.getElementById("editAbnormalBPdia")?.value || "").trim() || (document.getElementById("editAbnormalPulse")?.value || "").trim()),
         abnormalWeight: (document.getElementById("editAbnormalWeight")?.value || "").trim(),
         abnormalBPsys: (document.getElementById("editAbnormalBPsys")?.value || "").trim(),
         abnormalBPdia: (document.getElementById("editAbnormalBPdia")?.value || "").trim(),
+        abnormalPulse: (document.getElementById("editAbnormalPulse")?.value || "").trim(),
       };
 
       records[idx] = updated;
@@ -5191,6 +5350,7 @@ document.getElementById("date").value = toLocalISODate();
 
       records = loadRecords();
       residents = loadResidents();
+      recorders = loadRecorders();
       templates = loadTemplates();
 
       AUTO_ITEM_DEFS = loadAutoItemDefs();
@@ -5202,6 +5362,7 @@ document.getElementById("date").value = toLocalISODate();
       daySupportDefault = loadDaySupportDefault();
 
       renderResidentSelects();
+      renderRecorderSelects();
       renderRecords();
 
       setupTagButtons();
@@ -5346,6 +5507,11 @@ if (restoreBtn && restoreFile) {
       document.getElementById("residentAddButton").addEventListener("click", handleResidentAdd);
       document.getElementById("residentRenameButton").addEventListener("click", handleResidentRename);
       document.getElementById("residentDeleteButton").addEventListener("click", handleResidentDelete);
+
+      // 記録者管理
+      document.getElementById("recorderAddButton").addEventListener("click", handleRecorderAdd);
+      document.getElementById("recorderRenameButton").addEventListener("click", handleRecorderRename);
+      document.getElementById("recorderDeleteButton").addEventListener("click", handleRecorderDelete);
 
       // 支援項目管理UI
       document.getElementById("autoItemSelect").addEventListener("change", fillAutoItemInputsBySelect);
