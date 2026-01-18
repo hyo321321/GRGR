@@ -29,6 +29,14 @@
   color: #2563eb;
 }
 
+/* バイタル（体重・血圧・脈拍）：コンパクト表示 */
+.vitals-compact{ margin-top:8px; }
+.vitals-compact .vitals-title{ font-weight:700; font-size:13px; margin-bottom:4px; }
+.vitals-compact label{ font-size:12px; }
+.vitals-compact input{ padding:6px 8px; font-size:13px; height:34px; }
+.vitals-compact .small-text{ font-size:11px; margin-top:4px; }
+
+
 
 /* 曜日カラー（一覧：日付） */
 .dow-sun{ color:#dc2626; font-weight:800; }
@@ -70,13 +78,12 @@
     .layout {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
       gap: 18px;
     }
 
-    @media (max-width: 900px) {
-      .layout { grid-template-columns: 1fr; }
-    }
-
+    /* ✅ Gridの右カラム（記録一覧）が消える/押し出される対策：子要素を縮められるようにする */
+    .layout > * { min-width: 0; }
     .card {
       background: white;
       border-radius: 18px;
@@ -329,6 +336,7 @@
     tbody tr:nth-child(even) { background: #f9fafb; }
 
     .table-wrapper {
+      max-width: 100%;
       max-height: 1050px;
       overflow: auto;
       border-radius: 14px;
@@ -570,6 +578,27 @@
       color: #166534;
       margin-top: 6px;
     }
+        /* ====== 日中支援テンプレ（業務日誌へ追記）：専用ボックス ====== */
+    .daynote-template-box{
+      border: 2px solid #60a5fa;
+      background: #eff6ff;
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-top: 10px;
+    }
+    .daynote-template-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom: 6px;
+    }
+    .daynote-template-title{
+      font-weight: 800;
+      color: #1d4ed8;
+    }
+
     /* ====== ここまで：初心者の緑 ====== */
 
     /* ====== 管理エリア色分け（あまり触らない所） ====== */
@@ -922,58 +951,35 @@
               </div>
             </div>
           </div>
-
-          <div class="field-row-3">
-            <div class="field">
-              <label for="timeSlot">時間帯</label>
-              <select id="timeSlot">
-                <option>日中</option>
-                <option>夕方</option>
-                <option>夜間</option>
-              </select>
-              <div class="quick-row" data-target="timeSlot">
-                <button type="button" class="quick-btn" data-value="日中">日中</button>
-                <button type="button" class="quick-btn" data-value="夕方">夕方</button>
-                <button type="button" class="quick-btn" data-value="夜間">夜間</button>
-              </div>
-              <div class="small-text">上のボタンをクリックすると時間帯が選択されます。</div>
-            </div>
-
-            <div class="field">
-              <label for="condition">体調</label>
-              <select id="condition">
-                <option>良好</option>
-                <option>普通</option>
-                <option>不良</option>
-              </select>
-              <div class="quick-row" data-target="condition">
-                <button type="button" class="quick-btn" data-value="良好">😊 良好</button>
-                <button type="button" class="quick-btn" data-value="普通">😐 普通</button>
-                <button type="button" class="quick-btn" data-value="不良">😟 不良</button>
-              </div>
-              <div class="small-text">ボタンを押すだけで体調を選べます。</div>
-            </div>
-
-            <div class="field">
-              <label for="mental">心の状態</label>
-              <select id="mental">
-                <option>安定</option>
-                <option>やや不安</option>
-                <option>不安定</option>
-              </select>
-              <div class="quick-row" data-target="mental">
-                <button type="button" class="quick-btn" data-value="安定">😊 安定</button>
-                <button type="button" class="quick-btn" data-value="やや不安">😐 やや不安</button>
-                <button type="button" class="quick-btn" data-value="不安定">😟 不安定</button>
-              </div>
-              <div class="small-text">心の状態もボタンで選べます。</div>
-            </div>
-          </div>
-
           <div class="field">
             <label for="meal">食事の様子（朝・昼・夕 / 摂取量など）</label>
             <input type="text" id="meal" placeholder="例）朝：完食 / 昼：7割 / 夕：少なめ など" />
           </div>
+
+          <div class="field vitals-compact" id="abnormalVitalsBox" style="margin-top:8px;">
+                <div class="vitals-title">体重・血圧・脈拍（任意）</div>
+                <div class="field-row-4" id="abnormalVitalsInputs" style="align-items:end;">
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalWeight">体重（kg）</label>
+                    <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalBPsys">血圧（上 / mmHg）</label>
+                    <input type="text" id="abnormalBPsys" placeholder="例：120" inputmode="numeric" />
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalBPdia">血圧（下 / mmHg）</label>
+                    <input type="text" id="abnormalBPdia" placeholder="例：80" inputmode="numeric" />
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalPulse">脈拍（回/分）</label>
+                    <input type="text" id="abnormalPulse" placeholder="例：72" inputmode="numeric" />
+                  </div>
+                </div>
+                <div class="small-text" style="margin-top:6px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
+              </div>
+              
+
 
           <div class="field">
             <div class="checkbox-row">
@@ -1028,8 +1034,20 @@
             </div>
 
             <div class="checkbox-row" id="daySupportMainCheckboxes" style="margin-top:8px;"></div>
+
+            <div class="daynote-template-box" style="margin-top:10px;">
+              <div class="daynote-template-head">
+                <div class="daynote-template-title">日中支援テンプレ（業務日誌へ追記）</div>
+                <button type="button" class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;">🛠 編集</button>
+              </div>
+              <div class="checkbox-row" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
+              <div class="small-text">※チェックすると「業務日誌」へ追記されます（追記のみ・消えません）。追記後はチェックが自動で戻ります。</div>
+            </div>
+
+
           </div>
 
+          <div class="daynote-template-box" style="margin-top:10px;">
           <!-- 日中活動（通所/欠席） -->
           <div class="field">
             <label>日中活動</label>
@@ -1046,69 +1064,14 @@
             <div class="checkbox-row" id="daySupportReasonCheckboxes"></div>
           </div>
 
+
+          </div>
           <div class="field">
             <label for="daySupportTime">日中支援の主な時間帯（任意）</label>
             <input type="text" id="daySupportTime" placeholder="例）9:00〜15:00 の間、居室と共有スペースで継続的に見守り支援" />
           </div>
 
-          <!-- 自作テンプレ管理（共通） -->
-          <div class="field">
-            <label>支援内容テンプレート（自作）</label>
-
-            <div class="field-row">
-              <div class="field">
-                <label for="templateScope" class="small-text">テンプレの対象項目</label>
-                <select id="templateScope">
-                  <option value="common">共通（どの項目でも）</option>
-                  <option value="med_combo">服薬対応（管理・確認）</option>
-                  <option value="bathing">入浴</option>
-                  <option value="day_support">日中支援加算</option>
-                </select>
-                <div class="small-text">対象を選ぶと、その項目用のテンプレ一覧が下に表示されます。</div>
-              </div>
-              <div class="field">
-                <label for="templateNameInput" class="small-text">テンプレート名</label>
-                <input type="text" id="templateNameInput" placeholder="例：服薬管理・安定パターン" />
-                <div class="small-text">今の「本日の支援内容 (職員側)」を、この名前・対象項目のテンプレとして保存します。</div>
-              </div>
-            </div>
-
-            <div class="field" style="margin-top:8px;">
-              <select id="templateSelect"><option value="">選択してください</option></select>
-              <div class="small-text">
-                ・「テンプレ挿入」：選んだテンプレを「本日の支援内容」へ追記します。<br>
-
-                ※追記なので、既存の文章は消えません。
-              </div>
-            </div>
-
-            <div class="btn-row">
-              <button type="button" class="btn-secondary" id="templateApplyButton">テンプレ挿入</button>
-              <button type="button" class="btn-primary" id="templateSaveButton">テンプレ保存 / 上書き</button>
-              <button type="button" class="btn-danger" id="templateDeleteButton">選択テンプレ削除</button>
-            </div>
-
-            <div class="small-text">
-              ※テンプレートはこのパソコンのブラウザに保存されます。他のPCとは共有されません。
-            </div>
-
-            <!-- ✅ 自動テンプレ（利用者別） -->
-            <div class="field" style="margin-top:10px;">
-              <label for="residentTemplateSelect">自動テンプレ（利用者別）</label>
-              <div class="field-row" style="align-items:end;">
-                <div class="field" style="margin-bottom:0;">
-                  <select id="residentTemplateSelect">
-                    <option value="">（なし）</option>
-                  </select>
-                </div>
-                <div class="field" style="margin-bottom:0;">
-                  <button type="button" class="btn-secondary" id="openResidentTemplateModalBtn">🛠 自動テンプレ編集（利用者別）</button>
-                </div>
-              </div>
-              <div class="small-text">※利用者ごとの「自動文章」を管理できます。</div>
-            </div>
-
-          </div>
+          
 
           <div class="field">
             <label for="support">本日の支援内容 (職員側)</label>
@@ -1136,27 +1099,6 @@
                 ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
               </div>
               <div class="small-text" id="voiceNoteStatus" style="margin-top:4px;"></div>
-              <div class="field" id="abnormalVitalsBox" style="margin-top:10px;">
-                <div style="font-weight:700; margin-bottom:6px;">体重・血圧・脈拍（任意）</div>
-                <div class="field-row-4" id="abnormalVitalsInputs" style="align-items:end;">
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalWeight">体重（kg）</label>
-                    <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalBPsys">血圧（上 / mmHg）</label>
-                    <input type="text" id="abnormalBPsys" placeholder="例：120" inputmode="numeric" />
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalBPdia">血圧（下 / mmHg）</label>
-                    <input type="text" id="abnormalBPdia" placeholder="例：80" inputmode="numeric" />
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalPulse">脈拍（回/分）</label>
-                    <input type="text" id="abnormalPulse" placeholder="例：72" inputmode="numeric" />
-                  </div>
-                </div>
-                <div class="small-text" style="margin-top:6px;">※入力すると、業務日誌の自動欄にも反映されます。</div>
               </div>
               <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
             </div>
@@ -1279,7 +1221,7 @@
     <!-- 利用者管理 -->
     <section class="card admin-card">
       <div class="card-title">
-        <span>利用者管理</span>
+        <span>① 利用者管理</span>
         <span class="admin-pill">管理（慣れた人向け）</span>
         <span class="record-count" id="residentCount">0名</span>
       </div>
@@ -1310,7 +1252,7 @@
     <!-- 記録者管理 -->
     <section class="card admin-card">
       <div class="card-title">
-        <span>記録者管理</span>
+        <span>① 記録者管理</span>
         <span class="admin-pill">管理（慣れた人向け）</span>
         <span class="record-count" id="recorderCount">0名</span>
       </div>
@@ -1341,7 +1283,7 @@
     <!-- 自動入力項目 管理 -->
     <section class="card admin-card">
       <div class="card-title">
-        <span>自動入力の支援項目 管理（サイト上で追加・編集・削除）</span>
+        <span>② 自動入力の支援項目 管理（サイト上で追加・編集・削除）</span>
         <span class="admin-pill">管理（慣れた人向け）</span>
         <span class="record-count" id="autoItemCount">0件</span>
       </div>
@@ -1393,7 +1335,7 @@
     <!-- ✅ よく使う項目 管理（利用者別） -->
     <section class="card admin-card">
       <div class="card-title">
-        <span>よく使う項目 管理（利用者別）</span>
+        <span>③【日中に行った主な支援】 よく使う項目 管理（利用者別）</span>
         <span class="admin-pill">管理（慣れた人向け）</span>
       </div>
       <div class="card-subtitle">
@@ -1423,53 +1365,10 @@
       </div>
     </section>
 
-    <!-- ✅ 自動テンプレ編集（利用者別） -->
-    <section class="card admin-card">
-      <div class="card-title">
-        <span>自動テンプレ編集（利用者別）</span>
-        <span class="admin-pill">管理（慣れた人向け）</span>
-      </div>
-      <div class="card-subtitle">
-        利用者ごとの「自動テンプレ」を管理します（フォームの「自動テンプレ（利用者別）」に反映されます）。
-      </div>
-
-      <div class="field-row">
-        <div class="field">
-          <label for="rtResidentSelect">対象の利用者</label>
-          <select id="rtResidentSelect"></select>
-        </div>
-        <div class="field">
-          <label for="rtTemplateSelect">既存テンプレ</label>
-          <select id="rtTemplateSelect">
-            <option value="">（新規作成）</option>
-          </select>
-          <div class="small-text" id="rtDefaultInfo">既定：なし</div>
-        </div>
-      </div>
-
-      <div class="field-row">
-        <div class="field">
-          <label for="rtTemplateName">テンプレ名</label>
-          <input type="text" id="rtTemplateName" placeholder="例：日中・標準" />
-        </div>
-        <div class="field">
-          <label for="rtTemplateText">テンプレ本文（自動で追記）</label>
-          <textarea id="rtTemplateText" rows="5" placeholder="例）日中は落ち着いて過ごされる。必要時に声かけ・見守りを行った。"></textarea>
-        </div>
-      </div>
-
-      <div class="btn-row">
-        <button type="button" class="btn-primary" id="rtSaveBtn">💾 追加 / 更新</button>
-        <button type="button" class="btn-secondary" id="rtSetDefaultBtn">⭐ 既定にする</button>
-        <button type="button" class="btn-danger" id="rtDeleteBtn">🗑️ 削除</button>
-        <button type="button" class="btn-secondary" id="rtClearBtn">🧹 新規入力に戻す</button>
-      </div>
-    </section>
-
     <!-- ✅ 🛠 日中支援チェック編集（利用者別） -->
     <section class="card admin-card">
       <div class="card-title">
-        <span>🛠 日中支援チェック編集（利用者別）</span>
+        <span>③【日中に行った主な支援】 🛠 日中支援チェック編集（利用者別）</span>
         <span class="admin-pill">管理（慣れた人向け）</span>
       </div>
       <div class="card-subtitle">
@@ -1575,40 +1474,35 @@
           <label for="editRecorder">記録者</label>
           <select id="editRecorder"></select>
         </div>
-
-        <div class="field-row-3">
-          <div class="field">
-            <label for="editTimeSlot">時間帯</label>
-            <select id="editTimeSlot">
-              <option>日中</option>
-              <option>夕方</option>
-              <option>夜間</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="editCondition">体調</label>
-            <select id="editCondition">
-              <option>良好</option>
-              <option>普通</option>
-              <option>不良</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="editMental">心の状態</label>
-            <select id="editMental">
-              <option>安定</option>
-              <option>やや不安</option>
-              <option>不安定</option>
-            </select>
-          </div>
-        </div>
-
         <div class="field">
           <label for="editMeal">食事の様子</label>
           <input type="text" id="editMeal" placeholder="例）朝：完食 / 昼：7割 など" />
         </div>
+
+        <div class="field vitals-compact" id="editAbnormalVitalsBox" style="margin-top:8px;">
+            <div class="vitals-title">体重・血圧・脈拍（任意）</div>
+            <div class="field-row-4" id="editAbnormalVitalsInputs" style="align-items:end;">
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalWeight">体重（kg）</label>
+                <input type="text" id="editAbnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalBPsys">血圧（上 / mmHg）</label>
+                <input type="text" id="editAbnormalBPsys" placeholder="例：120" inputmode="numeric" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalBPdia">血圧（下 / mmHg）</label>
+                <input type="text" id="editAbnormalBPdia" placeholder="例：80" inputmode="numeric" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalPulse">脈拍（回/分）</label>
+                <input type="text" id="editAbnormalPulse" placeholder="例：72" inputmode="numeric" />
+              </div>
+            </div>
+            <div class="small-text" style="margin-top:6px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
+          </div>
+          
+
 
         <div class="field">
           <div class="checkbox-row">
@@ -1636,6 +1530,7 @@
           <input type="text" id="editDaySupportTime" placeholder="例）9:00〜15:00 の間、見守り支援" />
         </div>
 
+        <div class="daynote-template-box" style="margin-top:10px;">
         <div class="field">
           <label>日中活動</label>
           <div class="checkbox-row" id="editDayActivityCheckboxes"></div>
@@ -1652,6 +1547,8 @@
           <div class="checkbox-row" id="editDaySupportReasonCheckboxes"></div>
         </div>
 
+
+        </div>
         <div class="field">
           <label for="editSupport">本日の支援内容 (職員側)</label>
           <textarea id="editSupport" rows="8"></textarea>
@@ -1672,27 +1569,16 @@
             ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
           </div>
           <div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
-          <div class="field" id="editAbnormalVitalsBox" style="margin-top:10px;">
-            <div style="font-weight:700; margin-bottom:6px;">体重・血圧・脈拍（任意）</div>
-            <div class="field-row-4" id="editAbnormalVitalsInputs" style="align-items:end;">
-              <div class="field" style="margin-bottom:0;">
-                <label for="editAbnormalWeight">体重（kg）</label>
-                <input type="text" id="editAbnormalWeight" placeholder="例：56.2" inputmode="decimal" />
-              </div>
-              <div class="field" style="margin-bottom:0;">
-                <label for="editAbnormalBPsys">血圧（上 / mmHg）</label>
-                <input type="text" id="editAbnormalBPsys" placeholder="例：120" inputmode="numeric" />
-              </div>
-              <div class="field" style="margin-bottom:0;">
-                <label for="editAbnormalBPdia">血圧（下 / mmHg）</label>
-                <input type="text" id="editAbnormalBPdia" placeholder="例：80" inputmode="numeric" />
-              </div>
-              <div class="field" style="margin-bottom:0;">
-                <label for="editAbnormalPulse">脈拍（回/分）</label>
-                <input type="text" id="editAbnormalPulse" placeholder="例：72" inputmode="numeric" />
-              </div>
+
+          <div class="daynote-template-box" style="margin-top:6px;">
+            <div class="daynote-template-head">
+              <div class="daynote-template-title">日中支援テンプレ（業務日誌へ追記）</div>
             </div>
-            <div class="small-text" style="margin-top:6px;">※入力すると、業務日誌の自動欄にも反映されます。</div>
+            <div class="checkbox-row" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
+            <div class="small-text">※チェックすると「業務日誌」へ追記されます（追記のみ・消えません）。追記後はチェックが自動で戻ります。</div>
+          </div>
+
+
           </div>
           <textarea id="editNote" rows="10"></textarea>
         </div>
@@ -1740,45 +1626,6 @@
   </div>
 
   <!-- ✅ 自動テンプレ（利用者別） 小窓モーダル：無いとJSが止まるので追加 -->
-  <div id="rtModal" class="detail-modal-backdrop">
-    <div class="detail-modal">
-      <div class="detail-modal-header">
-        <div class="detail-modal-title">自動テンプレ編集（この利用者）</div>
-        <button type="button" class="detail-modal-close" id="rtModalClose">×</button>
-      </div>
-
-      <div class="detail-modal-body">
-        <div class="small-text" id="rtModalResidentInfo" style="margin-bottom:8px;">対象：</div>
-
-        <div class="field-row">
-          <div class="field">
-            <label for="rtModalSelect">既存テンプレ</label>
-            <select id="rtModalSelect">
-              <option value="">（新規作成）</option>
-            </select>
-            <div class="small-text" id="rtModalDefaultInfo">既定：なし</div>
-          </div>
-          <div class="field">
-            <label for="rtModalName">テンプレ名</label>
-            <input type="text" id="rtModalName" placeholder="例：日中・標準" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="rtModalText">テンプレ本文（自動で追記）</label>
-          <textarea id="rtModalText" rows="7" placeholder="例）日中は落ち着いて過ごされる。必要時に声かけ・見守りを行った。"></textarea>
-        </div>
-
-        <div class="btn-row" style="margin-top:10px;">
-          <button type="button" class="btn-primary" id="rtModalSaveBtn">💾 保存</button>
-          <button type="button" class="btn-secondary" id="rtModalSetDefaultBtn">⭐ 既定にする</button>
-          <button type="button" class="btn-danger" id="rtModalDeleteBtn">🗑️ 削除</button>
-          <button type="button" class="btn-secondary" id="rtModalCloseBtn">閉じる</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- 日中支援チェック（この利用者）編集モーダル -->
   <div id="dsModal" class="detail-modal-backdrop">
     <div class="detail-modal">
@@ -1809,7 +1656,50 @@
     </div>
   </div>
 
-  <!-- メインスクリプト -->
+  
+
+  <!-- 日中支援テンプレ（共通）編集モーダル -->
+  <div id="dayNoteTplModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="dayNoteTplModalTitle">日中支援テンプレ編集（共通）</div>
+        <button type="button" class="detail-modal-close" id="dayNoteTplModalClose">×</button>
+      </div>
+      <div class="detail-modal-body">
+        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="dnTplSelect">既存テンプレ</label>
+            <select id="dnTplSelect">
+              <option value="">（新規作成）</option>
+            </select>
+            <div class="small-text">選ぶと下の入力欄に入ります。</div>
+          </div>
+          <div class="field">
+            <label for="dnTplName">テンプレ名</label>
+            <input type="text" id="dnTplName" placeholder="例：散歩同行（余暇）" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dnTplText">テンプレ本文（業務日誌へ追記）</label>
+          <textarea id="dnTplText" rows="7" placeholder="例）【日中支援（余暇）】職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。結果：＿＿。"></textarea>
+        </div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button type="button" class="btn-primary" id="dnTplSaveBtn">💾 追加 / 更新</button>
+          <button type="button" class="btn-danger" id="dnTplDeleteBtn">🗑️ 削除</button>
+          <button type="button" class="btn-secondary" id="dnTplClearBtn">🧹 新規入力に戻す</button>
+          <button type="button" class="btn-secondary" id="dnTplResetDefaultBtn">↩ 初期テンプレに戻す</button>
+          <button type="button" class="btn-secondary" id="dayNoteTplModalCloseBtn">閉じる</button>
+        </div>
+
+        <div class="small-text" style="margin-top:8px;">※テンプレはこのPC（ブラウザ）内に保存されます。他PCとは共有されません。</div>
+      </div>
+    </div>
+  </div>
+<!-- メインスクリプト -->
   <script>
     const STORAGE_KEY   = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
@@ -1828,6 +1718,18 @@
     const DAY_SUPPORT_BY_RESIDENT_KEY = "group_home_day_support_by_resident_v1";
     const DAY_SUPPORT_DEFAULT_KEY = "group_home_day_support_default_v1";
     const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
+
+    // ★日中支援テンプレ（業務日誌へ追記）
+    const DAY_NOTE_TEMPLATES_KEY = "group_home_day_note_templates_v1";
+    const DEFAULT_DAY_NOTE_TEMPLATES = [
+      { id: "dnt_walk",   name: "散歩同行（余暇）", text: "【日中支援（余暇）】職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。" },
+      { id: "dnt_shop",   name: "買い物同行（余暇）", text: "【日中支援（余暇）】職員同行で買い物。本人の希望確認：＿＿。支援：商品選択の声かけ、金銭管理の見守り。安全配慮：人混み・体調変化に留意。" },
+      { id: "dnt_outing", name: "外出支援（公共機関）", text: "【日中支援】外出支援（公共機関の利用等）。支援：行き先の確認、移動時の見守り、必要時の介助。安全配慮：転倒・迷子に留意。" },
+      { id: "dnt_leisure",name: "余暇活動（室内）", text: "【日中支援（余暇）】室内で余暇活動（TV/読書/ゲーム等）。本人の様子：＿＿。支援：声かけ・見守り、気分転換の提案。" },
+      { id: "dnt_consult",name: "相談対応（生活）", text: "【日中支援】生活・対人面の相談対応。内容：＿＿。支援：傾聴、整理の声かけ、必要時に関係機関へ相談。" },
+      { id: "dnt_support",name: "生活リズム調整", text: "【日中支援】生活リズムの調整支援。支援：起床・活動の声かけ、日中の過ごし方の提案、見守り。" },
+    ];
+
 
     const DEFAULT_AUTO_ITEM_DEFS = [
   { key: "med_combo",   label: "服薬対応（管理・確認）", defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。" },
@@ -1993,6 +1895,7 @@
     let recorders = [];
     let currentTags = [];
     let templates = [];
+    let dayNoteTemplates = [];
 
     // 自動入力項目 / タグ
     let AUTO_ITEM_DEFS = [];
@@ -2035,6 +1938,174 @@
     }
 
     function saveTags() { saveJSON(TAGS_KEY, TAG_LIST); }
+
+    // ===== 日中支援テンプレ（業務日誌へ追記） =====
+    function loadDayNoteTemplates() {
+      const parsed = loadJSON(DAY_NOTE_TEMPLATES_KEY, null);
+      if (Array.isArray(parsed) && parsed.length) {
+        return parsed
+          .filter((t) => t && typeof t.id === "string" && typeof t.name === "string" && typeof t.text === "string")
+          .map((t) => ({ id: String(t.id), name: String(t.name), text: String(t.text) }));
+      }
+      // 初回はデフォルトを入れる
+      saveJSON(DAY_NOTE_TEMPLATES_KEY, DEFAULT_DAY_NOTE_TEMPLATES);
+      return DEFAULT_DAY_NOTE_TEMPLATES.slice();
+    }
+
+    function saveDayNoteTemplates() {
+      saveJSON(DAY_NOTE_TEMPLATES_KEY, Array.isArray(dayNoteTemplates) ? dayNoteTemplates : []);
+    }
+
+    function appendTextToTextarea(textareaEl, addText) {
+      if (!textareaEl || !addText) return;
+      const cur = String(textareaEl.value || "");
+      const add = String(addText).trimEnd();
+      if (!cur.trim()) {
+        textareaEl.value = add;
+      } else {
+        textareaEl.value = cur + (cur.endsWith("\n") ? "" : "\n") + add;
+      }
+      textareaEl.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function renderDayNoteTemplateChecks() {
+      const targets = [
+        { wrapId: "dayNoteTemplateChecks", textareaId: "note", emptyText: "（テンプレがありません）" },
+        { wrapId: "editDayNoteTemplateChecks", textareaId: "editNote", emptyText: "（テンプレがありません）" },
+      ];
+
+      targets.forEach(({ wrapId, textareaId, emptyText }) => {
+        const wrap = document.getElementById(wrapId);
+        if (!wrap) return;
+
+        wrap.innerHTML = "";
+        const ta = document.getElementById(textareaId);
+        const list = Array.isArray(dayNoteTemplates) ? dayNoteTemplates : [];
+
+        if (!list.length) {
+          const span = document.createElement("span");
+          span.className = "small-text";
+          span.textContent = emptyText;
+          wrap.appendChild(span);
+          return;
+        }
+
+        list.forEach((tpl) => {
+          const label = document.createElement("label");
+          label.innerHTML = `<input type="checkbox" class="day-note-tpl-check" value="${tpl.id}"> ${escapeHtml(tpl.name)}`;
+          const input = label.querySelector("input");
+          if (input) {
+            input.addEventListener("change", () => {
+              if (!input.checked) return;
+              appendTextToTextarea(ta, tpl.text);
+              // 同じテンプレを連続で使えるように自動で戻す
+              setTimeout(() => { input.checked = false; }, 0);
+            });
+          }
+          wrap.appendChild(label);
+        });
+      });
+    }
+
+
+    // ---- 編集モーダル（共通） ----
+    function openDayNoteTemplateModal() {
+      const modal = document.getElementById("dayNoteTplModal");
+      if (!modal) return;
+      renderDayNoteTemplateManager();
+      clearDayNoteTemplateManagerInputs();
+      modal.classList.add("show");
+    }
+
+    function closeDayNoteTemplateModal() {
+      const modal = document.getElementById("dayNoteTplModal");
+      if (!modal) return;
+      modal.classList.remove("show");
+    }
+
+    function renderDayNoteTemplateManager() {
+      const sel = document.getElementById("dnTplSelect");
+      if (!sel) return;
+      const prev = sel.value || "";
+      sel.innerHTML = '<option value="">（新規作成）</option>';
+      (dayNoteTemplates || []).forEach((t) => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+      sel.value = prev && (dayNoteTemplates || []).some((t) => t.id === prev) ? prev : "";
+    }
+
+    function fillDayNoteTemplateManagerInputs() {
+      const selId = document.getElementById("dnTplSelect")?.value || "";
+      const nameEl = document.getElementById("dnTplName");
+      const textEl = document.getElementById("dnTplText");
+      if (!nameEl || !textEl) return;
+      if (!selId) {
+        nameEl.value = "";
+        textEl.value = "";
+        return;
+      }
+      const tpl = (dayNoteTemplates || []).find((t) => t.id === selId);
+      nameEl.value = tpl?.name || "";
+      textEl.value = tpl?.text || "";
+    }
+
+    function clearDayNoteTemplateManagerInputs() {
+      const sel = document.getElementById("dnTplSelect");
+      const nameEl = document.getElementById("dnTplName");
+      const textEl = document.getElementById("dnTplText");
+      if (sel) sel.value = "";
+      if (nameEl) nameEl.value = "";
+      if (textEl) textEl.value = "";
+    }
+
+    function saveDayNoteTemplateFromManager() {
+      const sel = document.getElementById("dnTplSelect");
+      const name = document.getElementById("dnTplName")?.value?.trim() || "";
+      const textV = document.getElementById("dnTplText")?.value || "";
+      if (!name) { alert("テンプレ名を入力してください"); return; }
+      if (!textV.trim()) { alert("本文を入力してください"); return; }
+
+      const selectedId = sel?.value || "";
+      if (selectedId) {
+        const idx = (dayNoteTemplates || []).findIndex((t) => t.id === selectedId);
+        if (idx >= 0) dayNoteTemplates[idx] = { id: selectedId, name, text: textV };
+      } else {
+        const newId = "dnt_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7);
+        (dayNoteTemplates || []).push({ id: newId, name, text: textV });
+        if (sel) sel.value = newId;
+      }
+
+      saveDayNoteTemplates();
+      renderDayNoteTemplateManager();
+      renderDayNoteTemplateChecks();
+      alert("保存しました");
+    }
+
+    function deleteDayNoteTemplateFromManager() {
+      const selId = document.getElementById("dnTplSelect")?.value || "";
+      if (!selId) { alert("削除するテンプレを選択してください"); return; }
+      if (!confirm("このテンプレを削除しますか？")) return;
+      dayNoteTemplates = (dayNoteTemplates || []).filter((t) => t.id !== selId);
+      saveDayNoteTemplates();
+      renderDayNoteTemplateManager();
+      clearDayNoteTemplateManagerInputs();
+      renderDayNoteTemplateChecks();
+      alert("削除しました");
+    }
+
+    function resetDayNoteTemplatesToDefault() {
+      if (!confirm("日中支援テンプレを初期状態に戻しますか？\n（作成したテンプレは消えます）")) return;
+      dayNoteTemplates = DEFAULT_DAY_NOTE_TEMPLATES.slice();
+      saveDayNoteTemplates();
+      renderDayNoteTemplateManager();
+      clearDayNoteTemplateManagerInputs();
+      renderDayNoteTemplateChecks();
+      alert("初期に戻しました");
+    }
+
 
     function loadAutoItemDefs() {
   const raw = localStorage.getItem(AUTO_ITEM_DEFS_KEY);
@@ -2394,6 +2465,7 @@ const conf = getDaySupportForResident(resident || "");
       renderDayActivityCheckboxes();
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
+      renderDayNoteTemplateChecks();
 
       // 退避したチェックを復元（存在するものだけ）
       document.querySelectorAll(".day-main-item").forEach((x) => { x.checked = prevMain.has(x.value); });
@@ -2814,9 +2886,12 @@ tr.appendChild(tdSupport);
     function resetForm() {
       document.getElementById("recordForm").reset();
       document.getElementById("date").value = toLocalISODate();
-      document.getElementById("timeSlot").value = "日中";
-      document.getElementById("condition").value = "良好";
-      document.getElementById("mental").value = "安定";
+      const _ts = document.getElementById("timeSlot");
+      if (_ts) _ts.value = "日中";
+      const _cond = document.getElementById("condition");
+      if (_cond) _cond.value = "良好";
+      const _ment = document.getElementById("mental");
+      if (_ment) _ment.value = "安定";
       document.getElementById("medTaken").checked = false;
 
       const daySupportType = document.getElementById("daySupportType");
@@ -2907,6 +2982,7 @@ function buildBackupPayload() {
       favByResident: (favByResident && typeof favByResident === "object") ? favByResident : {},
       residentAutoTemplates: (residentAutoTemplates && typeof residentAutoTemplates === "object") ? residentAutoTemplates : {},
       daySupportByResident: (daySupportByResident && typeof daySupportByResident === "object") ? daySupportByResident : {},
+      dayNoteTemplates: Array.isArray(dayNoteTemplates) ? dayNoteTemplates : [],
     }
   };
 }
@@ -2947,7 +3023,7 @@ function normalizeBackupData(parsed) {
   if (parsed && typeof parsed === "object" && parsed.data && typeof parsed.data === "object") return parsed.data;
 
   // 旧形式: { records:..., residents:..., ... }
-  const keys = ["records","residents","recorders","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident"];
+  const keys = ["records","residents","recorders","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident","dayNoteTemplates"];
   const hasAny = keys.some((k) => Object.prototype.hasOwnProperty.call(parsed || {}, k));
   if (hasAny) {
     return {
@@ -2960,6 +3036,7 @@ function normalizeBackupData(parsed) {
       favByResident: parsed.favByResident,
       residentAutoTemplates: parsed.residentAutoTemplates,
       daySupportByResident: parsed.daySupportByResident,
+      dayNoteTemplates: parsed.dayNoteTemplates,
     };
   }
   return null;
@@ -2979,6 +3056,7 @@ function applyRestoreData(data) {
     favByResident: safeObj(data.favByResident),
     residentAutoTemplates: safeObj(data.residentAutoTemplates),
     daySupportByResident: safeObj(data.daySupportByResident),
+    dayNoteTemplates: safeArr(data.dayNoteTemplates),
   };
 
   // localStorageへ反映（アプリの各データ）
@@ -2991,6 +3069,7 @@ function applyRestoreData(data) {
   localStorage.setItem(FAV_BY_RESIDENT_KEY, JSON.stringify(next.favByResident));
   localStorage.setItem(RESIDENT_AUTO_TEMPLATES_KEY, JSON.stringify(next.residentAutoTemplates));
   localStorage.setItem(DAY_SUPPORT_BY_RESIDENT_KEY, JSON.stringify(next.daySupportByResident));
+  localStorage.setItem(DAY_NOTE_TEMPLATES_KEY, JSON.stringify(next.dayNoteTemplates));
 }
 
 function handleRestoreFile(file) {
@@ -3056,9 +3135,6 @@ function handleRestoreFile(file) {
         date,
         resident,
         recorder: document.getElementById("recorder")?.value || "",
-        timeSlot: document.getElementById("timeSlot").value,
-        condition: document.getElementById("condition").value,
-        mental: document.getElementById("mental").value,
         meal: document.getElementById("meal").value,
         medTaken: document.getElementById("medTaken").checked,
         support: document.getElementById("support").value,
@@ -3224,9 +3300,6 @@ function handleRestoreFile(file) {
       addRow("日付：", record.date || "");
       addRow("利用者：", record.resident || "");
       addRow("記録者：", record.recorder || "");
-      addRow("時間帯：", record.timeSlot || "");
-      addRow("体調：", record.condition || "");
-      addRow("心の状態：", record.mental || "");
       addRow("食事の様子：", record.meal || "");
       addRow("服薬：", medText);
       // バイタル（体重・血圧・脈拍）
@@ -4594,9 +4667,12 @@ function buildAutoBathSentence() {
         ensureSelectHasValue(__er, record.recorder || "");
         __er.value = record.recorder || "";
       }
-      document.getElementById("editTimeSlot").value = record.timeSlot || "日中";
-      document.getElementById("editCondition").value = record.condition || "良好";
-      document.getElementById("editMental").value = record.mental || "安定";
+      const _ets = document.getElementById("editTimeSlot");
+      if (_ets) _ets.value = record.timeSlot || "日中";
+      const _ec = document.getElementById("editCondition");
+      if (_ec) _ec.value = record.condition || "良好";
+      const _em = document.getElementById("editMental");
+      if (_em) _em.value = record.mental || "安定";
       document.getElementById("editMeal").value = record.meal || "";
       document.getElementById("editMedTaken").checked = !!record.medTaken;
       document.getElementById("editSupport").value = record.support || "";
@@ -4737,9 +4813,6 @@ reasonWrap.innerHTML = "";
         date,
         resident,
         recorder: document.getElementById("editRecorder")?.value || "",
-        timeSlot: document.getElementById("editTimeSlot").value,
-        condition: document.getElementById("editCondition").value,
-        mental: document.getElementById("editMental").value,
         meal: document.getElementById("editMeal").value,
         medTaken: document.getElementById("editMedTaken").checked,
         support: document.getElementById("editSupport").value,
@@ -5343,6 +5416,15 @@ for (let r = 1; r <= __rangeB.e.r; r++) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
+  // ✅ レイアウト補正：記録一覧カードが下に落ちる場合は、.layout に戻す
+  ;(function fixRecordListPlacement(){
+    const layout = document.querySelector('.layout');
+    const recordCard = document.querySelector('#recordTableBody')?.closest('section.card');
+    if(layout && recordCard && recordCard.parentElement !== layout){
+      layout.appendChild(recordCard);
+    }
+  })();
+
       
   // Excel出力
   document.getElementById("exportExcelBtn")?.addEventListener("click", exportExcelXlsxMerged);
@@ -5360,6 +5442,7 @@ document.getElementById("date").value = toLocalISODate();
       residentAutoTemplates = loadResidentAutoTemplates();
       daySupportByResident = loadDaySupportByResident();
       daySupportDefault = loadDaySupportDefault();
+      dayNoteTemplates = loadDayNoteTemplates();
 
       renderResidentSelects();
       renderRecorderSelects();
@@ -5381,6 +5464,7 @@ document.getElementById("date").value = toLocalISODate();
       renderDayActivityCheckboxes();
       renderDaySupportMainCheckboxes();
       renderDaySupportReasonCheckboxes();
+      renderDayNoteTemplateChecks();
 
       // 日中活動 / 欠席理由 のチェック → 業務日誌欄へ自動反映
       setupAutoNoteMain();
@@ -5400,6 +5484,22 @@ document.getElementById("date").value = toLocalISODate();
       document.getElementById("recordForm").addEventListener("submit", handleSubmit);
       document.
 getElementById("resetButton").addEventListener("click", resetForm);
+
+      // ===== 日中支援テンプレ（業務日誌へ追記）: チェックで自動追記 =====
+      // （配線は renderDayNoteTemplateChecks() 内で行います）
+
+      document.getElementById("openDayNoteTemplateModalBtn")?.addEventListener("click", openDayNoteTemplateModal);
+      document.getElementById("dayNoteTplModalClose")?.addEventListener("click", closeDayNoteTemplateModal);
+      document.getElementById("dayNoteTplModalCloseBtn")?.addEventListener("click", closeDayNoteTemplateModal);
+      document.getElementById("dayNoteTplModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeDayNoteTemplateModal();
+      });
+
+      document.getElementById("dnTplSelect")?.addEventListener("change", fillDayNoteTemplateManagerInputs);
+      document.getElementById("dnTplSaveBtn")?.addEventListener("click", saveDayNoteTemplateFromManager);
+      document.getElementById("dnTplDeleteBtn")?.addEventListener("click", deleteDayNoteTemplateFromManager);
+      document.getElementById("dnTplClearBtn")?.addEventListener("click", clearDayNoteTemplateManagerInputs);
+      document.getElementById("dnTplResetDefaultBtn")?.addEventListener("click", resetDayNoteTemplatesToDefault);
 
       // 特記事項あり（フォーム/編集モーダルの見た目強調）
       const __specialCb = document.getElementById("hasSpecialNote");
@@ -5477,9 +5577,9 @@ if (restoreBtn && restoreFile) {
       }
 
       // テンプレ（共通）
-      document.getElementById("templateApplyButton").addEventListener("click", handleTemplateApply);
-      document.getElementById("templateSaveButton").addEventListener("click", handleTemplateSave);
-      document.getElementById("templateDeleteButton").addEventListener("click", handleTemplateDelete);
+      document.getElementById("templateApplyButton")?.addEventListener("click", handleTemplateApply);
+      document.getElementById("templateSaveButton")?.addEventListener("click", handleTemplateSave);
+      document.getElementById("templateDeleteButton")?.addEventListener("click", handleTemplateDelete);
 
       // 詳細モーダル
       const detailModal = document.getElementById("detailModal");
@@ -5535,16 +5635,16 @@ if (restoreBtn && restoreFile) {
       document.getElementById("favClearBtn").addEventListener("click", clearFavChecks);
 
       // 自動テンプレ（利用者別）管理
-      document.getElementById("rtResidentSelect").addEventListener("change", () => {
+      document.getElementById("rtResidentSelect")?.addEventListener("change", () => {
         renderResidentTemplateManager();
         document.getElementById("rtTemplateSelect").value = "";
         fillResidentTemplateManagerInputs();
       });
-      document.getElementById("rtTemplateSelect").addEventListener("change", fillResidentTemplateManagerInputs);
-      document.getElementById("rtSaveBtn").addEventListener("click", saveResidentTemplateFromManager);
-      document.getElementById("rtSetDefaultBtn").addEventListener("click", setDefaultResidentTemplateFromManager);
-      document.getElementById("rtDeleteBtn").addEventListener("click", deleteResidentTemplateFromManager);
-      document.getElementById("rtClearBtn").addEventListener("click", clearResidentTemplateManagerInputs);
+      document.getElementById("rtTemplateSelect")?.addEventListener("change", fillResidentTemplateManagerInputs);
+      document.getElementById("rtSaveBtn")?.addEventListener("click", saveResidentTemplateFromManager);
+      document.getElementById("rtSetDefaultBtn")?.addEventListener("click", setDefaultResidentTemplateFromManager);
+      document.getElementById("rtDeleteBtn")?.addEventListener("click", deleteResidentTemplateFromManager);
+      document.getElementById("rtClearBtn")?.addEventListener("click", clearResidentTemplateManagerInputs);
 
       // 日中支援チェック（利用者別）管理
       document.getElementById("dsResidentSelect").addEventListener("change", renderDaySupportManager);
@@ -5559,14 +5659,14 @@ if (restoreBtn && restoreFile) {
       document.getElementById("favModal").addEventListener("click", (e) => { if (e.target.id === "favModal") document.getElementById("favModal").classList.remove("show"); });
 
       // 自動テンプレ小窓（rtModal）
-      document.getElementById("openResidentTemplateModalBtn").addEventListener("click", openResidentTemplateModalForCurrentResident);
-      document.getElementById("rtModalClose").addEventListener("click", () => document.getElementById("rtModal").classList.remove("show"));
-      document.getElementById("rtModalCloseBtn").addEventListener("click", () => document.getElementById("rtModal").classList.remove("show"));
-      document.getElementById("rtModalSelect").addEventListener("change", fillResidentTemplateModalInputs);
-      document.getElementById("rtModalSaveBtn").addEventListener("click", saveResidentTemplateModal);
-      document.getElementById("rtModalSetDefaultBtn").addEventListener("click", setDefaultResidentTemplateModal);
-      document.getElementById("rtModalDeleteBtn").addEventListener("click", deleteResidentTemplateModal);
-      document.getElementById("rtModal").addEventListener("click", (e) => { if (e.target.id === "rtModal") document.getElementById("rtModal").classList.remove("show"); });
+      document.getElementById("openResidentTemplateModalBtn")?.addEventListener("click", openResidentTemplateModalForCurrentResident);
+      document.getElementById("rtModalClose")?.addEventListener("click", () => document.getElementById("rtModal").classList.remove("show"));
+      document.getElementById("rtModalCloseBtn")?.addEventListener("click", () => document.getElementById("rtModal").classList.remove("show"));
+      document.getElementById("rtModalSelect")?.addEventListener("change", fillResidentTemplateModalInputs);
+      document.getElementById("rtModalSaveBtn")?.addEventListener("click", saveResidentTemplateModal);
+      document.getElementById("rtModalSetDefaultBtn")?.addEventListener("click", setDefaultResidentTemplateModal);
+      document.getElementById("rtModalDeleteBtn")?.addEventListener("click", deleteResidentTemplateModal);
+      document.getElementById("rtModal")?.addEventListener("click", (e) => { if (e.target.id === "rtModal") document.getElementById("rtModal").classList.remove("show"); });
 
       // 日中支援小窓（dsModal）
       document.getElementById("openDaySupportModalBtn").addEventListener("click", openDaySupportModalForCurrentResident);
