@@ -70,17 +70,23 @@
     }
 
     main {
-      max-width: 1280px;
+      max-width: 1720px;
       margin: 0 auto;
-      padding: 18px;
+      padding: 16px;
     }
 
     .layout {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      /* PC前提：左は可変、右（記録一覧）は読みやすい幅で固定 */
+      grid-template-columns: minmax(0, 1fr) 560px;
       align-items: start;
       gap: 18px;
     }
+
+
+    /* ===== PC前提：右の記録一覧は常に右で追従 ===== */
+    /* 記録一覧（右）：ページと一緒にスクロール（左右が“固定で動く”感じを避ける） */
+    .records-panel{ align-self: start; }
 
     /* ✅ Gridの右カラム（記録一覧）が消える/押し出される対策：子要素を縮められるようにする */
     .layout > * { min-width: 0; }
@@ -170,10 +176,14 @@
     @media (max-width: 900px) { #note, #editNote { min-height: 180px; } }
 
 
+    /* フォームの2列配置（カード内用） */
     .field-row {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
+    }
+    @media (max-width: 900px) {
+      .field-row { grid-template-columns: 1fr; }
     }
 
     .field-row-3 {
@@ -755,9 +765,9 @@
 
     /* ===== アップデート通知バナー ===== */
     .update-banner{
-      max-width:1280px;
+      max-width:1720px;
       margin:10px auto 0;
-      padding:12px 14px;
+      padding:12px 16px;
       border:1px solid #fde68a;
       background:#fffbeb;
       color:#92400e;
@@ -841,7 +851,7 @@
   <header>グループホーム 個人記録 WEBアプリ（初心者ガイド付き）</header>
 
 <!-- XLSXローカル読み込み（ネット不可時の救済） -->
-<div id="xlsxLoadMsg" style="display:none; max-width:1280px; margin:10px auto 0; padding:10px 12px; border-radius:12px; border:1px solid #fca5a5; background:#fef2f2; color:#991b1b; font-size:14px;">
+<div id="xlsxLoadMsg" style="display:none; max-width:1720px; margin:10px auto 0; padding:10px 12px; border-radius:12px; border:1px solid #fca5a5; background:#fef2f2; color:#991b1b; font-size:14px;">
   Excelライブラリを読み込めませんでした（ネット接続なし/制限ありの可能性）。<br>
   ✅ 対応方法：<b>xlsx.bundle.js</b> をPCに保存して、ここから読み込んでください（1回読み込めばこのページを開いている間はExcel出力できます）。<br>
   <input type="file" id="xlsxLocalFile" accept=".js" style="margin-top:8px;">
@@ -1120,7 +1130,7 @@
       </section>
 
       <!-- 一覧表示 -->
-      <section class="card">
+      <section class="card records-panel">
         <div class="card-title">
           <span>記録一覧</span>
           <span class="record-count" id="recordCount">0件</span>
