@@ -1134,6 +1134,12 @@
                     style="font-size:12px; padding:6px 10px;">
               📄 別ページで開く
             </button>
+            <button type="button"
+                    onclick="window.open('vitals.html', '_blank')"
+                    class="btn-secondary"
+                    style="font-size:12px; padding:6px 10px;">
+              🩺 バイタル入力
+            </button>
           </div>
 
           <div class="record-tools-bottom">
@@ -1721,6 +1727,7 @@
 
     // ★日中支援テンプレ（業務日誌へ追記）
     const DAY_NOTE_TEMPLATES_KEY = "group_home_day_note_templates_v1";
+    const VITALS_KEY = "group_home_vitals_v1";
     const DEFAULT_DAY_NOTE_TEMPLATES = [
       { id: "dnt_walk",   name: "散歩同行（余暇）", text: "【日中支援（余暇）】職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。" },
       { id: "dnt_shop",   name: "買い物同行（余暇）", text: "【日中支援（余暇）】職員同行で買い物。本人の希望確認：＿＿。支援：商品選択の声かけ、金銭管理の見守り。安全配慮：人混み・体調変化に留意。" },
@@ -2983,6 +2990,7 @@ function buildBackupPayload() {
       residentAutoTemplates: (residentAutoTemplates && typeof residentAutoTemplates === "object") ? residentAutoTemplates : {},
       daySupportByResident: (daySupportByResident && typeof daySupportByResident === "object") ? daySupportByResident : {},
       dayNoteTemplates: Array.isArray(dayNoteTemplates) ? dayNoteTemplates : [],
+      vitals: (function(){ try { const r = localStorage.getItem(VITALS_KEY); const v = JSON.parse(r||'[]'); return Array.isArray(v)?v:[]; } catch(e){ return []; } })(),
     }
   };
 }
@@ -3023,7 +3031,7 @@ function normalizeBackupData(parsed) {
   if (parsed && typeof parsed === "object" && parsed.data && typeof parsed.data === "object") return parsed.data;
 
   // 旧形式: { records:..., residents:..., ... }
-  const keys = ["records","residents","recorders","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident","dayNoteTemplates"];
+  const keys = ["records","residents","recorders","templates","autoItemDefs","tags","favByResident","residentAutoTemplates","daySupportByResident","dayNoteTemplates","vitals"];
   const hasAny = keys.some((k) => Object.prototype.hasOwnProperty.call(parsed || {}, k));
   if (hasAny) {
     return {
@@ -3037,6 +3045,7 @@ function normalizeBackupData(parsed) {
       residentAutoTemplates: parsed.residentAutoTemplates,
       daySupportByResident: parsed.daySupportByResident,
       dayNoteTemplates: parsed.dayNoteTemplates,
+      vitals: parsed.vitals,
     };
   }
   return null;
@@ -3057,6 +3066,7 @@ function applyRestoreData(data) {
     residentAutoTemplates: safeObj(data.residentAutoTemplates),
     daySupportByResident: safeObj(data.daySupportByResident),
     dayNoteTemplates: safeArr(data.dayNoteTemplates),
+    vitals: safeArr(data.vitals),
   };
 
   // localStorageへ反映（アプリの各データ）
@@ -3070,6 +3080,7 @@ function applyRestoreData(data) {
   localStorage.setItem(RESIDENT_AUTO_TEMPLATES_KEY, JSON.stringify(next.residentAutoTemplates));
   localStorage.setItem(DAY_SUPPORT_BY_RESIDENT_KEY, JSON.stringify(next.daySupportByResident));
   localStorage.setItem(DAY_NOTE_TEMPLATES_KEY, JSON.stringify(next.dayNoteTemplates));
+  localStorage.setItem(VITALS_KEY, JSON.stringify(next.vitals));
 }
 
 function handleRestoreFile(file) {
