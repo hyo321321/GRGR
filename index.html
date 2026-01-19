@@ -988,16 +988,6 @@
                 </div>
                 <div class="small-text" style="margin-top:6px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
               </div>
-              
-
-
-          <div class="field">
-            <div class="checkbox-row">
-              <label><input type="checkbox" id="medTaken" /> 服薬済み</label>
-              <span class="small-text">（飲み忘れ等があれば下の支援内容に記入）</span>
-            </div>
-          </div>
-
           <!-- タグ -->
           <div class="field">
             <label>キーワード（タグ）</label>
@@ -1222,7 +1212,6 @@
     <th>利用者</th>
     <th>日中の主な支援</th>
     <th>支援内容・タグ</th>
-    <th>服薬</th>
     <th>操作</th>
   </tr>
 </thead>
@@ -1517,15 +1506,6 @@
             </div>
             <div class="small-text" style="margin-top:6px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
           </div>
-          
-
-
-        <div class="field">
-          <div class="checkbox-row">
-            <label><input type="checkbox" id="editMedTaken" /> 服薬済み</label>
-          </div>
-        </div>
-
         <div class="field">
           <label>キーワード（タグ）</label>
           <div class="tag-buttons" id="editTagButtons"></div>
@@ -1985,7 +1965,43 @@
       textareaEl.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
+    function __normalizeNL(s) { return String(s ?? "").replace(/\r\n?/g, "\n"); }
+
+    function hasTextBlock(textareaEl, blockText) {
+      if (!textareaEl) return false;
+      const cur = __normalizeNL(textareaEl.value || "");
+      const blk = __normalizeNL(blockText || "").trimEnd();
+      if (!blk) return false;
+      return cur.indexOf(blk) !== -1;
+    }
+
+    function removeTextFromTextarea(textareaEl, removeText) {
+      if (!textareaEl || !removeText) return;
+      let cur = __normalizeNL(textareaEl.value || "");
+      const blk = __normalizeNL(removeText || "").trimEnd();
+      if (!blk) return;
+
+      const idx = cur.indexOf(blk);
+      if (idx === -1) return;
+
+      let start = idx;
+      let end = idx + blk.length;
+
+      // 余計な空行を作らないように、前後の改行を1つだけ吸収
+      if (start === 0) {
+        if (cur[end] === "\n") end += 1;
+      } else if (cur[start - 1] === "\n") {
+        start -= 1;
+      } else if (cur[end] === "\n") {
+        end += 1;
+      }
+
+      textareaEl.value = (cur.slice(0, start) + cur.slice(end)).replace(/^\n+/, "");
+      textareaEl.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
     function renderDayNoteTemplateChecks() {
+
       const targets = [
         { wrapId: "dayNoteTemplateChecks", textareaId: "note", emptyText: "（テンプレがありません）" },
         { wrapId: "editDayNoteTemplateChecks", textareaId: "editNote", emptyText: "（テンプレがありません）" },
@@ -2013,10 +2029,13 @@
           const input = label.querySelector("input");
           if (input) {
             input.addEventListener("change", () => {
-              if (!input.checked) return;
-              appendTextToTextarea(ta, tpl.text);
-              // 同じテンプレを連続で使えるように自動で戻す
-              setTimeout(() => { input.checked = false; }, 0);
+              if (input.checked) {
+                // すでに同じテンプレ文が入っている場合は二重追記しない
+                if (!hasTextBlock(ta, tpl.text)) appendTextToTextarea(ta, tpl.text);
+              } else {
+                // チェックを外したら、テンプレ由来の文章だけを削除
+                removeTextFromTextarea(ta, tpl.text);
+              }
             });
           }
           wrap.appendChild(label);
@@ -2865,12 +2884,6 @@ if (record.tags && record.tags.length) {
 }
 
 tr.appendChild(tdSupport);
-
-
-        const tdMed = document.createElement("td");
-        tdMed.textContent = record.medTaken ? "服薬済み" : "";
-        tr.appendChild(tdMed);
-
         const tdActions = document.createElement("td");
 
         const viewBtn = document.createElement("button");
@@ -2909,7 +2922,6 @@ tr.appendChild(tdSupport);
       if (_cond) _cond.value = "良好";
       const _ment = document.getElementById("mental");
       if (_ment) _ment.value = "安定";
-      document.getElementById("medTaken").checked = false;
 
       const daySupportType = document.getElementById("daySupportType");
       if (daySupportType) daySupportType.value = "";
@@ -2930,6 +2942,9 @@ tr.appendChild(tdSupport);
       document.querySelectorAll(".auto-bath-sub").forEach((el) => { el.checked = false; });
       setupAutoBathCompound();
       syncAutoItemsToSupport();
+
+      // 日中支援テンプレ（業務日誌へ追記）のチェックもリセット
+      document.querySelectorAll("#dayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // 日中支援チェックリセット
       document.querySelectorAll(".day-activity-item").forEach((el) => { el.checked = false; });
@@ -3157,7 +3172,7 @@ function handleRestoreFile(file) {
         resident,
         recorder: document.getElementById("recorder")?.value || "",
         meal: document.getElementById("meal").value,
-        medTaken: document.getElementById("medTaken").checked,
+        medTaken: false,
         support: document.getElementById("support").value,
         note: document.getElementById("note").value,
         hasSpecialNote: !!document.getElementById("hasSpecialNote")?.checked,
@@ -3313,8 +3328,7 @@ function handleRestoreFile(file) {
       };
 
       const tagsText = record.tags && record.tags.length ? record.tags.map((t) => "#" + t).join(" ") : "なし";
-      const medText = record.medTaken ? "服薬済み" : "未確認／未内服の可能性あり";
-      const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + record.daySupportType : "なし";
+const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + record.daySupportType : "なし";
 
       if (titleEl) titleEl.textContent = `${record.date || ""} ${record.resident || ""} さんの記録`;
 
@@ -3322,8 +3336,7 @@ function handleRestoreFile(file) {
       addRow("利用者：", record.resident || "");
       addRow("記録者：", record.recorder || "");
       addRow("食事の様子：", record.meal || "");
-      addRow("服薬：", medText);
-      // バイタル（体重・血圧・脈拍）
+// バイタル（体重・血圧・脈拍）
       if ((record.abnormalVitalsOn || record.abnormalWeight || record.abnormalBPsys || record.abnormalBPdia || record.abnormalPulse)) {
         const parts = [];
         if (record.abnormalWeight) parts.push(`体重 ${record.abnormalWeight}kg`);
@@ -4695,9 +4708,11 @@ function buildAutoBathSentence() {
       const _em = document.getElementById("editMental");
       if (_em) _em.value = record.mental || "安定";
       document.getElementById("editMeal").value = record.meal || "";
-      document.getElementById("editMedTaken").checked = !!record.medTaken;
-      document.getElementById("editSupport").value = record.support || "";
+document.getElementById("editSupport").value = record.support || "";
       document.getElementById("editNote").value = record.note || "";
+
+      // 日中支援テンプレ（業務日誌へ追記）チェック：前回の編集状態を残さない
+      document.querySelectorAll("#editDayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // バイタル（体重・血圧・脈拍）
       const __evW  = document.getElementById("editAbnormalWeight");
@@ -4835,7 +4850,7 @@ reasonWrap.innerHTML = "";
         resident,
         recorder: document.getElementById("editRecorder")?.value || "",
         meal: document.getElementById("editMeal").value,
-        medTaken: document.getElementById("editMedTaken").checked,
+        medTaken: false,
         support: document.getElementById("editSupport").value,
         note: document.getElementById("editNote").value,
         hasSpecialNote: !!document.getElementById("editHasSpecialNote")?.checked,
