@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>バイタル記録（体重・血圧・脈拍）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Yu Gothic UI", sans-serif;
+      background: #f6f7fb;
+      color: #0f172a;
+    }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: #ffffffcc;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 16px;
+      z-index: 10;
+    }
+    .topbar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .title {
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #475569;
+      margin-top: 2px;
+    }
+
+    .wrap { max-width: 1100px; margin: 14px auto 24px; padding: 0 16px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 12px;
+      align-items: start;
+    }
+    .layout > * { min-width: 0; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(2,6,23,.04);
+      padding: 14px;
+    }
+    .card-title {
+      font-weight: 800;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    label { display: block; font-size: 12px; color: #475569; margin: 0 0 6px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    textarea { resize: vertical; min-height: 78px; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .btn {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn-danger { background: #ef4444; color: #fff; border-color: #ef4444; }
+    .btn-ghost { background: #fff; color: #0f172a; }
+
+    .hint { font-size: 12px; color: #475569; line-height: 1.45; }
+
+    .tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+    .item-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .item-title { font-weight: 800; }
+    .item-meta { font-size: 12px; color: #475569; }
+    .item-body { margin-top: 6px; font-size: 13px; line-height: 1.5; }
+    .pill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      color: #334155;
+      background: #f8fafc;
+      margin-right: 6px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+      z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 60;
+    }
+    .modal {
+      width: min(720px, 100%);
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 18px 55px rgba(2,6,23,.25);
+      padding: 14px;
+    }
+
+    .chart-wrap {
+      margin: 10px 0 0;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .chart-title {
+      font-weight: 900;
+      font-size: 13px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .chart-sub {
+      font-size: 12px;
+      color: #475569;
+      font-weight: 700;
+    }
+    canvas.chart {
+      width: 100%;
+      height: 170px;
+      display: block;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    .legend {
+      margin-top: 8px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+    .legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="title">🩺 バイタル記録（体重・血圧・脈拍）</div>
+        <div class="subtitle">※保存先はブラウザの保存領域（localStorage）です。利用者・記録者リストは本体アプリと共有します。</div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <a href="index.html">← 個人記録へ戻る</a>
+        <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
+        <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
+        <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
+        <input type="file" id="restoreVitalsFile" accept=".json,application/json" style="display:none" />
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="layout">
+      <div class="card">
+        <div class="card-title">
+          <span>入力</span>
+          <span class="hint" id="quickStatus"></span>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label>日付</label>
+            <input type="date" id="vDate" />
+          </div>
+          <div>
+            <label>時刻</label>
+            <input type="time" id="vTime" />
+          </div>
+        </div>
+
+        <div class="grid" style="margin-top:10px;">
+          <div>
+            <label>利用者</label>
+            <select id="vResident"></select>
+          </div>
+          <div>
+            <label>記録者</label>
+            <select id="vRecorder"></select>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top:10px;">
+          <div>
+            <label>体重（kg）</label>
+            <input type="number" id="vWeight" inputmode="decimal" step="0.1" placeholder="例）58.4" />
+          </div>
+          <div>
+            <label>血圧（上）</label>
+            <input type="number" id="vBpSys" inputmode="numeric" step="1" placeholder="例）128" />
+          </div>
+          <div>
+            <label>血圧（下）</label>
+            <input type="number" id="vBpDia" inputmode="numeric" step="1" placeholder="例）78" />
+          </div>
+        </div>
+
+        <div class="grid" style="margin-top:10px;">
+          <div>
+            <label>脈拍（回/分）</label>
+            <input type="number" id="vPulse" inputmode="numeric" step="1" placeholder="例）72" />
+          </div>
+          <div>
+            <label>メモ（任意）</label>
+            <input type="text" id="vMemo" placeholder="例）起床後、服薬前" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="saveVitalBtn">💾 保存</button>
+          <button class="btn" id="clearBtn">🧹 クリア</button>
+          <button class="btn" id="copyBtn">📋 コピー</button>
+        </div>
+
+        <div class="hint" style="margin-top:10px;">
+          ・保存すると右の一覧に出ます（新しい順）。<br>
+          ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>一覧</span>
+          <span class="hint" id="countLabel"></span>
+        </div>
+
+        <div class="chart-wrap" id="chartsWrap">
+          <div class="chart-title">
+            <span>体重（kg）</span>
+            <span class="chart-sub" id="chartResidentLabel"></span>
+          </div>
+          <canvas id="chartWeight" class="chart"></canvas>
+          <div class="hint" id="chartWeightHint" style="margin-top:6px"></div>
+        </div>
+
+        <div class="chart-wrap" id="chartsWrap2">
+          <div class="chart-title"><span>血圧・脈拍</span><span class="chart-sub" id="chartRangeLabel"></span></div>
+          <canvas id="chartVitals" class="chart"></canvas>
+          <div class="legend">
+            <span><i style="background:#ef4444"></i>血圧（上）</span>
+            <span><i style="background:#f59e0b"></i>血圧（下）</span>
+            <span><i style="background:#10b981"></i>脈拍</span>
+          </div>
+          <div class="hint" id="chartVitalsHint" style="margin-top:6px"></div>
+        </div>
+
+
+        <div class="tools">
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <label style="margin:0">表示：</label>
+            <select id="filterResident" style="width:auto; min-width: 180px;"></select>
+            <select id="filterRange" style="width:auto">
+              <option value="today">今日</option>
+              <option value="week" selected>直近7日</option>
+              <option value="month">今月</option>
+              <option value="all">全期間</option>
+            </select>
+          </div>
+          <input type="text" id="search" placeholder="検索（メモ/数値）" style="width: 180px;" />
+        </div>
+
+        <div class="list" id="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="modalBg">
+    <div class="modal">
+      <div class="card-title"><span>編集</span><button class="btn" id="closeModalBtn">✕</button></div>
+
+      <div class="grid">
+        <div><label>日付</label><input type="date" id="eDate" /></div>
+        <div><label>時刻</label><input type="time" id="eTime" /></div>
+      </div>
+
+      <div class="grid" style="margin-top:10px;">
+        <div><label>利用者</label><select id="eResident"></select></div>
+        <div><label>記録者</label><select id="eRecorder"></select></div>
+      </div>
+
+      <div class="grid-3" style="margin-top:10px;">
+        <div><label>体重（kg）</label><input type="number" id="eWeight" step="0.1" /></div>
+        <div><label>血圧（上）</label><input type="number" id="eBpSys" step="1" /></div>
+        <div><label>血圧（下）</label><input type="number" id="eBpDia" step="1" /></div>
+      </div>
+
+      <div class="grid" style="margin-top:10px;">
+        <div><label>脈拍（回/分）</label><input type="number" id="ePulse" step="1" /></div>
+        <div><label>メモ（任意）</label><input type="text" id="eMemo" /></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="saveEditBtn">💾 更新</button>
+        <button class="btn btn-danger" id="deleteEditBtn">🗑 削除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 共有キー（本体アプリと合わせる）
+    const RESIDENTS_KEY = "group_home_residents_v1";
+    const RECORDERS_KEY = "group_home_recorders_v1";
+    const VITALS_KEY    = "group_home_vitals_v1";
+
+    const $ = (id) => document.getElementById(id);
+
+    const toast = (msg) => {
+      const el = $('toast');
+      el.textContent = msg || '';
+      el.classList.add('show');
+      clearTimeout(window.__toastT);
+      window.__toastT = setTimeout(() => el.classList.remove('show'), 1400);
+    };
+
+    const loadJSON = (key, fallback) => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        const v = JSON.parse(raw);
+        return v;
+      } catch (e) {
+        return fallback;
+      }
+    };
+    const saveJSON = (key, value) => {
+      localStorage.setItem(key, JSON.stringify(value));
+    };
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const nowLocalDate = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    };
+    const nowLocalTime = () => {
+      const d = new Date();
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    };
+
+    function buildMeasuredAt(dateStr, timeStr) {
+      // date/time (local) -> ISO string
+      const [y,m,da] = dateStr.split('-').map(Number);
+      const [h,mi] = timeStr.split(':').map(Number);
+      const d = new Date(y, (m-1), da, h, mi, 0, 0);
+      return d.toISOString();
+    }
+
+    function formatJP(iso) {
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = pad2(d.getMonth()+1);
+      const da = pad2(d.getDate());
+      const h = pad2(d.getHours());
+      const mi = pad2(d.getMinutes());
+      return `${y}/${m}/${da} ${h}:${mi}`;
+    }
+
+    function vitalsToText(v) {
+      const parts = [];
+      const w = (v.weight ?? '');
+      const s = (v.bpSys ?? '');
+      const d = (v.bpDia ?? '');
+      const p = (v.pulse ?? '');
+      if (String(w).trim() !== '') parts.push(`体重${w}kg`);
+      if (String(s).trim() !== '' || String(d).trim() !== '') parts.push(`血圧${s || '―'}/${d || '―'}`);
+      if (String(p).trim() !== '') parts.push(`脈拍${p}`);
+      const memo = String(v.memo || '').trim();
+      const base = parts.length ? parts.join('、') : '（未入力）';
+      return memo ? `バイタル：${base}（${memo}）` : `バイタル：${base}`;
+    }
+
+    function buildResidentsSelect(selectEl, list, allowAll=false) {
+      selectEl.innerHTML = '';
+      if (allowAll) {
+        const opt = document.createElement('option');
+        opt.value = '__all__';
+        opt.textContent = '全員';
+        selectEl.appendChild(opt);
+      }
+      if (!Array.isArray(list) || list.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '（利用者が未登録です）';
+        selectEl.appendChild(opt);
+        return;
+      }
+      for (const name of list) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    function buildRecordersSelect(selectEl, list) {
+      selectEl.innerHTML = '';
+      if (!Array.isArray(list) || list.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '（記録者が未登録です）';
+        selectEl.appendChild(opt);
+        return;
+      }
+      for (const name of list) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    function loadVitals() {
+      const v = loadJSON(VITALS_KEY, []);
+      return Array.isArray(v) ? v : [];
+    }
+    function saveVitals(list) {
+      saveJSON(VITALS_KEY, list);
+    }
+
+    function getFilterRange() {
+      const mode = $('filterRange').value;
+      const now = new Date();
+      const end = now.getTime();
+      let start = 0;
+      if (mode === 'today') {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
+        start = d.getTime();
+      } else if (mode === 'week') {
+        start = end - 7*24*60*60*1000;
+      } else if (mode === 'month') {
+        const d = new Date(now.getFullYear(), now.getMonth(), 1, 0,0,0,0);
+        start = d.getTime();
+      } else {
+        start = 0;
+      }
+      return { start, end };
+    }
+
+    function normalizeNum(v) {
+      if (v == null) return '';
+      const s = String(v).trim();
+      return s;
+    }
+
+
+    function parseNumOrNull(v) {
+      const s = String(v ?? '').trim();
+      if (!s) return null;
+      const n = Number(s);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function dayKeyFromISO(iso) {
+      const d = new Date(iso);
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+
+    function shortLabelFromISO(iso) {
+      const d = new Date(iso);
+      return `${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`;
+    }
+
+    function groupByDayLastMetrics(records) {
+      // records: measuredAt ASC recommended
+      const map = new Map();
+      for (const v of records) {
+        const iso = v.measuredAt;
+        if (!iso) continue;
+        const k = dayKeyFromISO(iso);
+        let cur = map.get(k);
+        if (!cur) {
+          cur = { day: k, label: shortLabelFromISO(iso), lastISO: iso, weight: null, bpSys: null, bpDia: null, pulse: null };
+          map.set(k, cur);
+        }
+        // keep latest ISO for label positioning
+        if (String(iso).localeCompare(String(cur.lastISO)) > 0) {
+          cur.lastISO = iso;
+          cur.label = shortLabelFromISO(iso);
+        }
+        const w = parseNumOrNull(v.weight);
+        const s = parseNumOrNull(v.bpSys);
+        const d = parseNumOrNull(v.bpDia);
+        const p = parseNumOrNull(v.pulse);
+        if (w != null) cur.weight = w;
+        if (s != null) cur.bpSys = s;
+        if (d != null) cur.bpDia = d;
+        if (p != null) cur.pulse = p;
+      }
+      const days = Array.from(map.values()).sort((a,b) => a.day.localeCompare(b.day));
+      return days;
+    }
+
+    function sizeCanvasToCSS(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      return { cssW: rect.width, cssH: rect.height, dpr };
+    }
+
+    function drawLineChart(canvas, labels, series, opts) {
+      const ctx = canvas.getContext('2d');
+      const { cssW, cssH, dpr } = sizeCanvasToCSS(canvas);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.clearRect(0,0,cssW,cssH);
+
+      const padL = 46, padR = 10, padT = 10, padB = 30;
+      const innerW = Math.max(10, cssW - padL - padR);
+      const innerH = Math.max(10, cssH - padT - padB);
+
+      // collect y values
+      const ys = [];
+      for (const s of series) {
+        for (const y of s.y) if (y != null) ys.push(y);
+      }
+      if (labels.length < 1 || ys.length === 0) {
+        // empty
+        ctx.fillStyle = '#475569';
+        ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Noto Sans JP, Yu Gothic UI, sans-serif';
+        ctx.fillText('データがありません（期間/利用者を切り替えてください）', 12, 22);
+        return;
+      }
+
+      let yMin = Math.min(...ys);
+      let yMax = Math.max(...ys);
+      if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) return;
+      if (yMin === yMax) {
+        yMin -= 1;
+        yMax += 1;
+      } else {
+        const pad = (yMax - yMin) * 0.08;
+        yMin -= pad;
+        yMax += pad;
+      }
+
+      const xCount = labels.length;
+      const xAt = (i) => padL + (xCount === 1 ? 0 : (i * innerW / (xCount - 1)));
+      const yAt = (v) => padT + (yMax - v) * innerH / (yMax - yMin);
+
+      // grid
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      const gridN = 4;
+      for (let g=0; g<=gridN; g++) {
+        const y = padT + innerH * (g / gridN);
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(padL + innerW, y);
+        ctx.stroke();
+      }
+
+      // y labels
+      ctx.fillStyle = '#475569';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Noto Sans JP, Yu Gothic UI, sans-serif';
+      for (let g=0; g<=gridN; g++) {
+        const v = yMax - (yMax - yMin) * (g / gridN);
+        const y = padT + innerH * (g / gridN);
+        ctx.fillText((opts && opts.yFmt ? opts.yFmt(v) : String(Math.round(v))), 6, y + 4);
+      }
+
+      // x labels (few ticks)
+      const ticks = []
+      if (xCount <= 6) {
+        for (let i=0;i<xCount;i++) ticks.push(i);
+      } else {
+        ticks.push(0);
+        ticks.push(Math.floor((xCount-1)*0.25));
+        ticks.push(Math.floor((xCount-1)*0.5));
+        ticks.push(Math.floor((xCount-1)*0.75));
+        ticks.push(xCount-1);
+      }
+      const uniqTicks = Array.from(new Set(ticks)).sort((a,b)=>a-b);
+      for (const i of uniqTicks) {
+        const x = xAt(i);
+        const txt = labels[i] || '';
+        ctx.fillText(txt, Math.min(cssW-28, Math.max(0, x-12)), padT + innerH + 22);
+      }
+
+      // series lines
+      for (const s of series) {
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        for (let i=0;i<xCount;i++) {
+          const yv = s.y[i];
+          if (yv == null) {
+            started = false;
+            continue;
+          }
+          const x = xAt(i);
+          const y = yAt(yv);
+          if (!started) {
+            ctx.moveTo(x,y);
+            started = true;
+          } else {
+            ctx.lineTo(x,y);
+          }
+        }
+        ctx.stroke();
+
+        // points
+        ctx.fillStyle = s.color;
+        for (let i=0;i<xCount;i++) {
+          const yv = s.y[i];
+          if (yv == null) continue;
+          const x = xAt(i);
+          const y = yAt(yv);
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function getFilteredForChart() {
+      const all = loadVitals();
+      const resident = $('filterResident').value;
+      const { start, end } = getFilterRange();
+      return all
+        .slice()
+        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''))
+        .filter(v => {
+          const t = new Date(v.measuredAt || 0).getTime();
+          if (start && t < start) return false;
+          if (end && t > end) return false;
+          if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          return true;
+        });
+    }
+
+    function getRangeLabel() {
+      const mode = $('filterRange').value;
+      if (mode === 'today') return '今日';
+      if (mode === 'week') return '直近7日';
+      if (mode === 'month') return '今月';
+      return '全期間';
+    }
+
+    function renderCharts() {
+      const records = getFilteredForChart();
+      const days = groupByDayLastMetrics(records);
+      const labels = days.map(d => d.label);
+
+      const resident = $('filterResident').value;
+      const residentLabel = (resident && resident !== '__all__') ? resident : '（全員）';
+      const rangeLabel = getRangeLabel();
+
+      const cr = $('chartResidentLabel');
+      const rg = $('chartRangeLabel');
+      if (cr) cr.textContent = residentLabel;
+      if (rg) rg.textContent = rangeLabel;
+
+      const weightY = days.map(d => d.weight);
+      const bpSysY = days.map(d => d.bpSys);
+      const bpDiaY = days.map(d => d.bpDia);
+      const pulseY = days.map(d => d.pulse);
+
+      // weight chart
+      const wHint = $('chartWeightHint');
+      const vHint = $('chartVitalsHint');
+      if (resident === '__all__') {
+        if (wHint) wHint.textContent = '※全員表示だと混在します。利用者で絞ると見やすいです。';
+      } else {
+        if (wHint) wHint.textContent = '';
+      }
+
+      drawLineChart($('chartWeight'), labels, [
+        { name: '体重', color: '#2563eb', y: weightY }
+      ], { yFmt: (v) => (Math.round(v*10)/10).toString() });
+
+      // vitals chart
+      if (vHint) vHint.textContent = '';
+      drawLineChart($('chartVitals'), labels, [
+        { name: '血圧（上）', color: '#ef4444', y: bpSysY },
+        { name: '血圧（下）', color: '#f59e0b', y: bpDiaY },
+        { name: '脈拍', color: '#10b981', y: pulseY },
+      ], { yFmt: (v) => String(Math.round(v)) });
+    }
+
+    function renderList() {
+      const listEl = $('list');
+      const all = loadVitals();
+      const resident = $('filterResident').value;
+      const q = String($('search').value || '').trim().toLowerCase();
+      const { start, end } = getFilterRange();
+
+      const filtered = all
+        .slice()
+        .sort((a,b) => (b.measuredAt || '').localeCompare(a.measuredAt || ''))
+        .filter(v => {
+          const t = new Date(v.measuredAt || 0).getTime();
+          if (start && t < start) return false;
+          if (end && t > end) return false;
+          if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          if (q) {
+            const hay = [
+              v.resident, v.recorder, v.memo,
+              normalizeNum(v.weight), normalizeNum(v.bpSys), normalizeNum(v.bpDia), normalizeNum(v.pulse)
+            ].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+
+      $('countLabel').textContent = `${filtered.length}件`;
+      listEl.innerHTML = '';
+
+      renderCharts();
+
+      if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'hint';
+        div.textContent = 'データがありません。左で入力して保存してください。';
+        listEl.appendChild(div);
+        return;
+      }
+
+      for (const v of filtered) {
+        const item = document.createElement('div');
+        item.className = 'item';
+
+        const head = document.createElement('div');
+        head.className = 'item-head';
+
+        const left = document.createElement('div');
+        left.innerHTML = `<div class="item-title">${formatJP(v.measuredAt)} <span class="pill">${escapeHTML(v.resident || '')}</span></div>`;
+
+        const right = document.createElement('div');
+        right.className = 'item-meta';
+        right.textContent = v.recorder ? `記録者：${v.recorder}` : '';
+
+        head.appendChild(left);
+        head.appendChild(right);
+
+        const body = document.createElement('div');
+        body.className = 'item-body';
+
+        const chunks = [];
+        if (String(v.weight||'').trim() !== '') chunks.push(`体重 ${v.weight}kg`);
+        if (String(v.bpSys||'').trim() !== '' || String(v.bpDia||'').trim() !== '') chunks.push(`血圧 ${v.bpSys||'―'}/${v.bpDia||'―'}`);
+        if (String(v.pulse||'').trim() !== '') chunks.push(`脈拍 ${v.pulse}`);
+        const memo = String(v.memo||'').trim();
+        body.innerHTML = `${chunks.map(c=>`<span class="pill">${escapeHTML(c)}</span>`).join(' ')}${memo?`<div class="item-meta" style="margin-top:6px">メモ：${escapeHTML(memo)}</div>`:''}`;
+
+        const btns = document.createElement('div');
+        btns.className = 'btn-row';
+        btns.style.marginTop = '8px';
+
+        const bCopy = document.createElement('button');
+        bCopy.className = 'btn';
+        bCopy.textContent = '📋 コピー';
+        bCopy.onclick = () => {
+          const txt = vitalsToText(v);
+          navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(() => {
+            fallbackCopy(txt);
+            toast('コピーしました');
+          });
+        };
+
+        const bEdit = document.createElement('button');
+        bEdit.className = 'btn';
+        bEdit.textContent = '✏ 編集';
+        bEdit.onclick = () => openEdit(v.id);
+
+        btns.appendChild(bCopy);
+        btns.appendChild(bEdit);
+
+        item.appendChild(head);
+        item.appendChild(body);
+        item.appendChild(btns);
+        listEl.appendChild(item);
+      }
+    }
+
+    function escapeHTML(s){
+      return String(s ?? '').replace(/[&<>\"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function fallbackCopy(text){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+
+    function clearInputs() {
+      $('vWeight').value = '';
+      $('vBpSys').value = '';
+      $('vBpDia').value = '';
+      $('vPulse').value = '';
+      $('vMemo').value = '';
+      $('quickStatus').textContent = '';
+    }
+
+    function getCurrentDraft() {
+      const date = $('vDate').value;
+      const time = $('vTime').value;
+      const resident = $('vResident').value;
+      const recorder = $('vRecorder').value;
+      const weight = String($('vWeight').value || '').trim();
+      const bpSys = String($('vBpSys').value || '').trim();
+      const bpDia = String($('vBpDia').value || '').trim();
+      const pulse = String($('vPulse').value || '').trim();
+      const memo = String($('vMemo').value || '').trim();
+      return { date, time, resident, recorder, weight, bpSys, bpDia, pulse, memo };
+    }
+
+    function saveDraftToVitals() {
+      const d = getCurrentDraft();
+      if (!d.resident) {
+        toast('利用者を選択してください');
+        return;
+      }
+      if (!d.date || !d.time) {
+        toast('日付と時刻を入力してください');
+        return;
+      }
+
+      const entry = {
+        id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2),
+        resident: d.resident,
+        recorder: d.recorder || '',
+        measuredAt: buildMeasuredAt(d.date, d.time),
+        weight: d.weight,
+        bpSys: d.bpSys,
+        bpDia: d.bpDia,
+        pulse: d.pulse,
+        memo: d.memo,
+      };
+
+      const all = loadVitals();
+      all.push(entry);
+      saveVitals(all);
+
+      $('quickStatus').textContent = '保存しました';
+      toast('保存しました');
+
+      // 次の入力用に時刻だけ更新（体重等はクリア）
+      $('vTime').value = nowLocalTime();
+      clearInputs();
+
+      renderList();
+
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+    }
+
+    // --- 編集 ---
+    let editingId = null;
+
+    function openEdit(id) {
+      const all = loadVitals();
+      const v = all.find(x => x.id === id);
+      if (!v) return;
+      editingId = id;
+
+      const d = new Date(v.measuredAt);
+      $('eDate').value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      $('eTime').value = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+      $('eResident').value = v.resident || '';
+      $('eRecorder').value = v.recorder || '';
+      $('eWeight').value = v.weight ?? '';
+      $('eBpSys').value = v.bpSys ?? '';
+      $('eBpDia').value = v.bpDia ?? '';
+      $('ePulse').value = v.pulse ?? '';
+      $('eMemo').value = v.memo ?? '';
+
+      $('modalBg').style.display = 'flex';
+    }
+
+    function closeEdit() {
+      editingId = null;
+      $('modalBg').style.display = 'none';
+    }
+
+    function applyEdit() {
+      if (!editingId) return;
+      const all = loadVitals();
+      const idx = all.findIndex(x => x.id === editingId);
+      if (idx < 0) return;
+
+      const date = $('eDate').value;
+      const time = $('eTime').value;
+      if (!date || !time) { toast('日付と時刻を入力してください'); return; }
+
+      all[idx] = {
+        ...all[idx],
+        resident: $('eResident').value || '',
+        recorder: $('eRecorder').value || '',
+        measuredAt: buildMeasuredAt(date, time),
+        weight: String($('eWeight').value || '').trim(),
+        bpSys: String($('eBpSys').value || '').trim(),
+        bpDia: String($('eBpDia').value || '').trim(),
+        pulse: String($('ePulse').value || '').trim(),
+        memo: String($('eMemo').value || '').trim(),
+      };
+
+      saveVitals(all);
+      toast('更新しました');
+      closeEdit();
+      renderList();
+
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+    }
+
+    function deleteEdit() {
+      if (!editingId) return;
+      const ok = confirm('このバイタル記録を削除しますか？');
+      if (!ok) return;
+      const all = loadVitals().filter(x => x.id !== editingId);
+      saveVitals(all);
+      toast('削除しました');
+      closeEdit();
+      renderList();
+
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+    }
+
+    // --- CSV / バックアップ / 復元（このページ単体） ---
+    function yyyymmdd_hhmmss(){
+      const d = new Date();
+      return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
+    }
+
+    function downloadTextFile(filename, text, mime){
+      const blob = new Blob([text], {type: mime || 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    }
+
+    function exportCsv(){
+      const rows = [
+        ['measuredAt','resident','recorder','weight','bpSys','bpDia','pulse','memo']
+      ];
+      for (const v of loadVitals()) {
+        rows.push([
+          v.measuredAt||'', v.resident||'', v.recorder||'', v.weight||'', v.bpSys||'', v.bpDia||'', v.pulse||'', (v.memo||'').replace(/\r?\n/g,' ')
+        ]);
+      }
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell ?? '');
+        if (/[\",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+        return s;
+      }).join(',')).join('\n');
+      downloadTextFile(`vitals_${yyyymmdd_hhmmss()}.csv`, csv, 'text/csv');
+      toast('CSVを保存しました');
+    }
+
+    function backupVitals(){
+      const payload = {
+        app: 'group_home_vitals',
+        schemaVersion: 1,
+        exportedAt: new Date().toISOString(),
+        vitals: loadVitals(),
+      };
+      downloadTextFile(`vitals_backup_${yyyymmdd_hhmmss()}.json`, JSON.stringify(payload, null, 2), 'application/json');
+      toast('バックアップを保存しました');
+    }
+
+    function normalizeVitalsBackup(parsed){
+      if (parsed && parsed.vitals && Array.isArray(parsed.vitals)) return parsed.vitals;
+      if (Array.isArray(parsed)) return parsed;
+      return null;
+    }
+
+    function restoreVitalsFile(file){
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result||''));
+          const vitals = normalizeVitalsBackup(parsed);
+          if (!vitals) { alert('このファイルはバイタル復元用として認識できませんでした'); return; }
+          const ok = confirm(`復元しますか？\n\n現在：${loadVitals().length}件\n復元：${vitals.length}件\n\n※現在のバイタルは上書きされます。`);
+          if (!ok) return;
+          saveVitals(Array.isArray(vitals)?vitals:[]);
+          toast('復元しました');
+          renderList();
+
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+        } catch (e) {
+          alert('復元に失敗しました：' + (e?.message || e));
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // --- 初期化 ---
+    function init(){
+      $('vDate').value = nowLocalDate();
+      $('vTime').value = nowLocalTime();
+
+      const residents = loadJSON(RESIDENTS_KEY, []);
+      const recorders = loadJSON(RECORDERS_KEY, []);
+
+      buildResidentsSelect($('vResident'), residents, false);
+      buildRecordersSelect($('vRecorder'), recorders);
+      buildResidentsSelect($('filterResident'), residents, true);
+
+      // filterResident: なるべく「最後に使った利用者」へ（グラフが見やすい）
+      $('filterResident').value = '__all__';
+
+      // 編集モーダル側
+      buildResidentsSelect($('eResident'), residents, false);
+      buildRecordersSelect($('eRecorder'), recorders);
+
+      // 設定の復元（最後に使った利用者/記録者）
+      try {
+        const last = loadJSON('group_home_vitals_last_v1', {});
+        if (last && typeof last === 'object') {
+          if (last.resident && Array.from($('vResident').options).some(o=>o.value===last.resident)) $('vResident').value = last.resident;
+          if (last.recorder && Array.from($('vRecorder').options).some(o=>o.value===last.recorder)) $('vRecorder').value = last.recorder;
+        }
+      } catch(e){}
+
+      // できれば一覧も同じ利用者に合わせる（見やすさ優先）
+      try {
+        const cur = $('vResident').value;
+        if (cur && Array.from($('filterResident').options).some(o=>o.value===cur)) {
+          $('filterResident').value = cur;
+        } else {
+          const first = Array.from($('filterResident').options).find(o => o.value && o.value !== '__all__');
+          if (first) $('filterResident').value = first.value;
+        }
+      } catch(e){}
+
+      $('saveVitalBtn').onclick = () => {
+        // last used
+        try { saveJSON('group_home_vitals_last_v1', { resident: $('vResident').value, recorder: $('vRecorder').value }); } catch(e){}
+        saveDraftToVitals();
+      };
+      $('clearBtn').onclick = clearInputs;
+      $('copyBtn').onclick = () => {
+        const d = getCurrentDraft();
+        const v = { weight:d.weight, bpSys:d.bpSys, bpDia:d.bpDia, pulse:d.pulse, memo:d.memo };
+        const txt = vitalsToText(v);
+        navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(()=>{ fallbackCopy(txt); toast('コピーしました'); });
+      };
+
+      $('filterResident').onchange = renderList;
+      $('filterRange').onchange = renderList;
+      $('search').oninput = renderList;
+
+      $('closeModalBtn').onclick = closeEdit;
+      $('modalBg').addEventListener('click', (e) => { if (e.target === $('modalBg')) closeEdit(); });
+      $('saveEditBtn').onclick = applyEdit;
+      $('deleteEditBtn').onclick = deleteEdit;
+
+      $('exportCsvBtn').onclick = exportCsv;
+      $('backupVitalsBtn').onclick = backupVitals;
+      $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
+      $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
+
+      renderList();
+
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+
+      // 注意表示
+      if (!Array.isArray(residents) || residents.length==0) {
+        $('quickStatus').textContent = '※利用者が未登録です（本体の「① 利用者管理」で登録してください）';
+      }
+    }
+
+  
+    document.addEventListener('DOMContentLoaded', init);
+
+  </script>
+</body>
+</html>
