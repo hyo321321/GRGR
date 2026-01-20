@@ -739,6 +739,74 @@
       .daynote-template-grid{ grid-template-columns: 1fr; }
     }
 
+
+    /* 日中支援テンプレ：直近の追記プレビュー（スクロール不要） */
+    .daynote-last-preview{
+      font-size: 12px;
+      color: #1e3a8a;
+      margin-top: 6px;
+      padding: 6px 8px;
+      border: 1px dashed #93c5fd;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.65);
+      cursor: pointer;
+      user-select: none;
+    }
+    .daynote-last-preview.empty{
+      opacity: .75;
+      cursor: default;
+    }
+    .daynote-last-preview:hover{
+      filter: brightness(0.985);
+    }
+
+    /* トースト通知（チェック後の確認用） */
+    .dn-toast{
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      width: min(460px, calc(100vw - 28px));
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      z-index: 9999;
+      display: none;
+    }
+    .dn-toast.show{ display: block; }
+    .dn-toast-title{
+      font-weight: 900;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+    .dn-toast-body{
+      font-size: 12.5px;
+      color: #0f172a;
+      white-space: pre-wrap;
+      max-height: 120px;
+      overflow: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px;
+      background: #f8fafc;
+    }
+    .dn-toast-actions{
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    @keyframes dnflash{
+      0% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+      35%{ box-shadow: 0 0 0 6px rgba(37,99,235,0.25); }
+      100%{ box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+    }
+    .dn-flash{ animation: dnflash 1.2s ease-in-out; }
+
     /* ====== ここまで：初心者の色付き枠 ====== */
 
     /* ====== 管理エリア色分け（あまり触らない所） ====== */
@@ -1166,6 +1234,7 @@
                 <div class="daynote-template-title">日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）</div>
                 <button type="button" class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;">🛠 編集</button>
               </div>
+              <div class="daynote-last-preview empty" id="dayNoteLastPreview" title="直近の追記内容（クリックで表示）">最新：なし</div>
               <div class="checkbox-row daynote-template-grid" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
               <div class="small-text">※日中支援加算Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
             </div>
@@ -2379,7 +2448,112 @@
 
     
     
-    function renderDayNoteTemplateChecks() {
+    
+
+    // ===== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）：プレビュー＆トースト =====
+    let __dnToastTimer = null;
+
+    function __dnOneLine(s){
+      return String(s || "").replace(/\r?\n/g, " ").replace(/\s+/g, " ").trim();
+    }
+    function __dnSnippet(s, maxLen=110){
+      const one = __dnOneLine(s);
+      if (one.length <= maxLen) return one;
+      return one.slice(0, Math.max(0, maxLen-1)) + "…";
+    }
+
+    function setDayNoteLastPreview(fullText){
+      const el = document.getElementById("dayNoteLastPreview");
+      if(!el) return;
+      const txt = String(fullText || "").trim();
+      if(!txt){
+        el.textContent = "最新：なし";
+        el.classList.add("empty");
+        el.dataset.full = "";
+        el.title = "直近の追記内容（クリックで表示）";
+        return;
+      }
+      el.textContent = "最新：" + __dnSnippet(txt, 120);
+      el.classList.remove("empty");
+      el.dataset.full = txt;
+      el.title = txt;
+    }
+
+    function hideDayNoteToast(){
+      const toast = document.getElementById("dnToast");
+      if(!toast) return;
+      toast.classList.remove("show");
+      toast.setAttribute("aria-hidden", "true");
+      if(__dnToastTimer){ clearTimeout(__dnToastTimer); __dnToastTimer = null; }
+    }
+
+    function showDayNoteToast(title, fullText){
+      const toast = document.getElementById("dnToast");
+      const tEl = document.getElementById("dnToastTitle");
+      const bEl = document.getElementById("dnToastBody");
+      if(!toast || !tEl || !bEl) return;
+      tEl.textContent = title || "業務日誌に反映しました";
+      bEl.textContent = String(fullText || "").trim();
+      toast.classList.add("show");
+      toast.setAttribute("aria-hidden", "false");
+      if(__dnToastTimer){ clearTimeout(__dnToastTimer); __dnToastTimer = null; }
+      __dnToastTimer = setTimeout(() => hideDayNoteToast(), 6500);
+    }
+
+    function jumpToNote(){
+      const field = document.getElementById("noteField");
+      const ta = document.getElementById("note");
+      if(field) field.scrollIntoView({behavior:"smooth", block:"start"});
+      if(ta){
+        ta.focus({preventScroll:true});
+        ta.classList.add("dn-flash");
+        setTimeout(() => ta.classList.remove("dn-flash"), 1250);
+      }
+    }
+
+    function notifyDayNoteTplChange(action, tplName, pat, fullText, textareaId){
+      // メインフォーム（note）だけ：チェック後に下を見に行かなくても確認できるように
+      if(textareaId !== "note") return;
+
+      const p = (pat === 2 || pat === 3) ? pat : 1;
+
+      if(action === "remove"){
+        setDayNoteLastPreview("削除：" + (tplName || "テンプレ"));
+        showDayNoteToast("業務日誌から削除しました：" + (tplName || ""), "");
+        return;
+      }
+
+      const txt = String(fullText || "").trim();
+      if(!txt) return;
+
+      setDayNoteLastPreview(txt);
+      showDayNoteToast(`業務日誌に追記しました：${tplName || ""}（${p}）`, txt);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("dnToastCloseBtn")?.addEventListener("click", hideDayNoteToast);
+      document.getElementById("dnToastJumpBtn")?.addEventListener("click", () => { hideDayNoteToast(); jumpToNote(); });
+
+      const toast = document.getElementById("dnToast");
+      if(toast){
+        toast.addEventListener("mouseenter", () => { if(__dnToastTimer){ clearTimeout(__dnToastTimer); __dnToastTimer = null; } });
+        toast.addEventListener("mouseleave", () => {
+          if(toast.classList.contains("show")){
+            if(__dnToastTimer) clearTimeout(__dnToastTimer);
+            __dnToastTimer = setTimeout(() => hideDayNoteToast(), 4000);
+          }
+        });
+      }
+
+      const prev = document.getElementById("dayNoteLastPreview");
+      if(prev){
+        prev.addEventListener("click", () => {
+          const full = prev.dataset.full || "";
+          if(full) showDayNoteToast("最新の追記内容", full);
+        });
+      }
+    });
+function renderDayNoteTemplateChecks() {
 
       const targets = [
         { wrapId: "dayNoteTemplateChecks", textareaId: "note", emptyText: "（テンプレがありません）" },
@@ -2446,11 +2620,17 @@
             if (!addText) return;
             if (!hasTextBlock(ta, addText)) appendTextToTextarea(ta, addText);
             dayNoteInsertedMap[textareaId][tpl.id] = addText;
+
+            // 追記の確認（トースト＋プレビュー）
+            notifyDayNoteTplChange("add", tpl.name, getDayNotePat(tpl.id), addText, textareaId);
           };
 
           const applyRemove = () => {
             if (!ta) return;
             removeDayNoteTplAny(ta, tpl, textareaId);
+
+            // 削除の確認（トースト＋プレビュー）
+            notifyDayNoteTplChange("remove", tpl.name, getDayNotePat(tpl.id), "", textareaId);
           };
 
           comp.addEventListener("change", (e) => {
@@ -6765,6 +6945,17 @@ if (restoreBtn && restoreFile) {
 
 <!-- 保存しました：トースト表示 -->
   <div id="saveToast" role="status" aria-live="polite"></div>
+
+
+  <!-- 日中支援テンプレ：チェック直後の確認トースト -->
+  <div class="dn-toast" id="dnToast" aria-hidden="true">
+    <div class="dn-toast-title" id="dnToastTitle">業務日誌に反映しました</div>
+    <div class="dn-toast-body" id="dnToastBody"></div>
+    <div class="dn-toast-actions">
+      <button type="button" class="btn-secondary" id="dnToastJumpBtn">業務日誌へ移動</button>
+      <button type="button" class="btn-secondary" id="dnToastCloseBtn">閉じる</button>
+    </div>
+  </div>
 
 </body>
 </html>
