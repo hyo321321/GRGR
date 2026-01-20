@@ -225,6 +225,27 @@
       margin-bottom: 0;
     }
 
+    /* 日中支援：主な支援（③）を見やすく整える（2列グリッド） */
+    .checkbox-row.checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 12px;
+      align-items: start;
+    }
+    .checkbox-row.checkbox-grid label {
+      align-items: flex-start;
+      line-height: 1.35;
+      padding: 2px 0;
+    }
+    .checkbox-row.checkbox-grid input[type="checkbox"] {
+      margin-top: 2px;
+    }
+    @media (max-width: 900px) {
+      .checkbox-row.checkbox-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     
     /* 日中支援：複合チェック（入浴対応など） */
     .day-main-composite {
@@ -308,7 +329,7 @@
     .btn-secondary { background: #e5e7eb; color: #111827; }
     .btn-danger { background: #dc2626; color: white; }
 
-    /* ★初心者向け：緑ボタン（重要操作） */
+    /* ★初心者向け：色付き枠（重要操作） */
     .btn-beginner {
       background: #16a34a;
       color: #fff;
@@ -363,7 +384,7 @@
       color: white;
     }
 
-    .badge-day { background: #22c55e; }
+    .badge-day { background: #3b82f6; }
     .badge-evening { background: #f59e0b; }
     .badge-night { background: #6366f1; }
 
@@ -541,17 +562,17 @@
       font-size: 13px;
     }
 
-    /* ====== ここから：初心者が触るところを緑に ====== */
+    /* ====== ここから：初心者が触るところを色付き枠に ====== */
     .beginner-guide {
-      border: 2px solid #22c55e;
-      background: #f0fdf4;
+      border: 2px solid #3b82f6;
+      background: #eff6ff;
       border-radius: 16px;
       padding: 12px 14px;
       margin-bottom: 12px;
     }
     .beginner-guide .title {
       font-weight: 800;
-      color: #166534;
+      color: #1e3a8a;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -559,12 +580,12 @@
     }
     .beginner-guide .steps {
       font-size: 13px;
-      color: #166534;
+      color: #1e3a8a;
     }
 
     .beginner-zone {
-      border: 2px solid #22c55e;
-      background: #f0fdf4;
+      border: 2px solid #3b82f6;
+      background: #eff6ff;
       border-radius: 14px;
       padding: 10px 12px;
       margin-bottom: 12px;
@@ -577,18 +598,18 @@
       border-radius: 999px;
       font-size: 12px;
       font-weight: 800;
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #86efac;
+      background: #dbeafe;
+      color: #1e3a8a;
+      border: 1px solid #93c5fd;
       margin-left: 8px;
       white-space: nowrap;
     }
     .beginner-hint {
       font-size: 12px;
-      color: #166534;
+      color: #1e3a8a;
       margin-top: 6px;
     }
-        /* ====== 日中支援テンプレ（業務日誌へ追記）：専用ボックス ====== */
+        /* ====== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）：専用ボックス ====== */
     .daynote-template-box{
       border: 2px solid #60a5fa;
       background: #eff6ff;
@@ -609,7 +630,116 @@
       color: #1d4ed8;
     }
 
-    /* ====== ここまで：初心者の緑 ====== */
+    /* 日中支援テンプレ：パターン（①②③）選択 */
+    .dn-compound{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+      padding:6px 10px;
+      border:1px dashed #93c5fd;
+      border-radius:12px;
+      background: rgba(255,255,255,0.65);
+    }
+    .dn-subwrap{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-size:12px;
+      color:#1e3a8a;
+    }
+    .dn-subwrap .paren{ opacity:.65; }
+    .dn-subwrap.disabled{
+      opacity:.55;
+      pointer-events:none;
+      filter: grayscale(0.25);
+    }
+    .dn-subwrap label{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      margin:0;
+      white-space:nowrap;
+      padding: 2px 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* 日中支援テンプレ：サブ（①②③）を□デザイン＋色分け */
+    .dn-subwrap input.day-note-tpl-pat{
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid #94a3b8;
+      border-radius: 3px;
+      background: #ffffff;
+      display: inline-grid;
+      place-content: center;
+      transform: translateY(0.5px);
+    }
+    .dn-subwrap input.day-note-tpl-pat[value="1"]{ --pat:#2563eb; }
+    .dn-subwrap input.day-note-tpl-pat[value="2"]{ --pat:#f97316; }
+    .dn-subwrap input.day-note-tpl-pat[value="3"]{ --pat:#7c3aed; }
+    .dn-subwrap input.day-note-tpl-pat:checked{
+      border-color: var(--pat);
+      background: var(--pat);
+    }
+    .dn-subwrap input.day-note-tpl-pat:checked::after{
+      content: "✓";
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+      transform: translateY(-0.5px);
+    }
+    .dn-subwrap input.day-note-tpl-pat:focus-visible{
+      outline: 3px solid rgba(37,99,235,.25);
+      outline-offset: 2px;
+    }
+
+    /* ラベル側も色づけ（対応ブラウザ：Chrome/Edgeなど） */
+    .dn-subwrap label:has(input.day-note-tpl-pat:checked){
+      font-weight: 800;
+    }
+    .dn-subwrap label:has(input.day-note-tpl-pat[value="1"]:checked){
+      border-color: #2563eb;
+      background: rgba(37,99,235,.12);
+      color: #1d4ed8;
+    }
+    .dn-subwrap label:has(input.day-note-tpl-pat[value="2"]:checked){
+      border-color: #f97316;
+      background: rgba(249,115,22,.14);
+      color: #9a3412;
+    }
+    .dn-subwrap label:has(input.day-note-tpl-pat[value="3"]:checked){
+      border-color: #7c3aed;
+      background: rgba(124,58,237,.12);
+      color: #5b21b6;
+    }
+    /* DayNote templates: compact 2-column layout (PC) */
+    .daynote-template-grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 10px;
+    }
+    .daynote-template-grid .dn-compound{
+      width: 100%;
+      margin: 0;
+      padding: 5px 8px;
+      gap: 8px;
+    }
+    .daynote-template-grid .dn-subwrap{
+      gap: 8px;
+    }
+    @media (max-width: 920px){
+      .daynote-template-grid{ grid-template-columns: 1fr; }
+    }
+
+    /* ====== ここまで：初心者の色付き枠 ====== */
 
     /* ====== 管理エリア色分け（あまり触らない所） ====== */
     .admin-card {
@@ -896,9 +1026,9 @@
             setTimeout(function(){
               if(typeof XLSX !== "undefined"){
                 if(st) st.innerHTML = "✅ ローカルからExcelライブラリを読み込みました。もう一度「Excel出力」を押してください。";
-                box.style.borderColor = "#86efac";
-                box.style.background = "#f0fdf4";
-                box.style.color = "#166534";
+                box.style.borderColor = "#93c5fd";
+                box.style.background = "#eff6ff";
+                box.style.color = "#1e3a8a";
               }else{
                 if(st) st.innerHTML = "❌ ローカル読み込みに失敗しました（ファイルが違う可能性）。";
               }
@@ -931,9 +1061,9 @@
 
         <!-- ★初心者ガイド -->
         <div class="beginner-guide">
-          <div class="title">✅ 初心者は「緑の枠だけ」でOK</div>
+          <div class="title">✅ 初心者は「色付きの枠だけ」でOK</div>
           <div class="steps">
-            ① 日付・利用者・記録者 → ② よく使う項目チェック → ③【日中に行った主な支援】 → 💾 記録を保存
+            ① 日付・利用者・記録者 → ② よく使う項目チェック → ③【日中に行った主な支援】 → ④ 日中活動 → ⑤💾 記録を保存
           </div>
         </div>
 
@@ -942,8 +1072,8 @@
           <!-- ★日付・利用者（初心者OK） -->
           <div class="beginner-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#166534;">① 日付・利用者・記録者 <span class="beginner-badge">ここだけOK</span></div>
-              <div class="beginner-hint">※利用者を選ぶと「よく使う項目」が自動でONになります。</div>
+              <div style="font-weight:800; color:#1e3a8a;">① 日付・利用者・記録者 <span class="beginner-badge">ここだけOK</span></div>
+              <div class="beginner-hint">※利用者別に設定した初期値がある場合は自動で反映されます。</div>
             </div>
 
             <div class="field-row-3" style="margin-top:10px;">
@@ -961,14 +1091,10 @@
               </div>
             </div>
           </div>
-          <div class="field">
-            <label for="meal">食事の様子（朝・昼・夕 / 摂取量など）</label>
-            <input type="text" id="meal" placeholder="例）朝：完食 / 昼：7割 / 夕：少なめ など" />
-          </div>
-
-          <div class="field vitals-compact" id="abnormalVitalsBox" style="margin-top:8px;">
-                <div class="vitals-title">体重・血圧・脈拍（任意）</div>
-                <div class="field-row-4" id="abnormalVitalsInputs" style="align-items:end;">
+<div class="field vitals-compact" id="abnormalVitalsBox" style="margin-top:8px;">
+                <div class="vitals-title">体重・血圧・脈拍（異常があった場合のみ）</div>
+                <div class="small-text" style="margin:4px 0 6px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
+<div class="field-row-4" id="abnormalVitalsInputs" style="align-items:end;">
                   <div class="field" style="margin-bottom:0;">
                     <label for="abnormalWeight">体重（kg）</label>
                     <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
@@ -998,8 +1124,8 @@
           <!-- ★自動入力したい支援項目（初心者OK） -->
           <div class="beginner-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#166534;">② 自動入力したい支援項目 <span class="beginner-badge">ここだけOK</span></div>
-              <div class="small-text">※利用者を選ぶと「よく使う項目」が自動でONになります</div>
+              <div style="font-weight:800; color:#1e3a8a;">② 自動入力したい支援項目 <span class="beginner-badge">ここだけOK</span></div>
+              <div class="small-text">※利用者別に設定した初期値がある場合は自動で反映されます</div>
             </div>
 
             <div class="btn-row" style="margin-top:8px;">
@@ -1025,7 +1151,7 @@
           <!-- ★日中支援：主な支援（初心者OK） -->
           <div class="beginner-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#166534;">③【日中に行った主な支援】 <span class="beginner-badge">ここだけOK</span></div>
+              <div style="font-weight:800; color:#1e3a8a;">③【日中に行った主な支援】 <span class="beginner-badge">ここだけOK</span></div>
               <div class="beginner-hint">※該当するものにチェック（漏れ防止）</div>
             </div>
 
@@ -1033,48 +1159,40 @@
               <button type="button" class="btn-secondary" id="openDaySupportModalBtn">🛠 日中支援チェック編集（利用者別）</button>
             </div>
 
-            <div class="checkbox-row" id="daySupportMainCheckboxes" style="margin-top:8px;"></div>
+            <div class="checkbox-row checkbox-grid" id="daySupportMainCheckboxes" style="margin-top:8px;"></div>
 
             <div class="daynote-template-box" style="margin-top:10px;">
               <div class="daynote-template-head">
-                <div class="daynote-template-title">日中支援テンプレ（業務日誌へ追記）</div>
+                <div class="daynote-template-title">日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）</div>
                 <button type="button" class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;">🛠 編集</button>
               </div>
-              <div class="checkbox-row" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
-              <div class="small-text">※チェックすると「業務日誌」へ追記されます（追記のみ・消えません）。追記後はチェックが自動で戻ります。</div>
+              <div class="checkbox-row daynote-template-grid" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
+              <div class="small-text">※日中支援加算Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
             </div>
 
 
           </div>
 
-          <div class="daynote-template-box" style="margin-top:10px;">
-          <!-- 日中活動（通所/欠席） -->
-          <div class="field">
-            <label>日中活動</label>
-            <div class="checkbox-row" id="dayActivityCheckboxes"></div>
-          </div>
+          <div class="beginner-zone" style="margin-top:10px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+    <div style="font-weight:800; color:#1e3a8a;">④ 日中活動 <span class="beginner-badge">ここだけOK</span></div>
+    <div class="beginner-hint">※通所/欠席をチェック。</div>
+  </div>
 
+  <div class="field" style="margin-top:8px;">
+    <label>日中活動（A型 / B型）</label>
+    <div class="checkbox-row" id="dayActivityCheckboxes"></div>
+  </div>
 
-          <!-- 日中支援：理由（任意/上級） -->
-          <div class="field">
-            <label>【日中活動に行けなかった理由】（任意）</label>
-            <div class="small-text" style="margin-bottom:4px;">
-              ※該当する場合のみチェックしてください（必要があるときだけ）。
-            </div>
-            <div class="checkbox-row" id="daySupportReasonCheckboxes"></div>
-          </div>
+  <div class="field">
+    <label>【日中活動に行けなかった理由】（任意）</label>
+    <div class="small-text" style="margin-bottom:4px;">※該当する場合のみチェックしてください（必要があるときだけ）。</div>
+    <div class="checkbox-row" id="daySupportReasonCheckboxes"></div>
+  </div>
+</div>
 
-
-          </div>
-          <div class="field">
-            <label for="daySupportTime">日中支援の主な時間帯（任意）</label>
-            <input type="text" id="daySupportTime" placeholder="例）9:00〜15:00 の間、居室と共有スペースで継続的に見守り支援" />
-          </div>
-
-          
-
-          <div class="field">
-            <label for="support">本日の支援内容 (職員側)</label>
+<div class="field" style="margin-top:18px;">
+  <label for="support">本日の支援内容 (職員側)</label>
             <div class="small-text">
               ※職員側の記入欄：普段同じ内容でもOK。日中の様子と行った支援を簡潔に記入してください。<br>
               ②のチェック内容はこの欄に自動反映されます。必要に応じて「テンプレ挿入」で文章を追記できます。<br>
@@ -1106,7 +1224,7 @@
           <!-- ★保存（初心者OK） -->
           <div class="beginner-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#166534;">④ 記録を保存 <span class="beginner-badge">ここだけOK</span></div>
+              <div style="font-weight:800; color:#1e3a8a;">⑤ 記録を保存 <span class="beginner-badge">ここだけOK</span></div>
               <div class="beginner-hint">※終わったら保存。</div>
             </div>
 
@@ -1340,11 +1458,11 @@
     <!-- ✅ よく使う項目 管理（利用者別） -->
     <section class="card admin-card">
       <div class="card-title">
-        <span>③【日中に行った主な支援】 よく使う項目 管理（利用者別）</span>
+        <span>②③ よく使う項目 管理（利用者別）</span>
         <span class="admin-pill">管理（慣れた人向け）</span>
       </div>
       <div class="card-subtitle">
-        利用者ごとに「自動入力したい支援項目」と「日中に行った主な支援」の初期チェックを保存できます（利用者を選ぶと自動でONになります）。
+        利用者ごとに「② 自動入力」と「③ 日中に行った主な支援」の初期チェックを保存できます（保存した内容がある場合のみ自動反映されます）。入浴対応・体調管理はサブチェックも保存できます。
       </div>
 
       <div class="field">
@@ -1359,8 +1477,8 @@
 
       <div class="field" style="margin-top:10px;">
         <label>日中に行った主な支援（よく使う）</label>
-        <div class="checkbox-row" id="favDaySupportMainCheckboxes"></div>
-        <div class="small-text">※この利用者を選ぶと、フォームの【日中に行った主な支援】も自動でONになります。</div>
+        <div class="checkbox-row checkbox-grid" id="favDaySupportMainCheckboxes"></div>
+        <div class="small-text">※この利用者に保存した初期値がある場合、フォームのチェックに自動反映されます。</div>
       </div>
 
       <div class="btn-row">
@@ -1479,14 +1597,10 @@
           <label for="editRecorder">記録者</label>
           <select id="editRecorder"></select>
         </div>
-        <div class="field">
-          <label for="editMeal">食事の様子</label>
-          <input type="text" id="editMeal" placeholder="例）朝：完食 / 昼：7割 など" />
-        </div>
-
-        <div class="field vitals-compact" id="editAbnormalVitalsBox" style="margin-top:8px;">
-            <div class="vitals-title">体重・血圧・脈拍（任意）</div>
-            <div class="field-row-4" id="editAbnormalVitalsInputs" style="align-items:end;">
+<div class="field vitals-compact" id="editAbnormalVitalsBox" style="margin-top:8px;">
+            <div class="vitals-title">体重・血圧・脈拍（異常があった場合のみ）</div>
+            <div class="small-text" style="margin:4px 0 6px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
+<div class="field-row-4" id="editAbnormalVitalsInputs" style="align-items:end;">
               <div class="field" style="margin-bottom:0;">
                 <label for="editAbnormalWeight">体重（kg）</label>
                 <input type="text" id="editAbnormalWeight" placeholder="例：56.2" inputmode="decimal" />
@@ -1520,33 +1634,30 @@
             <option value="Ⅱ">日中支援加算Ⅱ</option>
           </select>
         </div>
+<div class="beginner-zone" style="margin-top:10px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+    <div style="font-weight:800; color:#1e3a8a;">④ 日中活動</div>
+    <div class="beginner-hint">※通所/欠席をチェック。</div>
+  </div>
 
-        <div class="field">
-          <label for="editDaySupportTime">日中支援の主な時間帯（任意）</label>
-          <input type="text" id="editDaySupportTime" placeholder="例）9:00〜15:00 の間、見守り支援" />
-        </div>
+  <div class="field" style="margin-top:8px;">
+    <label>日中活動（A型 / B型）</label>
+    <div class="checkbox-row" id="editDayActivityCheckboxes"></div>
+  </div>
 
-        <div class="daynote-template-box" style="margin-top:10px;">
-        <div class="field">
-          <label>日中活動</label>
-          <div class="checkbox-row" id="editDayActivityCheckboxes"></div>
-        </div>
+  <div class="field">
+    <label>【日中活動に行けなかった理由】（任意）</label>
+    <div class="checkbox-row" id="editDaySupportReasonCheckboxes"></div>
+  </div>
 
+  <div class="field">
+    <label>【日中に行った主な支援】</label>
+    <div class="checkbox-row checkbox-grid" id="editDaySupportMainCheckboxes"></div>
+  </div>
+</div>
 
-        <div class="field">
-          <label>【日中に行った主な支援】</label>
-          <div class="checkbox-row" id="editDaySupportMainCheckboxes"></div>
-        </div>
-
-        <div class="field">
-          <label>【日中活動に行けなかった理由】（任意）</label>
-          <div class="checkbox-row" id="editDaySupportReasonCheckboxes"></div>
-        </div>
-
-
-        </div>
-        <div class="field">
-          <label for="editSupport">本日の支援内容 (職員側)</label>
+<div class="field" style="margin-top:18px;">
+  <label for="editSupport">本日の支援内容 (職員側)</label>
           <textarea id="editSupport" rows="8"></textarea>
         </div>
 
@@ -1568,10 +1679,10 @@
 
           <div class="daynote-template-box" style="margin-top:6px;">
             <div class="daynote-template-head">
-              <div class="daynote-template-title">日中支援テンプレ（業務日誌へ追記）</div>
+              <div class="daynote-template-title">日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）</div>
             </div>
-            <div class="checkbox-row" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
-            <div class="small-text">※チェックすると「業務日誌」へ追記されます（追記のみ・消えません）。追記後はチェックが自動で戻ります。</div>
+            <div class="checkbox-row daynote-template-grid" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
+            <div class="small-text">※日中支援加算Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
           </div>
 
 
@@ -1600,7 +1711,7 @@
       </div>
       <div class="detail-modal-body">
         <div class="small-text" style="margin-bottom:8px;">
-          ※利用者を選んだ時に自動でONになるチェックをここで保存できます。
+          ※この利用者の「初期値（デフォルトでONにしたいチェック）」をここで保存できます。
         </div>
 
         <div class="field">
@@ -1610,7 +1721,7 @@
 
         <div class="field" style="margin-top:10px;">
           <label>日中に行った主な支援（よく使う）</label>
-          <div class="checkbox-row" id="favModalDaySupportMainCheckboxes"></div>
+          <div class="checkbox-row checkbox-grid" id="favModalDaySupportMainCheckboxes"></div>
         </div>
 
         <div class="btn-row" style="margin-top:10px;">
@@ -1662,7 +1773,7 @@
         <button type="button" class="detail-modal-close" id="dayNoteTplModalClose">×</button>
       </div>
       <div class="detail-modal-body">
-        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
+        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
 
         <div class="field-row">
           <div class="field">
@@ -1715,8 +1826,9 @@
     const DAY_SUPPORT_DEFAULT_KEY = "group_home_day_support_default_v1";
     const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
 
-    // ★日中支援テンプレ（業務日誌へ追記）
+    // ★日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）
     const DAY_NOTE_TEMPLATES_KEY = "group_home_day_note_templates_v1";
+    const DAY_NOTE_PATTERN_STATE_KEY = "group_home_day_note_pattern_state_v1";
     const VITALS_KEY = "group_home_vitals_v1";
     const DEFAULT_DAY_NOTE_TEMPLATES = [
       { id: "dnt_walk",   name: "散歩同行（余暇）", text: "【日中支援（余暇）】職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。" },
@@ -1731,6 +1843,7 @@
     const DEFAULT_AUTO_ITEM_DEFS = [
   { key: "med_combo",   label: "服薬対応（管理・確認）", defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。" },
   { key: "bathing",     label: "入浴対応",               defaultText: "入浴対応：声かけ・見守り・介助を実施。" },
+  { key: "health",      label: "体調管理",               defaultText: "体調管理：血圧・検温・症状確認等を実施。" },
   { key: "day_support", label: "日中支援加算",           defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
   { key: "clean_keep",  label: "清潔保持",               defaultText: "清潔保持：清潔保持のため、着替えについて声かけを行った。" }
 ];
@@ -1742,25 +1855,29 @@
     const DEFAULT_RECORDER_LIST = ["職員A","職員B","職員C","職員D","職員E","職員F"];
 
     // ★利用者別「よく使う項目」未設定時のデフォルト（② 自動入力）
-    const DEFAULT_FAV_AUTO_KEYS = ["med_combo", "bathing"];
+    const DEFAULT_FAV_AUTO_KEYS = [];
+
+    // ★利用者別「よく使う項目」未設定時のデフォルト（③ 主な支援の初期ON）
+    const DEFAULT_FAV_DAY_MAIN = [];
+
+
 
     // ★日中支援：主な支援（初期）
     const DEFAULT_DAY_SUPPORT_MAIN = [
-      "体調管理（検温・症状確認・安静の見守りなど）",
-      "食事の支援（準備・配膳・介助）",
+      "体調管理",
       "服薬管理・内服確認",
-      "水分・トイレの声かけ・介助",
-      "入浴・清潔保持の支援",
+      "水分摂取の声かけ",
+      "排泄（トイレ）の声かけ・介助",
       "入浴対応",
-      "行動や安全面の見守り",
-      "心理面の支援や相談",
-      "日中の活動支援・生活リズムの調整",
-      "外出・通院同行、受診付き添い（医療連携）",
-      "予定変更への対応（説明・納得支援・代替活動）",
-      "行動面の安定化（クールダウン、刺激調整、環境調整）",
-      "余暇活動支援（散歩、創作、趣味、社会参加の支援）",
-      "家事・生活環境の支援（掃除・洗濯・片付けなど）",
-      "金銭管理・買い物支援（支払い・管理など）",
+      "清潔保持（整容・着替え）",
+      "安全確認・見守り（事故予防）",
+      "生活リズム調整（起床・休息など）",
+      "相談・傾聴（心理面支援）",
+      "余暇活動支援（散歩・ゲーム・創作など）",
+      "家事支援（掃除・洗濯・片付け）",
+      "外出・買い物同行",
+      "通院・受診同行（医療連携）",
+      "金銭管理支援",
       "関係機関連絡・調整（家族・相談支援・通所先など）",
     ];
 
@@ -1856,8 +1973,15 @@
         }
 
         if (t.classList.contains(parentClass)) {
-          // 親OFFならサブを全解除
-          if (parent && !parent.checked) subs.forEach((s) => { s.checked = false; });
+          // 親OFFならサブを全解除／親ONでサブ0ならデフォON
+          if (parent && !parent.checked) {
+            subs.forEach((s) => { s.checked = false; });
+          } else if (parent && parent.checked) {
+            if (!subs.some((s) => s.checked)) {
+              // 入浴は「声かけ・見守り・介助」をデフォON
+              subs.forEach((s) => { s.checked = true; });
+            }
+          }
         }
 
         const subWrap = comp.querySelector(".day-main-subwrap");
@@ -1885,6 +2009,116 @@
     }
 
 
+    // ★複合チェック（体調管理：血圧/体重/検温/症状確認/安静見守り）
+    const HEALTH_MAIN_KEY = "体調管理";
+    const HEALTH_SUB_OPTIONS = ["血圧", "体重", "検温", "症状確認", "安静見守り"];
+
+    function isHealthMainItemText(text) {
+      return typeof text === "string" && /^体調管理/.test(text.trim());
+    }
+
+    function makeHealthCompositeHTML(mode = "main") {
+      const parentClass = mode === "edit" ? "edit-day-main-item edit-day-main-health" : "day-main-item day-main-health";
+      const subClass    = mode === "edit" ? "edit-day-main-health-sub" : "day-main-health-sub";
+      const baseLabel   = HEALTH_MAIN_KEY;
+
+      const subs = HEALTH_SUB_OPTIONS.map((t) => {
+        return `<label><input type="checkbox" class="${subClass}" value="${escapeHtmlAttr(t)}"> ${escapeHtml(t)}</label>`;
+      }).join("");
+
+      return `
+        <div class="day-main-composite">
+          <label><input type="checkbox" class="${parentClass}" value="${escapeHtmlAttr(HEALTH_MAIN_KEY)}"> ${escapeHtml(baseLabel)}</label>
+          <span class="day-main-subwrap disabled">
+            <span class="paren">（</span>
+            ${subs}
+            <span class="paren">）</span>
+          </span>
+        </div>
+      `;
+    }
+
+    function syncHealthCompositeInWrap(wrapEl, mode = "main") {
+      if (!wrapEl) return;
+      const parentSelector = mode === "edit" ? "input.edit-day-main-health" : "input.day-main-health";
+      const subSelector    = mode === "edit" ? "input.edit-day-main-health-sub" : "input.day-main-health-sub";
+
+      wrapEl.querySelectorAll(".day-main-composite").forEach((comp) => {
+        const parent = comp.querySelector(parentSelector);
+        const subWrap = comp.querySelector(".day-main-subwrap");
+        if (!parent || !subWrap) return;
+        subWrap.classList.toggle("disabled", !parent.checked);
+      });
+
+      // 親がOFFならサブもOFF（安全側）
+      wrapEl.querySelectorAll(".day-main-composite").forEach((comp) => {
+        const parent = comp.querySelector(parentSelector);
+        const subs = Array.from(comp.querySelectorAll(subSelector));
+        if (!parent) return;
+        if (!parent.checked) subs.forEach((s) => { s.checked = false; });
+      });
+    }
+
+    function bindHealthCompositeHandlersOnce(wrapId, mode = "main") {
+      const wrapEl = document.getElementById(wrapId);
+      if (!wrapEl) return;
+      const flag = mode === "edit" ? "healthBoundEdit" : "healthBoundMain";
+      if (wrapEl.dataset[flag] === "1") return;
+      wrapEl.dataset[flag] = "1";
+
+      const parentClass = mode === "edit" ? "edit-day-main-health" : "day-main-health";
+      const subClass    = mode === "edit" ? "edit-day-main-health-sub" : "day-main-health-sub";
+
+      wrapEl.addEventListener("change", (e) => {
+        const t = e.target;
+        if (!t) return;
+        const comp = t.closest(".day-main-composite");
+        if (!comp) return;
+
+        const parent = comp.querySelector(`input.${parentClass}`);
+        const subs = Array.from(comp.querySelectorAll(`input.${subClass}`));
+
+        if (t.classList.contains(subClass)) {
+          const any = subs.some((s) => s.checked);
+          if (parent) parent.checked = any;
+        }
+
+        if (t.classList.contains(parentClass)) {
+          if (parent && !parent.checked) {
+            subs.forEach((s) => { s.checked = false; });
+          } else if (parent && parent.checked) {
+            // 親ONでサブ0なら「血圧」をデフォON
+            if (!subs.some((s) => s.checked)) {
+              const bp = subs.find((x) => x.value === "血圧");
+              if (bp) bp.checked = true;
+            }
+          }
+        }
+
+        const subWrap = comp.querySelector(".day-main-subwrap");
+        if (subWrap && parent) subWrap.classList.toggle("disabled", !parent.checked);
+      });
+    }
+
+    function getHealthSubSelected(mode = "main") {
+      const sel = mode === "edit" ? ".edit-day-main-health-sub:checked" : ".day-main-health-sub:checked";
+      return Array.from(document.querySelectorAll(sel)).map((x) => x.value);
+    }
+
+    function applyHealthSubSelected(arr, mode = "main") {
+      const sel = mode === "edit" ? ".edit-day-main-health-sub" : ".day-main-health-sub";
+      const set = new Set(Array.isArray(arr) ? arr : []);
+      document.querySelectorAll(sel).forEach((cb) => { cb.checked = set.has(cb.value); });
+
+      const parentSel = mode === "edit" ? ".edit-day-main-health" : ".day-main-health";
+      const parent = document.querySelector(parentSel);
+      if (parent) parent.checked = (set.size > 0);
+
+      const wrapId = mode === "edit" ? "editDaySupportMainCheckboxes" : "daySupportMainCheckboxes";
+      syncHealthCompositeInWrap(document.getElementById(wrapId), mode);
+    }
+
+
 
 
     let records = [];
@@ -1893,6 +2127,9 @@
     let currentTags = [];
     let templates = [];
     let dayNoteTemplates = [];
+    let dayNotePatternState = {};
+    let dayNoteInsertedMap = { note: {}, editNote: {} };
+
 
     // 自動入力項目 / タグ
     let AUTO_ITEM_DEFS = [];
@@ -1936,7 +2173,7 @@
 
     function saveTags() { saveJSON(TAGS_KEY, TAG_LIST); }
 
-    // ===== 日中支援テンプレ（業務日誌へ追記） =====
+    // ===== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記） =====
     function loadDayNoteTemplates() {
       const parsed = loadJSON(DAY_NOTE_TEMPLATES_KEY, null);
       if (Array.isArray(parsed) && parsed.length) {
@@ -2000,6 +2237,148 @@
       textareaEl.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
+
+
+    // ===== 日中支援テンプレ：パターン（①②③） =====
+    function loadDayNotePatternState(){
+      const raw = localStorage.getItem(DAY_NOTE_PATTERN_STATE_KEY);
+      if(!raw) return {};
+      try{
+        const obj = JSON.parse(raw);
+        return (obj && typeof obj === 'object') ? obj : {};
+      }catch{
+        return {};
+      }
+    }
+    function saveDayNotePatternState(){
+      localStorage.setItem(DAY_NOTE_PATTERN_STATE_KEY, JSON.stringify(dayNotePatternState || {}));
+    }
+    function getDayNotePat(tplId){
+      const v = (dayNotePatternState || {})[tplId];
+      const n = parseInt(v, 10);
+      return (n === 2 || n === 3) ? n : 1;
+    }
+    function setDayNotePat(tplId, pat){
+      if(!tplId) return;
+      const n = (pat === 2 || pat === 3) ? pat : 1;
+      dayNotePatternState = dayNotePatternState || {};
+      dayNotePatternState[tplId] = n;
+      saveDayNotePatternState();
+    }
+
+    function _fill(text, re, fill){
+      const v = String(fill || '').trim();
+      if(!v) return text;
+      return String(text || '').replace(re, (m) => {
+        // m 末尾の句点を維持
+        const hasMaru = /。$/.test(m);
+        const head = m.replace(/＿＿。?$/, '');
+        return head + v + (hasMaru ? '。' : '');
+      });
+    }
+
+    function getDayNotePatternText(tpl, pat){
+      const id = String(tpl?.id || '');
+      const base = String(tpl?.text || '').trimEnd();
+      const p = (pat === 2 || pat === 3) ? pat : 1;
+      if(!base) return '';
+
+      // 個別最適（デフォルトテンプレはここで綺麗に差し替え）
+      if(id === 'dnt_walk'){
+        const fills = {
+          1: '落ち着いた様子で歩行できた',
+          2: '途中で休憩を挟みながら無理なく歩行できた',
+          3: '会話が見られ意欲的に参加できた'
+        };
+        return _fill(base, /本人の様子：＿＿。?/g, fills[p]);
+      }
+      if(id === 'dnt_shop'){
+        const fills = {
+          1: '購入希望を確認し、落ち着いて商品選択できた',
+          2: '商品選択に迷いがあり、声かけで整理しながら選択できた',
+          3: '会話しながら意欲的に商品選択できた'
+        };
+        return _fill(base, /本人の希望確認：＿＿。?/g, fills[p]);
+      }
+      if(id === 'dnt_leisure'){
+        const fills = {
+          1: '穏やかに過ごされ、気分転換となった',
+          2: '集中して取り組めた',
+          3: '途中で休憩を挟みながら継続できた'
+        };
+        return _fill(base, /本人の様子：＿＿。?/g, fills[p]);
+      }
+      if(id === 'dnt_consult'){
+        const fills = {
+          1: '生活面の不安について相談あり',
+          2: '対人面の悩みについて相談あり',
+          3: '予定変更に伴う不安について相談あり'
+        };
+        return _fill(base, /内容：＿＿。?/g, fills[p]);
+      }
+      if(id === 'dnt_outing'){
+        const suffix = {
+          1: '本人は落ち着いて移動できた。',
+          2: '途中で不安がみられ、声かけで落ち着いた。',
+          3: '体調変化なく実施できた。'
+        };
+        return base + (base.endsWith('。') ? '' : '。') + '\n' + suffix[p];
+      }
+      if(id === 'dnt_support'){
+        const suffix = {
+          1: '声かけにより日中の過ごし方を整えた。',
+          2: '休息も確保し、無理のない範囲で調整した。',
+          3: '活動の提案により意欲が見られた。'
+        };
+        return base + (base.endsWith('。') ? '' : '。') + '\n' + suffix[p];
+      }
+
+      // 汎用：よくある「＿＿」を自動補完（ユーザー作成テンプレも最低限対応）
+      const genericFills = {
+        1: '落ち着いた様子で参加できた',
+        2: '途中で休憩を挟みながら無理なく参加できた',
+        3: '会話が見られ意欲的に参加できた'
+      };
+      let out = base;
+      // 本人の様子
+      out = _fill(out, /本人の様子：＿＿。?/g, genericFills[p]);
+      // 希望確認
+      out = _fill(out, /本人の希望確認：＿＿。?/g, genericFills[p]);
+      // 内容
+      out = _fill(out, /内容：＿＿。?/g, genericFills[p]);
+      // もし置換できない場合は末尾に1行だけ足す
+      if(/＿＿/.test(out)){
+        out = out.replace(/＿＿/g, genericFills[p]);
+      }
+      if(out === base){
+        const suffix = {
+          1: '本人は落ち着いた様子で参加できた。',
+          2: '途中で休憩を挟みながら無理なく実施できた。',
+          3: '会話が見られ意欲的に参加できた。'
+        };
+        out = base + (base.endsWith('。') ? '' : '。') + '\n' + suffix[p];
+      }
+      return out;
+    }
+
+    function removeDayNoteTplAny(ta, tpl, areaKey){
+      if(!ta || !tpl) return;
+      const id = String(tpl.id || '');
+      if(!id) return;
+      dayNoteInsertedMap[areaKey] = dayNoteInsertedMap[areaKey] || {};
+      const prev = dayNoteInsertedMap[areaKey][id];
+      if(prev && hasTextBlock(ta, prev)) removeTextFromTextarea(ta, prev);
+      // 念のため：全パターン＋元テキストも除去を試す
+      [1,2,3].forEach((p) => {
+        const t = getDayNotePatternText(tpl, p);
+        if(t && hasTextBlock(ta, t)) removeTextFromTextarea(ta, t);
+      });
+      if(tpl.text && hasTextBlock(ta, tpl.text)) removeTextFromTextarea(ta, tpl.text);
+      delete dayNoteInsertedMap[areaKey][id];
+    }
+
+    
+    
     function renderDayNoteTemplateChecks() {
 
       const targets = [
@@ -2023,26 +2402,85 @@
           return;
         }
 
+        // areaKey: note / editNote
+        dayNoteInsertedMap[textareaId] = dayNoteInsertedMap[textareaId] || {};
+
         list.forEach((tpl) => {
-          const label = document.createElement("label");
-          label.innerHTML = `<input type="checkbox" class="day-note-tpl-check" value="${tpl.id}"> ${escapeHtml(tpl.name)}`;
-          const input = label.querySelector("input");
-          if (input) {
-            input.addEventListener("change", () => {
-              if (input.checked) {
-                // すでに同じテンプレ文が入っている場合は二重追記しない
-                if (!hasTextBlock(ta, tpl.text)) appendTextToTextarea(ta, tpl.text);
+          const comp = document.createElement("div");
+          comp.className = "dn-compound";
+
+          const patName = `dnt_pat_${tpl.id}_${wrapId}`;
+          const curPat = getDayNotePat(tpl.id);
+
+          comp.innerHTML = `
+            <label><input type="checkbox" class="day-note-tpl-check" value="${escapeHtmlAttr(tpl.id)}"> ${escapeHtml(tpl.name)}</label>
+            <span class="dn-subwrap disabled">
+              <span class="paren">（</span>
+              <label><input type="radio" class="day-note-tpl-pat" name="${escapeHtmlAttr(patName)}" value="1">①</label>
+              <label><input type="radio" class="day-note-tpl-pat" name="${escapeHtmlAttr(patName)}" value="2">②</label>
+              <label><input type="radio" class="day-note-tpl-pat" name="${escapeHtmlAttr(patName)}" value="3">③</label>
+              <span class="paren">）</span>
+            </span>
+          `;
+
+          const parent = comp.querySelector(".day-note-tpl-check");
+          const subWrap = comp.querySelector(".dn-subwrap");
+          const radios = Array.from(comp.querySelectorAll(".day-note-tpl-pat"));
+          const radio = radios.find((r) => String(r.value) === String(curPat)) || radios[0];
+          if (radio) radio.checked = true;
+
+          const syncUI = () => {
+            if (subWrap && parent) subWrap.classList.toggle("disabled", !parent.checked);
+          };
+
+          const applyInsert = () => {
+            const selRadio = radios.find((r) => r.checked) || radios[0];
+            const pat = parseInt(selRadio?.value || "1", 10) || 1;
+            setDayNotePat(tpl.id, (pat === 2 || pat === 3) ? pat : 1);
+
+            if (!ta) return;
+
+            // 既存のこのテンプレ文（全パターン）を削除 → 選択中パターンを追記
+            removeDayNoteTplAny(ta, tpl, textareaId);
+            const addText = getDayNotePatternText(tpl, getDayNotePat(tpl.id));
+            if (!addText) return;
+            if (!hasTextBlock(ta, addText)) appendTextToTextarea(ta, addText);
+            dayNoteInsertedMap[textareaId][tpl.id] = addText;
+          };
+
+          const applyRemove = () => {
+            if (!ta) return;
+            removeDayNoteTplAny(ta, tpl, textareaId);
+          };
+
+          comp.addEventListener("change", (e) => {
+            const t = e.target;
+            if (!t) return;
+
+            // パターン選択（サブ）→ 親ON + 追記
+            if (t.classList.contains("day-note-tpl-pat")) {
+              if (parent && !parent.checked) parent.checked = true;
+              syncUI();
+              applyInsert();
+              return;
+            }
+
+            // 親のON/OFF
+            if (t.classList.contains("day-note-tpl-check")) {
+              syncUI();
+              if (parent && parent.checked) {
+                applyInsert();
               } else {
-                // チェックを外したら、テンプレ由来の文章だけを削除
-                removeTextFromTextarea(ta, tpl.text);
+                applyRemove();
               }
-            });
-          }
-          wrap.appendChild(label);
+            }
+          });
+
+          syncUI();
+          wrap.appendChild(comp);
         });
       });
     }
-
 
     // ---- 編集モーダル（共通） ----
     function openDayNoteTemplateModal() {
@@ -2218,6 +2656,11 @@
           changed = true;
         }
 
+        if (!hasKey("health")) {
+          updated.push({ key: "health", label: "体調管理", defaultText: "体調管理：血圧・検温・症状確認等を実施。" });
+          changed = true;
+        }
+
         // ⑤ 旧キーが残っていれば削除（重複防止）
         const beforeLen = updated.length;
         updated = updated.filter((d) => d.key !== "med_manage" && d.key !== "oral_check");
@@ -2302,7 +2745,7 @@ function saveAutoItemDefs() {
 
         // 旧形式：配列（autoKeysのみ）→ 新形式へ変換
         if (Array.isArray(v)) {
-          out[name] = { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [] };
+          out[name] = { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] };
           return;
         }
         // 新形式：オブジェクト
@@ -2311,10 +2754,13 @@ function saveAutoItemDefs() {
             autoKeys: mapAutoKeys(v.autoKeys),
             dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
             autoBathSubs: Array.isArray(v.autoBathSubs) ? v.autoBathSubs : [],
+            autoHealthSubs: Array.isArray(v.autoHealthSubs) ? v.autoHealthSubs : [],
+            dayBathingSubs: Array.isArray(v.dayBathingSubs) ? v.dayBathingSubs : [],
+            dayHealthSubs: Array.isArray(v.dayHealthSubs) ? v.dayHealthSubs : [],
           };
           return;
         }
-        out[name] = { autoKeys: [], dayMain: [], autoBathSubs: [] };
+        out[name] = { autoKeys: [], dayMain: [], autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] };
       });
       return out;
     }
@@ -2336,17 +2782,20 @@ function saveAutoItemDefs() {
         return Array.from(new Set(mapped));
       };
 
-      if (Array.isArray(v)) return { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [] }; // 旧形式対策
+      if (Array.isArray(v)) return { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] }; // 旧形式対策
       if (v && typeof v === "object") {
         return {
           autoKeys: mapAutoKeys(v.autoKeys),
           dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
           autoBathSubs: Array.isArray(v.autoBathSubs) ? v.autoBathSubs : [],
+          autoHealthSubs: Array.isArray(v.autoHealthSubs) ? v.autoHealthSubs : [],
+          dayBathingSubs: Array.isArray(v.dayBathingSubs) ? v.dayBathingSubs : [],
+          dayHealthSubs: Array.isArray(v.dayHealthSubs) ? v.dayHealthSubs : [],
         };
       }
 
       // 未設定ならデフォルト（② 自動入力の初期ON）
-      return { autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice(), dayMain: [], autoBathSubs: [] };
+      return { autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice(), dayMain: (DEFAULT_FAV_DAY_MAIN || []).slice(), autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] };
     }
 
     function applyFavToMainCheckboxes(name) {
@@ -2363,6 +2812,7 @@ function saveAutoItemDefs() {
 
       // 入浴（② 自動入力）複合チェックの有効/無効を同期（利用者切替で親が自動ONになるため）
       setupAutoBathCompound();
+      setupAutoHealthCompound();
 
       // 入浴（② 自動入力）サブチェック：利用者別に復元（未設定ならデフォルト）
       const __autoWrap = document.getElementById("autoItemCheckboxes");
@@ -2385,11 +2835,51 @@ function saveAutoItemDefs() {
         }
       }
 
+
+      // 体調管理（② 自動入力）サブチェック：利用者別に復元（未設定ならデフォルト）
+      const __autoWrapH = document.getElementById("autoItemCheckboxes");
+      if (__autoWrapH) {
+        const subs = Array.from(__autoWrapH.querySelectorAll(".auto-health-sub"));
+        if (autoSet.has("health")) {
+          if (hasStored) {
+            const saved = Array.isArray(fav.autoHealthSubs) ? fav.autoHealthSubs : [];
+            if (saved.length) {
+              subs.forEach((cb) => { cb.checked = saved.includes(cb.dataset.sub); });
+            } else {
+              subs.forEach((cb) => { cb.checked = false; });
+            }
+          } else {
+            // ★デフォルト時：未設定ならサブは未チェック（利用者別設定で指定）
+            subs.forEach((cb) => { cb.checked = false; });
+          }
+        } else {
+          subs.forEach((cb) => { cb.checked = false; });
+        }
+      }
+
       // 日中支援：主な支援
       const daySet = new Set(fav.dayMain);
       document.querySelectorAll(".day-main-item").forEach((cb) => {
         cb.checked = daySet.has(cb.value);
       });
+
+      // 入浴（③ 主な支援）サブチェック：利用者別に復元（未設定ならデフォルト）
+      if (daySet.has(BATHING_MAIN_KEY)) {
+        const saved = Array.isArray(fav.dayBathingSubs) ? fav.dayBathingSubs : [];
+        const subs = (saved && saved.length) ? saved : [];
+        applyBathingSubSelected(subs, "main");
+      } else {
+        applyBathingSubSelected([], "main");
+      }
+
+      // 体調管理（③ 主な支援）サブチェック：利用者別に復元（未設定ならデフォルト）
+      if (daySet.has(HEALTH_MAIN_KEY)) {
+        const saved = Array.isArray(fav.dayHealthSubs) ? fav.dayHealthSubs : [];
+        const subs = (saved && saved.length) ? saved : [];
+        applyHealthSubSelected(subs, "main");
+      } else {
+        applyHealthSubSelected([], "main");
+      }
 
       // ② 自動入力（支援項目）→ 本日の支援内容へ反映
       syncAutoItemsToSupport();
@@ -2494,7 +2984,8 @@ function saveAutoItemDefs() {
       const prevReason = new Set(Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value));
 
             const prevBathingSub = Array.from(document.querySelectorAll(".day-main-bathing-sub:checked")).map((x) => x.value);
-const conf = getDaySupportForResident(resident || "");
+      const prevHealthSub = Array.from(document.querySelectorAll(".day-main-health-sub:checked")).map((x) => x.value);
+      const conf = getDaySupportForResident(resident || "");
       DAY_SUPPORT_MAIN_LIST = conf.main.slice();
       DAY_SUPPORT_REASON_LIST = conf.reason.slice();
 
@@ -2509,6 +3000,7 @@ const conf = getDaySupportForResident(resident || "");
 
       // 複合（入浴対応）サブチェックも復元
       applyBathingSubSelected(prevBathingSub, "main");
+      applyHealthSubSelected(prevHealthSub, "main");
 
 
       // チェック内容の自動反映（業務日誌欄）
@@ -2764,7 +3256,7 @@ if (d0 < weekStart || d0 > today0) return false;
         if (keyword) {
           const tagsText = (r.tags || []).join(" ");
           const tagsTextHash = (r.tags || []).map(t => "#" + t).join(" ");
-          const target = (((r.support || "") + " " + (r.note || "") + " " + (r.meal || "") + " " + tagsText + " " + tagsTextHash)).toLowerCase();
+          const target = (((r.support || "") + " " + (r.note || "") + " " + tagsText + " " + tagsTextHash)).toLowerCase();
           if (!target.includes(keyword)) return false;
         }
 
@@ -2828,7 +3320,8 @@ if (record.hasSpecialNote) {
 
 tr.appendChild(tdResident);
 const tdDayMain = document.createElement("td");
-        const mainItems = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
+        const mainItemsRaw = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
+        const mainItems = formatDaySupportMainItems(mainItemsRaw, record.daySupportBathingSubItems, record.daySupportHealthSubItems);
         if (mainItems.length) {
           const wrap = document.createElement("div");
           wrap.className = "list-support-tags";
@@ -2924,11 +3417,7 @@ tr.appendChild(tdSupport);
       if (_ment) _ment.value = "安定";
 
       const daySupportType = document.getElementById("daySupportType");
-      if (daySupportType) daySupportType.value = "";
-      const daySupportTime = document.getElementById("daySupportTime");
-      if (daySupportTime) daySupportTime.value = "";
-
-      currentTags = [];
+      if (daySupportType) daySupportType.value = "";      currentTags = [];
       updateTagUI();
       syncQuickButtonsAll();
 
@@ -2941,9 +3430,10 @@ tr.appendChild(tdSupport);
       // 入浴（② 自動入力）サブチェックもリセット
       document.querySelectorAll(".auto-bath-sub").forEach((el) => { el.checked = false; });
       setupAutoBathCompound();
+      setupAutoHealthCompound();
       syncAutoItemsToSupport();
 
-      // 日中支援テンプレ（業務日誌へ追記）のチェックもリセット
+      // 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）のチェックもリセット
       document.querySelectorAll("#dayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // 日中支援チェックリセット
@@ -3158,10 +3648,7 @@ function handleRestoreFile(file) {
         return;
       }
 
-      const daySupportType = document.getElementById("daySupportType")?.value || "";
-      const daySupportTime = document.getElementById("daySupportTime")?.value || "";
-
-      const dayActivityItems = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((el) => el.value);
+      const daySupportType = document.getElementById("daySupportType")?.value || "";      const dayActivityItems = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((el) => el.value);
 
       const daySupportMainItems = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
       const daySupportReasonItems = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
@@ -3170,19 +3657,16 @@ function handleRestoreFile(file) {
         id: Date.now().toString(),
         date,
         resident,
-        recorder: document.getElementById("recorder")?.value || "",
-        meal: document.getElementById("meal").value,
-        medTaken: false,
+        recorder: document.getElementById("recorder")?.value || "",        medTaken: false,
         support: document.getElementById("support").value,
         note: document.getElementById("note").value,
         hasSpecialNote: !!document.getElementById("hasSpecialNote")?.checked,
         tags: [...currentTags],
-        daySupportType,
-        daySupportTime,
-        dayActivityItems,
+        daySupportType,        dayActivityItems,
         daySupportMainItems,
         daySupportReasonItems,
         daySupportBathingSubItems: getBathingSubSelected("main"),
+        daySupportHealthSubItems: getHealthSubSelected("main"),
         abnormalVitalsOn: !!((document.getElementById("abnormalWeight")?.value || "").trim() || (document.getElementById("abnormalBPsys")?.value || "").trim() || (document.getElementById("abnormalBPdia")?.value || "").trim() || (document.getElementById("abnormalPulse")?.value || "").trim()),
         abnormalWeight: (document.getElementById("abnormalWeight")?.value || "").trim(),
         abnormalBPsys: (document.getElementById("abnormalBPsys")?.value || "").trim(),
@@ -3239,6 +3723,11 @@ function handleRestoreFile(file) {
               return;
             }
 
+            if (key === "health") {
+              const t = buildAutoHealthSentence();
+              if (t) parts.push(t);
+              return;
+            }
             const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
             if (!def) return;
             let text = (def.defaultText || "").trim();
@@ -3334,9 +3823,7 @@ const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + recor
 
       addRow("日付：", record.date || "");
       addRow("利用者：", record.resident || "");
-      addRow("記録者：", record.recorder || "");
-      addRow("食事の様子：", record.meal || "");
-// バイタル（体重・血圧・脈拍）
+      addRow("記録者：", record.recorder || "");// バイタル（体重・血圧・脈拍）
       if ((record.abnormalVitalsOn || record.abnormalWeight || record.abnormalBPsys || record.abnormalBPdia || record.abnormalPulse)) {
         const parts = [];
         if (record.abnormalWeight) parts.push(`体重 ${record.abnormalWeight}kg`);
@@ -3347,12 +3834,9 @@ const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + recor
         addRow("バイタル：", parts.join("、"));
       }
       addRow("タグ：", tagsText);
-      addRow("日中支援加算区分：", daySupportTypeLabel);
-      addRow("日中支援の時間帯：", record.daySupportTime || "");
-
-      // ✅ ここがタグ表示
+      addRow("日中支援加算区分：", daySupportTypeLabel);      // ✅ ここがタグ表示
       addTagRow("日中活動：", record.dayActivityItems, "activity");
-      addTagRow("主な支援：", formatDaySupportMainItems(record.daySupportMainItems, record.daySupportBathingSubItems), "main");
+      addTagRow("主な支援：", formatDaySupportMainItems(record.daySupportMainItems, record.daySupportBathingSubItems, record.daySupportHealthSubItems), "main");
       addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
       // 特記事項あり（一覧から一瞬で分かるように）
       addRow("特記事項：", record.hasSpecialNote ? "あり" : "なし");
@@ -3364,12 +3848,17 @@ addMultiline("業務日誌・利用者の活動状況（特記事項含む）：
 
 
     
-    function formatDaySupportMainItems(items, bathingSubItems) {
+    function formatDaySupportMainItems(items, bathingSubItems, healthSubItems) {
       const arr = Array.isArray(items) ? items.slice() : [];
-      const subs = Array.isArray(bathingSubItems) ? bathingSubItems.filter(Boolean) : [];
+      const bathSubs = Array.isArray(bathingSubItems) ? bathingSubItems.filter(Boolean) : [];
+      const healthSubs = Array.isArray(healthSubItems) ? healthSubItems.filter(Boolean) : [];
+
       return arr.map((x) => {
         if (x === BATHING_MAIN_KEY) {
-          return subs.length ? `${BATHING_MAIN_KEY}（${subs.join("・")}）` : BATHING_MAIN_KEY;
+          return bathSubs.length ? `${BATHING_MAIN_KEY}（${bathSubs.join("・")}）` : BATHING_MAIN_KEY;
+        }
+        if (x === HEALTH_MAIN_KEY) {
+          return healthSubs.length ? `${HEALTH_MAIN_KEY}（${healthSubs.join("・")}）` : HEALTH_MAIN_KEY;
         }
         return x;
       });
@@ -3767,12 +4256,31 @@ function closeRecordDetail() {
           return;
         }
 
+        // 体調管理：複合チェック（血圧/体重/検温/症状確認/安静見守り）
+        if (def.key === "health") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="auto-item" value="health"> ${escapeHtml(def.label || "体調管理")}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="auto-health-sub" data-sub="bp" data-label="血圧">血圧</label>
+              <label><input type="checkbox" class="auto-health-sub" data-sub="wt" data-label="体重">体重</label>
+              <label><input type="checkbox" class="auto-health-sub" data-sub="temp" data-label="検温">検温</label>
+              <label><input type="checkbox" class="auto-health-sub" data-sub="symp" data-label="症状確認">症状確認</label>
+              <label><input type="checkbox" class="auto-health-sub" data-sub="rest" data-label="安静見守り">安静見守り</label>
+            </span>
+          `;
+          wrap.appendChild(box);
+          return;
+        }
+
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="auto-item" value="${def.key}"> ${escapeHtml(def.label)}`;
         wrap.appendChild(label);
       });
 
       setupAutoBathCompound();
+      setupAutoHealthCompound();
       // ②のチェック操作だけで「本日の支援内容」を常に最新にする（ボタン無しの完全自動）
       setupAutoSupportAutoSync();
       syncAutoItemsToSupport();
@@ -3816,6 +4324,41 @@ function closeRecordDetail() {
       sync();
     }
 
+
+
+    // 体調管理（② 自動入力）複合チェック：親OFFならサブ無効＆OFF／サブONなら親ON
+    function setupAutoHealthCompound() {
+      const wrap = document.getElementById("autoItemCheckboxes");
+      if (!wrap) return;
+
+      const parent = wrap.querySelector('.auto-item[value="health"]');
+      const subs = Array.from(wrap.querySelectorAll('.auto-health-sub'));
+      if (!parent || subs.length === 0) return;
+
+      const sync = () => {
+        const on = !!parent.checked;
+        subs.forEach((cb) => {
+          cb.disabled = !on;
+          const lbl = cb.closest("label");
+          if (lbl) lbl.style.opacity = on ? "1" : "0.55";
+          if (!on) cb.checked = false;
+        });
+      };
+
+      if (parent.dataset.wired === "1") { sync(); return; }
+      parent.dataset.wired = "1";
+
+      parent.addEventListener("change", sync);
+      subs.forEach((cb) => {
+        cb.addEventListener("change", () => {
+          if (cb.checked && !parent.checked) parent.checked = true;
+          sync();
+        });
+      });
+
+      sync();
+    }
+
 function buildAutoBathSentence() {
       const wrap = document.getElementById("autoItemCheckboxes");
       if (!wrap) return "";
@@ -3837,6 +4380,21 @@ function buildAutoBathSentence() {
       return `入浴対応：${picked.join("・")}を実施。`;
     }
 
+
+
+
+    function buildAutoHealthSentence() {
+      const wrap = document.getElementById("autoItemCheckboxes");
+      if (!wrap) return "";
+
+      const parent = wrap.querySelector('.auto-item[value="health"]');
+      if (!parent || !parent.checked) return "";
+
+      const subs = Array.from(wrap.querySelectorAll('.auto-health-sub'));
+      const picked = subs.filter((cb) => cb.checked).map((cb) => cb.dataset.label || "").filter(Boolean);
+
+      return picked.length ? `体調管理：${picked.join("・")}を実施。` : "体調管理を実施。";
+    }
 
     // ===== ② 自動入力（支援項目）→ 本日の支援内容へ完全自動反映 =====
     // ※表示用テキストに【② 自動入力】/【/② 自動入力】を出さないよう、不可視タグで内部管理します
@@ -3863,6 +4421,11 @@ function buildAutoBathSentence() {
       checkedKeys.forEach((key) => {
         if (key === "bathing") {
           const t = buildAutoBathSentence();
+          if (t) lines.push(t);
+          return;
+        }
+        if (key === "health") {
+          const t = buildAutoHealthSentence();
           if (t) lines.push(t);
           return;
         }
@@ -3927,7 +4490,7 @@ function buildAutoBathSentence() {
         wrap.addEventListener("change", (e) => {
           const t = e?.target;
           if (!t || !t.classList) return;
-          if (t.classList.contains("auto-item") || t.classList.contains("auto-bath-sub")) {
+          if (t.classList.contains("auto-item") || t.classList.contains("auto-bath-sub") || t.classList.contains("auto-health-sub")) {
             syncAutoItemsToSupport();
           }
         });
@@ -3975,8 +4538,8 @@ function buildAutoBathSentence() {
     // ===== 日中支援（フォーム）チェック生成 =====
     function renderDaySupportMainCheckboxes() {
       const wrap = document.getElementById("daySupportMainCheckboxes");
-      if (!wrap) return;
       wrap.innerHTML = "";
+
       DAY_SUPPORT_MAIN_LIST.forEach((text) => {
         if (isBathingMainItemText(text)) {
           const holder = document.createElement("div");
@@ -3984,15 +4547,33 @@ function buildAutoBathSentence() {
           wrap.appendChild(holder.firstElementChild);
           return;
         }
+        if (isHealthMainItemText(text)) {
+          const holder = document.createElement("div");
+          holder.innerHTML = makeHealthCompositeHTML("main");
+          wrap.appendChild(holder.firstElementChild);
+          return;
+        }
+
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="day-main-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
         wrap.appendChild(label);
       });
 
-      // 複合チェックのイベント（1回だけ）
       bindBathingCompositeHandlersOnce("daySupportMainCheckboxes", "main");
       syncBathingCompositeInWrap(wrap, "main");
-    }function renderDaySupportReasonCheckboxes() {
+
+      bindHealthCompositeHandlersOnce("daySupportMainCheckboxes", "main");
+      syncHealthCompositeInWrap(wrap, "main");
+
+      // チェック変更で自動追記（業務日誌）
+      wrap.querySelectorAll("input[type=checkbox]").forEach((el) => {
+        el.addEventListener("change", () => {
+          updateAutoNoteMain();
+        });
+      });
+    }
+
+    function renderDaySupportReasonCheckboxes() {
       const wrap = document.getElementById("daySupportReasonCheckboxes");
       if (!wrap) return;
       wrap.innerHTML = "";
@@ -4381,53 +4962,233 @@ function buildAutoBathSentence() {
       if (!resSel.value && resident) resSel.value = resident;
 
       const fav = getFavForResident(resident);
-      const autoSet = new Set(fav.autoKeys);
-      const daySet  = new Set(fav.dayMain);
+      const autoSet = new Set(fav.autoKeys || []);
+      const daySet  = new Set(fav.dayMain || []);
 
-      // 自動入力（支援項目）
+      const savedAutoBathSubs = Array.isArray(fav.autoBathSubs) ? fav.autoBathSubs : [];
+      const savedAutoHealthSubs = Array.isArray(fav.autoHealthSubs) ? fav.autoHealthSubs : [];
+      const savedDayBathSubs = Array.isArray(fav.dayBathingSubs) ? fav.dayBathingSubs : [];
+      const savedDayHealthSubs = Array.isArray(fav.dayHealthSubs) ? fav.dayHealthSubs : [];
+
+      const setupCompound = (parent, subs, defaultSub) => {
+        if (!parent || !subs || subs.length === 0) return;
+        const sync = () => {
+          const on = !!parent.checked;
+          subs.forEach((cb) => {
+            cb.disabled = !on;
+            const lbl = cb.closest("label");
+            if (lbl) lbl.style.opacity = on ? "1" : "0.55";
+            if (!on) cb.checked = false;
+          });
+          if (on && !subs.some((cb) => cb.checked) && defaultSub) {
+            const d = subs.find((cb) => (cb.dataset.sub || cb.value) === defaultSub);
+            if (d) d.checked = true;
+          }
+        };
+
+        parent.addEventListener("change", sync);
+        subs.forEach((cb) => {
+          cb.addEventListener("change", () => {
+            if (cb.checked && !parent.checked) parent.checked = true;
+            sync();
+          });
+        });
+
+        sync();
+      };
+
+      // ② 自動入力（支援項目）
       autoBox.innerHTML = "";
       AUTO_ITEM_DEFS.forEach((def) => {
+        if (def.key === "bathing") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="fav-item" value="bathing"> ${escapeHtml(def.label || "入浴対応")}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="fav-auto-bath-sub" data-sub="prompt" data-label="声かけ">声かけ</label>
+              <label><input type="checkbox" class="fav-auto-bath-sub" data-sub="watch" data-label="見守り">見守り</label>
+              <label><input type="checkbox" class="fav-auto-bath-sub" data-sub="assist" data-label="介助">介助</label>
+            </span>
+          `;
+          autoBox.appendChild(box);
+          return;
+        }
+        if (def.key === "health") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="fav-item" value="health"> ${escapeHtml(def.label || "体調管理")}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="fav-auto-health-sub" data-sub="bp" data-label="血圧">血圧</label>
+              <label><input type="checkbox" class="fav-auto-health-sub" data-sub="wt" data-label="体重">体重</label>
+              <label><input type="checkbox" class="fav-auto-health-sub" data-sub="temp" data-label="検温">検温</label>
+              <label><input type="checkbox" class="fav-auto-health-sub" data-sub="symp" data-label="症状確認">症状確認</label>
+              <label><input type="checkbox" class="fav-auto-health-sub" data-sub="rest" data-label="安静見守り">安静見守り</label>
+            </span>
+          `;
+          autoBox.appendChild(box);
+          return;
+        }
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="fav-item" value="${def.key}"> ${escapeHtml(def.label)}`;
         autoBox.appendChild(label);
       });
+
       autoBox.querySelectorAll(".fav-item").forEach((cb) => {
         cb.checked = autoSet.has(cb.value);
       });
 
-      // 日中支援：主な支援（利用者別リストに合わせる）
+      // ②サブ（入浴/体調）
+      const bathParent = autoBox.querySelector('.fav-item[value="bathing"]');
+      const bathSubs = Array.from(autoBox.querySelectorAll('.fav-auto-bath-sub'));
+      bathSubs.forEach((cb) => cb.checked = savedAutoBathSubs.includes(cb.dataset.sub));
+      setupCompound(bathParent, bathSubs, "prompt");
+
+      const healthParent = autoBox.querySelector('.fav-item[value="health"]');
+      const healthSubs = Array.from(autoBox.querySelectorAll('.fav-auto-health-sub'));
+      healthSubs.forEach((cb) => cb.checked = savedAutoHealthSubs.includes(cb.dataset.sub));
+      setupCompound(healthParent, healthSubs, "bp");
+
+      // ③ 日中支援：主な支援（利用者別リストに合わせる）
       const conf = getDaySupportForResident(resident);
       dayBox.innerHTML = "";
       (conf.main || []).forEach((text) => {
+        if (text === BATHING_MAIN_KEY) {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="fav-day-main-item" value="${escapeHtmlAttr(BATHING_MAIN_KEY)}"> ${escapeHtml(BATHING_MAIN_KEY)}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="fav-day-bath-sub" data-sub="声かけ" value="声かけ">声かけ</label>
+              <label><input type="checkbox" class="fav-day-bath-sub" data-sub="見守り" value="見守り">見守り</label>
+              <label><input type="checkbox" class="fav-day-bath-sub" data-sub="介助" value="介助">介助</label>
+            </span>
+          `;
+          dayBox.appendChild(box);
+          return;
+        }
+        if (text === HEALTH_MAIN_KEY) {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="fav-day-main-item" value="${escapeHtmlAttr(HEALTH_MAIN_KEY)}"> ${escapeHtml(HEALTH_MAIN_KEY)}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="fav-day-health-sub" data-sub="血圧" value="血圧">血圧</label>
+              <label><input type="checkbox" class="fav-day-health-sub" data-sub="体重" value="体重">体重</label>
+              <label><input type="checkbox" class="fav-day-health-sub" data-sub="検温" value="検温">検温</label>
+              <label><input type="checkbox" class="fav-day-health-sub" data-sub="症状確認" value="症状確認">症状確認</label>
+              <label><input type="checkbox" class="fav-day-health-sub" data-sub="安静見守り" value="安静見守り">安静見守り</label>
+            </span>
+          `;
+          dayBox.appendChild(box);
+          return;
+        }
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="fav-day-main-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
         dayBox.appendChild(label);
       });
+
       dayBox.querySelectorAll(".fav-day-main-item").forEach((cb) => {
         cb.checked = daySet.has(cb.value);
       });
+
+      // ③サブ（入浴/体調）
+      const dayBathParent = Array.from(dayBox.querySelectorAll('.fav-day-main-item')).find((x) => x.value === BATHING_MAIN_KEY);
+      const dayBathSubs = Array.from(dayBox.querySelectorAll('.fav-day-bath-sub'));
+      dayBathSubs.forEach((cb) => cb.checked = savedDayBathSubs.includes(cb.dataset.sub));
+      setupCompound(dayBathParent, dayBathSubs, "声かけ");
+
+      const dayHealthParent = Array.from(dayBox.querySelectorAll('.fav-day-main-item')).find((x) => x.value === HEALTH_MAIN_KEY);
+      const dayHealthSubs = Array.from(dayBox.querySelectorAll('.fav-day-health-sub'));
+      dayHealthSubs.forEach((cb) => cb.checked = savedDayHealthSubs.includes(cb.dataset.sub));
+      setupCompound(dayHealthParent, dayHealthSubs, "血圧");
     }
 
-    function saveFavFromManager() {
+function saveFavFromManager() {
       const res = document.getElementById("favResidentSelect")?.value;
       if (!res) { alert("対象の利用者を選択してください"); return; }
 
       const autoKeys = Array.from(document.querySelectorAll("#favAutoItemCheckboxes .fav-item:checked")).map((x) => x.value);
       const dayMain  = Array.from(document.querySelectorAll("#favDaySupportMainCheckboxes .fav-day-main-item:checked")).map((x) => x.value);
 
-      favByResident[res] = { autoKeys, dayMain };
+      // ②サブ
+      let autoBathSubs = [];
+      const bathParent = document.querySelector('#favAutoItemCheckboxes .fav-item[value="bathing"]');
+      if (bathParent && bathParent.checked) {
+        autoBathSubs = Array.from(document.querySelectorAll('#favAutoItemCheckboxes .fav-auto-bath-sub:checked')).map((x) => x.dataset.sub);
+        if (autoBathSubs.length === 0) autoBathSubs = ["prompt"]; // サブ必須
+      }
+
+      let autoHealthSubs = [];
+      const healthParent = document.querySelector('#favAutoItemCheckboxes .fav-item[value="health"]');
+      if (healthParent && healthParent.checked) {
+        autoHealthSubs = Array.from(document.querySelectorAll('#favAutoItemCheckboxes .fav-auto-health-sub:checked')).map((x) => x.dataset.sub);
+        if (autoHealthSubs.length === 0) autoHealthSubs = ["bp"]; // サブ必須
+      }
+
+      // ③サブ
+      let dayBathingSubs = [];
+      const dayBathParent = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-main-item')).find((x) => x.value === BATHING_MAIN_KEY);
+      if (dayBathParent && dayBathParent.checked) {
+        dayBathingSubs = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-bath-sub:checked')).map((x) => x.dataset.sub);
+        if (dayBathingSubs.length === 0) dayBathingSubs = ["声かけ"];
+      }
+
+      let dayHealthSubs = [];
+      const dayHealthParent = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-main-item')).find((x) => x.value === HEALTH_MAIN_KEY);
+      if (dayHealthParent && dayHealthParent.checked) {
+        dayHealthSubs = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-health-sub:checked')).map((x) => x.dataset.sub);
+        if (dayHealthSubs.length === 0) dayHealthSubs = ["血圧"];
+      }
+
+      const prev = getFavForResident(res);
+
+      favByResident[res] = { ...prev, autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
       saveFavByResident();
       alert("保存しました。");
     }
 
-    function applyFavNowFromManager() {
+function applyFavNowFromManager() {
       const res = document.getElementById("favResidentSelect")?.value;
       if (!res) return;
 
       const autoKeys = Array.from(document.querySelectorAll("#favAutoItemCheckboxes .fav-item:checked")).map((x) => x.value);
       const dayMain  = Array.from(document.querySelectorAll("#favDaySupportMainCheckboxes .fav-day-main-item:checked")).map((x) => x.value);
 
-      favByResident[res] = { autoKeys, dayMain };
+      // ②サブ
+      let autoBathSubs = [];
+      const bathParent = document.querySelector('#favAutoItemCheckboxes .fav-item[value="bathing"]');
+      if (bathParent && bathParent.checked) {
+        autoBathSubs = Array.from(document.querySelectorAll('#favAutoItemCheckboxes .fav-auto-bath-sub:checked')).map((x) => x.dataset.sub);
+        if (autoBathSubs.length === 0) autoBathSubs = ["prompt"];
+      }
+
+      let autoHealthSubs = [];
+      const healthParent = document.querySelector('#favAutoItemCheckboxes .fav-item[value="health"]');
+      if (healthParent && healthParent.checked) {
+        autoHealthSubs = Array.from(document.querySelectorAll('#favAutoItemCheckboxes .fav-auto-health-sub:checked')).map((x) => x.dataset.sub);
+        if (autoHealthSubs.length === 0) autoHealthSubs = ["bp"];
+      }
+
+      // ③サブ
+      let dayBathingSubs = [];
+      const dayBathParent = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-main-item')).find((x) => x.value === BATHING_MAIN_KEY);
+      if (dayBathParent && dayBathParent.checked) {
+        dayBathingSubs = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-bath-sub:checked')).map((x) => x.dataset.sub);
+        if (dayBathingSubs.length === 0) dayBathingSubs = ["声かけ"];
+      }
+
+      let dayHealthSubs = [];
+      const dayHealthParent = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-main-item')).find((x) => x.value === HEALTH_MAIN_KEY);
+      if (dayHealthParent && dayHealthParent.checked) {
+        dayHealthSubs = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-health-sub:checked')).map((x) => x.dataset.sub);
+        if (dayHealthSubs.length === 0) dayHealthSubs = ["血圧"];
+      }
+
+      const prev = getFavForResident(res);
+
+      favByResident[res] = { ...prev, autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
       saveFavByResident();
 
       const current = document.getElementById("resident")?.value;
@@ -4438,10 +5199,19 @@ function buildAutoBathSentence() {
       alert("フォームへ反映しました。");
     }
 
-    function clearFavChecks() {
-      document.querySelectorAll("#favAutoItemCheckboxes .fav-item").forEach((x) => x.checked = false);
-      document.querySelectorAll("#favDaySupportMainCheckboxes .fav-day-main-item").forEach((x) => x.checked = false);
+function clearFavChecks() {
+      const autoParents = Array.from(document.querySelectorAll('#favAutoItemCheckboxes .fav-item'));
+      autoParents.forEach((x) => { x.checked = false; });
+      // 親のchangeを投げてサブをOFF&無効化
+      autoParents.forEach((x) => x.dispatchEvent(new Event('change')));
+
+      const dayParents = Array.from(document.querySelectorAll('#favDaySupportMainCheckboxes .fav-day-main-item'));
+      dayParents.forEach((x) => { x.checked = false; });
+      dayParents.forEach((x) => x.dispatchEvent(new Event('change')));
     }
+
+
+
 
     // ===== 自動テンプレ（利用者別）管理（下の管理カード） =====
     function renderResidentTemplateManager() {
@@ -4706,12 +5476,10 @@ function buildAutoBathSentence() {
       const _ec = document.getElementById("editCondition");
       if (_ec) _ec.value = record.condition || "良好";
       const _em = document.getElementById("editMental");
-      if (_em) _em.value = record.mental || "安定";
-      document.getElementById("editMeal").value = record.meal || "";
-document.getElementById("editSupport").value = record.support || "";
+      if (_em) _em.value = record.mental || "安定";document.getElementById("editSupport").value = record.support || "";
       document.getElementById("editNote").value = record.note || "";
 
-      // 日中支援テンプレ（業務日誌へ追記）チェック：前回の編集状態を残さない
+      // 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）チェック：前回の編集状態を残さない
       document.querySelectorAll("#editDayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // バイタル（体重・血圧・脈拍）
@@ -4730,10 +5498,7 @@ document.getElementById("editSupport").value = record.support || "";
       
       const __en = document.getElementById("editNote");
       if (__en) __en.classList.toggle("special-note-on", !!record.hasSpecialNote);
-document.getElementById("editDaySupportType").value = record.daySupportType || "";
-      document.getElementById("editDaySupportTime").value = record.daySupportTime || "";
-
-      // タグ
+document.getElementById("editDaySupportType").value = record.daySupportType || "";      // タグ
       editTags = Array.isArray(record.tags) ? [...record.tags] : [];
       renderEditTagButtons();
 
@@ -4743,6 +5508,7 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
       // 日中支援チェック（この記録の利用者に合わせる）
       renderEditDaySupportCheckboxes(record.resident, record.daySupportMainItems || [], record.daySupportReasonItems || []);
       applyBathingSubSelected(record.daySupportBathingSubItems || [], "edit");
+      applyHealthSubSelected(record.daySupportHealthSubItems || [], "edit");
 
       document.getElementById("editModalTitle").textContent = `記録の編集（${record.date || ""} / ${record.resident || ""}）`;
 
@@ -4756,80 +5522,59 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
     }
 
     function renderEditDaySupportCheckboxes(resident, checkedMainArr, checkedReasonArr) {
-      const mainWrap = document.getElementById("editDaySupportMainCheckboxes");
-      const reasonWrap = document.getElementById("editDaySupportReasonCheckboxes");
-      if (!mainWrap || !reasonWrap) return;
+      const conf = getDaySupportForResident(resident || "");
+      const mainList = conf.main || [];
+      const reasonList = conf.reason || [];
 
-      const conf = getDaySupportForResident(resident);
+      const wrapMain = document.getElementById("editDaySupportMainCheckboxes");
+      const wrapReason = document.getElementById("editDaySupportReasonCheckboxes");
+      wrapMain.innerHTML = "";
+      wrapReason.innerHTML = "";
+
       const checkedMain = new Set(Array.isArray(checkedMainArr) ? checkedMainArr : []);
       const checkedReason = new Set(Array.isArray(checkedReasonArr) ? checkedReasonArr : []);
 
-      mainWrap.innerHTML = "";
-      conf.main.forEach((text) => {
+      mainList.forEach((text) => {
         if (isBathingMainItemText(text)) {
           const holder = document.createElement("div");
           holder.innerHTML = makeBathingCompositeHTML("edit");
-          mainWrap.appendChild(holder.firstElementChild);
+          const comp = holder.firstElementChild;
+          const parent = comp.querySelector("input.edit-day-main-bathing");
+          if (parent) parent.checked = checkedMain.has(BATHING_MAIN_KEY);
+          wrapMain.appendChild(comp);
           return;
         }
+        if (isHealthMainItemText(text)) {
+          const holder = document.createElement("div");
+          holder.innerHTML = makeHealthCompositeHTML("edit");
+          const comp = holder.firstElementChild;
+          const parent = comp.querySelector("input.edit-day-main-health");
+          if (parent) parent.checked = checkedMain.has(HEALTH_MAIN_KEY);
+          wrapMain.appendChild(comp);
+          return;
+        }
+
         const label = document.createElement("label");
-        const v = text;
-        label.innerHTML = `<input type="checkbox" class="edit-day-main-item" value="${escapeHtmlAttr(v)}"> ${escapeHtml(v)}`;
-        mainWrap.appendChild(label);
+        label.innerHTML = `<input type="checkbox" class="edit-day-main-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
+        const cb = label.querySelector("input");
+        cb.checked = checkedMain.has(text);
+        wrapMain.appendChild(label);
       });
 
-      // チェック復元
-      mainWrap.querySelectorAll(".edit-day-main-item").forEach((cb) => {
-        cb.checked = checkedMain.has(cb.value);
+      reasonList.forEach((text) => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="edit-day-reason-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
+        const cb = label.querySelector("input");
+        cb.checked = checkedReason.has(text);
+        wrapReason.appendChild(label);
       });
 
-      // 複合チェックのイベント（1回だけ）
       bindBathingCompositeHandlersOnce("editDaySupportMainCheckboxes", "edit");
-      syncBathingCompositeInWrap(mainWrap, "edit");
-reasonWrap.innerHTML = "";
-      conf.reason.forEach((text) => {
-        const label = document.createElement("label");
-        const v = text;
-        label.innerHTML = `<input type="checkbox" class="edit-day-reason-item" value="${escapeHtmlAttr(v)}"> ${escapeHtml(v)}`;
-        reasonWrap.appendChild(label);
-      });
-      reasonWrap.querySelectorAll(".edit-day-reason-item").forEach((cb) => {
-        cb.checked = checkedReason.has(cb.value);
-      });
+      syncBathingCompositeInWrap(wrapMain, "edit");
+
+      bindHealthCompositeHandlersOnce("editDaySupportMainCheckboxes", "edit");
+      syncHealthCompositeInWrap(wrapMain, "edit");
     }
-
-    function renderEditDayActivityCheckboxes(checkedArr) {
-      const wrap = document.getElementById("editDayActivityCheckboxes");
-      if (!wrap) return;
-      const checked = new Set(Array.isArray(checkedArr) ? checkedArr : []);
-      wrap.innerHTML = "";
-
-      const conflict = {
-        "A型事業所通所": "A型事業所欠席",
-        "A型事業所欠席": "A型事業所通所",
-        "B型事業所通所": "B型事業所欠席",
-        "B型事業所欠席": "B型事業所通所",
-      };
-
-      DAY_ACTIVITY_LIST.forEach((v) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="edit-day-activity-item" value="${escapeHtmlAttr(v)}"> ${escapeHtml(v)}`;
-        wrap.appendChild(label);
-      });
-
-      wrap.querySelectorAll(".edit-day-activity-item").forEach((cb) => {
-        cb.checked = checked.has(cb.value);
-        cb.addEventListener("change", () => {
-          if (!cb.checked) return;
-          const other = conflict[cb.value];
-          if (!other) return;
-          const otherCb = wrap.querySelector(`.edit-day-activity-item[value="${CSS.escape(other)}"]`);
-          if (otherCb) otherCb.checked = false;
-        });
-      });
-    }
-
-
 
     function saveEditModal() {
       if (!editingRecordId) return;
@@ -4848,19 +5593,16 @@ reasonWrap.innerHTML = "";
         ...records[idx],
         date,
         resident,
-        recorder: document.getElementById("editRecorder")?.value || "",
-        meal: document.getElementById("editMeal").value,
-        medTaken: false,
+        recorder: document.getElementById("editRecorder")?.value || "",        medTaken: false,
         support: document.getElementById("editSupport").value,
         note: document.getElementById("editNote").value,
         hasSpecialNote: !!document.getElementById("editHasSpecialNote")?.checked,
         tags: [...editTags],
-        daySupportType: document.getElementById("editDaySupportType").value,
-        daySupportTime: document.getElementById("editDaySupportTime").value,
-        dayActivityItems: activityItems,
+        daySupportType: document.getElementById("editDaySupportType").value,        dayActivityItems: activityItems,
         daySupportMainItems: mainItems,
         daySupportReasonItems: reasonItems,
         daySupportBathingSubItems: getBathingSubSelected("edit"),
+        daySupportHealthSubItems: getHealthSubSelected("edit"),
         abnormalVitalsOn: !!((document.getElementById("editAbnormalWeight")?.value || "").trim() || (document.getElementById("editAbnormalBPsys")?.value || "").trim() || (document.getElementById("editAbnormalBPdia")?.value || "").trim() || (document.getElementById("editAbnormalPulse")?.value || "").trim()),
         abnormalWeight: (document.getElementById("editAbnormalWeight")?.value || "").trim(),
         abnormalBPsys: (document.getElementById("editAbnormalBPsys")?.value || "").trim(),
@@ -4892,6 +5634,8 @@ reasonWrap.innerHTML = "";
 
       const savedBathSubs = Array.isArray(fav.autoBathSubs) ? fav.autoBathSubs : [];
 
+      const savedHealthSubs = Array.isArray(fav.autoHealthSubs) ? fav.autoHealthSubs : [];
+
       AUTO_ITEM_DEFS.forEach((def) => {
         // 入浴だけ：複合チェック（声かけ/見守り/介助）をモーダルでも選択可にする
         if (def.key === "bathing") {
@@ -4909,6 +5653,24 @@ reasonWrap.innerHTML = "";
           return;
         }
 
+        // 体調管理：複合チェック（血圧/体重/検温/症状確認/安静見守り）
+        if (def.key === "health") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="fav-modal-item fav-modal-health-parent" value="health"> ${escapeHtml(def.label || "体調管理")}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="fav-modal-auto-health-sub" data-sub="bp" data-label="血圧">血圧</label>
+              <label><input type="checkbox" class="fav-modal-auto-health-sub" data-sub="wt" data-label="体重">体重</label>
+              <label><input type="checkbox" class="fav-modal-auto-health-sub" data-sub="temp" data-label="検温">検温</label>
+              <label><input type="checkbox" class="fav-modal-auto-health-sub" data-sub="symp" data-label="症状確認">症状確認</label>
+              <label><input type="checkbox" class="fav-modal-auto-health-sub" data-sub="rest" data-label="安静見守り">安静見守り</label>
+            </span>
+          `;
+          autoWrap.appendChild(box);
+          return;
+        }
+
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="fav-modal-item" value="${def.key}"> ${escapeHtml(def.label)}`;
         autoWrap.appendChild(label);
@@ -4917,6 +5679,15 @@ reasonWrap.innerHTML = "";
       // チェック復元
       autoWrap.querySelectorAll(".fav-modal-item").forEach((cb) => {
         cb.checked = autoSet.has(cb.value);
+      });
+
+
+      // 体調管理サブ（この利用者）
+      const healthParent = autoWrap.querySelector('.fav-modal-item[value="health"]');
+      if (healthParent && savedHealthSubs.length && !healthParent.checked) healthParent.checked = true;
+
+      autoWrap.querySelectorAll(".fav-modal-auto-health-sub").forEach((cb) => {
+        cb.checked = savedHealthSubs.includes(cb.dataset.sub);
       });
 
       // 入浴サブ（この利用者）
@@ -4957,18 +5728,143 @@ reasonWrap.innerHTML = "";
         sync();
       })();
 
+
+      // 体調管理（モーダル）複合チェックの同期：親OFFならサブ無効＆OFF／サブONなら親ON
+      (function setupFavModalHealthCompound(){
+        const parent = autoWrap.querySelector('.fav-modal-item[value="health"]');
+        const subs = Array.from(autoWrap.querySelectorAll('.fav-modal-auto-health-sub'));
+        if (!parent || subs.length === 0) return;
+
+        const sync = () => {
+          const on = !!parent.checked;
+          subs.forEach((cb) => {
+            cb.disabled = !on;
+            const lbl = cb.closest("label");
+            if (lbl) lbl.style.opacity = on ? "1" : "0.55";
+            if (!on) cb.checked = false;
+          });
+        };
+
+        if (parent.dataset.wired === "1") { sync(); return; }
+        parent.dataset.wired = "1";
+
+        parent.addEventListener("change", sync);
+        subs.forEach((cb) => {
+          cb.addEventListener("change", () => {
+            if (cb.checked && !parent.checked) parent.checked = true;
+            sync();
+          });
+        });
+
+        sync();
+      })();
+
       // 日中支援：主な支援（利用者別リスト）
       const dayWrap = document.getElementById("favModalDaySupportMainCheckboxes");
       const conf = getDaySupportForResident(resident);
+      const savedDayBath = Array.isArray(fav.dayBathingSubs) ? fav.dayBathingSubs : [];
+      const savedDayHealth = Array.isArray(fav.dayHealthSubs) ? fav.dayHealthSubs : [];
+
       dayWrap.innerHTML = "";
       (conf.main || []).forEach((text) => {
+        if (isBathingMainItemText(text)) {
+          const holder = document.createElement("div");
+          holder.innerHTML = `
+            <div class="day-main-composite">
+              <label><input type="checkbox" class="fav-modal-day-main-item fav-modal-day-bathing" value="${escapeHtmlAttr(BATHING_MAIN_KEY)}"> ${escapeHtml(BATHING_MAIN_KEY)}</label>
+              <span class="day-main-subwrap disabled">
+                <span class="paren">（</span>
+                <label><input type="checkbox" class="fav-modal-day-bath-sub" data-sub="声かけ" value="声かけ"> 声かけ</label>
+                <label><input type="checkbox" class="fav-modal-day-bath-sub" data-sub="見守り" value="見守り"> 見守り</label>
+                <label><input type="checkbox" class="fav-modal-day-bath-sub" data-sub="介助" value="介助"> 介助</label>
+                <span class="paren">）</span>
+              </span>
+            </div>
+          `;
+          dayWrap.appendChild(holder.firstElementChild);
+          return;
+        }
+        if (isHealthMainItemText(text)) {
+          const holder = document.createElement("div");
+          holder.innerHTML = `
+            <div class="day-main-composite">
+              <label><input type="checkbox" class="fav-modal-day-main-item fav-modal-day-health" value="${escapeHtmlAttr(HEALTH_MAIN_KEY)}"> ${escapeHtml(HEALTH_MAIN_KEY)}</label>
+              <span class="day-main-subwrap disabled">
+                <span class="paren">（</span>
+                <label><input type="checkbox" class="fav-modal-day-health-sub" data-sub="血圧" value="血圧"> 血圧</label>
+                <label><input type="checkbox" class="fav-modal-day-health-sub" data-sub="体重" value="体重"> 体重</label>
+                <label><input type="checkbox" class="fav-modal-day-health-sub" data-sub="検温" value="検温"> 検温</label>
+                <label><input type="checkbox" class="fav-modal-day-health-sub" data-sub="症状確認" value="症状確認"> 症状確認</label>
+                <label><input type="checkbox" class="fav-modal-day-health-sub" data-sub="安静見守り" value="安静見守り"> 安静見守り</label>
+                <span class="paren">）</span>
+              </span>
+            </div>
+          `;
+          dayWrap.appendChild(holder.firstElementChild);
+          return;
+        }
+
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="fav-modal-day-main-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
         dayWrap.appendChild(label);
       });
+
+      // 親チェック復元
       dayWrap.querySelectorAll(".fav-modal-day-main-item").forEach((cb) => {
         cb.checked = daySet.has(cb.value);
       });
+
+      // サブ復元（親がONのときだけ）
+      const dayBathParent = dayWrap.querySelector('input.fav-modal-day-bathing');
+      const dayBathSubs = Array.from(dayWrap.querySelectorAll('.fav-modal-day-bath-sub'));
+      if (dayBathParent && dayBathParent.checked) {
+        const set = new Set(savedDayBath);
+        dayBathSubs.forEach((cb) => cb.checked = set.has(cb.dataset.sub));
+      }
+
+      const dayHealthParent = dayWrap.querySelector('input.fav-modal-day-health');
+      const dayHealthSubs = Array.from(dayWrap.querySelectorAll('.fav-modal-day-health-sub'));
+      if (dayHealthParent && dayHealthParent.checked) {
+        const set = new Set(savedDayHealth);
+        dayHealthSubs.forEach((cb) => cb.checked = set.has(cb.dataset.sub));
+      }
+
+      // 親子同期（親OFFでサブ無効＆OFF／サブONで親ON）
+      (function setupFavModalDayBath(){
+        if (!dayBathParent || dayBathSubs.length === 0) return;
+        const sync = () => {
+          const on = !!dayBathParent.checked;
+          const wrap = dayBathParent.closest('.day-main-composite')?.querySelector('.day-main-subwrap');
+          if (wrap) wrap.classList.toggle('disabled', !on);
+          dayBathSubs.forEach((cb) => {
+            cb.disabled = !on;
+            const lbl = cb.closest('label');
+            if (lbl) lbl.style.opacity = on ? '1' : '0.55';
+            if (!on) cb.checked = false;
+          });
+        };
+        dayBathParent.addEventListener('change', sync);
+        dayBathSubs.forEach((cb) => cb.addEventListener('change', () => { if (cb.checked && !dayBathParent.checked) dayBathParent.checked = true; sync(); }));
+        sync();
+      })();
+
+      (function setupFavModalDayHealth(){
+        if (!dayHealthParent || dayHealthSubs.length === 0) return;
+        const sync = () => {
+          const on = !!dayHealthParent.checked;
+          const wrap = dayHealthParent.closest('.day-main-composite')?.querySelector('.day-main-subwrap');
+          if (wrap) wrap.classList.toggle('disabled', !on);
+          dayHealthSubs.forEach((cb) => {
+            cb.disabled = !on;
+            const lbl = cb.closest('label');
+            if (lbl) lbl.style.opacity = on ? '1' : '0.55';
+            if (!on) cb.checked = false;
+          });
+        };
+        dayHealthParent.addEventListener('change', sync);
+        dayHealthSubs.forEach((cb) => cb.addEventListener('change', () => { if (cb.checked && !dayHealthParent.checked) dayHealthParent.checked = true; sync(); }));
+        sync();
+      })();
 
       document.getElementById("favModal").classList.add("show");
     }
@@ -4985,13 +5881,35 @@ reasonWrap.innerHTML = "";
 
       let autoBathSubs = [];
 
+      let autoHealthSubs = [];
+
+      let dayBathingSubs = [];
+      let dayHealthSubs = [];
+
       const bathParent = document.querySelector('#favModalCheckboxes .fav-modal-item[value="bathing"]');
       if (bathParent && bathParent.checked) {
         autoBathSubs = Array.from(document.querySelectorAll('#favModalCheckboxes .fav-modal-auto-bath-sub:checked')).map((x) => x.dataset.sub);
         if (autoBathSubs.length === 0) autoBathSubs = ["prompt"];
       }
 
-      favByResident[resident] = { autoKeys, dayMain, autoBathSubs };
+
+      const healthParent2 = document.querySelector('#favModalCheckboxes .fav-modal-item[value="health"]');
+      if (healthParent2 && healthParent2.checked) {
+        autoHealthSubs = Array.from(document.querySelectorAll('#favModalCheckboxes .fav-modal-auto-health-sub:checked')).map((x) => x.dataset.sub);
+      }
+
+      
+
+      const dayBathParent2 = document.querySelector('#favModalDaySupportMainCheckboxes input.fav-modal-day-bathing');
+      if (dayBathParent2 && dayBathParent2.checked) {
+        dayBathingSubs = Array.from(document.querySelectorAll('#favModalDaySupportMainCheckboxes .fav-modal-day-bath-sub:checked')).map((x) => x.dataset.sub);
+      }
+
+      const dayHealthParent2 = document.querySelector('#favModalDaySupportMainCheckboxes input.fav-modal-day-health');
+      if (dayHealthParent2 && dayHealthParent2.checked) {
+        dayHealthSubs = Array.from(document.querySelectorAll('#favModalDaySupportMainCheckboxes .fav-modal-day-health-sub:checked')).map((x) => x.dataset.sub);
+      }
+favByResident[resident] = { autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
       saveFavByResident();
 
       // 反映（フォーム側）
@@ -5479,6 +6397,7 @@ document.getElementById("date").value = toLocalISODate();
       daySupportByResident = loadDaySupportByResident();
       daySupportDefault = loadDaySupportDefault();
       dayNoteTemplates = loadDayNoteTemplates();
+      dayNotePatternState = loadDayNotePatternState();
 
       renderResidentSelects();
       renderRecorderSelects();
@@ -5521,7 +6440,7 @@ document.getElementById("date").value = toLocalISODate();
       document.
 getElementById("resetButton").addEventListener("click", resetForm);
 
-      // ===== 日中支援テンプレ（業務日誌へ追記）: チェックで自動追記 =====
+      // ===== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）: チェックで自動追記 =====
       // （配線は renderDayNoteTemplateChecks() 内で行います）
 
       document.getElementById("openDayNoteTemplateModalBtn")?.addEventListener("click", openDayNoteTemplateModal);
