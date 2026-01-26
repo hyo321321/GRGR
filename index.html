@@ -4766,7 +4766,8 @@ function buildAutoBathSentence() {
 
     // ===== 日中活動 / 欠席理由 → 業務日誌欄へ自動反映 =====
     const AUTO_NOTE_ACTIVITY_PREFIX = "日中活動：";
-    const AUTO_NOTE_REASON_PREFIX   = "【日中活動に行けなかった理由】：";
+    const AUTO_NOTE_REASON_PREFIX   = "欠席理由：";
+    const AUTO_NOTE_REASON_PREFIX_OLD = "【日中活動に行けなかった理由】：";
     const AUTO_NOTE_VITAL_PREFIX    = "バイタル：";
     const AUTO_NOTE_VITAL_PREFIX_OLD = "異常時バイタル：";
     const AUTO_NOTE_HEADER        = "▼自動入力（チェック連動）";
@@ -4778,6 +4779,7 @@ function buildAutoBathSentence() {
       const filtered = lines.filter((l) => {
         return !l.startsWith(AUTO_NOTE_ACTIVITY_PREFIX)
           && !l.startsWith(AUTO_NOTE_REASON_PREFIX)
+          && !l.startsWith(AUTO_NOTE_REASON_PREFIX_OLD)
           && !l.startsWith(AUTO_NOTE_VITAL_PREFIX)
           && !l.startsWith(AUTO_NOTE_VITAL_PREFIX_OLD)
           && l.trim() !== AUTO_NOTE_HEADER
@@ -4799,36 +4801,34 @@ function buildAutoBathSentence() {
         autoLines.push(AUTO_NOTE_ACTIVITY_PREFIX + " " + activityArr.join(" / "));
       }
       if (Array.isArray(reasonArr) && reasonArr.length) {
-        autoLines.push(AUTO_NOTE_REASON_PREFIX + " " + reasonArr.join(" / "));
+        // 例：欠席理由：体調不良 / 通所先・就労先が休み／臨時休業のため在宅
+        autoLines.push(AUTO_NOTE_REASON_PREFIX + reasonArr.join(" / "));
       }
       if (vitalObj) {
         const w = (vitalObj.weight || "").toString().trim();
-        const s = (vitalObj.bpSys || "").toString().trim();
-        const d = (vitalObj.bpDia || "").toString().trim();
+        const sys = (vitalObj.bpSys || "").toString().trim();
+        const dia = (vitalObj.bpDia || "").toString().trim();
         const p = (vitalObj.pulse || "").toString().trim();
-        if (w || s || d || p) {
+        if (w || sys || dia || p) {
           const parts = [];
           if (w) parts.push(`体重 ${w}kg`);
-          if (s && d) parts.push(`血圧 ${s}/${d}mmHg`);
-          else if (s) parts.push(`血圧 上${s}mmHg`);
-          else if (d) parts.push(`血圧 下${d}mmHg`);
+          if (sys && dia) parts.push(`血圧 ${sys}/${dia}mmHg`);
+          else if (sys) parts.push(`血圧 上${sys}mmHg`);
+          else if (dia) parts.push(`血圧 下${dia}mmHg`);
           if (p) parts.push(`脈拍 ${p}回/分`);
           autoLines.push(AUTO_NOTE_VITAL_PREFIX + " " + parts.join("、"));
         }
       }
 
+      const cleanedUser = (userText || "").replace(/^\s+/, "");
+
       if (autoLines.length === 0) {
-        textarea.value = userText;
+        textarea.value = cleanedUser;
       } else {
-        const blockLines = [
-          AUTO_NOTE_HEADER,
-          ...autoLines,
-          AUTO_NOTE_SEPARATOR,
-          AUTO_NOTE_MANUAL_HEADER,
-          ""
-        ];
-        const cleanedUser = (userText || "").replace(/^\s+/, "");
-        textarea.value = blockLines.join("\n") + cleanedUser;
+        let out = autoLines.join("\n");
+        if (cleanedUser) out += "\n\n" + cleanedUser;
+        else out += "\n";
+        textarea.value = out;
       }
     }
 
