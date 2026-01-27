@@ -1958,12 +1958,14 @@
       "医師の指示で外出・通所を控えている"
     ];
 
-    // ★日中活動（通所 / 欠席） ※固定（利用者別編集の対象外）
+    // ★日中活動（通所 / 欠席 / なし） ※固定（利用者別編集の対象外）
+    const DAY_ACTIVITY_NONE = "なし（在宅・予定なし）";
     const DAY_ACTIVITY_LIST = [
       "A型事業所通所",
       "A型事業所欠席",
       "B型事業所通所",
-      "B型事業所欠席"
+      "B型事業所欠席",
+      DAY_ACTIVITY_NONE
     ];
 
     // ★複合チェック（入浴対応：声かけ/見守り/介助）
@@ -4715,7 +4717,42 @@ function buildAutoBathSentence() {
       });
     }
 
-    // ===== 日中支援（フォーム）チェック生成 =====
+    
+    // ===== 日中活動（編集フォーム）チェック生成 =====
+    function renderEditDayActivityCheckboxes(checkedArr = []) {
+      const wrap = document.getElementById("editDayActivityCheckboxes");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+
+      const checked = new Set(Array.isArray(checkedArr) ? checkedArr : []);
+
+      const conflict = {
+        "A型事業所通所": "A型事業所欠席",
+        "A型事業所欠席": "A型事業所通所",
+        "B型事業所通所": "B型事業所欠席",
+        "B型事業所欠席": "B型事業所通所",
+      };
+
+      DAY_ACTIVITY_LIST.forEach((text) => {
+        const label = document.createElement("label");
+        const isChecked = checked.has(text);
+        label.innerHTML = `<input type="checkbox" class="edit-day-activity-item" value="${escapeHtmlAttr(text)}" ${isChecked ? "checked" : ""}> ${escapeHtml(text)}`;
+        wrap.appendChild(label);
+      });
+
+      // 同一事業所の「通所」と「欠席」は同時にチェックできないようにする（矛盾防止）
+      wrap.querySelectorAll(".edit-day-activity-item").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          if (!cb.checked) return;
+          const other = conflict[cb.value];
+          if (!other) return;
+          const otherCb = wrap.querySelector(`.edit-day-activity-item[value="${CSS.escape(other)}"]`);
+          if (otherCb) otherCb.checked = false;
+        });
+      });
+    }
+
+// ===== 日中支援（フォーム）チェック生成 =====
     function renderDaySupportMainCheckboxes() {
       const wrap = document.getElementById("daySupportMainCheckboxes");
       wrap.innerHTML = "";
@@ -4845,7 +4882,8 @@ function buildAutoBathSentence() {
     function updateAutoNoteMain() {
       const ta = document.getElementById("note");
       if (!ta) return;
-      const activity = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((x) => x.value);
+      const activityRaw = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((x) => x.value);
+      const activity = activityRaw.filter((v) => v !== DAY_ACTIVITY_NONE);
       const reasons  = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value);
       const vital = {
         weight: document.getElementById("abnormalWeight")?.value || "",
@@ -4862,7 +4900,30 @@ function buildAutoBathSentence() {
 
       // イベント委譲（再描画されてもOK）
       if (actWrap) actWrap.addEventListener("change", (e) => {
-        if (e?.target?.classList?.contains("day-activity-item")) updateAutoNoteMain();
+        const t = e?.target;
+        if (!t?.classList?.contains("day-activity-item")) return;
+
+        // 「なし（在宅・予定なし）」は他と排他（チェックしたら他は外す）
+        if (t.value === DAY_ACTIVITY_NONE && t.checked) {
+          actWrap.querySelectorAll(".day-activity-item").forEach((cb) => {
+            if (cb !== t) cb.checked = false;
+          });
+          // 欠席理由は不要なのでクリア
+          document.querySelectorAll(".day-reason-item").forEach((cb) => (cb.checked = false));
+        } else if (t.value !== DAY_ACTIVITY_NONE && t.checked) {
+          // 通所/欠席を選んだら「なし」は外す
+          const noneCb = actWrap.querySelector(`.day-activity-item[value="${CSS.escape(DAY_ACTIVITY_NONE)}"]`);
+          if (noneCb) noneCb.checked = false;
+        }
+
+        // 欠席が1つも無いなら、欠席理由はクリア（誤入力防止）
+        const selected = Array.from(actWrap.querySelectorAll(".day-activity-item:checked")).map((x) => x.value);
+        const hasAbsence = selected.some((v) => /欠席/.test(v));
+        if (!hasAbsence) {
+          document.querySelectorAll(".day-reason-item").forEach((cb) => (cb.checked = false));
+        }
+
+        updateAutoNoteMain();
       });
       if (reaWrap) reaWrap.addEventListener("change", (e) => {
         if (e?.target?.classList?.contains("day-reason-item")) updateAutoNoteMain();
@@ -4887,7 +4948,8 @@ function buildAutoBathSentence() {
     function updateAutoNoteEdit() {
       const ta = document.getElementById("editNote");
       if (!ta) return;
-      const activity = Array.from(document.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
+      const activityRaw = Array.from(document.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
+      const activity = activityRaw.filter((v) => v !== DAY_ACTIVITY_NONE);
       const reasons  = Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((x) => x.value);
       const vital = {
         weight: document.getElementById("editAbnormalWeight")?.value || "",
@@ -4903,7 +4965,27 @@ function buildAutoBathSentence() {
       const reaWrap = document.getElementById("editDaySupportReasonCheckboxes");
 
       if (actWrap) actWrap.addEventListener("change", (e) => {
-        if (e?.target?.classList?.contains("edit-day-activity-item")) updateAutoNoteEdit();
+        const t = e?.target;
+        if (!t?.classList?.contains("edit-day-activity-item")) return;
+
+        // 「なし（在宅・予定なし）」は他と排他
+        if (t.value === DAY_ACTIVITY_NONE && t.checked) {
+          actWrap.querySelectorAll(".edit-day-activity-item").forEach((cb) => {
+            if (cb !== t) cb.checked = false;
+          });
+          document.querySelectorAll(".edit-day-reason-item").forEach((cb) => (cb.checked = false));
+        } else if (t.value !== DAY_ACTIVITY_NONE && t.checked) {
+          const noneCb = actWrap.querySelector(`.edit-day-activity-item[value="${CSS.escape(DAY_ACTIVITY_NONE)}"]`);
+          if (noneCb) noneCb.checked = false;
+        }
+
+        const selected = Array.from(actWrap.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
+        const hasAbsence = selected.some((v) => /欠席/.test(v));
+        if (!hasAbsence) {
+          document.querySelectorAll(".edit-day-reason-item").forEach((cb) => (cb.checked = false));
+        }
+
+        updateAutoNoteEdit();
       });
       if (reaWrap) reaWrap.addEventListener("change", (e) => {
         if (e?.target?.classList?.contains("edit-day-reason-item")) updateAutoNoteEdit();
