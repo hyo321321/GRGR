@@ -609,7 +609,7 @@
       color: #1e3a8a;
       margin-top: 6px;
     }
-        /* ====== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）：専用ボックス ====== */
+        /* ====== 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）：専用ボックス ====== */
     .daynote-template-box{
       border: 2px solid #60a5fa;
       background: #eff6ff;
@@ -653,6 +653,22 @@
       opacity:.55;
       pointer-events:none;
       filter: grayscale(0.25);
+    }
+
+    .dn-inline-preview{
+      flex-basis: 100%;
+      margin-left: 22px;
+      padding: 6px 8px;
+      border-left: 3px solid #60a5fa;
+      background: rgba(239,246,255,0.75);
+      border-radius: 10px;
+      font-size: 12px;
+      color: #1e3a8a;
+      white-space: pre-wrap;
+      line-height: 1.35;
+      max-height: 120px;
+      overflow: auto;
+      display: none;
     }
     .dn-subwrap label{
       display:inline-flex;
@@ -1231,12 +1247,12 @@
 
             <div class="daynote-template-box" style="margin-top:10px;">
               <div class="daynote-template-head">
-                <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）</div>
+                <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
                 <button type="button" class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;">🛠 編集</button>
               </div>
               <div class="daynote-last-preview empty" id="dayNoteLastPreview" title="直近の追記内容（クリックで表示）">最新：なし</div>
               <div class="checkbox-row daynote-template-grid" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
-              <div class="small-text">※日中支援Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。<br>※初期テンプレは「日中支援：」で統一しています（本文の書き方はそのまま残します）。<br>※自動文章用に「掃除＋会話＋状況確認」も1クリックで出せます。長さはどれくらいが一番使いやすいですか？</div>
+              <div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。<br>※初期テンプレは「日中支援：」で統一しています（本文の書き方はそのまま残します）。<br>※自動文章用に「掃除＋会話＋状況確認」も1クリックで出せます。長さはどれくらいが一番使いやすいですか？</div>
             </div>
 
 
@@ -1748,10 +1764,10 @@
 
           <div class="daynote-template-box" style="margin-top:6px;">
             <div class="daynote-template-head">
-              <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）</div>
+              <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
             </div>
             <div class="checkbox-row daynote-template-grid" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
-            <div class="small-text">※日中支援Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
+            <div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
           </div>
 
 
@@ -1842,7 +1858,7 @@
         <button type="button" class="detail-modal-close" id="dayNoteTplModalClose">×</button>
       </div>
       <div class="detail-modal-body">
-        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
+        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
 
         <div class="field-row">
           <div class="field">
@@ -1895,7 +1911,7 @@
     const DAY_SUPPORT_DEFAULT_KEY = "group_home_day_support_default_v1";
     const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
 
-    // ★日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）
+    // ★日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）
     const DAY_NOTE_TEMPLATES_KEY = "group_home_day_note_templates_v1";
     const DAY_NOTE_PATTERN_STATE_KEY = "group_home_day_note_pattern_state_v1";
     const VITALS_KEY = "group_home_vitals_v1";
@@ -2238,7 +2254,7 @@
 
     function saveTags() { saveJSON(TAGS_KEY, TAG_LIST); }
 
-    // ===== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記） =====
+    // ===== 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記） =====
     function loadDayNoteTemplates() {
       const parsed = loadJSON(DAY_NOTE_TEMPLATES_KEY, null);
 
@@ -2479,7 +2495,7 @@
     
     
 
-    // ===== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）：プレビュー＆トースト =====
+    // ===== 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）：プレビュー＆トースト =====
     let __dnToastTimer = null;
 
     function __dnOneLine(s){
@@ -2585,7 +2601,7 @@
       if(!txt) return;
 
       setDayNoteLastPreview(txt);
-      showDayNoteToast(`業務日誌に追記しました：${tplName || ""}（${p}）`, txt);
+      showDayNoteToast(`業務日誌に追記しました：${tplName || ""}（${p}）`, "");
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -2653,10 +2669,13 @@ function renderDayNoteTemplateChecks() {
               <label><input type="radio" class="day-note-tpl-pat" name="${escapeHtmlAttr(patName)}" value="3">③</label>
               <span class="paren">）</span>
             </span>
+          
+            <div class="dn-inline-preview"></div>
           `;
 
           const parent = comp.querySelector(".day-note-tpl-check");
           const subWrap = comp.querySelector(".dn-subwrap");
+          const inlinePrev = comp.querySelector(".dn-inline-preview");
           const radios = Array.from(comp.querySelectorAll(".day-note-tpl-pat"));
           const radio = radios.find((r) => String(r.value) === String(curPat)) || radios[0];
           if (radio) radio.checked = true;
@@ -2680,6 +2699,8 @@ function renderDayNoteTemplateChecks() {
             dayNoteInsertedMap[textareaId][tpl.id] = addText;
 
             // 追記の確認（トースト＋プレビュー）
+            if (inlinePrev) { inlinePrev.style.display = "block"; inlinePrev.textContent = addText; }
+
             notifyDayNoteTplChange("add", tpl.name, getDayNotePat(tpl.id), addText, textareaId);
           };
 
@@ -2688,6 +2709,8 @@ function renderDayNoteTemplateChecks() {
             removeDayNoteTplAny(ta, tpl, textareaId);
 
             // 削除の確認（トースト＋プレビュー）
+            if (inlinePrev) { inlinePrev.style.display = "none"; inlinePrev.textContent = ""; }
+
             notifyDayNoteTplChange("remove", tpl.name, getDayNotePat(tpl.id), "", textareaId);
           };
 
@@ -3687,7 +3710,7 @@ tr.appendChild(tdSupport);
       setupAutoHealthCompound();
       syncAutoItemsToSupport();
 
-      // 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）のチェックもリセット
+      // 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）のチェックもリセット
       document.querySelectorAll("#dayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // 日中支援チェックリセット
@@ -5813,7 +5836,7 @@ function clearFavChecks() {
       if (_em) _em.value = record.mental || "安定";document.getElementById("editSupport").value = record.support || "";
       document.getElementById("editNote").value = record.note || "";
 
-      // 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）チェック：前回の編集状態を残さない
+      // 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）チェック：前回の編集状態を残さない
       document.querySelectorAll("#editDayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // バイタル（体重・血圧・脈拍）
@@ -6790,7 +6813,7 @@ document.getElementById("date").value = toLocalISODate();
       document.
 getElementById("resetButton").addEventListener("click", resetForm);
 
-      // ===== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）: チェックで自動追記 =====
+      // ===== 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）: チェックで自動追記 =====
       // （配線は renderDayNoteTemplateChecks() 内で行います）
 
       document.getElementById("openDayNoteTemplateModalBtn")?.addEventListener("click", openDayNoteTemplateModal);
