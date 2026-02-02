@@ -609,7 +609,7 @@
       color: #1e3a8a;
       margin-top: 6px;
     }
-        /* ====== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）：専用ボックス ====== */
+        /* ====== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）：専用ボックス ====== */
     .daynote-template-box{
       border: 2px solid #60a5fa;
       background: #eff6ff;
@@ -1203,16 +1203,16 @@
             <div class="checkbox-row" id="autoItemCheckboxes" style="margin-top:8px;"></div>
           </div>
 
-          <!-- 日中支援加算 区分 -->
+          <!-- 日中支援 区分 -->
           <div class="field">
-            <label for="daySupportType">日中支援加算の区分</label>
+            <label for="daySupportType">日中支援の区分</label>
             <select id="daySupportType">
               <option value="">選択なし</option>
-              <option value="Ⅰ">日中支援加算Ⅰ</option>
-              <option value="Ⅱ">日中支援加算Ⅱ</option>
+              <option value="Ⅰ">日中支援Ⅰ</option>
+              <option value="Ⅱ">日中支援Ⅱ</option>
             </select>
             <div class="small-text">
-              日中支援加算に該当する場合のみ、Ⅰ / Ⅱ を選択してください。（自動文章の置換にも反映）
+              日中支援に該当する場合のみ、Ⅰ / Ⅱ を選択してください。（自動文章の置換にも反映）
             </div>
           </div>
 
@@ -1231,12 +1231,12 @@
 
             <div class="daynote-template-box" style="margin-top:10px;">
               <div class="daynote-template-head">
-                <div class="daynote-template-title">日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）</div>
+                <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）</div>
                 <button type="button" class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;">🛠 編集</button>
               </div>
               <div class="daynote-last-preview empty" id="dayNoteLastPreview" title="直近の追記内容（クリックで表示）">最新：なし</div>
               <div class="checkbox-row daynote-template-grid" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
-              <div class="small-text">※日中支援加算Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。<br>※初期テンプレは「日中支援：」で統一しています（本文の書き方はそのまま残します）。<br>※自動文章用に「掃除＋会話＋状況確認」も1クリックで出せます。長さはどれくらいが一番使いやすいですか？</div>
+              <div class="small-text">※日中支援Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。<br>※初期テンプレは「日中支援：」で統一しています（本文の書き方はそのまま残します）。<br>※自動文章用に「掃除＋会話＋状況確認」も1クリックで出せます。長さはどれくらいが一番使いやすいですか？</div>
             </div>
 
 
@@ -1508,8 +1508,8 @@
           <label for="autoItemText">自動で追記する定型文</label>
           <textarea id="autoItemText" rows="3" placeholder="例：【金銭管理】金銭の確認と声かけを行い、必要に応じて支援した。"></textarea>
           <div class="small-text">
-            日中支援加算の区分を入れたい場合：<br>
-            <b>{{daySupportTypeLabel}}</b> を文中に入れると「日中支援加算Ⅰ/Ⅱ」に置換されます。
+            日中支援の区分を入れたい場合：<br>
+            <b>{{daySupportTypeLabel}}</b> を文中に入れると「日中支援Ⅰ/Ⅱ」に置換されます。
           </div>
         </div>
       </div>
@@ -1696,11 +1696,11 @@
         </div>
 
         <div class="field">
-          <label for="editDaySupportType">日中支援加算の区分</label>
+          <label for="editDaySupportType">日中支援の区分</label>
           <select id="editDaySupportType">
             <option value="">選択なし</option>
-            <option value="Ⅰ">日中支援加算Ⅰ</option>
-            <option value="Ⅱ">日中支援加算Ⅱ</option>
+            <option value="Ⅰ">日中支援Ⅰ</option>
+            <option value="Ⅱ">日中支援Ⅱ</option>
           </select>
         </div>
 <div class="beginner-zone" style="margin-top:10px;">
@@ -1748,10 +1748,10 @@
 
           <div class="daynote-template-box" style="margin-top:6px;">
             <div class="daynote-template-head">
-              <div class="daynote-template-title">日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）</div>
+              <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）</div>
             </div>
             <div class="checkbox-row daynote-template-grid" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
-            <div class="small-text">※日中支援加算Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
+            <div class="small-text">※日中支援Ⅰの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
           </div>
 
 
@@ -1842,7 +1842,7 @@
         <button type="button" class="detail-modal-close" id="dayNoteTplModalClose">×</button>
       </div>
       <div class="detail-modal-body">
-        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
+        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
 
         <div class="field-row">
           <div class="field">
@@ -1895,18 +1895,18 @@
     const DAY_SUPPORT_DEFAULT_KEY = "group_home_day_support_default_v1";
     const DAY_SUPPORT_DEFAULT_VALUE = "__DEFAULT__";
 
-    // ★日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）
+    // ★日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）
     const DAY_NOTE_TEMPLATES_KEY = "group_home_day_note_templates_v1";
     const DAY_NOTE_PATTERN_STATE_KEY = "group_home_day_note_pattern_state_v1";
     const VITALS_KEY = "group_home_vitals_v1";
     const DEFAULT_DAY_NOTE_TEMPLATES = [
-      { id: "dnt_walk",   name: "散歩同行（余暇）", text: "職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。" },
-      { id: "dnt_shop",   name: "買い物同行（余暇）", text: "職員同行で買い物。本人の希望確認：＿＿。支援：商品選択の声かけ、金銭管理の見守り。安全配慮：人混み・体調変化に留意。" },
-      { id: "dnt_outing", name: "外出支援（公共機関）", text: "外出支援（公共機関の利用等）。支援：行き先の確認、移動時の見守り、必要時の介助。安全配慮：転倒・迷子に留意。" },
-      { id: "dnt_leisure",name: "余暇活動（室内）", text: "室内で余暇活動（TV/読書/ゲーム等）。本人の様子：＿＿。支援：声かけ・見守り、気分転換の提案。" },
-      { id: "dnt_consult",name: "相談対応（生活）", text: "生活・対人面の相談対応。内容：＿＿。支援：傾聴、整理の声かけ、必要時に関係機関へ相談。" },
-      { id: "dnt_support",name: "生活リズム調整", text: "生活リズムの調整支援。支援：起床・活動の声かけ、日中の過ごし方の提案、見守り。" },
-      { id: "dnt_clean_chat", name: "掃除＋会話＋状況確認", text: "共用部の掃除を実施。作業中に会話を行い、体調・生活状況を確認した（訴え：＿＿）。" },
+      { id: "dnt_walk",   name: "散歩同行（余暇）", text: "日中支援：職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。" },
+      { id: "dnt_shop",   name: "買い物同行（余暇）", text: "日中支援：職員同行で買い物。本人の希望確認：＿＿。支援：商品選択の声かけ、金銭管理の見守り。安全配慮：人混み・体調変化に留意。" },
+      { id: "dnt_outing", name: "外出支援（公共機関）", text: "日中支援：外出支援（公共機関の利用等）。支援：行き先の確認、移動時の見守り、必要時の介助。安全配慮：転倒・迷子に留意。" },
+      { id: "dnt_leisure",name: "余暇活動（室内）", text: "日中支援：室内で余暇活動（TV/読書/ゲーム等）。本人の様子：＿＿。支援：声かけ・見守り、気分転換の提案。" },
+      { id: "dnt_consult",name: "相談対応（生活）", text: "日中支援：生活・対人面の相談対応。内容：＿＿。支援：傾聴、整理の声かけ、必要時に関係機関へ相談。" },
+      { id: "dnt_support",name: "生活リズム調整", text: "日中支援：生活リズムの調整支援。支援：起床・活動の声かけ、日中の過ごし方の提案、見守り。" },
+      { id: "dnt_clean_chat", name: "掃除＋会話＋状況確認", text: "日中支援：共用部の掃除を実施。作業中に会話を行い、体調・生活状況を確認した（訴え：＿＿）。" },
     ];
 
 
@@ -1914,7 +1914,7 @@
   { key: "med_combo",   label: "服薬対応（管理・確認）", defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。" },
   { key: "bathing",     label: "入浴対応",               defaultText: "入浴対応：声かけ・見守り・介助を実施。" },
   { key: "health",      label: "体調管理",               defaultText: "体調管理：血圧・検温・症状確認等を実施。" },
-  { key: "day_support", label: "日中支援加算",           defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
+  { key: "day_support", label: "日中支援",           defaultText: "日中支援：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
   { key: "clean_keep",  label: "清潔保持",               defaultText: "清潔保持：清潔保持のため、着替えについて声かけを行った。" }
 ];
 
@@ -1934,21 +1934,14 @@
 
     // ★日中支援：主な支援（初期）
     const DEFAULT_DAY_SUPPORT_MAIN = [
-      "体調管理",
-      "服薬管理・内服確認",
-      "水分摂取の声かけ",
-      "排泄（トイレ）の声かけ・介助",
-      "入浴対応",
-      "清潔保持（整容・着替え）",
-      "安全確認・見守り（事故予防）",
-      "生活リズム調整（起床・休息など）",
-      "相談・傾聴（心理面支援）",
-      "余暇活動支援（散歩・ゲーム・創作など）",
-      "家事支援（掃除・洗濯・片付け）",
-      "外出・買い物同行",
-      "通院・受診同行（医療連携）",
-      "金銭管理支援",
-      "関係機関連絡・調整（家族・相談支援・通所先など）",
+      "見守り・声かけ",
+      "生活支援（食事含む）",
+      "清潔保持・入浴",
+      "余暇・外出",
+      "外出・同行（受診等）",
+      "相談・会話",
+      "体調・生活状況の確認",
+      "金銭管理",
     ];
 
     // ★日中支援：理由（初期）
@@ -1970,11 +1963,11 @@
     ];
 
     // ★複合チェック（入浴対応：声かけ/見守り/介助）
-    const BATHING_MAIN_KEY = "入浴対応";
+    const BATHING_MAIN_KEY = "清潔保持・入浴";
     const BATHING_SUB_OPTIONS = ["声かけ", "見守り", "介助"];
 
     function isBathingMainItemText(text) {
-      return typeof text === "string" && /^入浴対応/.test(text.trim());
+      return typeof text === "string" && /^清潔保持・入浴/.test(text.trim());
     }
 
     function makeBathingCompositeHTML(mode = "main") {
@@ -2245,7 +2238,7 @@
 
     function saveTags() { saveJSON(TAGS_KEY, TAG_LIST); }
 
-    // ===== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記） =====
+    // ===== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記） =====
     function loadDayNoteTemplates() {
       const parsed = loadJSON(DAY_NOTE_TEMPLATES_KEY, null);
 
@@ -2260,24 +2253,14 @@
 
         let changed = false;
 
-        // デフォルト由来のテンプレは先頭の「日中支援：」や【...】タイトルを付けない（本文だけに統一）
+        // デフォルト由来のテンプレは「日中支援：」で統一（本文は残す）
         cleaned.forEach((t) => {
           if (!t || !t.id) return;
           if (!defMap[t.id]) return; // ユーザー追加分は触らない
-          if (typeof t.text !== "string") return;
-
-          let newText = String(t.text);
-
-          // 旧形式：先頭が【...】の場合はタイトルを外す
-          newText = newText.replace(/^\s*【[^】]+】\s*/u, "");
-
-          // 旧形式：先頭が「日中支援：」「日中支援 :」などの場合は外す
-          newText = newText.replace(/^\s*日中支援\s*[:：]\s*/u, "");
-
-          // 先頭の余計な改行を軽く整える
-          newText = newText.replace(/^\s*\n+/u, "");
-
-          if (newText !== t.text) { t.text = newText; changed = true; }
+          if (typeof t.text === "string" && t.text.startsWith("【日中支援")) {
+            const newText = t.text.replace(/^【[^】]+】\s*/, "日中支援：");
+            if (newText !== t.text) { t.text = newText; changed = true; }
+          }
         });
 
         // 新しく追加したデフォルトテンプレ（例：掃除＋会話＋状況確認）を自動で補完
@@ -2315,44 +2298,6 @@
         textareaEl.value = cur + (cur.endsWith("\n") ? "" : "\n") + add;
       }
       textareaEl.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-
-
-    // 日中支援テンプレ（業務日誌へ追記）：先頭の「日中支援：」は最初の1回だけ付ける
-    function __stripLeadingNitchuPrefix(text){
-      let t = String(text || "");
-      // 先頭の【...】タイトルは外す（過去互換）
-      t = t.replace(/^\s*【[^】]+】\s*/u, "");
-      // 先頭の「日中支援：」「日中支援 :」などは外す
-      t = t.replace(/^\s*日中支援\s*[:：]\s*/u, "");
-      // 先頭の改行は削る
-      t = t.replace(/^\s*\n+/u, "");
-      return t.trimEnd();
-    }
-
-    function appendDayNoteNitchu(textareaEl, addText){
-      if(!textareaEl) return { inserted: "" };
-
-      const cur = String(textareaEl.value || "");
-      const body = __stripLeadingNitchuPrefix(addText);
-      if(!body.trim()) return { inserted: "" };
-
-      const curTrim = cur.trim();
-
-      // 空欄（または日中支援：だけ）の場合は先頭に「日中支援：」を付ける
-      const isEffectivelyEmpty = (!curTrim) || (curTrim === "日中支援：" || curTrim === "日中支援:" || curTrim === "日中支援 :");
-      let inserted = "";
-
-      if(isEffectivelyEmpty){
-        inserted = "日中支援：" + body;
-        textareaEl.value = inserted;
-      }else{
-        inserted = body;
-        textareaEl.value = cur + (cur.endsWith("\n") ? "" : "\n") + inserted;
-      }
-
-      textareaEl.dispatchEvent(new Event("input", { bubbles: true }));
-      return { inserted };
     }
 
     function __normalizeNL(s) { return String(s ?? "").replace(/\r\n?/g, "\n"); }
@@ -2521,23 +2466,12 @@
       dayNoteInsertedMap[areaKey] = dayNoteInsertedMap[areaKey] || {};
       const prev = dayNoteInsertedMap[areaKey][id];
       if(prev && hasTextBlock(ta, prev)) removeTextFromTextarea(ta, prev);
-
-      // 念のため：全パターン＋元テキストも除去を試す（過去互換：先頭に日中支援：が付いているケースも削除）
+      // 念のため：全パターン＋元テキストも除去を試す
       [1,2,3].forEach((p) => {
-        const t0 = getDayNotePatternText(tpl, p);
-        const t = __stripLeadingNitchuPrefix(t0);
+        const t = getDayNotePatternText(tpl, p);
         if(t && hasTextBlock(ta, t)) removeTextFromTextarea(ta, t);
-        const tPref = t ? ("日中支援：" + t) : "";
-        if(tPref && hasTextBlock(ta, tPref)) removeTextFromTextarea(ta, tPref);
       });
-
-      if(tpl.text){
-        const t = __stripLeadingNitchuPrefix(tpl.text);
-        if(t && hasTextBlock(ta, t)) removeTextFromTextarea(ta, t);
-        const tPref = t ? ("日中支援：" + t) : "";
-        if(tPref && hasTextBlock(ta, tPref)) removeTextFromTextarea(ta, tPref);
-      }
-
+      if(tpl.text && hasTextBlock(ta, tpl.text)) removeTextFromTextarea(ta, tpl.text);
       delete dayNoteInsertedMap[areaKey][id];
     }
 
@@ -2545,7 +2479,7 @@
     
     
 
-    // ===== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）：プレビュー＆トースト =====
+    // ===== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）：プレビュー＆トースト =====
     let __dnToastTimer = null;
 
     function __dnOneLine(s){
@@ -2740,25 +2674,13 @@ function renderDayNoteTemplateChecks() {
 
             // 既存のこのテンプレ文（全パターン）を削除 → 選択中パターンを追記
             removeDayNoteTplAny(ta, tpl, textareaId);
-            const addText0 = getDayNotePatternText(tpl, getDayNotePat(tpl.id));
-            const body = __stripLeadingNitchuPrefix(addText0);
-            if (!body) return;
-
-            // 追加される“実際のブロック”を先に見積もって重複チェック
-            const cur = String(ta.value || "");
-            const curTrim = cur.trim();
-            const isEffectivelyEmpty = (!curTrim) || (curTrim === "日中支援：" || curTrim === "日中支援:" || curTrim === "日中支援 :");
-            const prospective = isEffectivelyEmpty ? ("日中支援：" + body) : body;
-
-            if (!hasTextBlock(ta, prospective)) {
-              const res = appendDayNoteNitchu(ta, body);
-              dayNoteInsertedMap[textareaId][tpl.id] = res.inserted || prospective;
-            } else {
-              dayNoteInsertedMap[textareaId][tpl.id] = prospective;
-            }
+            const addText = getDayNotePatternText(tpl, getDayNotePat(tpl.id));
+            if (!addText) return;
+            if (!hasTextBlock(ta, addText)) appendTextToTextarea(ta, addText);
+            dayNoteInsertedMap[textareaId][tpl.id] = addText;
 
             // 追記の確認（トースト＋プレビュー）
-            notifyDayNoteTplChange("add", tpl.name, getDayNotePat(tpl.id), prospective, textareaId);
+            notifyDayNoteTplChange("add", tpl.name, getDayNotePat(tpl.id), addText, textareaId);
           };
 
           const applyRemove = () => {
@@ -2941,11 +2863,35 @@ function renderDayNoteTemplateChecks() {
             }
           }
           if (d.key === "day_support") {
-            const t = (d.defaultText || "");
-            if (t.includes("【日中支援加算】")) {
+            // ✅ 表記ゆれを統一：日中支援加算 → 日中支援（ユーザー編集は極力尊重）
+            let lbl = (d.label || "");
+            let t = (d.defaultText || "");
+
+            if (lbl.includes("日中支援加算")) {
+              lbl = lbl.replace(/日中支援加算/g, "日中支援");
               changed = true;
-              return { ...d, defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" };
             }
+            if (!lbl) {
+              lbl = "日中支援";
+              changed = true;
+            }
+
+            if (t.includes("日中支援加算")) {
+              t = t.replace(/日中支援加算/g, "日中支援");
+              changed = true;
+            }
+            // 旧テンプレ：見出しが【日中支援】形式だったものを標準文へ
+            if (t.includes("【日中支援】")) {
+              t = "日中支援：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。";
+              changed = true;
+            }
+            // 何も入っていない場合は標準文を補完
+            if (!t.trim()) {
+              t = "日中支援：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。";
+              changed = true;
+            }
+
+            return { ...d, label: lbl, defaultText: t };
           }
           return d;
         });
@@ -2964,7 +2910,7 @@ function renderDayNoteTemplateChecks() {
           changed = true;
         }
         if (!hasKey("day_support")) {
-          updated.push({ key: "day_support", label: "日中支援加算", defaultText: "日中支援加算：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" });
+          updated.push({ key: "day_support", label: "日中支援", defaultText: "日中支援：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" });
           changed = true;
         }
         if (!hasKey("bathing")) {
@@ -3242,9 +3188,10 @@ function saveAutoItemDefs() {
         if (!Array.isArray(v.main)) { v.main = []; changed = true; }
         if (!Array.isArray(v.reason)) { v.reason = []; changed = true; }
 
-        // 既存の並びは維持しつつ、不足分だけ末尾に追加
-        changed = mergeListUnique(v.main, DEFAULT_DAY_SUPPORT_MAIN) || changed;
-        changed = mergeListUnique(v.reason, DEFAULT_DAY_SUPPORT_REASON) || changed;
+        // 既存の利用者別設定が残っていても、初期項目を最新デフォルトで上書き
+        v.main = DEFAULT_DAY_SUPPORT_MAIN.slice();
+        v.reason = DEFAULT_DAY_SUPPORT_REASON.slice();
+        changed = true;
       }
 
       if (changed) saveJSON(DAY_SUPPORT_BY_RESIDENT_KEY, st);
@@ -3255,20 +3202,11 @@ function saveAutoItemDefs() {
     function loadDaySupportDefault() {
       const st = loadJSON(DAY_SUPPORT_DEFAULT_KEY, null);
 
-      // 既存ユーザーのデータがあっても、追加されたデフォルト項目は自動で末尾に補完
-      if (st && Array.isArray(st.main) && Array.isArray(st.reason)) {
-        const main = st.main.slice();
-        const reason = st.reason.slice();
-
-        const changedMain = mergeListUnique(main, DEFAULT_DAY_SUPPORT_MAIN);
-        const changedReason = mergeListUnique(reason, DEFAULT_DAY_SUPPORT_REASON);
-
-        if (changedMain || changedReason) {
-          const merged = { main, reason };
-          saveJSON(DAY_SUPPORT_DEFAULT_KEY, merged);
-          return merged;
-        }
-        return { main, reason };
+      // 既存ユーザーのデータがあっても、最新デフォルトで上書き（③の初期項目を確実に反映）
+      if (st && typeof st === "object") {
+        const merged = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+        saveJSON(DAY_SUPPORT_DEFAULT_KEY, merged);
+        return merged;
       }
 
       const init = { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
@@ -3749,7 +3687,7 @@ tr.appendChild(tdSupport);
       setupAutoHealthCompound();
       syncAutoItemsToSupport();
 
-      // 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）のチェックもリセット
+      // 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）のチェックもリセット
       document.querySelectorAll("#dayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // 日中支援チェックリセット
@@ -4029,7 +3967,7 @@ function handleRestoreFile(file) {
         const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
         if (checkedKeys.length > 0) {
           const daySupportType = document.getElementById("daySupportType")?.value || "";
-          const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
+          const daySupportTypeLabel = daySupportType ? ("日中支援" + daySupportType) : "日中支援";
 
           checkedKeys.forEach((key) => {
             // 入浴だけは複合チェックから文章生成
@@ -4133,7 +4071,7 @@ function handleRestoreFile(file) {
       };
 
       const tagsText = record.tags && record.tags.length ? record.tags.map((t) => "#" + t).join(" ") : "なし";
-const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + record.daySupportType : "なし";
+const daySupportTypeLabel = record.daySupportType ? "日中支援" + record.daySupportType : "なし";
 
       if (titleEl) titleEl.textContent = `${record.date || ""} ${record.resident || ""} さんの記録`;
 
@@ -4150,7 +4088,7 @@ const daySupportTypeLabel = record.daySupportType ? "日中支援加算" + recor
         addRow("バイタル：", parts.join("、"));
       }
       addRow("タグ：", tagsText);
-      addRow("日中支援加算区分：", daySupportTypeLabel);      // ✅ ここがタグ表示
+      addRow("日中支援区分：", daySupportTypeLabel);      // ✅ ここがタグ表示
       addTagRow("日中活動：", record.dayActivityItems, "activity");
       addTagRow("主な支援：", formatDaySupportMainItems(record.daySupportMainItems, record.daySupportBathingSubItems, record.daySupportHealthSubItems), "main");
       addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
@@ -4731,7 +4669,7 @@ function buildAutoBathSentence() {
       if (!checkedKeys.length) return "";
 
       const daySupportType = document.getElementById("daySupportType")?.value || "";
-      const daySupportTypeLabel = daySupportType ? ("日中支援加算" + daySupportType) : "日中支援加算";
+      const daySupportTypeLabel = daySupportType ? ("日中支援" + daySupportType) : "日中支援";
 
       const lines = [];
       checkedKeys.forEach((key) => {
@@ -5875,7 +5813,7 @@ function clearFavChecks() {
       if (_em) _em.value = record.mental || "安定";document.getElementById("editSupport").value = record.support || "";
       document.getElementById("editNote").value = record.note || "";
 
-      // 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）チェック：前回の編集状態を残さない
+      // 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）チェック：前回の編集状態を残さない
       document.querySelectorAll("#editDayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
       // バイタル（体重・血圧・脈拍）
@@ -5930,13 +5868,21 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
       const checkedMain = new Set(Array.isArray(checkedMainArr) ? checkedMainArr : []);
       const checkedReason = new Set(Array.isArray(checkedReasonArr) ? checkedReasonArr : []);
 
-      mainList.forEach((text) => {
+      mainList.forEach((text, idx) => {
         if (isBathingMainItemText(text)) {
           const holder = document.createElement("div");
           holder.innerHTML = makeBathingCompositeHTML("edit");
           const comp = holder.firstElementChild;
           const parent = comp.querySelector("input.edit-day-main-bathing");
           if (parent) parent.checked = checkedMain.has(BATHING_MAIN_KEY);
+          // 連番表示（欠番防止）
+          const lbl = comp.querySelector("label");
+          if (lbl) {
+            const inp = lbl.querySelector("input");
+            lbl.innerHTML = "";
+            if (inp) lbl.appendChild(inp);
+            lbl.append(` ${idx + 1}. ${BATHING_MAIN_KEY}`);
+          }
           wrapMain.appendChild(comp);
           return;
         }
@@ -5946,12 +5892,20 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
           const comp = holder.firstElementChild;
           const parent = comp.querySelector("input.edit-day-main-health");
           if (parent) parent.checked = checkedMain.has(HEALTH_MAIN_KEY);
+          // 連番表示（欠番防止）
+          const lbl = comp.querySelector("label");
+          if (lbl) {
+            const inp = lbl.querySelector("input");
+            lbl.innerHTML = "";
+            if (inp) lbl.appendChild(inp);
+            lbl.append(` ${idx + 1}. ${HEALTH_MAIN_KEY}`);
+          }
           wrapMain.appendChild(comp);
           return;
         }
 
         const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="edit-day-main-item" value="${escapeHtmlAttr(text)}"> ${escapeHtml(text)}`;
+        label.innerHTML = `<input type="checkbox" class="edit-day-main-item" value="${escapeHtmlAttr(text)}"> ${idx + 1}. ${escapeHtml(text)}`;
         const cb = label.querySelector("input");
         cb.checked = checkedMain.has(text);
         wrapMain.appendChild(label);
@@ -6836,7 +6790,7 @@ document.getElementById("date").value = toLocalISODate();
       document.
 getElementById("resetButton").addEventListener("click", resetForm);
 
-      // ===== 日中支援テンプレ（日中支援加算Ⅰ・業務日誌へ追記）: チェックで自動追記 =====
+      // ===== 日中支援テンプレ（日中支援Ⅰ・業務日誌へ追記）: チェックで自動追記 =====
       // （配線は renderDayNoteTemplateChecks() 内で行います）
 
       document.getElementById("openDayNoteTemplateModalBtn")?.addEventListener("click", openDayNoteTemplateModal);
