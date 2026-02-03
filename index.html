@@ -1529,6 +1529,14 @@
           </div>
         </div>
       </div>
+      <div class="field-row" id="autoCleanSubsRow" style="display:none;">
+        <div class="field">
+          <label for="autoCleanSubsText">清潔保持 サブチェック（1行=1項目）</label>
+          <textarea id="autoCleanSubsText" rows="4" placeholder="例：声かけ&#10;確認&#10;見守り&#10;介助"></textarea>
+          <div class="small-text">※ここで作った項目が、上の「清潔保持」の横にサブチェックとして表示されます。</div>
+        </div>
+      </div>
+
 
       <div class="btn-row">
         <button type="button" class="btn-primary" id="autoItemSaveBtn">💾 追加 / 更新</button>
@@ -1900,6 +1908,9 @@
 
     // 自動入力（支援項目）
     const AUTO_ITEM_DEFS_KEY = "group_home_auto_item_defs_v1";
+
+    // 自動入力（サブチェック定義：清潔保持 など）
+    const AUTO_ITEM_SUBS_KEY = "group_home_auto_item_subs_v1";
 
     // タグ
     const TAGS_KEY = "group_home_tags_v1";
@@ -2842,7 +2853,42 @@ function renderDayNoteTemplateChecks() {
     }
 
 
-    function loadAutoItemDefs() {
+    
+    function loadAutoItemSubs() {
+      const raw = localStorage.getItem(AUTO_ITEM_SUBS_KEY);
+      const defaults = {
+        clean_keep: ["声かけ", "確認", "見守り", "介助", "着替え", "外用薬（足）"]
+      };
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            const out = {};
+            Object.keys(defaults).forEach((k) => {
+              const v = parsed[k];
+              out[k] = Array.isArray(v) ? v.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim()) : defaults[k].slice();
+            });
+            localStorage.setItem(AUTO_ITEM_SUBS_KEY, JSON.stringify(out));
+            return out;
+          }
+        } catch {}
+      }
+      localStorage.setItem(AUTO_ITEM_SUBS_KEY, JSON.stringify(defaults));
+      return defaults;
+    }
+
+    let AUTO_ITEM_SUBS = loadAutoItemSubs();
+
+    function saveAutoItemSubs() {
+      localStorage.setItem(AUTO_ITEM_SUBS_KEY, JSON.stringify(AUTO_ITEM_SUBS));
+    }
+
+    function getAutoSubs(key) {
+      const v = AUTO_ITEM_SUBS && AUTO_ITEM_SUBS[key];
+      return Array.isArray(v) ? v : [];
+    }
+
+function loadAutoItemDefs() {
   const raw = localStorage.getItem(AUTO_ITEM_DEFS_KEY);
   if (raw) {
     try {
@@ -3098,6 +3144,7 @@ function saveAutoItemDefs() {
       // 入浴（② 自動入力）複合チェックの有効/無効を同期（利用者切替で親が自動ONになるため）
       setupAutoBathCompound();
       setupAutoHealthCompound();
+      setupAutoCleanCompound();
 
       // 入浴（② 自動入力）サブチェック：利用者別に復元（未設定ならデフォルト）
       const __autoWrap = document.getElementById("autoItemCheckboxes");
@@ -4551,6 +4598,25 @@ function closeRecordDetail() {
           return;
         }
 
+
+        // 清潔保持：複合チェック（サブは管理で編集可）
+        if (def.key === "clean_keep") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          const subs = getAutoSubs("clean_keep");
+          const subHtml = subs.map((lbl) => {
+            const safe = escapeHtml(lbl);
+            const safeAttr = escapeHtmlAttr(lbl);
+            return `<label><input type="checkbox" class="auto-clean-sub" data-label="${safeAttr}" value="${safeAttr}">${safe}</label>`;
+          }).join("");
+          box.innerHTML = `
+            <label><input type="checkbox" class="auto-item" value="clean_keep"> ${escapeHtml(def.label || "清潔保持")}</label>
+            <span class="auto-compound-sub">${subHtml}</span>
+          `;
+          wrap.appendChild(box);
+          return;
+        }
+
         const label = document.createElement("label");
         label.innerHTML = `<input type="checkbox" class="auto-item" value="${def.key}"> ${escapeHtml(def.label)}`;
         wrap.appendChild(label);
@@ -4636,6 +4702,21 @@ function closeRecordDetail() {
       sync();
     }
 
+
+function setupAutoCleanCompound() {
+      const wrap = document.getElementById("autoItemCheckboxes");
+      if (!wrap) return;
+      const parent = wrap.querySelector('input.auto-item[value="clean_keep"]');
+      const subs = Array.from(wrap.querySelectorAll(".auto-clean-sub"));
+      if (!parent) return;
+
+      const syncParent = () => {
+        if (parent.checked) return;
+        if (subs.some((cb) => cb.checked)) parent.checked = true;
+      };
+      subs.forEach((cb) => cb.addEventListener("change", syncParent));
+    }
+
 function buildAutoBathSentence() {
       const wrap = document.getElementById("autoItemCheckboxes");
       if (!wrap) return "";
@@ -4673,6 +4754,23 @@ function buildAutoBathSentence() {
       return picked.length ? `体調管理：${picked.join("・")}を実施。` : "体調管理を実施。";
     }
 
+
+function buildAutoCleanSentence() {
+      const wrap = document.getElementById("autoItemCheckboxes");
+      if (!wrap) return "";
+
+      const parent = wrap.querySelector('.auto-item[value="clean_keep"]');
+      if (!parent || !parent.checked) return "";
+
+      const def = AUTO_ITEM_DEFS.find((d) => d.key === "clean_keep");
+      const baseLabel = (def && def.label) ? def.label : "清潔保持";
+
+      const subs = Array.from(wrap.querySelectorAll(".auto-clean-sub:checked")).map((cb) => cb.value).filter(Boolean);
+      // サブが選ばれていれば短文を生成。なければ既定文へ。
+      if (subs.length) return `${baseLabel}：${subs.join("・")}を実施。`;
+      return (def && def.defaultText) ? def.defaultText : `${baseLabel}：必要な支援を行った。`;
+    }
+
     // ===== ② 自動入力（支援項目）→ 本日の支援内容へ完全自動反映 =====
     // ※表示用テキストに【② 自動入力】/【/② 自動入力】を出さないよう、不可視タグで内部管理します
     const LEGACY_AUTO_SUPPORT_BLOCK_START = "【② 自動入力】";
@@ -4706,7 +4804,14 @@ function buildAutoBathSentence() {
           if (t) lines.push(t);
           return;
         }
-        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
+
+        if (key === "clean_keep") {
+          const t = buildAutoCleanSentence();
+          if (t) lines.push(t);
+          return;
+        }
+
+const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
         if (!def) return;
         let text = (def.defaultText || "").trim();
         if (!text) return;
@@ -5124,6 +5229,24 @@ function buildAutoBathSentence() {
       document.getElementById("autoItemKey").value = "";
       document.getElementById("autoItemLabel").value = "";
       document.getElementById("autoItemText").value = "";
+      const row = document.getElementById("autoCleanSubsRow");
+      if (row) row.style.display = "none";
+      const ta = document.getElementById("autoCleanSubsText");
+      if (ta) ta.value = "";
+    }
+
+
+    function toggleAutoCleanSubsRow(key) {
+      const row = document.getElementById("autoCleanSubsRow");
+      const ta  = document.getElementById("autoCleanSubsText");
+      if (!row || !ta) return;
+      if (key === "clean_keep") {
+        row.style.display = "";
+        ta.value = getAutoSubs("clean_keep").join("\n");
+      } else {
+        row.style.display = "none";
+        ta.value = "";
+      }
     }
 
     function fillAutoItemInputsBySelect() {
@@ -5140,6 +5263,7 @@ function buildAutoBathSentence() {
       document.getElementById("autoItemKey").value = d.key || "";
       document.getElementById("autoItemLabel").value = d.label || "";
       document.getElementById("autoItemText").value = d.defaultText || "";
+      toggleAutoCleanSubsRow(d.key || "");
     }
 
     function saveAutoItemFromInputs() {
@@ -5172,7 +5296,15 @@ function buildAutoBathSentence() {
         AUTO_ITEM_DEFS.push({ key, label, defaultText: text });
       }
 
-      saveAutoItemDefs();
+      
+      // 清潔保持サブチェック（管理）
+      if (key === "clean_keep") {
+        const ta = document.getElementById("autoCleanSubsText");
+        const lines = (ta ? ta.value : "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+        AUTO_ITEM_SUBS.clean_keep = lines.length ? lines : ["声かけ","確認","見守り","介助"];
+        saveAutoItemSubs();
+      }
+saveAutoItemDefs();
       renderAutoItemCheckboxes();
       renderAutoItemManager();
       renderFavManager(); // 利用者別UIも更新
@@ -6943,6 +7075,7 @@ if (restoreBtn && restoreFile) {
 
       // 支援項目管理UI
       document.getElementById("autoItemSelect").addEventListener("change", fillAutoItemInputsBySelect);
+      document.getElementById("autoItemKey").addEventListener("input", (e) => toggleAutoCleanSubsRow(e.target.value.trim()));
       document.getElementById("autoItemSaveBtn").addEventListener("click", saveAutoItemFromInputs);
       document.getElementById("autoItemDeleteBtn").addEventListener("click", deleteSelectedAutoItem);
       document.getElementById("autoItemClearBtn").addEventListener("click", clearAutoItemInputs);
