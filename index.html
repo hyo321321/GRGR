@@ -36,6 +36,67 @@
 .vitals-compact input{ padding:6px 8px; font-size:13px; height:34px; }
 .vitals-compact .small-text{ font-size:11px; margin-top:4px; }
 
+/* バイタル：折りたたみ（普段は閉じておく） */
+.vitals-details{
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+.vitals-details summary{
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  user-select: none;
+}
+.vitals-details summary::-webkit-details-marker{ display:none; }
+.vitals-details .vitals-summary-left{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.vitals-details .vitals-title{ margin:0; }
+.vitals-details .vitals-summary-hint{ font-size:11px; color:#6b7280; font-weight:600; }
+.vitals-details .vitals-chevron{ font-size:12px; color:#6b7280; transform: rotate(0deg); transition: transform .15s ease; }
+.vitals-details[open] .vitals-chevron{ transform: rotate(180deg); }
+
+.field-row-vitals{
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+@media (max-width: 1100px){
+  .field-row-vitals{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 折りたたみ（任意項目：タグなど） */
+.fold-details{
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+.fold-details summary{
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.fold-details summary::-webkit-details-marker{ display:none; }
+.fold-details .fold-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  font-weight:800;
+  font-size:13px;
+}
+.fold-details .fold-chevron{ font-size:12px; color:#6b7280; transform: rotate(0deg); transition: transform .15s ease; }
+.fold-details[open] .fold-chevron{ transform: rotate(180deg); }
+
 
 
 /* 曜日カラー（一覧：日付） */
@@ -1175,13 +1236,23 @@
               </div>
             </div>
           </div>
-<div class="field vitals-compact" id="abnormalVitalsBox" style="margin-top:8px;">
-                <div class="vitals-title">体重・血圧・脈拍（異常があった場合のみ）</div>
-                <div class="small-text" style="margin:4px 0 6px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
-<div class="field-row-4" id="abnormalVitalsInputs" style="align-items:end;">
+<details class="field vitals-compact vitals-details" id="abnormalVitalsBox" style="margin-top:8px;">
+                <summary>
+                  <div class="vitals-summary-left">
+                    <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
+                    <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
+                  </div>
+                  <div class="vitals-chevron">▼</div>
+                </summary>
+                <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
+                <div class="field-row-vitals" id="abnormalVitalsInputs" style="align-items:end;">
                   <div class="field" style="margin-bottom:0;">
                     <label for="abnormalWeight">体重（kg）</label>
                     <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="abnormalTemp">体温（℃）</label>
+                    <input type="text" id="abnormalTemp" placeholder="例：36.5" inputmode="decimal" />
                   </div>
                   <div class="field" style="margin-bottom:0;">
                     <label for="abnormalBPsys">血圧（上 / mmHg）</label>
@@ -1196,14 +1267,8 @@
                     <input type="text" id="abnormalPulse" placeholder="例：72" inputmode="numeric" />
                   </div>
                 </div>
-                <div class="small-text" style="margin-top:6px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-              </div>
-          <!-- タグ -->
-          <div class="field">
-            <label>キーワード（タグ）</label>
-            <div class="tag-buttons" id="tagButtons"></div>
-            <div class="small-text" id="selectedTagsInfo">選択中：なし</div>
-          </div>
+                <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
+              </details>
 
           <!-- ★自動入力したい支援項目（初心者OK） -->
           <div class="beginner-zone">
@@ -1303,6 +1368,17 @@
               <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
             </div>
 
+          <details class="field fold-details" id="tagDetails" style="margin-top:10px;">
+            <summary class="fold-summary">
+              <span>キーワード（タグ）（任意）</span>
+              <span class="fold-chevron">▼</span>
+            </summary>
+            <div style="margin-top:10px;">
+              <div class="tag-buttons" id="tagButtons"></div>
+              <div class="small-text" id="selectedTagsInfo">選択中：なし</div>
+            </div>
+          </details>
+
           <!-- ★保存（初心者OK） -->
           <div class="beginner-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
@@ -1371,9 +1447,9 @@
         <div class="resident-select-row">
           <span>期間：</span>
           <select id="periodFilter">
-            <option value="today">今日</option>
+            <option value="today" selected>今日</option>
             <option value="week">直近7日間</option>
-            <option value="month" selected>今月</option>
+            <option value="month">今月</option>
             <option value="year">今年</option>
             <option value="all">全期間</option>
             <option value="custom">日付指定</option>
@@ -1687,13 +1763,23 @@
           <label for="editRecorder">記録者</label>
           <select id="editRecorder"></select>
         </div>
-<div class="field vitals-compact" id="editAbnormalVitalsBox" style="margin-top:8px;">
-            <div class="vitals-title">体重・血圧・脈拍（異常があった場合のみ）</div>
-            <div class="small-text" style="margin:4px 0 6px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
-<div class="field-row-4" id="editAbnormalVitalsInputs" style="align-items:end;">
+<details class="field vitals-compact vitals-details" id="editAbnormalVitalsBox" style="margin-top:8px;">
+            <summary>
+              <div class="vitals-summary-left">
+                <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
+                <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
+              </div>
+              <div class="vitals-chevron">▼</div>
+            </summary>
+            <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
+            <div class="field-row-vitals" id="editAbnormalVitalsInputs" style="align-items:end;">
               <div class="field" style="margin-bottom:0;">
                 <label for="editAbnormalWeight">体重（kg）</label>
                 <input type="text" id="editAbnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalTemp">体温（℃）</label>
+                <input type="text" id="editAbnormalTemp" placeholder="例：36.5" inputmode="decimal" />
               </div>
               <div class="field" style="margin-bottom:0;">
                 <label for="editAbnormalBPsys">血圧（上 / mmHg）</label>
@@ -1708,15 +1794,23 @@
                 <input type="text" id="editAbnormalPulse" placeholder="例：72" inputmode="numeric" />
               </div>
             </div>
-            <div class="small-text" style="margin-top:6px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-          </div>
-        <div class="field">
-          <label>キーワード（タグ）</label>
-          <div class="tag-buttons" id="editTagButtons"></div>
-          <div class="small-text" id="editSelectedTagsInfo">選択中：なし</div>
-        </div>
+            <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
+          </details>
 
-        <div class="beginner-zone" style="margin-top:10px;">
+<div class="field">
+          <label>キーワード（タグ）</label>
+        <details class="field fold-details" id="editTagDetails">
+          <summary class="fold-summary">
+            <span>キーワード（タグ）（任意）</span>
+            <span class="fold-chevron">▼</span>
+          </summary>
+          <div style="margin-top:10px;">
+            <div class="tag-buttons" id="editTagButtons"></div>
+            <div class="small-text" id="editSelectedTagsInfo">選択中：なし</div>
+          </div>
+        </details>
+
+<div class="beginner-zone" style="margin-top:10px;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
     <div style="font-weight:800; color:#1e3a8a;">④ 日中活動</div>
     <div class="beginner-hint">※通所/欠席をチェック。</div>
@@ -3888,15 +3982,24 @@ tr.appendChild(tdSupport);
       const __nta = document.getElementById("note");
       if (__nta) __nta.classList.remove("special-note-on");
 
-      // バイタル（体重・血圧・脈拍）
+      // バイタル（体重・体温・血圧・脈拍）
       const __vW  = document.getElementById("abnormalWeight");
+      const __vT  = document.getElementById("abnormalTemp");
       const __vS  = document.getElementById("abnormalBPsys");
       const __vD  = document.getElementById("abnormalBPdia");
       const __vP  = document.getElementById("abnormalPulse");
       if (__vW) __vW.value = "";
+      if (__vT) __vT.value = "";
       if (__vS) __vS.value = "";
       if (__vD) __vD.value = "";
       if (__vP) __vP.value = "";
+
+      // 折りたたみを初期状態に戻す
+      const __vDetails = document.getElementById("abnormalVitalsBox");
+      if (__vDetails) __vDetails.open = false;
+      const __tagDet = document.getElementById("tagDetails");
+      if (__tagDet) __tagDet.open = false;
+
       syncAbnormalVitalsUI("main");
       updateAutoNoteMain();
 
@@ -4099,8 +4202,9 @@ function handleRestoreFile(file) {
         daySupportReasonItems,
         daySupportBathingSubItems: getBathingSubSelected("main"),
         daySupportHealthSubItems: getHealthSubSelected("main"),
-        abnormalVitalsOn: !!((document.getElementById("abnormalWeight")?.value || "").trim() || (document.getElementById("abnormalBPsys")?.value || "").trim() || (document.getElementById("abnormalBPdia")?.value || "").trim() || (document.getElementById("abnormalPulse")?.value || "").trim()),
+        abnormalVitalsOn: !!((document.getElementById("abnormalWeight")?.value || "").trim() || (document.getElementById("abnormalTemp")?.value || "").trim() || (document.getElementById("abnormalBPsys")?.value || "").trim() || (document.getElementById("abnormalBPdia")?.value || "").trim() || (document.getElementById("abnormalPulse")?.value || "").trim()),
         abnormalWeight: (document.getElementById("abnormalWeight")?.value || "").trim(),
+        abnormalTemp: (document.getElementById("abnormalTemp")?.value || "").trim(),
         abnormalBPsys: (document.getElementById("abnormalBPsys")?.value || "").trim(),
         abnormalBPdia: (document.getElementById("abnormalBPdia")?.value || "").trim(),
         abnormalPulse: (document.getElementById("abnormalPulse")?.value || "").trim(),
@@ -4255,10 +4359,11 @@ const daySupportTypeLabel = record.daySupportType ? "日中支援" + record.dayS
 
       addRow("日付：", record.date || "");
       addRow("利用者：", record.resident || "");
-      addRow("記録者：", record.recorder || "");// バイタル（体重・血圧・脈拍）
-      if ((record.abnormalVitalsOn || record.abnormalWeight || record.abnormalBPsys || record.abnormalBPdia || record.abnormalPulse)) {
+      addRow("記録者：", record.recorder || "");// バイタル（体重・体温・血圧・脈拍）
+      if ((record.abnormalVitalsOn || record.abnormalWeight || record.abnormalTemp || record.abnormalBPsys || record.abnormalBPdia || record.abnormalPulse)) {
         const parts = [];
         if (record.abnormalWeight) parts.push(`体重 ${record.abnormalWeight}kg`);
+        if (record.abnormalTemp) parts.push(`体温 ${record.abnormalTemp}℃`);
         if (record.abnormalBPsys && record.abnormalBPdia) parts.push(`血圧 ${record.abnormalBPsys}/${record.abnormalBPdia}mmHg`);
         else if (record.abnormalBPsys) parts.push(`血圧 上${record.abnormalBPsys}mmHg`);
         else if (record.abnormalBPdia) parts.push(`血圧 下${record.abnormalBPdia}mmHg`);
@@ -5223,12 +5328,14 @@ function setupAutoSupportAutoSync() {
       }
       if (vitalObj) {
         const w = (vitalObj.weight || "").toString().trim();
+        const t = (vitalObj.temp   || "").toString().trim();
         const sys = (vitalObj.bpSys || "").toString().trim();
         const dia = (vitalObj.bpDia || "").toString().trim();
         const p = (vitalObj.pulse || "").toString().trim();
-        if (w || sys || dia || p) {
+        if (w || t || sys || dia || p) {
           const parts = [];
           if (w) parts.push(`体重 ${w}kg`);
+          if (t) parts.push(`体温 ${t}℃`);
           if (sys && dia) parts.push(`血圧 ${sys}/${dia}mmHg`);
           else if (sys) parts.push(`血圧 上${sys}mmHg`);
           else if (dia) parts.push(`血圧 下${dia}mmHg`);
@@ -5267,6 +5374,7 @@ function setupAutoSupportAutoSync() {
       const reasons  = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((x) => x.value);
       const vital = {
         weight: document.getElementById("abnormalWeight")?.value || "",
+        temp:  document.getElementById("abnormalTemp")?.value || "",
         bpSys: document.getElementById("abnormalBPsys")?.value || "",
         bpDia: document.getElementById("abnormalBPdia")?.value || "",
         pulse: document.getElementById("abnormalPulse")?.value || "",
@@ -5309,14 +5417,15 @@ function setupAutoSupportAutoSync() {
         if (e?.target?.classList?.contains("day-reason-item")) updateAutoNoteMain();
       });
 
-      // バイタル（体重・血圧・脈拍）
+      // バイタル（体重・体温・血圧・脈拍）
       const __vW  = document.getElementById("abnormalWeight");
+      const __vT  = document.getElementById("abnormalTemp");
       const __vS  = document.getElementById("abnormalBPsys");
       const __vD  = document.getElementById("abnormalBPdia");
       const __vP  = document.getElementById("abnormalPulse");
-      [__vW, __vS, __vD, __vP].forEach((el) => {
+      [__vW, __vT, __vS, __vD, __vP].forEach((el) => {
         if (!el) return;
-        el.addEventListener("input", () => { updateAutoNoteMain(); });
+        el.addEventListener("input", () => { const d = document.getElementById("abnormalVitalsBox"); if (d) d.open = true; updateAutoNoteMain(); });
       });
       // 初期UI（常時表示）
       syncAbnormalVitalsUI("main");
@@ -5333,6 +5442,7 @@ function setupAutoSupportAutoSync() {
       const reasons  = Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((x) => x.value);
       const vital = {
         weight: document.getElementById("editAbnormalWeight")?.value || "",
+        temp:  document.getElementById("editAbnormalTemp")?.value || "",
         bpSys: document.getElementById("editAbnormalBPsys")?.value || "",
         bpDia: document.getElementById("editAbnormalBPdia")?.value || "",
         pulse: document.getElementById("editAbnormalPulse")?.value || "",
@@ -5371,14 +5481,15 @@ function setupAutoSupportAutoSync() {
         if (e?.target?.classList?.contains("edit-day-reason-item")) updateAutoNoteEdit();
       });
 
-      // バイタル（体重・血圧・脈拍）
+      // バイタル（体重・体温・血圧・脈拍）
       const __evW  = document.getElementById("editAbnormalWeight");
+      const __evT  = document.getElementById("editAbnormalTemp");
       const __evS  = document.getElementById("editAbnormalBPsys");
       const __evD  = document.getElementById("editAbnormalBPdia");
       const __evP  = document.getElementById("editAbnormalPulse");
-      [__evW, __evS, __evD, __evP].forEach((el) => {
+      [__evW, __evT, __evS, __evD, __evP].forEach((el) => {
         if (!el) return;
-        el.addEventListener("input", () => { updateAutoNoteEdit(); });
+        el.addEventListener("input", () => { const d = document.getElementById("editAbnormalVitalsBox"); if (d) d.open = true; updateAutoNoteEdit(); });
       });
       // 初期UI（常時表示）だけ反映
       syncAbnormalVitalsUI("edit");
@@ -6151,15 +6262,24 @@ function clearFavChecks() {
       // 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）チェック：前回の編集状態を残さない
       document.querySelectorAll("#editDayNoteTemplateChecks .day-note-tpl-check").forEach((el) => { el.checked = false; });
 
-      // バイタル（体重・血圧・脈拍）
+      // バイタル（体重・体温・血圧・脈拍）
       const __evW  = document.getElementById("editAbnormalWeight");
+      const __evT  = document.getElementById("editAbnormalTemp");
       const __evS  = document.getElementById("editAbnormalBPsys");
       const __evD  = document.getElementById("editAbnormalBPdia");
       const __evP  = document.getElementById("editAbnormalPulse");
       if (__evW) __evW.value = record.abnormalWeight || "";
+      if (__evT) __evT.value = record.abnormalTemp || "";
       if (__evS) __evS.value = record.abnormalBPsys || "";
       if (__evD) __evD.value = record.abnormalBPdia || "";
       if (__evP) __evP.value = record.abnormalPulse || "";
+
+      // 既に値がある場合は開いておく
+      const __det = document.getElementById("editAbnormalVitalsBox");
+      if (__det) __det.open = !!(record.abnormalWeight || record.abnormalTemp || record.abnormalBPsys || record.abnormalBPdia || record.abnormalPulse);
+      const __tagDet = document.getElementById("editTagDetails");
+      if (__tagDet) __tagDet.open = !!(record.tags && record.tags.length);
+
       syncAbnormalVitalsUI("edit");
       
       const __sh = document.getElementById("editHasSpecialNote");
@@ -6298,8 +6418,9 @@ function clearFavChecks() {
         daySupportReasonItems: reasonItems,
         daySupportBathingSubItems: getBathingSubSelected("edit"),
         daySupportHealthSubItems: getHealthSubSelected("edit"),
-        abnormalVitalsOn: !!((document.getElementById("editAbnormalWeight")?.value || "").trim() || (document.getElementById("editAbnormalBPsys")?.value || "").trim() || (document.getElementById("editAbnormalBPdia")?.value || "").trim() || (document.getElementById("editAbnormalPulse")?.value || "").trim()),
+        abnormalVitalsOn: !!((document.getElementById("editAbnormalWeight")?.value || "").trim() || (document.getElementById("editAbnormalTemp")?.value || "").trim() || (document.getElementById("editAbnormalBPsys")?.value || "").trim() || (document.getElementById("editAbnormalBPdia")?.value || "").trim() || (document.getElementById("editAbnormalPulse")?.value || "").trim()),
         abnormalWeight: (document.getElementById("editAbnormalWeight")?.value || "").trim(),
+        abnormalTemp: (document.getElementById("editAbnormalTemp")?.value || "").trim(),
         abnormalBPsys: (document.getElementById("editAbnormalBPsys")?.value || "").trim(),
         abnormalBPdia: (document.getElementById("editAbnormalBPdia")?.value || "").trim(),
         abnormalPulse: (document.getElementById("editAbnormalPulse")?.value || "").trim(),
@@ -7078,6 +7199,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // Excel出力
   document.getElementById("exportExcelBtn")?.addEventListener("click", exportExcelXlsxMerged);
 document.getElementById("date").value = toLocalISODate();
+
+      // 記録一覧：期間デフォルトは「今日」
+      const __todayStr = toLocalISODate(new Date());
+      const __pf = document.getElementById("periodFilter");
+      if (__pf) __pf.value = "today";
+      const __pFrom = document.getElementById("periodFrom");
+      const __pTo = document.getElementById("periodTo");
+      if (__pFrom) __pFrom.value = __todayStr;
+      if (__pTo) __pTo.value = __todayStr;
 
       records = loadRecords();
       residents = loadResidents();
