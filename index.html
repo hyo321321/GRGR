@@ -1219,18 +1219,15 @@
             <div class="checkbox-row" id="autoItemCheckboxes" style="margin-top:8px;"></div>
           </div>
 
-          <!-- 日中支援 区分 -->
-          <div class="field">
-            <label for="daySupportType">日中支援の区分</label>
-            <select id="daySupportType">
-              <option value="">選択なし</option>
-              <option value="Ⅰ">日中支援Ⅰ</option>
-              <option value="Ⅱ">日中支援Ⅱ</option>
-            </select>
-            <div class="small-text">
-              日中支援に該当する場合のみ、Ⅰ / Ⅱ を選択してください。（自動文章の置換にも反映）
+          <!-- ② 反映確認（スクロール不要） -->
+          <div class="field" id="autoSupportStatusBox" style="margin-top:10px;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <span class="pill" id="autoSupportStatusPill">②の反映：なし</span>
+              <button type="button" class="btn-secondary" id="jumpSupportBtn">本文を見る</button>
             </div>
+            <div class="small-text" id="autoSupportStatusPreview" style="margin-top:6px;"></div>
           </div>
+
 
           <!-- ★日中支援：主な支援（初心者OK） -->
           <div class="beginner-zone">
@@ -1719,15 +1716,7 @@
           <div class="small-text" id="editSelectedTagsInfo">選択中：なし</div>
         </div>
 
-        <div class="field">
-          <label for="editDaySupportType">日中支援の区分</label>
-          <select id="editDaySupportType">
-            <option value="">選択なし</option>
-            <option value="Ⅰ">日中支援Ⅰ</option>
-            <option value="Ⅱ">日中支援Ⅱ</option>
-          </select>
-        </div>
-<div class="beginner-zone" style="margin-top:10px;">
+        <div class="beginner-zone" style="margin-top:10px;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
     <div style="font-weight:800; color:#1e3a8a;">④ 日中活動</div>
     <div class="beginner-hint">※通所/欠席をチェック。</div>
@@ -2104,6 +2093,126 @@
     // ★複合チェック（体調管理：血圧/体重/検温/症状確認/安静見守り）
     const HEALTH_MAIN_KEY = "体調管理";
     const HEALTH_SUB_OPTIONS = ["血圧", "体重", "検温", "症状確認", "安静見守り"];
+
+    // ★日中支援（Ⅰ/Ⅱ）複合チェック（③ 主な支援）
+    const DAY_SUPPORT_TYPE_MAIN_KEY = "日中支援";
+    const DAY_SUPPORT_TYPE_SUB_OPTIONS = ["Ⅰ", "Ⅱ"];
+
+    function isDaySupportTypeMainItemText(text) {
+      return typeof text === "string" && /^日中支援/.test(text.trim());
+    }
+
+    function ensureDaySupportTypeItemInList(list) {
+      const arr = Array.isArray(list) ? list.slice() : [];
+      if (!arr.some((t) => isDaySupportTypeMainItemText(t))) arr.unshift(DAY_SUPPORT_TYPE_MAIN_KEY);
+      return arr;
+    }
+
+    function makeDaySupportTypeCompositeHTML(mode = "main") {
+      const parentClass = mode === "edit"
+        ? "edit-day-main-item edit-day-main-supporttype"
+        : "day-main-item day-main-supporttype";
+      const subClass = mode === "edit"
+        ? "edit-day-main-supporttype-sub"
+        : "day-main-supporttype-sub";
+
+      const subs = DAY_SUPPORT_TYPE_SUB_OPTIONS.map((t) => {
+        return `<label><input type="checkbox" class="${subClass}" value="${escapeHtmlAttr(t)}"> ${escapeHtml(t)}</label>`;
+      }).join("");
+
+      return `
+        <div class="day-main-composite">
+          <label><input type="checkbox" class="${parentClass}" value="${escapeHtmlAttr(DAY_SUPPORT_TYPE_MAIN_KEY)}"> ${escapeHtml(DAY_SUPPORT_TYPE_MAIN_KEY)}</label>
+          <div class="day-main-subwrap">
+            ${subs}
+          </div>
+        </div>
+      `;
+    }
+
+    function syncDaySupportTypeCompositeInWrap(wrapEl, mode = "main") {
+      if (!wrapEl) return;
+      const parentSelector = mode === "edit" ? "input.edit-day-main-supporttype" : "input.day-main-supporttype";
+      const subSelector = mode === "edit" ? "input.edit-day-main-supporttype-sub" : "input.day-main-supporttype-sub";
+
+      wrapEl.querySelectorAll(".day-main-composite").forEach((comp) => {
+        const parent = comp.querySelector(parentSelector);
+        const subWrap = comp.querySelector(".day-main-subwrap");
+        if (!parent || !subWrap) return;
+        subWrap.classList.toggle("disabled", !parent.checked);
+      });
+
+      // 親がOFFならサブもOFF
+      wrapEl.querySelectorAll(".day-main-composite").forEach((comp) => {
+        const parent = comp.querySelector(parentSelector);
+        const subs = Array.from(comp.querySelectorAll(subSelector));
+        if (!parent) return;
+        if (!parent.checked) subs.forEach((s) => { s.checked = false; });
+      });
+    }
+
+    function bindDaySupportTypeCompositeHandlersOnce(wrapId, mode = "main") {
+      const wrapEl = document.getElementById(wrapId);
+      if (!wrapEl) return;
+      const flag = mode === "edit" ? "dstBoundEdit" : "dstBoundMain";
+      if (wrapEl.dataset[flag] === "1") return;
+      wrapEl.dataset[flag] = "1";
+
+      const parentSelector = mode === "edit" ? "input.edit-day-main-supporttype" : "input.day-main-supporttype";
+      const subSelector = mode === "edit" ? "input.edit-day-main-supporttype-sub" : "input.day-main-supporttype-sub";
+
+      wrapEl.addEventListener("change", (e) => {
+        const t = e?.target;
+        if (!t || !t.matches) return;
+
+        // 親ON/OFF
+        if (t.matches(parentSelector)) {
+          syncDaySupportTypeCompositeInWrap(wrapEl, mode);
+          return;
+        }
+
+        // サブの排他
+        if (t.matches(subSelector)) {
+          const comp = t.closest(".day-main-composite");
+          if (!comp) return;
+
+          const parent = comp.querySelector(parentSelector);
+          if (parent && t.checked) parent.checked = true;
+
+          if (t.checked) {
+            comp.querySelectorAll(subSelector).forEach((cb) => {
+              if (cb !== t) cb.checked = false;
+            });
+          }
+          syncDaySupportTypeCompositeInWrap(wrapEl, mode);
+        }
+      });
+    }
+
+    function getDaySupportTypeSelected(mode = "main") {
+      const sel = mode === "edit" ? ".edit-day-main-supporttype-sub:checked" : ".day-main-supporttype-sub:checked";
+      const v = document.querySelector(sel)?.value || "";
+      return String(v || "").trim();
+    }
+
+    function applyDaySupportTypeSelected(val, mode = "main") {
+      const v = String(val || "").trim();
+      if (!v) return; // 空なら触らない（利用者別のデフォルトで後から制御する想定）
+
+      const parentSel = mode === "edit" ? ".edit-day-main-supporttype" : ".day-main-supporttype";
+      const subSel = mode === "edit" ? ".edit-day-main-supporttype-sub" : ".day-main-supporttype-sub";
+
+      const parent = document.querySelector(parentSel);
+      if (parent) parent.checked = true;
+
+      document.querySelectorAll(subSel).forEach((cb) => {
+        cb.checked = (cb.value === v);
+      });
+
+      const wrapId = mode === "edit" ? "editDaySupportMainCheckboxes" : "daySupportMainCheckboxes";
+      syncDaySupportTypeCompositeInWrap(document.getElementById(wrapId), mode);
+    }
+
 
     function isHealthMainItemText(text) {
       return typeof text === "string" && /^体調管理/.test(text.trim());
@@ -3287,15 +3396,15 @@ function saveAutoItemDefs() {
 
     function getDefaultDaySupport() {
       if (daySupportDefault && Array.isArray(daySupportDefault.main) && Array.isArray(daySupportDefault.reason)) {
-        return { main: daySupportDefault.main.slice(), reason: daySupportDefault.reason.slice() };
+        return { main: ensureDaySupportTypeItemInList(daySupportDefault.main), reason: daySupportDefault.reason.slice() };
       }
-      return { main: DEFAULT_DAY_SUPPORT_MAIN.slice(), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
+      return { main: ensureDaySupportTypeItemInList(DEFAULT_DAY_SUPPORT_MAIN), reason: DEFAULT_DAY_SUPPORT_REASON.slice() };
     }
 
     function getDaySupportForResident(resident) {
       if (resident) {
         const st = daySupportByResident[resident];
-        if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return { main: st.main.slice(), reason: st.reason.slice() };
+        if (st && Array.isArray(st.main) && Array.isArray(st.reason)) return { main: ensureDaySupportTypeItemInList(st.main), reason: st.reason.slice() };
       }
       return getDefaultDaySupport();
     }
@@ -3645,7 +3754,7 @@ if (record.hasSpecialNote) {
 tr.appendChild(tdResident);
 const tdDayMain = document.createElement("td");
         const mainItemsRaw = Array.isArray(record.daySupportMainItems) ? record.daySupportMainItems : [];
-        const mainItems = formatDaySupportMainItems(mainItemsRaw, record.daySupportBathingSubItems, record.daySupportHealthSubItems);
+        const mainItems = formatDaySupportMainItems(mainItemsRaw, record.daySupportBathingSubItems, record.daySupportHealthSubItems, record.daySupportType);
         if (mainItems.length) {
           const wrap = document.createElement("div");
           wrap.className = "list-support-tags";
@@ -3740,8 +3849,7 @@ tr.appendChild(tdSupport);
       const _ment = document.getElementById("mental");
       if (_ment) _ment.value = "安定";
 
-      const daySupportType = document.getElementById("daySupportType");
-      if (daySupportType) daySupportType.value = "";      currentTags = [];
+      // 日中支援の区分（Ⅰ/Ⅱ）は③の「日中支援」サブチェックで管理      currentTags = [];
       updateTagUI();
       syncQuickButtonsAll();
 
@@ -3972,7 +4080,7 @@ function handleRestoreFile(file) {
         return;
       }
 
-      const daySupportType = document.getElementById("daySupportType")?.value || "";      const dayActivityItems = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((el) => el.value);
+      const daySupportType = getDaySupportTypeSelected("main");      const dayActivityItems = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((el) => el.value);
 
       const daySupportMainItems = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
       const daySupportReasonItems = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
@@ -4036,7 +4144,7 @@ function handleRestoreFile(file) {
       if (!hasAutoSupportBlock(textArea?.value || "")) {
         const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
         if (checkedKeys.length > 0) {
-          const daySupportType = document.getElementById("daySupportType")?.value || "";
+          const daySupportType = getDaySupportTypeSelected("main");
           const daySupportTypeLabel = daySupportType ? ("日中支援" + daySupportType) : "日中支援";
 
           checkedKeys.forEach((key) => {
@@ -4160,7 +4268,7 @@ const daySupportTypeLabel = record.daySupportType ? "日中支援" + record.dayS
       addRow("タグ：", tagsText);
       addRow("日中支援区分：", daySupportTypeLabel);      // ✅ ここがタグ表示
       addTagRow("日中活動：", record.dayActivityItems, "activity");
-      addTagRow("主な支援：", formatDaySupportMainItems(record.daySupportMainItems, record.daySupportBathingSubItems, record.daySupportHealthSubItems), "main");
+      addTagRow("主な支援：", formatDaySupportMainItems(record.daySupportMainItems, record.daySupportBathingSubItems, record.daySupportHealthSubItems, record.daySupportType), "main");
       addTagRow("欠席理由：", record.daySupportReasonItems, "reason");
       // 特記事項あり（一覧から一瞬で分かるように）
       addRow("特記事項：", record.hasSpecialNote ? "あり" : "なし");
@@ -4172,7 +4280,7 @@ addMultiline("業務日誌・利用者の活動状況（特記事項含む）：
 
 
     
-    function formatDaySupportMainItems(items, bathingSubItems, healthSubItems) {
+    function formatDaySupportMainItems(items, bathingSubItems, healthSubItems, daySupportType) {
       const arr = Array.isArray(items) ? items.slice() : [];
       const bathSubs = Array.isArray(bathingSubItems) ? bathingSubItems.filter(Boolean) : [];
       const healthSubs = Array.isArray(healthSubItems) ? healthSubItems.filter(Boolean) : [];
@@ -4183,6 +4291,10 @@ addMultiline("業務日誌・利用者の活動状況（特記事項含む）：
         }
         if (x === HEALTH_MAIN_KEY) {
           return healthSubs.length ? `${HEALTH_MAIN_KEY}（${healthSubs.join("・")}）` : HEALTH_MAIN_KEY;
+        }
+        if (isDaySupportTypeMainItemText(x)) {
+          const t = String(daySupportType || "").trim();
+          return t ? `${DAY_SUPPORT_TYPE_MAIN_KEY}${t}` : DAY_SUPPORT_TYPE_MAIN_KEY;
         }
         return x;
       });
@@ -4626,6 +4738,18 @@ function closeRecordDetail() {
       setupAutoHealthCompound();
       // ②のチェック操作だけで「本日の支援内容」を常に最新にする（ボタン無しの完全自動）
       setupAutoSupportAutoSync();
+      updateAutoSupportStatus();
+      if (!window.__autoSupportStatusBound) {
+        window.__autoSupportStatusBound = true;
+        document.getElementById("jumpSupportBtn")?.addEventListener("click", () => {
+          const ta = document.getElementById("support");
+          if (!ta) return;
+          ta.scrollIntoView({ behavior: "smooth", block: "start" });
+          setTimeout(() => { try { ta.focus(); } catch(e){} }, 300);
+        });
+        document.getElementById("support")?.addEventListener("input", updateAutoSupportStatus);
+      }
+
       syncAutoItemsToSupport();
     }
 
@@ -4789,16 +4913,18 @@ function buildAutoCleanSentence() {
       const checkedKeys = Array.from(document.querySelectorAll(".auto-item:checked")).map((el) => el.value);
       if (!checkedKeys.length) return "";
 
-      const daySupportType = document.getElementById("daySupportType")?.value || "";
+      const daySupportType = getDaySupportTypeSelected("main");
       const daySupportTypeLabel = daySupportType ? ("日中支援" + daySupportType) : "日中支援";
 
       const lines = [];
+
       checkedKeys.forEach((key) => {
         if (key === "bathing") {
           const t = buildAutoBathSentence();
           if (t) lines.push(t);
           return;
         }
+
         if (key === "health") {
           const t = buildAutoHealthSentence();
           if (t) lines.push(t);
@@ -4811,13 +4937,20 @@ function buildAutoCleanSentence() {
           return;
         }
 
-const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
+        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
         if (!def) return;
+
         let text = (def.defaultText || "").trim();
-        if (!text) return;
+
+        // チェックしたら必ず何か出す（古いデータ/空テンプレ対策）
+        if (!text) {
+          text = `${def.label}：支援を行った。`;
+        }
+
         text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
         lines.push(text);
       });
+
       return lines.join("\n").trim();
     }
 
@@ -4863,27 +4996,65 @@ const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
 
       const inner = buildAutoItemsTextForSupport();
       textArea.value = upsertAutoSupportBlock(textArea.value, inner);
+      updateAutoSupportStatus();
     }
 
-    function setupAutoSupportAutoSync() {
+    
+
+    // ===== ② 反映確認バー（スクロール不要） =====
+    function extractAutoSupportInner(fullText) {
+      const full = String(fullText || "");
+      const s = full.indexOf(AUTO_SUPPORT_BLOCK_START);
+      const e = full.indexOf(AUTO_SUPPORT_BLOCK_END);
+      if (s === -1 || e === -1 || e <= s) return "";
+      return full.slice(s + AUTO_SUPPORT_BLOCK_START.length, e).trim();
+    }
+
+    function updateAutoSupportStatus() {
+      const pill = document.getElementById("autoSupportStatusPill");
+      const preview = document.getElementById("autoSupportStatusPreview");
+      const ta = document.getElementById("support");
+      if (!pill || !preview || !ta) return;
+
+      const inner = extractAutoSupportInner(ta.value);
+      const lines = inner ? inner.split(/\r?\n/).map((l) => l.trim()).filter(Boolean) : [];
+
+      if (!lines.length) {
+        pill.textContent = "②の反映：なし";
+        preview.innerHTML = "";
+        preview.removeAttribute("style");
+        return;
+      }
+
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      pill.textContent = `②の反映：${lines.length}件（${hh}:${mm}）`;
+
+      // 全件表示（長文でも見やすいように枠内スクロール）
+      preview.style.whiteSpace = "pre-wrap";
+      preview.style.maxHeight = "10em";
+      preview.style.overflowY = "auto";
+      preview.style.padding = "6px 8px";
+      preview.style.borderRadius = "10px";
+      preview.style.border = "1px solid #e5e7eb";
+
+      preview.innerHTML = lines.map((l) => escapeHtml(l)).join("<br>");
+    }
+
+function setupAutoSupportAutoSync() {
       const wrap = document.getElementById("autoItemCheckboxes");
       if (wrap && wrap.dataset.autoSupportWired !== "1") {
         wrap.dataset.autoSupportWired = "1";
         wrap.addEventListener("change", (e) => {
           const t = e?.target;
           if (!t || !t.classList) return;
-          if (t.classList.contains("auto-item") || t.classList.contains("auto-bath-sub") || t.classList.contains("auto-health-sub")) {
+          if (t.classList.contains("auto-item") || t.classList.contains("auto-bath-sub") || t.classList.contains("auto-health-sub") || t.classList.contains("auto-clean-sub") || t.classList.contains("auto-sub")) {
             syncAutoItemsToSupport();
           }
         });
       }
-
-      const ds = document.getElementById("daySupportType");
-      if (ds && ds.dataset.autoSupportWired !== "1") {
-        ds.dataset.autoSupportWired = "1";
-        ds.addEventListener("change", syncAutoItemsToSupport);
-      }
-    }
+}
 
 
     // ===== 日中活動（フォーム）チェック生成 =====
@@ -4958,6 +5129,12 @@ const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
       wrap.innerHTML = "";
 
       DAY_SUPPORT_MAIN_LIST.forEach((text) => {
+        if (isDaySupportTypeMainItemText(text)) {
+          const holder = document.createElement("div");
+          holder.innerHTML = makeDaySupportTypeCompositeHTML("main");
+          wrap.appendChild(holder.firstElementChild);
+          return;
+        }
         if (isBathingMainItemText(text)) {
           const holder = document.createElement("div");
           holder.innerHTML = makeBathingCompositeHTML("main");
@@ -4981,6 +5158,9 @@ const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
 
       bindHealthCompositeHandlersOnce("daySupportMainCheckboxes", "main");
       syncHealthCompositeInWrap(wrap, "main");
+
+      bindDaySupportTypeCompositeHandlersOnce("daySupportMainCheckboxes", "main");
+      syncDaySupportTypeCompositeInWrap(wrap, "main");
 
       // チェック変更で自動追記（業務日誌）
       wrap.querySelectorAll("input[type=checkbox]").forEach((el) => {
@@ -5987,7 +6167,7 @@ function clearFavChecks() {
       
       const __en = document.getElementById("editNote");
       if (__en) __en.classList.toggle("special-note-on", !!record.hasSpecialNote);
-document.getElementById("editDaySupportType").value = record.daySupportType || "";      // タグ
+      // タグ
       editTags = Array.isArray(record.tags) ? [...record.tags] : [];
       renderEditTagButtons();
 
@@ -5998,6 +6178,7 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
       renderEditDaySupportCheckboxes(record.resident, record.daySupportMainItems || [], record.daySupportReasonItems || []);
       applyBathingSubSelected(record.daySupportBathingSubItems || [], "edit");
       applyHealthSubSelected(record.daySupportHealthSubItems || [], "edit");
+      applyDaySupportTypeSelected(record.daySupportType || "", "edit");
 
       document.getElementById("editModalTitle").textContent = `記録の編集（${record.date || ""} / ${record.resident || ""}）`;
 
@@ -6024,6 +6205,12 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
       const checkedReason = new Set(Array.isArray(checkedReasonArr) ? checkedReasonArr : []);
 
       mainList.forEach((text, idx) => {
+        if (isDaySupportTypeMainItemText(text)) {
+          const holder = document.createElement("div");
+          holder.innerHTML = makeDaySupportTypeCompositeHTML("edit");
+          wrapMain.appendChild(holder.firstElementChild);
+          return;
+        }
         if (isBathingMainItemText(text)) {
           const holder = document.createElement("div");
           holder.innerHTML = makeBathingCompositeHTML("edit");
@@ -6079,6 +6266,9 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
 
       bindHealthCompositeHandlersOnce("editDaySupportMainCheckboxes", "edit");
       syncHealthCompositeInWrap(wrapMain, "edit");
+
+      bindDaySupportTypeCompositeHandlersOnce("editDaySupportMainCheckboxes", "edit");
+      syncDaySupportTypeCompositeInWrap(wrapMain, "edit");
     }
 
     function saveEditModal() {
@@ -6103,7 +6293,7 @@ document.getElementById("editDaySupportType").value = record.daySupportType || "
         note: document.getElementById("editNote").value,
         hasSpecialNote: !!document.getElementById("editHasSpecialNote")?.checked,
         tags: [...editTags],
-        daySupportType: document.getElementById("editDaySupportType").value,        dayActivityItems: activityItems,
+        daySupportType: getDaySupportTypeSelected("edit"),        dayActivityItems: activityItems,
         daySupportMainItems: mainItems,
         daySupportReasonItems: reasonItems,
         daySupportBathingSubItems: getBathingSubSelected("edit"),
