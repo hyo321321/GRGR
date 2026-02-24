@@ -670,6 +670,97 @@
       color: #1e3a8a;
       margin-top: 6px;
     }
+        
+    /* ====== UIモード（初心者 / 任意） ====== */
+    .optional-zone{
+      border: 2px solid #10b981;
+      background: #ecfdf5;
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .advanced-zone{
+      border: 2px dashed #94a3b8;
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .optional-badge{
+      display:inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #d1fae5;
+      color: #065f46;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+    .advanced-badge{
+      display:inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #334155;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+    .advanced-section{ display:none; }
+    body.show-advanced .advanced-section{ display:block; }
+
+    .advanced-toggle-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+.btn-advanced-toggle{
+  width: 100%;
+  font-weight: 800;
+  border-width: 2px;
+}
+.btn-advanced-toggle:active{ transform: translateY(1px); }
+
+    .daytype-pill{
+      display:inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #e2e8f0;
+      color: #334155;
+      margin-right: 8px;
+    }
+    .daytype-pill.holiday{
+      background:#fef3c7;
+      color:#92400e;
+    }
+
+    .draft-bar{
+      border: 2px solid #f59e0b;
+      background: #fffbeb;
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin: 10px 0 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .draft-bar .draft-title{
+      font-weight: 800;
+      color:#92400e;
+    }
+    .draft-bar .draft-meta{
+      font-size: 12px;
+      color:#92400e;
+      margin-top:2px;
+    }
         /* ====== 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）：専用ボックス ====== */
     .daynote-template-box{
       border: 2px solid #60a5fa;
@@ -1208,11 +1299,21 @@
         <div class="beginner-guide">
           <div class="title">✅ 初心者は「色付きの枠だけ」でOK</div>
           <div class="steps">
-            ① 日付・利用者・記録者 → ② よく使う項目チェック → ③【日中に行った主な支援】 → ④ 日中活動 → ⑤💾 記録を保存
+            ① 日付・利用者・記録者 → ② よく使う項目チェック → ④ 日中活動（必要な日だけ） → ⑤💾 記録を保存
           </div>
         </div>
 
         <form id="recordForm">
+          <div class="draft-bar" id="draftBar" style="display:none;">
+            <div>
+              <div class="draft-title">下書きがあります</div>
+              <div class="draft-meta" id="draftMeta">復元できます。</div>
+            </div>
+            <div class="btn-row" style="margin-top:0;">
+              <button type="button" class="btn-secondary" id="draftRestoreBtn">復元</button>
+              <button type="button" class="btn-secondary" id="draftDiscardBtn">破棄</button>
+            </div>
+          </div>
 
           <!-- ★日付・利用者（初心者OK） -->
           <div class="beginner-zone">
@@ -1236,39 +1337,48 @@
               </div>
             </div>
           </div>
+          <div class="small-text" style="margin-top:6px;">
+            <span class="daytype-pill" id="dayTypePill">平日</span>
+            <label style="margin-left:6px; user-select:none;">
+              <input type="checkbox" id="holidayOverride" /> この日を土日祝扱い
+            </label>
+            <span class="small-text" id="holidayName" style="margin-left:8px;"></span>
+          </div>
+
 <details class="field vitals-compact vitals-details" id="abnormalVitalsBox" style="margin-top:8px;">
-                <summary>
-                  <div class="vitals-summary-left">
-                    <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
-                    <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
-                  </div>
-                  <div class="vitals-chevron">▼</div>
-                </summary>
-                <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
-                <div class="field-row-vitals" id="abnormalVitalsInputs" style="align-items:end;">
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalWeight">体重（kg）</label>
-                    <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalTemp">体温（℃）</label>
-                    <input type="text" id="abnormalTemp" placeholder="例：36.5" inputmode="decimal" />
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalBPsys">血圧（上 / mmHg）</label>
-                    <input type="text" id="abnormalBPsys" placeholder="例：120" inputmode="numeric" />
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalBPdia">血圧（下 / mmHg）</label>
-                    <input type="text" id="abnormalBPdia" placeholder="例：80" inputmode="numeric" />
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label for="abnormalPulse">脈拍（回/分）</label>
-                    <input type="text" id="abnormalPulse" placeholder="例：72" inputmode="numeric" />
-                  </div>
-                </div>
-                <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-              </details>
+  <summary>
+    <div class="vitals-summary-left">
+      <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
+      <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
+    </div>
+    <div class="vitals-chevron">▼</div>
+  </summary>
+  <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
+  <div class="field-row-vitals" id="abnormalVitalsInputs" style="align-items:end;">
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalWeight">体重（kg）</label>
+      <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalTemp">体温（℃）</label>
+      <input type="text" id="abnormalTemp" placeholder="例：36.5" inputmode="decimal" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalBPsys">血圧（上 / mmHg）</label>
+      <input type="text" id="abnormalBPsys" placeholder="例：120" inputmode="numeric" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalBPdia">血圧（下 / mmHg）</label>
+      <input type="text" id="abnormalBPdia" placeholder="例：80" inputmode="numeric" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalPulse">脈拍（回/分）</label>
+      <input type="text" id="abnormalPulse" placeholder="例：72" inputmode="numeric" />
+    </div>
+  </div>
+  <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
+</details>
+
 
           <!-- ★自動入力したい支援項目（初心者OK） -->
           <div class="beginner-zone">
@@ -1279,6 +1389,7 @@
 
             <div class="btn-row" style="margin-top:8px;">
               <button type="button" class="btn-secondary" id="openFavModalBtn">🛠 よく使う項目編集（この利用者）</button>
+              <div class="small-text" style="margin-top:6px;">※平日/土日祝の初期チェック（②・④）はここで保存できます</div>
             </div>
 
             <div class="checkbox-row" id="autoItemCheckboxes" style="margin-top:8px;"></div>
@@ -1294,11 +1405,18 @@
           </div>
 
 
+          
+          <div class="advanced-toggle-row">
+            <button type="button" class="btn-secondary" id="toggleAdvancedBtn" class="btn-secondary btn-advanced-toggle">テンプレ・タグを表示</button>
+            <div class="small-text">日中支援テンプレ / タグ など（必要な人だけ）</div>
+          </div>
+
+
           <!-- ★日中支援：主な支援（初心者OK） -->
-          <div class="beginner-zone">
+          <div class="advanced-zone">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <div style="font-weight:800; color:#1e3a8a;">③【日中に行った主な支援】 <span class="beginner-badge">ここだけOK</span></div>
-              <div class="beginner-hint">※該当するものにチェック（漏れ防止）</div>
+              <div style="font-weight:800; color:#334155;">③【日中に行った主な支援】 <span class="advanced-badge">任意</span></div>
+              <div class="beginner-hint">※慣れた人向け（必要な日だけ）</div>
             </div>
 
             <div class="btn-row" style="margin-top:8px;">
@@ -1307,7 +1425,7 @@
 
             <div class="checkbox-row checkbox-grid" id="daySupportMainCheckboxes" style="margin-top:8px;"></div>
 
-            <div class="daynote-template-box" style="margin-top:10px;">
+            <div class="daynote-template-box advanced-section" style="margin-top:10px;">
               <div class="daynote-template-head">
                 <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
                 <button type="button" class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;">🛠 編集</button>
@@ -1320,10 +1438,10 @@
 
           </div>
 
-          <div class="beginner-zone" style="margin-top:10px;">
+          <div class="optional-zone" style="margin-top:10px;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-    <div style="font-weight:800; color:#1e3a8a;">④ 日中活動 <span class="beginner-badge">ここだけOK</span></div>
-    <div class="beginner-hint">※通所/欠席をチェック。</div>
+    <div style="font-weight:800; color:#065f46;">④ 日中活動 <span class="optional-badge">任意</span></div>
+    <div class="beginner-hint">※必要な日だけチェック。</div>
   </div>
 
   <div class="field" style="margin-top:8px;">
@@ -1368,16 +1486,16 @@
               <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
             </div>
 
-          <details class="field fold-details" id="tagDetails" style="margin-top:10px;">
-            <summary class="fold-summary">
-              <span>キーワード（タグ）（任意）</span>
-              <span class="fold-chevron">▼</span>
-            </summary>
+          <div class="field advanced-zone advanced-section" id="tagDetails" style="margin-top:10px;">
+            <div class="fold-header">
+              <div style="font-weight:800; color:#334155;">キーワード（タグ） <span class="advanced-badge">任意</span></div>
+              <div class="small-text">※普段は空でOK。必要なときだけ使ってください。</div>
+            </div>
             <div style="margin-top:10px;">
               <div class="tag-buttons" id="tagButtons"></div>
               <div class="small-text" id="selectedTagsInfo">選択中：なし</div>
             </div>
-          </details>
+          </div>
 
           <!-- ★保存（初心者OK） -->
           <div class="beginner-zone">
@@ -1385,6 +1503,8 @@
               <div style="font-weight:800; color:#1e3a8a;">⑤ 記録を保存 <span class="beginner-badge">ここだけOK</span></div>
               <div class="beginner-hint">※終わったら保存。</div>
             </div>
+
+            <div class="small-text" id="autosaveStatus" style="margin-top:8px;"></div>
 
             <div class="btn-row" style="margin-top:10px;">
               <button type="submit" class="btn-beginner" id="saveButton">💾 記録を保存</button>
@@ -1763,14 +1883,14 @@
           <label for="editRecorder">記録者</label>
           <select id="editRecorder"></select>
         </div>
-<details class="field vitals-compact vitals-details" id="editAbnormalVitalsBox" style="margin-top:8px;">
-            <summary>
+<div class="field vitals-compact vitals-box" id="editAbnormalVitalsBox" style="margin-top:8px;">
+            <div class="vitals-header">
               <div class="vitals-summary-left">
                 <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
                 <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
               </div>
-              <div class="vitals-chevron">▼</div>
-            </summary>
+              
+            </div>
             <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
             <div class="field-row-vitals" id="editAbnormalVitalsInputs" style="align-items:end;">
               <div class="field" style="margin-bottom:0;">
@@ -1795,20 +1915,20 @@
               </div>
             </div>
             <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-          </details>
+          </div>
 
 <div class="field">
           <label>キーワード（タグ）</label>
-        <details class="field fold-details" id="editTagDetails">
-          <summary class="fold-summary">
-            <span>キーワード（タグ）（任意）</span>
-            <span class="fold-chevron">▼</span>
-          </summary>
+        <div class="field advanced-zone advanced-section" id="editTagDetails">
+          <div class="fold-header">
+            <div style="font-weight:800; color:#334155;">キーワード（タグ） <span class="advanced-badge">任意</span></div>
+            <div class="small-text">※普段は空でOK。必要なときだけ使ってください。</div>
+          </div>
           <div style="margin-top:10px;">
             <div class="tag-buttons" id="editTagButtons"></div>
             <div class="small-text" id="editSelectedTagsInfo">選択中：なし</div>
           </div>
-        </details>
+        </div>
 
 <div class="beginner-zone" style="margin-top:10px;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
@@ -2458,6 +2578,412 @@
     function saveJSON(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
     }
+
+    // ===== UI / 下書き自動保存 / 平日・土日祝 判定 =====
+    const UI_PREF_KEY = "group_home_ui_pref_v2";
+    const DRAFTS_KEY  = "group_home_drafts_v1";
+
+    function pad2(n){ n = Number(n)||0; return (n<10?"0":"")+n; }
+    function formatHM(ts){
+      const d = new Date(ts);
+      return pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+    }
+    function debounce(fn, wait){
+      let t = null;
+      return function(...args){
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    }
+
+    function getDayTypeFromDateStr(dateStr){
+      if(!dateStr) return "weekday";
+      const d = new Date(dateStr + "T00:00:00");
+      if(isNaN(d.getTime())) return "weekday";
+      const dow = d.getDay();
+      if(dow === 0 || dow === 6) return "holiday";
+      if(isJapaneseHoliday(d)) return "holiday";
+      return "weekday";
+    }
+
+    // 日本の祝日（2000-2099程度を想定）
+    function nthWeekdayOfMonth(year, monthIndex, weekday, n){
+      // monthIndex: 0-11, weekday: 0(Sun)-6
+      const first = new Date(year, monthIndex, 1);
+      const firstDow = first.getDay();
+      const delta = (weekday - firstDow + 7) % 7;
+      const day = 1 + delta + (n-1)*7;
+      return new Date(year, monthIndex, day);
+    }
+    function vernalEquinoxDay(year){
+      // 1900-2099 の近似式
+      return Math.floor(20.8431 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
+    }
+    function autumnalEquinoxDay(year){
+      return Math.floor(23.2488 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
+    }
+    function ymd(d){
+      const y=d.getFullYear(), m=d.getMonth()+1, dd=d.getDate();
+      return y + "-" + pad2(m) + "-" + pad2(dd);
+    }
+    function addHoliday(map, dateObj, name){
+      map[ymd(dateObj)] = name;
+    }
+    function buildHolidayMap(year){
+      const h = {};
+
+      // 固定日
+      addHoliday(h, new Date(year,0,1),  "元日");
+      addHoliday(h, new Date(year,1,11), "建国記念の日");
+      if(year >= 2020) addHoliday(h, new Date(year,1,23), "天皇誕生日");
+      addHoliday(h, new Date(year,3,29), "昭和の日");
+      addHoliday(h, new Date(year,4,3),  "憲法記念日");
+      addHoliday(h, new Date(year,4,4),  "みどりの日");
+      addHoliday(h, new Date(year,4,5),  "こどもの日");
+      if(year >= 2016) addHoliday(h, new Date(year,7,11), "山の日");
+      addHoliday(h, new Date(year,10,3), "文化の日");
+      addHoliday(h, new Date(year,10,23),"勤労感謝の日");
+
+      // ハッピーマンデー
+      addHoliday(h, nthWeekdayOfMonth(year,0,1,2), "成人の日");        // 1月第2月曜
+      addHoliday(h, nthWeekdayOfMonth(year,6,1,3), "海の日");          // 7月第3月曜
+      addHoliday(h, nthWeekdayOfMonth(year,8,1,3), "敬老の日");        // 9月第3月曜
+      addHoliday(h, nthWeekdayOfMonth(year,9,1,2), "スポーツの日");    // 10月第2月曜
+
+      // 春分・秋分
+      addHoliday(h, new Date(year,2,vernalEquinoxDay(year)), "春分の日");
+      addHoliday(h, new Date(year,8,autumnalEquinoxDay(year)), "秋分の日");
+
+      // 特例（2019, 2020, 2021 の主な移動）
+      if(year === 2019){
+        addHoliday(h, new Date(2019,3,30), "国民の休日");
+        addHoliday(h, new Date(2019,4,1),  "天皇の即位の日");
+        addHoliday(h, new Date(2019,4,2),  "国民の休日");
+        addHoliday(h, new Date(2019,9,22), "即位礼正殿の儀");
+      }
+      if(year === 2020){
+        // 五輪特例
+        addHoliday(h, new Date(2020,6,23), "海の日");
+        addHoliday(h, new Date(2020,6,24), "スポーツの日");
+        addHoliday(h, new Date(2020,7,10), "山の日");
+      }
+      if(year === 2021){
+        addHoliday(h, new Date(2021,6,22), "海の日");
+        addHoliday(h, new Date(2021,6,23), "スポーツの日");
+        addHoliday(h, new Date(2021,7,8),  "山の日");
+      }
+
+      // 振替休日（まず日曜に当たる祝日をチェックして翌日へ）
+      // 祝日Mapを日付順で見ていく
+      const keys = Object.keys(h).sort();
+      const toAdd = {};
+      keys.forEach(k=>{
+        const d = new Date(k + "T00:00:00");
+        if(d.getDay() === 0){
+          let dd = new Date(d);
+          dd.setDate(dd.getDate()+1);
+          while(h[ymd(dd)] || toAdd[ymd(dd)]){
+            dd.setDate(dd.getDate()+1);
+          }
+          toAdd[ymd(dd)] = "振替休日";
+        }
+      });
+      Object.assign(h, toAdd);
+
+      // 国民の休日（祝日に挟まれた平日）
+      const allKeys = Object.keys(h).sort();
+      const exists = (k)=>!!h[k];
+      for(let m=1; m<=12; m++){
+        const daysInMonth = new Date(year, m, 0).getDate();
+        for(let d=2; d<daysInMonth; d++){
+          const cur = ymd(new Date(year, m-1, d));
+          if(exists(cur)) continue;
+          const prev = ymd(new Date(year, m-1, d-1));
+          const next = ymd(new Date(year, m-1, d+1));
+          const curDow = new Date(cur + "T00:00:00").getDay();
+          if(curDow===0 || curDow===6) continue;
+          if(exists(prev) && exists(next)){
+            h[cur] = "国民の休日";
+          }
+        }
+      }
+
+      return h;
+    }
+
+    const __holidayCache = {};
+    function getHolidayNameByDateStr(dateStr){
+      if(!dateStr) return "";
+      const y = Number(String(dateStr).slice(0,4));
+      if(!y) return "";
+      if(!__holidayCache[y]) __holidayCache[y] = buildHolidayMap(y);
+      return __holidayCache[y][dateStr] || "";
+    }
+    function isJapaneseHoliday(dateObj){
+      const k = ymd(dateObj);
+      const name = getHolidayNameByDateStr(k);
+      return !!name;
+    }
+
+    function getCurrentDayType(){
+      const dateStr = document.getElementById("date")?.value || "";
+      const override = !!document.getElementById("holidayOverride")?.checked;
+      const base = getDayTypeFromDateStr(dateStr);
+      return override ? "holiday" : base;
+    }
+
+    function updateDayTypeUI(){
+      const pill = document.getElementById("dayTypePill");
+      const nm = document.getElementById("holidayName");
+      const dateStr = document.getElementById("date")?.value || "";
+      const dayType = getCurrentDayType();
+      const holidayName = getHolidayNameByDateStr(dateStr);
+      if(pill){
+        pill.textContent = (dayType === "holiday") ? "土日祝" : "平日";
+        pill.classList.toggle("holiday", dayType === "holiday");
+      }
+      if(nm){
+        nm.textContent = (dayType === "holiday" && holidayName) ? ("（" + holidayName + "）") : "";
+      }
+    }
+
+    // 下書き：日付＋利用者 単位で保存
+    function loadDrafts(){ return loadJSON(DRAFTS_KEY, {}); }
+    function saveDrafts(obj){ saveJSON(DRAFTS_KEY, obj || {}); }
+
+    function getDraftKey(){
+      const dateStr = document.getElementById("date")?.value || "";
+      const resident = document.getElementById("resident")?.value || "";
+      if(!dateStr || !resident) return "";
+      return dateStr + "__" + resident;
+    }
+
+    function collectFormState(){
+      // ※存在しない要素があっても落ちないように全部ガード
+      const qVals = (sel)=>Array.from(document.querySelectorAll(sel)).filter(el=>el.checked).map(el=>el.value);
+      const qDataSubs = (sel, attr)=>Array.from(document.querySelectorAll(sel)).filter(el=>el.checked).map(el=>el.getAttribute(attr) || el.value);
+
+      return {
+        recorder: document.getElementById("recorder")?.value || "",
+        support: document.getElementById("support")?.value || "",
+        note: document.getElementById("note")?.value || "",
+        hasSpecialNote: !!document.getElementById("hasSpecialNote")?.checked,
+        tags: Array.isArray(window.currentTags) ? window.currentTags.slice() : [],
+
+        // ② 自動入力
+        autoKeys: qVals('#autoItemCheckboxes .auto-item'),
+        autoBathSubs: qDataSubs('#autoItemCheckboxes .auto-bath-sub', 'data-sub'),
+        autoHealthSubs: qDataSubs('#autoItemCheckboxes .auto-health-sub', 'data-sub'),
+        autoCleanSubs: qDataSubs('#autoItemCheckboxes .auto-clean-sub', 'data-sub'),
+
+        // ③（日中支援：主な支援）
+        daySupportType: (document.querySelector('.day-main-supporttype-sub:checked')?.value || ''),
+        dayMain: qVals('.day-main-item'),
+        dayBathingSubs: qVals('.day-main-bathing-sub'),
+        dayHealthSubs: qVals('.day-main-health-sub'),
+
+        // ④ 日中活動
+        dayActivity: qVals('.day-activity-item'),
+        dayReason: qVals('.day-reason-item'),
+
+        // バイタル
+        abnormalWeight: (document.getElementById("abnormalWeight")?.value || ""),
+        abnormalTemp: (document.getElementById("abnormalTemp")?.value || ""),
+        abnormalBPsys: (document.getElementById("abnormalBPsys")?.value || ""),
+        abnormalBPdia: (document.getElementById("abnormalBPdia")?.value || ""),
+        abnormalPulse: (document.getElementById("abnormalPulse")?.value || ""),
+
+        holidayOverride: !!document.getElementById("holidayOverride")?.checked,
+      };
+    }
+
+    function applyFormState(st){
+      if(!st || typeof st !== "object") return;
+      window.__applyingDraft = true;
+      try{
+        if(document.getElementById("recorder")) document.getElementById("recorder").value = st.recorder || "";
+        if(document.getElementById("support")) document.getElementById("support").value = st.support || "";
+        if(document.getElementById("note")) document.getElementById("note").value = st.note || "";
+        if(document.getElementById("hasSpecialNote")) document.getElementById("hasSpecialNote").checked = !!st.hasSpecialNote;
+
+        if(document.getElementById("holidayOverride")) document.getElementById("holidayOverride").checked = !!st.holidayOverride;
+        updateDayTypeUI();
+
+        // tags
+        if(Array.isArray(st.tags)){
+          window.currentTags = st.tags.slice();
+          if(typeof renderTagButtons === "function") renderTagButtons();
+          const info = document.getElementById("selectedTagsInfo");
+          if(info) info.textContent = "選択中：" + (window.currentTags.length ? window.currentTags.join(" / ") : "なし");
+        }
+
+        // checkbox apply helper
+        const applySet = (sel, arr)=>{
+          const set = new Set(Array.isArray(arr)?arr:[]);
+          document.querySelectorAll(sel).forEach(el=>{ el.checked = set.has(el.value); });
+        };
+
+        // ②
+        applySet('#autoItemCheckboxes .auto-item', st.autoKeys);
+        // subs (data-sub)
+        const subSet = (arr)=>new Set(Array.isArray(arr)?arr:[]);
+        const bathSet = subSet(st.autoBathSubs);
+        document.querySelectorAll('#autoItemCheckboxes .auto-bath-sub').forEach(el=>{
+          el.checked = bathSet.has(el.getAttribute('data-sub'));
+        });
+        const healthSet = subSet(st.autoHealthSubs);
+        document.querySelectorAll('#autoItemCheckboxes .auto-health-sub').forEach(el=>{
+          el.checked = healthSet.has(el.getAttribute('data-sub'));
+        });
+        const cleanSet = subSet(st.autoCleanSubs);
+        document.querySelectorAll('#autoItemCheckboxes .auto-clean-sub').forEach(el=>{
+          el.checked = cleanSet.has(el.getAttribute('data-sub'));
+        });
+
+        if(typeof setupAutoBathCompound === "function") setupAutoBathCompound();
+        if(typeof setupAutoHealthCompound === "function") setupAutoHealthCompound();
+        if(typeof setupAutoCleanCompound === "function") setupAutoCleanCompound();
+
+        // ③
+        if(st.daySupportType){
+          document.querySelectorAll('.day-main-supporttype-sub').forEach(el=>{ el.checked = (el.value === st.daySupportType); });
+        } else {
+          document.querySelectorAll('.day-main-supporttype-sub').forEach(el=>{ el.checked = false; });
+        }
+        applySet('.day-main-item', st.dayMain);
+        applySet('.day-main-bathing-sub', st.dayBathingSubs);
+        applySet('.day-main-health-sub', st.dayHealthSubs);
+
+        // ④
+        applySet('.day-activity-item', st.dayActivity);
+        applySet('.day-reason-item', st.dayReason);
+
+        // vitals
+        if(document.getElementById("abnormalWeight")) document.getElementById("abnormalWeight").value = st.abnormalWeight || "";
+        if(document.getElementById("abnormalTemp")) document.getElementById("abnormalTemp").value = st.abnormalTemp || "";
+        if(document.getElementById("abnormalBPsys")) document.getElementById("abnormalBPsys").value = st.abnormalBPsys || "";
+        if(document.getElementById("abnormalBPdia")) document.getElementById("abnormalBPdia").value = st.abnormalBPdia || "";
+        if(document.getElementById("abnormalPulse")) document.getElementById("abnormalPulse").value = st.abnormalPulse || "";
+
+        if(typeof syncAutoItemsToSupport === "function") syncAutoItemsToSupport();
+        if(typeof updateAutoSupportStatus === "function") updateAutoSupportStatus();
+      } finally {
+        setTimeout(()=>{ window.__applyingDraft = false; }, 50);
+      }
+    }
+
+    function showDraftBar(metaText){
+      const bar = document.getElementById("draftBar");
+      const meta = document.getElementById("draftMeta");
+      if(!bar) return;
+      if(meta) meta.textContent = metaText || "復元できます。";
+      bar.style.display = "flex";
+    }
+    function hideDraftBar(){
+      const bar = document.getElementById("draftBar");
+      if(!bar) return;
+      bar.style.display = "none";
+    }
+
+    function refreshDraftBarForCurrent(){
+      const key = getDraftKey();
+      if(!key){ hideDraftBar(); return; }
+      const drafts = loadDrafts();
+      const d = drafts[key];
+      if(d && d.ts){
+        showDraftBar("最終保存：" + formatHM(d.ts) + "（下書き）");
+      } else {
+        hideDraftBar();
+      }
+    }
+
+    function clearDraftForCurrent(){
+      const key = getDraftKey();
+      if(!key) return;
+      const drafts = loadDrafts();
+      if(drafts[key]){
+        delete drafts[key];
+        saveDrafts(drafts);
+      }
+      const st = document.getElementById("autosaveStatus");
+      if(st) st.textContent = "";
+      hideDraftBar();
+    }
+
+    const saveDraftDebounced = debounce(() => {
+      if(window.__applyingDraft) return;
+      const key = getDraftKey();
+      if(!key) return;
+
+      const drafts = loadDrafts();
+      drafts[key] = { ts: Date.now(), state: collectFormState() };
+      saveDrafts(drafts);
+
+      const st = document.getElementById("autosaveStatus");
+      if(st) st.textContent = "下書き保存：" + formatHM(drafts[key].ts);
+
+      refreshDraftBarForCurrent();
+    }, 650);
+
+    function requestDraftSave(){
+      saveDraftDebounced();
+    }
+
+    function tryRestoreDraft(){
+      const key = getDraftKey();
+      if(!key) return;
+      const drafts = loadDrafts();
+      const d = drafts[key];
+      if(d && d.state){
+        applyFormState(d.state);
+        const st = document.getElementById("autosaveStatus");
+        if(st) st.textContent = "下書きを復元しました：" + formatHM(Date.now());
+      }
+    }
+
+    function initAdvancedToggle(){
+      const btn = document.getElementById("toggleAdvancedBtn");
+      if(!btn) return;
+      const pref = loadJSON(UI_PREF_KEY, {});
+      const show = !!pref.showAdvanced;
+      document.body.classList.toggle("show-advanced", show);
+      btn.textContent = show ? "テンプレ・タグを隠す" : "テンプレ・タグを表示";
+      btn.addEventListener("click", () => {
+        const next = !document.body.classList.contains("show-advanced");
+        document.body.classList.toggle("show-advanced", next);
+        btn.textContent = next ? "テンプレ・タグを隠す" : "テンプレ・タグを表示";
+        const p = loadJSON(UI_PREF_KEY, {});
+        p.showAdvanced = next;
+        saveJSON(UI_PREF_KEY, p);
+      });
+    }
+
+    function initDraftAutosave(){
+      document.getElementById("draftRestoreBtn")?.addEventListener("click", tryRestoreDraft);
+      document.getElementById("draftDiscardBtn")?.addEventListener("click", clearDraftForCurrent);
+
+      const form = document.getElementById("recordForm");
+      if(form){
+        form.addEventListener("input", requestDraftSave);
+        form.addEventListener("change", requestDraftSave);
+      }
+    }
+
+    function initDayTypeHandlers(){
+      document.getElementById("date")?.addEventListener("change", () => {
+        updateDayTypeUI();
+        const r = document.getElementById("resident")?.value || "";
+        if(r && typeof applyFavToMainCheckboxes === "function") applyFavToMainCheckboxes(r);
+        refreshDraftBarForCurrent();
+      });
+      document.getElementById("holidayOverride")?.addEventListener("change", () => {
+        updateDayTypeUI();
+        const r = document.getElementById("resident")?.value || "";
+        if(r && typeof applyFavToMainCheckboxes === "function") applyFavToMainCheckboxes(r);
+        requestDraftSave();
+      });
+    }
+
 
     function loadTags() {
       const parsed = loadJSON(TAGS_KEY, null);
@@ -3307,7 +3833,7 @@ function saveAutoItemDefs() {
     }
     function saveFavByResident() { saveJSON(FAV_BY_RESIDENT_KEY, favByResident); }
 
-    function getFavForResident(name) {
+    function getFavForResident(name, dayType = "weekday") {
       const v = favByResident[name];
 
       const mapAutoKeys = (arr) => {
@@ -3316,24 +3842,41 @@ function saveAutoItemDefs() {
         return Array.from(new Set(mapped));
       };
 
-      if (Array.isArray(v)) return { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] }; // 旧形式対策
-      if (v && typeof v === "object") {
+      const normalize = (obj) => {
+        const o = (obj && typeof obj === "object") ? obj : {};
         return {
-          autoKeys: mapAutoKeys(v.autoKeys),
-          dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
-          autoBathSubs: Array.isArray(v.autoBathSubs) ? v.autoBathSubs : [],
-          autoHealthSubs: Array.isArray(v.autoHealthSubs) ? v.autoHealthSubs : [],
-          dayBathingSubs: Array.isArray(v.dayBathingSubs) ? v.dayBathingSubs : [],
-          dayHealthSubs: Array.isArray(v.dayHealthSubs) ? v.dayHealthSubs : [],
+          autoKeys: mapAutoKeys(o.autoKeys),
+          dayMain: Array.isArray(o.dayMain) ? o.dayMain : [],
+          dayActivity: Array.isArray(o.dayActivity) ? o.dayActivity : [],
+          autoBathSubs: Array.isArray(o.autoBathSubs) ? o.autoBathSubs : [],
+          autoHealthSubs: Array.isArray(o.autoHealthSubs) ? o.autoHealthSubs : [],
+          autoCleanSubs: Array.isArray(o.autoCleanSubs) ? o.autoCleanSubs : [],
+          dayBathingSubs: Array.isArray(o.dayBathingSubs) ? o.dayBathingSubs : [],
+          dayHealthSubs: Array.isArray(o.dayHealthSubs) ? o.dayHealthSubs : []
         };
+      };
+
+      // 旧形式対策（配列=autoKeysのみ）
+      if (Array.isArray(v)) return normalize({ autoKeys: v });
+
+      if (v && typeof v === "object") {
+        // 新形式：{ weekday: {...}, holiday: {...} }
+        if ((v.weekday && typeof v.weekday === "object") || (v.holiday && typeof v.holiday === "object")) {
+          const bucket = (dayType === "holiday") ? (v.holiday || v.weekday) : (v.weekday || v.holiday);
+          return normalize(bucket);
+        }
+        // 旧オブジェクト形式：そのまま両方に流用
+        return normalize(v);
       }
 
       // 未設定ならデフォルト（② 自動入力の初期ON）
-      return { autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice(), dayMain: (DEFAULT_FAV_DAY_MAIN || []).slice(), autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] };
+      return normalize({ autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice() });
     }
 
     function applyFavToMainCheckboxes(name) {
-      const fav = getFavForResident(name);
+      updateDayTypeUI();
+      const dayType = getCurrentDayType();
+      const fav = getFavForResident(name, dayType);
 
       // この利用者に「よく使う項目」が保存されているか（未設定ならデフォルト扱い）
       const hasStored = !!(name && Object.prototype.hasOwnProperty.call(favByResident || {}, name));
@@ -3417,7 +3960,13 @@ function saveAutoItemDefs() {
       }
 
       // ② 自動入力（支援項目）→ 本日の支援内容へ反映
-      syncAutoItemsToSupport();
+      
+      // ④ 日中活動（初期チェック：平日 / 土日祝）
+      try{
+        const actSet = new Set(Array.isArray(fav.dayActivity) ? fav.dayActivity : []);
+        document.querySelectorAll(".day-activity-item").forEach((el)=>{ el.checked = actSet.has(el.value); });
+      }catch(e){}
+syncAutoItemsToSupport();
     }
 
     // ===== 利用者別：自動テンプレ =====
@@ -4002,6 +4551,7 @@ tr.appendChild(tdSupport);
 
       syncAbnormalVitalsUI("main");
       updateAutoNoteMain();
+      clearDraftForCurrent();
 
     }
 
@@ -6440,13 +6990,31 @@ function clearFavChecks() {
 
       document.getElementById("favModalTitle").textContent = `よく使う項目（${resident}）`;
 
-      const fav = getFavForResident(resident);
+      const dayTypeEl = document.getElementById("favModalDayType");
+      const curType = (dayTypeEl && dayTypeEl.value) ? dayTypeEl.value : getCurrentDayType();
+      if(dayTypeEl) dayTypeEl.value = curType;
+
+      const fav = getFavForResident(resident, curType);
       const autoSet = new Set(fav.autoKeys || []);
       const daySet  = new Set(fav.dayMain || []);
+      const actSet  = new Set(fav.dayActivity || []);
 
       // 自動入力
       const autoWrap = document.getElementById("favModalCheckboxes");
       autoWrap.innerHTML = "";
+
+      // 日中活動（初期）
+      const actWrap = document.getElementById("favModalDayActivityCheckboxes");
+      if(actWrap){
+        actWrap.innerHTML = "";
+        (DAY_ACTIVITY_LIST || []).forEach((t)=>{
+          const lab = document.createElement("label");
+          lab.style.marginRight = "8px";
+          lab.innerHTML = `<input type="checkbox" class="fav-modal-day-activity-item" value="${escapeHtmlAttr(t)}"> ${escapeHtml(t)}`;
+          actWrap.appendChild(lab);
+        });
+        actWrap.querySelectorAll(".fav-modal-day-activity-item").forEach((el)=>{ el.checked = actSet.has(el.value); });
+      }
 
       const savedBathSubs = Array.isArray(fav.autoBathSubs) ? fav.autoBathSubs : [];
 
@@ -6687,6 +7255,7 @@ function clearFavChecks() {
 
     function saveFavModal() {
       const resident = document.getElementById("resident")?.value;
+      const dayType = document.getElementById("favModalDayType")?.value || getCurrentDayType();
       if (!resident) return;
 
       const autoKeys = Array.from(document.querySelectorAll("#favModalCheckboxes .fav-modal-item:checked"))
@@ -6725,7 +7294,21 @@ function clearFavChecks() {
       if (dayHealthParent2 && dayHealthParent2.checked) {
         dayHealthSubs = Array.from(document.querySelectorAll('#favModalDaySupportMainCheckboxes .fav-modal-day-health-sub:checked')).map((x) => x.dataset.sub);
       }
-favByResident[resident] = { autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
+const newFav = { autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
+      // dayType（平日 / 土日祝）ごとに保存
+      let existing = favByResident[resident];
+      let container = null;
+      if (existing && typeof existing === "object" && !Array.isArray(existing) && ((existing.weekday && typeof existing.weekday==="object") || (existing.holiday && typeof existing.holiday==="object"))) {
+        container = existing;
+      } else if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+        container = { weekday: existing, holiday: existing };
+      } else if (Array.isArray(existing)) {
+        container = { weekday: { autoKeys: existing }, holiday: { autoKeys: existing } };
+      } else {
+        container = { weekday: {}, holiday: {} };
+      }
+      container[dayType] = Object.assign({}, newFav, { dayActivity });
+      favByResident[resident] = container;
       saveFavByResident();
 
       // 反映（フォーム側）
@@ -6995,9 +7578,19 @@ function exportExcelXlsxMerged() {
     }
 
     function buildSheetForRecords(list) {
+      // ✅ Excelセルに改行を入れない（基本は1行）
+      const LF2 = String.fromCharCode(10);
+      const CR2 = String.fromCharCode(13);
+      function toInlineText(s){
+        if(s === null || s === undefined) return "";
+        let t = String(s);
+        t = t.split(CR2).join(" ").split(LF2).join(" ");
+        return t.trim();
+      }
+
       // ✅ ヘッダー（利用者列なし）
-      // A:日付 / B:曜日 / C:支援内容・様子（長文） / D:記録者
-      const header = ["日付", "曜日", "支援内容・様子", "記録者"];
+      // A:日付 / B:曜日 / C:支援内容（職員側） / D:業務日誌・利用者の活動状況 / E:記録者
+      const header = ["日付", "曜日", "支援内容（職員側）＋業務日誌・利用者の活動状況（特記事項含む）", "記録者"];
       const wsData = [header];
 
       // ✅ C列（支援内容・様子）は「文字数に応じて」縦の結合行数を自動調整
@@ -7053,13 +7646,19 @@ function exportExcelXlsxMerged() {
         const date = r?.date || "";
         const youbi = getWeekdayJa(date);
         const recorder = r?.recorder || "";
-        const support = (r?.support || "").trim();
+        const supportRaw = toInlineText(r?.support || "");
+        const diaryRaw = toInlineText(r?.note || "");
 
-        const rowsForThis = estimateRowsForSupport(support);
+        // ✅ 1セルにまとめる（改行なし）
+        let combined = "";
+        if (supportRaw) combined += `支援内容（職員側）：${supportRaw}`;
+        if (diaryRaw) combined += (combined ? " / " : "") + `業務日誌・利用者の活動状況（特記事項含む）：${diaryRaw}`;
+
+        const rowsForThis = estimateRowsForSupport(combined);
         const rowBase = curRow; // 0-based (ヘッダー=0)
 
         // 1行目：日付/曜日/支援内容（Cの左上セルにだけ入れる）
-        wsData.push([date, youbi, support, ""]);
+        wsData.push([date, youbi, combined, ""]);
 
         // 2行目〜（最後の1行手前まで）：空行（高さ確保用）
         for (let i = 0; i < rowsForThis - 2; i++) {
@@ -7071,6 +7670,7 @@ function exportExcelXlsxMerged() {
 
         // C列を縦結合（rowBase 〜 rowBase+rowsForThis-1）
         merges.push({ s: { r: rowBase, c: 2 }, e: { r: rowBase + rowsForThis - 1, c: 2 } });
+        merges.push({ s: { r: rowBase, c: 3 }, e: { r: rowBase + rowsForThis - 1, c: 3 } });
 
         // 次のレコード開始行へ
         curRow += rowsForThis;
@@ -7096,15 +7696,16 @@ for (let r = 1; r <= __rangeB.e.r; r++) {
   });
 }
 
-      // ✅ 実際に結合するのは「支援内容・様子」だけ
+      // ✅ 実際に結合するのは「支援内容（職員側）」と「業務日誌・利用者の活動状況」
       ws["!merges"] = merges;
 
       // ✅ 列幅（C列=45.5相当）
       ws["!cols"] = [
       { wch: 12.8125 }, // A 日付
       { wch: 6.8125  }, // B 曜日
-      { wch: 76      }, // C 支援内容・様子
-      { wch: 12.8125 }, // D 記録者
+      { wch: 48      }, // C 支援内容（職員側）
+      { wch: 48      }, // D 業務日誌・利用者の活動状況
+      { wch: 12.8125 }, // E 記録者
     ];
 
       // ✅ 全セル：フォントだけ「游ゴシック（標準）」に統一（※配置は触らない）
@@ -7258,12 +7859,42 @@ document.getElementById("date").value = toLocalISODate();
       }
       renderTemplateSelect();
 
-      renderAllResidentScopedUIs();
+        attachDetailsScrollPreserver("abnormalVitalsBox");
+  attachDetailsScrollPreserver("editAbnormalVitalsBox");
+renderAllResidentScopedUIs();
 
       // ===== 基本イベント =====
       document.getElementById("recordForm").addEventListener("submit", handleSubmit);
-      document.
-getElementById("resetButton").addEventListener("click", resetForm);
+      document.getElementById("resetButton").addEventListener("click", resetForm);
+
+      // 追加：任意項目トグル / 平日・土日祝 / 下書き自動保存
+
+function updateAdvancedToggleButtonLabel(){
+  const btn = document.getElementById("toggleAdvancedBtn");
+  if(!btn) return;
+  const on = document.body.classList.contains("show-advanced");
+  btn.textContent = on ? "− 任意項目（慣れた人用）を閉じる" : "＋ 任意項目（慣れた人用）を開く";
+}
+
+function attachDetailsScrollPreserver(detailsId){
+  const d = document.getElementById(detailsId);
+  if(!d || d.tagName !== "DETAILS") return;
+  const sum = d.querySelector("summary");
+  if(sum){
+    sum.addEventListener("click", () => {
+      d.dataset.prevScrollY = String(window.scrollY || 0);
+    }, { capture: true });
+  }
+  d.addEventListener("toggle", () => {
+    const y = Number(d.dataset.prevScrollY || window.scrollY || 0);
+    requestAnimationFrame(() => window.scrollTo({ top: y }));
+  });
+}
+      initAdvancedToggle();
+      initDayTypeHandlers();
+      initDraftAutosave();
+      updateDayTypeUI();
+      refreshDraftBarForCurrent();
 
       // ===== 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）: チェックで自動追記 =====
       // （配線は renderDayNoteTemplateChecks() 内で行います）
@@ -7346,7 +7977,9 @@ if (restoreBtn && restoreFile) {
         const r = document.getElementById("resident").value || "";
         applyDaySupportListsForResident(r); // 空ならデフォルト適用
         if (!r) return;
+        updateDayTypeUI();
         applyFavToMainCheckboxes(r);
+        refreshDraftBarForCurrent();
         renderResidentTemplateSelectForForm();
       });
 
@@ -7434,6 +8067,7 @@ if (restoreBtn && restoreFile) {
 
       // ===== フォーム側ボタン（小窓） =====
       document.getElementById("openFavModalBtn").addEventListener("click", openFavModalForCurrentResident);
+      document.getElementById("favModalDayType")?.addEventListener("change", () => { if(document.getElementById("favModal")?.classList.contains("show")) openFavModalForCurrentResident(); });
       document.getElementById("favModalClose").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
       document.getElementById("favModalCancel").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
       document.getElementById("favModalSave").addEventListener("click", saveFavModal);
