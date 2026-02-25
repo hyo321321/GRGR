@@ -1508,6 +1508,9 @@
 
             <div class="btn-row" style="margin-top:10px;">
               <button type="submit" class="btn-beginner" id="saveButton">💾 記録を保存</button>
+              <button type="button" class="btn-secondary" id="bulkIncompleteBtn">🧩 全員分の未完成を作成</button>
+            </div>
+            <div class="small-text" id="bulkIncompleteResult" style="margin-top:6px;"></div>
               <button type="button" class="btn-secondary" id="resetButton">🧹 入力リセット</button>
             </div>
           </div>
@@ -1952,14 +1955,22 @@
   </div>
 </div>
 
-<div class="field" style="margin-top:18px;">
-  <label for="editSupport">本日の支援内容 (職員側)</label>
-          <textarea id="editSupport" rows="8"></textarea>
-        </div>
+<div class="field" id="editNoteField">
+          
+          <div class="daynote-template-box" style="margin-top:6px;">
+            <div class="daynote-template-head">
+              <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
+            </div>
+            <div class="checkbox-row daynote-template-grid" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
+            <div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
+          </div>
 
-        <div class="field" id="editNoteField">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-            <label for="editNote" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
+
+          </div>
+          
+
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:10px;">
+            <div style="font-weight:800; color:#334155;">業務日誌・利用者の活動状況（特記事項含む）</div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <button type="button" class="btn-secondary" id="voiceEditNoteBtn" style="padding:6px 10px; font-size:12px;">🎙 音声入力</button>
               <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
@@ -1972,22 +1983,20 @@
             ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
           </div>
           <div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
+<textarea id="editNote" rows="10"></textarea>
+</div>
 
-          <div class="daynote-template-box" style="margin-top:6px;">
-            <div class="daynote-template-head">
-              <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
-            </div>
-            <div class="checkbox-row daynote-template-grid" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
-            <div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
+        <div class="field" style="margin-top:18px;">
+          <div style="font-weight:800; color:#334155; margin-bottom:4px;">本日の支援内容 (職員側)</div>
+          <div class="small-text" style="margin-bottom:6px;">
+            ※職員側の記入欄：日中の様子と行った支援を簡潔に。必要なら編集して整えてください。
           </div>
-
-
-          </div>
-          <textarea id="editNote" rows="10"></textarea>
+          <textarea id="editSupport" rows="8"></textarea>
         </div>
 
         <div class="btn-row" style="margin-top:10px;">
           <button type="button" class="btn-primary" id="editModalSaveBtn">💾 上書き保存</button>
+          <button type="button" class="btn-secondary" id="editModalRemoveIncompleteBtn" style="display:none;">未完成を外す</button>
           <button type="button" class="btn-secondary" id="editModalCancelBtn">キャンセル</button>
         </div>
 
@@ -2150,6 +2159,8 @@
 
     const DEFAULT_TAG_LIST = [
       "服薬","通院","入浴","外出","体調不良","相談","仕事","掃除","金銭","夜間対応"
+    ,
+      "未完成"
     ];
 
     const DEFAULT_RECORDER_LIST = ["職員A","職員B","職員C","職員D","職員E","職員F"];
@@ -2993,6 +3004,108 @@
     }
 
     function saveTags() { saveJSON(TAGS_KEY, TAG_LIST); }
+
+    // ===== 未完成（自動一括作成 / 解除） =====
+    const INCOMPLETE_TAG = "未完成";
+
+    function ensureTagExists(tagName){
+      if(!tagName) return;
+      if(!Array.isArray(TAG_LIST)) TAG_LIST = [];
+      if(TAG_LIST.includes(tagName)) return;
+      TAG_LIST.push(tagName);
+      saveTags();
+      try{ setupTagButtons(); }catch(e){}
+      try{ renderTagManager(); }catch(e){}
+    }
+
+    function hasRecordWithTag(dateStr, residentName, tagName){
+      return (records || []).some((r) => r && r.date === dateStr && r.resident === residentName && Array.isArray(r.tags) && r.tags.includes(tagName));
+    }
+
+    function hasConfirmedRecord(dateStr, residentName){
+      return (records || []).some((r) => r && r.date === dateStr && r.resident === residentName && !(Array.isArray(r.tags) && r.tags.includes(INCOMPLETE_TAG)));
+    }
+
+    function buildIncompleteRecordData(dateStr, residentName){
+      const dayType = getDayTypeFromDateStr(dateStr);
+      const fav = (typeof getFavForResident === "function") ? getFavForResident(residentName, dayType) : null;
+      const safeArr = (v) => Array.isArray(v) ? v.slice() : [];
+      const recorder = document.getElementById("recorder")?.value || "";
+
+      return {
+        id: Date.now().toString() + "_" + Math.random().toString(16).slice(2,6),
+        date: dateStr,
+        resident: residentName,
+        recorder,
+        medTaken: false,
+        support: "",
+        note: "",
+        hasSpecialNote: false,
+        tags: [INCOMPLETE_TAG],
+        daySupportType: "",
+        dayActivityItems: safeArr(fav?.dayActivity),
+        daySupportMainItems: safeArr(fav?.dayMain),
+        daySupportReasonItems: [],
+        daySupportBathingSubItems: safeArr(fav?.dayBathingSubs),
+        daySupportHealthSubItems: safeArr(fav?.dayHealthSubs),
+        abnormalVitalsOn: false,
+        abnormalWeight: "",
+        abnormalTemp: "",
+        abnormalBPsys: "",
+        abnormalBPdia: "",
+        abnormalPulse: "",
+      };
+    }
+
+    function createIncompleteForAllResidents(){
+      const dateStr = document.getElementById("date")?.value || toLocalISODate();
+      ensureTagExists(INCOMPLETE_TAG);
+
+      let created = 0;
+      let skipConfirmed = 0;
+      let skipIncomplete = 0;
+
+      (residents || []).forEach((name) => {
+        if(!name) return;
+        if(hasConfirmedRecord(dateStr, name)) { skipConfirmed++; return; }
+        if(hasRecordWithTag(dateStr, name, INCOMPLETE_TAG)) { skipIncomplete++; return; }
+        records.push(buildIncompleteRecordData(dateStr, name));
+        created++;
+      });
+
+      if(created > 0){
+        saveRecords();
+        renderRecords();
+      }
+
+      const msg = "作成：" + created + "件 / スキップ：" + (skipConfirmed + skipIncomplete) + "件（確定あり " + skipConfirmed + " / 未完成あり " + skipIncomplete + "）";
+      const el = document.getElementById("bulkIncompleteResult");
+      if(el) el.textContent = msg;
+
+      showToast(created > 0 ? "未完成を作成しました" : "作成できる未完成はありません");
+    }
+
+    function removeIncompleteTagFromEditingRecord(){
+      if(!editingRecordId) return;
+      const rec = (records || []).find((r) => r && r.id === editingRecordId);
+      if(!rec) return;
+      const tags = Array.isArray(rec.tags) ? rec.tags.slice() : [];
+      if(!tags.includes(INCOMPLETE_TAG)) return;
+
+      const ok = confirm("未完成を外しますか？");
+      if(!ok) return;
+
+      rec.tags = tags.filter((t) => t !== INCOMPLETE_TAG);
+      saveRecords();
+      renderRecords();
+      showToast("未完成を外しました");
+
+      editTags = Array.isArray(rec.tags) ? rec.tags.slice() : [];
+      renderEditTagButtons();
+      const btn = document.getElementById("editModalRemoveIncompleteBtn");
+      if(btn) btn.style.display = editTags.includes(INCOMPLETE_TAG) ? "" : "none";
+    }
+
 
     // ===== 日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記） =====
     function loadDayNoteTemplates() {
@@ -6840,6 +6953,8 @@ function clearFavChecks() {
       // タグ
       editTags = Array.isArray(record.tags) ? [...record.tags] : [];
       renderEditTagButtons();
+      const __incBtn = document.getElementById("editModalRemoveIncompleteBtn");
+      if(__incBtn) __incBtn.style.display = editTags.includes(INCOMPLETE_TAG) ? "" : "none";
 
       // 日中活動チェック
       renderEditDayActivityCheckboxes(record.dayActivityItems || []);
@@ -7262,6 +7377,9 @@ function clearFavChecks() {
         .map((x) => x.value);
 
       const dayMain = Array.from(document.querySelectorAll("#favModalDaySupportMainCheckboxes .fav-modal-day-main-item:checked"))
+        .map((x) => x.value);
+
+      const dayActivity = Array.from(document.querySelectorAll("#favModalDayActivityCheckboxes .fav-modal-day-activity-item:checked"))
         .map((x) => x.value);
 
       let autoBathSubs = [];
@@ -7866,6 +7984,12 @@ renderAllResidentScopedUIs();
       // ===== 基本イベント =====
       document.getElementById("recordForm").addEventListener("submit", handleSubmit);
       document.getElementById("resetButton").addEventListener("click", resetForm);
+      document.getElementById("bulkIncompleteBtn")?.addEventListener("click", () => {
+        const dateStr = document.getElementById("date")?.value || toLocalISODate();
+        const ok = confirm("「" + dateStr + "」で、全員分の未完成を作成しますか？\n\n※同日同利用者で確定がある場合／未完成がある場合はスキップします。\n※作成後は一覧に #未完成 が付きます。\n");
+        if(!ok) return;
+        createIncompleteForAllResidents();
+      });
 
       // 追加：任意項目トグル / 平日・土日祝 / 下書き自動保存
 
@@ -7983,6 +8107,30 @@ if (restoreBtn && restoreFile) {
         renderResidentTemplateSelectForForm();
       });
 
+      // ✅ 日付/土日祝判定の自動反映：カレンダー（土日＋祝日）でデフォルト初期チェックを切替
+      //   - 日付を変えたら「平日/土日祝」が自動で切替
+      //   - 利用者別（平日/土日祝）の「よく使う項目」保存がそのまま効く
+      //   - 下書きキー（日付＋利用者）も自動で切替
+      (function wireDayTypeAutoSwitch(){
+        const dateEl = document.getElementById("date");
+        const overrideEl = document.getElementById("holidayOverride"); // 手動上書き（必要時のみ）
+        if(!dateEl) return;
+
+        const apply = () => {
+          updateDayTypeUI();
+          const r = document.getElementById("resident")?.value || "";
+          if(r) applyFavToMainCheckboxes(r);
+          refreshDraftBarForCurrent();
+        };
+
+        dateEl.addEventListener("change", apply);
+        dateEl.addEventListener("input", apply);
+        if(overrideEl) overrideEl.addEventListener("change", apply);
+
+        // 初期表示時も反映（今日が土日祝なら最初から土日祝デフォルト）
+        apply();
+      })();
+
       // 自動
             {
         const autoBtn = document.getElementById("autoSupportBtn");
@@ -8006,6 +8154,7 @@ if (restoreBtn && restoreFile) {
       document.getElementById("editModalClose").addEventListener("click", closeEditModal);
       document.getElementById("editModalCancelBtn").addEventListener("click", closeEditModal);
       document.getElementById("editModalSaveBtn").addEventListener("click", saveEditModal);
+      document.getElementById("editModalRemoveIncompleteBtn")?.addEventListener("click", removeIncompleteTagFromEditingRecord);
       document.getElementById("editModal").addEventListener("click", (e) => { if (e.target.id === "editModal") closeEditModal(); });
 
       // 編集モーダル：利用者変更時
