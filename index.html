@@ -2150,7 +2150,7 @@
 
 
     const DEFAULT_AUTO_ITEM_DEFS = [
-  { key: "med_combo",   label: "服薬対応（管理・確認）", defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。" },
+  { key: "med_combo",   label: "服薬対応（管理・確認）", defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。" },
   { key: "bathing",     label: "入浴対応",               defaultText: "入浴対応：声かけ・見守り・介助を実施。" },
   { key: "health",      label: "体調管理",               defaultText: "体調管理：血圧・検温・症状確認等を実施。" },
   { key: "day_support", label: "日中支援",           defaultText: "日中支援：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
@@ -3755,7 +3755,7 @@ function loadAutoItemDefs() {
           updated.unshift({
             key: "med_combo",
             label: "服薬対応（管理・確認）",
-            defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。"
+            defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。"
           });
           changed = true;
         }
@@ -3812,7 +3812,7 @@ function loadAutoItemDefs() {
           updated.unshift({
             key: "med_combo",
             label: "服薬対応（管理・確認）",
-            defaultText: "服薬対応（管理・確認）：手渡しで目視確認（処方薬は事務所管理）。"
+            defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。"
           });
           changed = true;
         }
