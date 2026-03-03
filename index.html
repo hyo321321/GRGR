@@ -5528,10 +5528,30 @@ function buildAutoBathSentence() {
       if (!parent || !parent.checked) return "";
 
       const subs = Array.from(wrap.querySelectorAll('.auto-health-sub'));
-      const picked = subs.filter((cb) => cb.checked).map((cb) => cb.dataset.label || "").filter(Boolean);
+      const picked = subs
+        .filter((cb) => cb.checked)
+        .map((cb) => cb.dataset.label || "")
+        .filter(Boolean);
 
-      return picked.length ? `体調管理：${picked.join("・")}を実施。` : "体調管理を実施。";
+      if (!picked.length) return "体調管理を実施。";
+
+      // 「測定」が自然な項目と、行為系の項目を分けて文章化
+      const measureSet = new Set(["血圧", "体重", "検温", "体温"]);
+      const measure = [];
+      const actions = [];
+
+      picked.forEach((p) => {
+        if (measureSet.has(p)) measure.push(p);
+        else actions.push(p);
+      });
+
+      const parts = [];
+      if (measure.length) parts.push(`${measure.join("・")}を測定。`);
+      if (actions.length) parts.push(`${actions.join("・")}を実施。`);
+
+      return `体調管理：${parts.join("")}`;
     }
+
 
 
 function buildAutoCleanSentence() {
