@@ -1509,7 +1509,9 @@
             <div class="btn-row" style="margin-top:10px;">
               <button type="submit" class="btn-beginner" id="saveButton">💾 記録を保存</button>
               <button type="button" class="btn-secondary" id="resetButton">🧹 入力リセット</button>
-            </div>
+            
+              <button type="button" class="btn-secondary" id="createUnfinishedAllBtn">🧩 全員分の未完成を作成</button>
+</div>
           </div>
 
         </form>
@@ -1768,7 +1770,8 @@
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn-primary" id="favSaveBtn">💾 保存</button>
+        <button type="button" class="btn-primary" id="favSaveWeekdayBtn">💾 平日で保存</button>
+        <button type="button" class="btn-primary" id="favSaveHolidayBtn">💾 土日祝で保存</button>
         <button type="button" class="btn-secondary" id="favApplyNowBtn">↪ 今すぐフォームへ反映</button>
         <button type="button" class="btn-secondary" id="favClearBtn">🧹 全解除</button>
       </div>
@@ -2020,8 +2023,9 @@
           <div class="checkbox-row checkbox-grid" id="favModalDaySupportMainCheckboxes"></div>
         </div>
 
-        <div class="btn-row" style="margin-top:10px;">
-          <button type="button" class="btn-primary" id="favModalSave">💾 保存</button>
+        <div class="btn-row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn-primary" id="favModalSaveWeekday">💾 平日で保存</button>
+          <button type="button" class="btn-primary" id="favModalSaveHoliday">💾 土日祝で保存</button>
           <button type="button" class="btn-secondary" id="favModalCancel">閉じる</button>
         </div>
       </div>
@@ -2141,7 +2145,7 @@
 
 
     const DEFAULT_AUTO_ITEM_DEFS = [
-  { key: "med_combo",   label: "服薬対応", defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。" },
+  { key: "med_combo",   label: "服薬対応（管理・確認）", defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。" },
   { key: "bathing",     label: "入浴対応",               defaultText: "入浴対応：声かけ・見守り・介助を実施。" },
   { key: "health",      label: "体調管理",               defaultText: "体調管理：血圧・体重を測定。必要に応じて検温・症状確認を実施。" },
   { key: "day_support", label: "日中支援",           defaultText: "日中支援：{{daySupportTypeLabel}}の対象として、日中もGH内で見守り、声かけ、誘導等の支援を継続して実施した。" },
@@ -3641,8 +3645,8 @@ function loadAutoItemDefs() {
           updated = updated.filter((d) => d.key !== "med_manage" && d.key !== "oral_check");
           updated.unshift({
             key: "med_combo",
-            label: "服薬対応",
-            defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。。"
+            label: "服薬対応（管理・確認）",
+            defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。"
           });
           changed = true;
         }
@@ -3698,7 +3702,7 @@ function loadAutoItemDefs() {
         if (!hasKey("med_combo")) {
           updated.unshift({
             key: "med_combo",
-            label: "服薬対応",
+            label: "服薬対応（管理・確認）",
             defaultText: "服薬対応：手渡しで目視確認。処方薬は事務所管理。"
           });
           changed = true;
@@ -4766,6 +4770,156 @@ function handleRestoreFile(file) {
       renderRecords();
       resetForm();
     }
+    // ===== A) 全員分の未完成を作成（タグ：未完成） =====
+    function ensureTagExists(tagText) {
+      const t = String(tagText || "").trim();
+      if (!t) return;
+      if (!Array.isArray(TAG_LIST)) TAG_LIST = [];
+      if (!TAG_LIST.includes(t)) {
+        TAG_LIST.push(t);
+        try { saveTags(); } catch(e) {}
+      }
+    }
+
+    function buildAutoBathSentenceFromSubs(subs) {
+      const map = { prompt: "声かけ", watch: "見守り", assist: "介助" };
+      let picked = (Array.isArray(subs) ? subs : []).map((s) => map[s]).filter(Boolean);
+      if (!picked.length) picked = ["声かけ"];
+      return `入浴対応：${picked.join("・")}を実施。`;
+    }
+
+    function buildAutoHealthSentenceFromSubs(subs) {
+      const map = { bp: "血圧", wt: "体重", temp: "検温", symp: "症状確認", rest: "安静見守り" };
+      const picked = (Array.isArray(subs) ? subs : []).map((s) => map[s]).filter(Boolean);
+      if (!picked.length) return "体調管理を実施。";
+
+      const measureSet = new Set(["血圧", "体重", "検温", "体温"]);
+      const measure = [];
+      const actions = [];
+      picked.forEach((p) => { if (measureSet.has(p)) measure.push(p); else actions.push(p); });
+
+      const parts = [];
+      if (measure.length) parts.push(`${measure.join("・")}を測定。`);
+      if (actions.length) parts.push(`${actions.join("・")}を実施。`);
+
+      return `体調管理：${parts.join("")}`;
+    }
+
+    function buildAutoCleanSentenceFromSubs(subs) {
+      const def = AUTO_ITEM_DEFS.find((d) => d.key === "clean_keep");
+      const baseLabel = (def && def.label) ? def.label : "清潔保持";
+      const picked = (Array.isArray(subs) ? subs : []).filter(Boolean);
+      if (picked.length) return `${baseLabel}：${picked.join("・")}を実施。`;
+      return (def && def.defaultText) ? String(def.defaultText).trim() : `${baseLabel}：必要な支援を行った。`;
+    }
+
+    function buildAutoItemsTextFromFav(fav, daySupportType) {
+      const checkedKeys = Array.isArray(fav?.autoKeys) ? fav.autoKeys.slice() : [];
+      if (!checkedKeys.length) return "";
+
+      const daySupportTypeLabel = daySupportType ? ("日中支援" + daySupportType) : "日中支援";
+      const lines = [];
+
+      checkedKeys.forEach((key) => {
+        if (key === "bathing") {
+          lines.push(buildAutoBathSentenceFromSubs(fav.autoBathSubs));
+          return;
+        }
+        if (key === "health") {
+          lines.push(buildAutoHealthSentenceFromSubs(fav.autoHealthSubs));
+          return;
+        }
+        if (key === "clean_keep") {
+          lines.push(buildAutoCleanSentenceFromSubs(fav.autoCleanSubs));
+          return;
+        }
+
+        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
+        if (!def) return;
+
+        let text = String(def.defaultText || "").trim();
+        if (!text) text = `${def.label}：支援を行った。`;
+        text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
+        lines.push(text);
+      });
+
+      return lines.join("\n").trim();
+    }
+
+    function makeUnfinishedRecord(dateStr, residentName, dayType) {
+      const daySupportType = ""; // 未完成自動作成では空（必要なら後で編集）
+      const fav = getFavForResident(residentName, dayType);
+
+      const inner = buildAutoItemsTextFromFav(fav, daySupportType);
+      const supportText = upsertAutoSupportBlock("", inner);
+
+      const recordData = {
+        id: (Date.now().toString() + "_" + Math.random().toString(16).slice(2)),
+        date: dateStr,
+        resident: residentName,
+        recorder: "",
+        medTaken: false,
+        support: supportText,
+        note: "",
+        hasSpecialNote: false,
+        tags: ["未完成"],
+        daySupportType,
+        dayActivityItems: Array.isArray(fav.dayActivity) ? fav.dayActivity : [],
+        daySupportMainItems: Array.isArray(fav.dayMain) ? fav.dayMain : [],
+        daySupportReasonItems: [],
+        daySupportBathingSubItems: Array.isArray(fav.dayBathingSubs) ? fav.dayBathingSubs : [],
+        daySupportHealthSubItems: Array.isArray(fav.dayHealthSubs) ? fav.dayHealthSubs : [],
+        abnormalVitalsOn: false,
+        abnormalWeight: "",
+        abnormalTemp: "",
+        abnormalBPsys: "",
+        abnormalBPdia: "",
+        abnormalPulse: ""
+      };
+
+      return recordData;
+    }
+
+    function createUnfinishedForAllResidents() {
+      const dateStr = document.getElementById("date")?.value || "";
+      if (!dateStr) { alert("先に日付を選択してください"); return; }
+
+      const residentsList = Array.isArray(residents) ? residents.slice() : [];
+      if (!residentsList.length) { alert("利用者が登録されていません"); return; }
+
+      if (!confirm(`【${dateStr}】の未完成記録を、利用者全員分まとめて作成します。\n（既に同日同利用者の記録がある場合はスキップします）\n\n作成しますか？`)) return;
+
+      ensureTagExists("未完成");
+
+      const dayType = getDayTypeFromDateStr(dateStr);
+
+      let created = 0;
+      let skippedConfirmed = 0;
+      let skippedUnfinished = 0;
+
+      residentsList.forEach((r) => {
+        const name = String(r || "").trim();
+        if (!name) return;
+
+        const existing = records.find((rec) => rec && rec.date === dateStr && rec.resident === name);
+        if (existing) {
+          const tags = Array.isArray(existing.tags) ? existing.tags : [];
+          if (tags.includes("未完成")) skippedUnfinished++;
+          else skippedConfirmed++;
+          return;
+        }
+
+        const rec = makeUnfinishedRecord(dateStr, name, dayType);
+        records.push(rec);
+        created++;
+      });
+
+      saveRecords();
+      renderRecords();
+
+      alert(`未完成を作成しました。\n作成：${created}件\nスキップ（確定あり）：${skippedConfirmed}件\nスキップ（未完成あり）：${skippedUnfinished}件`);
+    }
+
 
     // ★自動：利用者別テンプレ（選択）＋共通テンプレ（選択）＋チェック項目（選択）をまとめて追記
     function generateSupportText() {
@@ -6455,7 +6609,7 @@ saveAutoItemDefs();
       setupCompound(dayHealthParent, dayHealthSubs, "血圧");
     }
 
-function saveFavFromManager() {
+function saveFavFromManager(forceDayType) {
       const res = document.getElementById("favResidentSelect")?.value;
       if (!res) { alert("対象の利用者を選択してください"); return; }
 
@@ -6492,9 +6646,34 @@ function saveFavFromManager() {
         if (dayHealthSubs.length === 0) dayHealthSubs = ["血圧"];
       }
 
-      const prev = getFavForResident(res);
+      const dayType = forceDayType || getCurrentDayType();
+      const prevBucket = getFavForResident(res, dayType);
 
-      favByResident[res] = { ...prev, autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
+      const newFav = {
+        autoKeys,
+        dayMain,
+        dayActivity: Array.isArray(prevBucket.dayActivity) ? prevBucket.dayActivity : [],
+        autoBathSubs,
+        autoHealthSubs,
+        autoCleanSubs: Array.isArray(prevBucket.autoCleanSubs) ? prevBucket.autoCleanSubs : [],
+        dayBathingSubs,
+        dayHealthSubs
+      };
+
+      // dayType（平日 / 土日祝）ごとに保存
+      let existing = favByResident[res];
+      let container = null;
+      if (existing && typeof existing === "object" && !Array.isArray(existing) && ((existing.weekday && typeof existing.weekday==="object") || (existing.holiday && typeof existing.holiday==="object"))) {
+        container = existing;
+      } else if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+        container = { weekday: existing, holiday: existing };
+      } else if (Array.isArray(existing)) {
+        container = { weekday: { autoKeys: existing }, holiday: { autoKeys: existing } };
+      } else {
+        container = { weekday: {}, holiday: {} };
+      }
+      container[dayType] = newFav;
+      favByResident[res] = container;
       saveFavByResident();
       alert("保存しました。");
     }
@@ -7273,9 +7452,9 @@ function clearFavChecks() {
       document.getElementById("favModal").classList.add("show");
     }
 
-    function saveFavModal() {
+    function saveFavModal(forceDayType) {
       const resident = document.getElementById("resident")?.value;
-      const dayType = document.getElementById("favModalDayType")?.value || getCurrentDayType();
+      const dayType = forceDayType || getCurrentDayType();
       if (!resident) return;
 
       const autoKeys = Array.from(document.querySelectorAll("#favModalCheckboxes .fav-modal-item:checked"))
@@ -7886,8 +8065,8 @@ renderAllResidentScopedUIs();
       // ===== 基本イベント =====
       document.getElementById("recordForm").addEventListener("submit", handleSubmit);
       document.getElementById("resetButton").addEventListener("click", resetForm);
-
-      // 追加：任意項目トグル / 平日・土日祝 / 下書き自動保存
+      document.getElementById("createUnfinishedAllBtn")?.addEventListener("click", createUnfinishedForAllResidents);
+// 追加：任意項目トグル / 平日・土日祝 / 下書き自動保存
 
 function updateAdvancedToggleButtonLabel(){
   const btn = document.getElementById("toggleAdvancedBtn");
@@ -8064,8 +8243,11 @@ if (restoreBtn && restoreFile) {
 
       // よく使う項目（利用者別）
       document.getElementById("favResidentSelect").addEventListener("change", renderFavManager);
-      document.getElementById("favSaveBtn").addEventListener("click", saveFavFromManager);
-      document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowFromManager);
+      document.getElementById("favSaveWeekdayBtn")?.addEventListener("click", () => saveFavFromManager("weekday"));
+      document.getElementById("favSaveHolidayBtn")?.addEventListener("click", () => saveFavFromManager("holiday"));
+      // 互換：旧ボタンが残っている場合
+      document.getElementById("favSaveBtn")?.addEventListener("click", () => saveFavFromManager(getCurrentDayType()));
+document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowFromManager);
       document.getElementById("favClearBtn").addEventListener("click", clearFavChecks);
 
       // 自動テンプレ（利用者別）管理
@@ -8090,7 +8272,8 @@ if (restoreBtn && restoreFile) {
       document.getElementById("favModalDayType")?.addEventListener("change", () => { if(document.getElementById("favModal")?.classList.contains("show")) openFavModalForCurrentResident(); });
       document.getElementById("favModalClose").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
       document.getElementById("favModalCancel").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
-      document.getElementById("favModalSave").addEventListener("click", saveFavModal);
+      document.getElementById("favModalSaveWeekday").addEventListener("click", () => saveFavModal("weekday"));
+      document.getElementById("favModalSaveHoliday").addEventListener("click", () => saveFavModal("holiday"));
       document.getElementById("favModal").addEventListener("click", (e) => { if (e.target.id === "favModal") document.getElementById("favModal").classList.remove("show"); });
 
       // 自動テンプレ小窓（rtModal）
