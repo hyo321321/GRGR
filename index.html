@@ -794,11 +794,13 @@
       background: rgba(255,255,255,0.65);
     }
     .dn-subwrap{
-      display:inline-flex;
+      display:flex;
+      flex-wrap: wrap;
       align-items:center;
       gap:10px;
       font-size:12px;
       color:#1e3a8a;
+      max-width: 100%;
     }
     .dn-subwrap .paren{ opacity:.65; }
     .dn-subwrap.disabled{
@@ -827,7 +829,7 @@
       align-items:center;
       gap:4px;
       margin:0;
-      white-space:nowrap;
+      white-space:normal;
       padding: 2px 6px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
@@ -1345,14 +1347,8 @@
             <span class="small-text" id="holidayName" style="margin-left:8px;"></span>
           </div>
 
-<details class="field vitals-compact vitals-details" id="abnormalVitalsBox" style="margin-top:8px;">
-  <summary>
-    <div class="vitals-summary-left">
-      <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
-      <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
-    </div>
-    <div class="vitals-chevron">▼</div>
-  </summary>
+<div class="field vitals-compact" id="abnormalVitalsBox" style="margin-top:8px;">
+  <div class="vitals-title" style="font-weight:700; font-size:13px; margin-bottom:4px;">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
   <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
   <div class="field-row-vitals" id="abnormalVitalsInputs" style="align-items:end;">
     <div class="field" style="margin-bottom:0;">
@@ -1377,7 +1373,7 @@
     </div>
   </div>
   <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-</details>
+</div>
 
 
           <!-- ★自動入力したい支援項目（初心者OK） -->
@@ -4555,7 +4551,7 @@ tr.appendChild(tdSupport);
 
       // 折りたたみを初期状態に戻す
       const __vDetails = document.getElementById("abnormalVitalsBox");
-      if (__vDetails) __vDetails.open = false;
+      if (__vDetails && __vDetails.tagName==="DETAILS") __vDetails.open = false;
       const __tagDet = document.getElementById("tagDetails");
       if (__tagDet) __tagDet.open = false;
 
@@ -6155,7 +6151,7 @@ function setupAutoSupportAutoSync() {
       const __vP  = document.getElementById("abnormalPulse");
       [__vW, __vT, __vS, __vD, __vP].forEach((el) => {
         if (!el) return;
-        el.addEventListener("input", () => { const d = document.getElementById("abnormalVitalsBox"); if (d) d.open = true; updateAutoNoteMain(); });
+        el.addEventListener("input", () => { const d = document.getElementById("abnormalVitalsBox"); if (d && d.tagName==="DETAILS") d.open = true; updateAutoNoteMain(); });
       });
       // 初期UI（常時表示）
       syncAbnormalVitalsUI("main");
@@ -8064,7 +8060,7 @@ document.getElementById("date").value = toLocalISODate();
       }
       renderTemplateSelect();
 
-        attachDetailsScrollPreserver("abnormalVitalsBox");
+        if (document.getElementById("abnormalVitalsBox")?.tagName==="DETAILS") attachDetailsScrollPreserver("abnormalVitalsBox");
   attachDetailsScrollPreserver("editAbnormalVitalsBox");
 renderAllResidentScopedUIs();
 
