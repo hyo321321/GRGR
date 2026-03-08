@@ -7,6 +7,12 @@
 
   <style>
     * { box-sizing: border-box; }
+
+/* 「この日を土日祝扱い」誤タップ対策：文字部分をクリック不可にする */
+.override-wrap{ display:inline-flex; align-items:center; gap:6px; padding:2px 6px; border:1px solid #e5e7eb; border-radius:999px; background:#fff; }
+.override-wrap input{ width:16px; height:16px; }
+.override-text{ pointer-events:none; font-size:12px; color:#374151; font-weight:700; }
+
 /* 記録一覧：支援内容を“折りたたみ→もっと見る” */
 .support-preview{
   white-space: pre-wrap;     /* 改行をそのまま表示 */
@@ -1322,7 +1328,14 @@
           <div class="steps">
             ① 日付・利用者・記録者 → ② よく使う項目チェック → ④ 日中活動（必要な日だけ） → ⑤💾 記録を保存
           </div>
-        </div>
+        
+          <div class="beginner-unfinished" style="margin-top:10px;">
+            <div style="font-size:13px; opacity:0.9; margin-bottom:6px;">
+              入力がどうしても出来ない日は、下のボタンを押すだけで「全員分」を未完成で作成できます（後で編集して完成させます）。
+            </div>
+            <button type="button" class="btn-beginner" id="createUnfinishedAllBtn">🧩 今日は未完成で全員作成</button>
+          </div>
+</div>
 
         <form id="recordForm">
 
@@ -1352,9 +1365,10 @@
           </div>
           <div class="small-text" style="margin-top:6px;">
             <span class="daytype-pill" id="dayTypePill">平日</span>
-            <label style="margin-left:6px; user-select:none;">
-              <input type="checkbox" id="holidayOverride" /> この日を土日祝扱い
-            </label>
+            <span class="override-wrap" style="margin-left:6px;">
+              <input type="checkbox" id="holidayOverride" />
+              <span class="override-text">この日を土日祝扱い（通常は不要）</span>
+            </span>
             <span class="small-text" id="holidayName" style="margin-left:8px;"></span>
           </div>
 
@@ -1517,8 +1531,6 @@
             <div class="btn-row" style="margin-top:10px;">
               <button type="submit" class="btn-beginner" id="saveButton">💾 記録を保存</button>
               <button type="button" class="btn-secondary" id="resetButton">🧹 入力リセット</button>
-            
-              <button type="button" class="btn-secondary" id="createUnfinishedAllBtn">🧩 全員分の未完成を作成</button>
 </div>
           </div>
 
@@ -3056,7 +3068,11 @@
         if(r && typeof applyFavToMainCheckboxes === "function") applyFavToMainCheckboxes(r);
         refreshDraftBarForCurrent();
       });
-      document.getElementById("holidayOverride")?.addEventListener("change", () => {
+      document.getElementById("holidayOverride")?.addEventListener("change", (e) => {
+        if(e?.target?.checked){
+          const ok = confirm("この日を土日祝として手動で扱います。通常はカレンダーで自動判定されます。続行しますか？");
+          if(!ok){ e.target.checked = false; return; }
+        }
         updateDayTypeUI();
         const r = document.getElementById("resident")?.value || "";
         if(r && typeof applyFavToMainCheckboxes === "function") applyFavToMainCheckboxes(r);
