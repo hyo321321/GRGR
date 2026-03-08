@@ -1210,7 +1210,82 @@
 .btn-row, .tag-buttons {
   max-width: 100%;
 }
-</style>
+
+    /* ヘッダー内ボタン */
+    .header-inner{
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items:center;
+      gap:12px;
+    }
+    .header-title{ text-align:center; font-weight:700; }
+    .header-actions{ display:flex; justify-content:flex-end; }
+    .header-btn{
+      font-size:13px;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.14);
+      color:#fff;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .header-btn:hover{ background: rgba(255,255,255,0.22); }
+
+    /* 説明書モーダル */
+    .modal-overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .modal-overlay.show{ display:flex; }
+    .manual-modal{
+      width:min(980px, 100%);
+      max-height: 90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:16px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.25);
+      border:1px solid #e5e7eb;
+    }
+    .manual-header{
+      position:sticky;
+      top:0;
+      background:#fff;
+      border-bottom:1px solid #e5e7eb;
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      z-index:1;
+    }
+    .manual-title{ font-size:16px; font-weight:700; color:#111827; }
+    .manual-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .manual-btn{
+      font-size:13px;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #e5e7eb;
+      background:#f9fafb;
+      color:#111827;
+      cursor:pointer;
+    }
+    .manual-btn:hover{ background:#f3f4f6; }
+    .manual-body{ padding:16px; }
+    .manual-section{ margin: 0 0 16px 0; padding: 14px; border:1px solid #e5e7eb; border-radius:14px; background:#fff; }
+    .manual-section h3{ margin:0 0 8px 0; font-size:15px; }
+    .manual-section .small{ font-size:13px; color:#374151; }
+    .manual-kbd{ display:inline-block; padding:2px 6px; border:1px solid #d1d5db; border-radius:6px; background:#f9fafb; font-size:12px; }
+    .manual-ul{ margin:8px 0 0 18px; }
+    .manual-ul li{ margin:4px 0; }
+
+  </style>
 
 <!-- Excelライブラリ（スタイル対応：xlsx-js-style）ローダー -->
 <script>
@@ -1241,7 +1316,181 @@
 </head>
 
 <body>
-  <header>グループホーム 個人記録 WEBアプリ（初心者ガイド付き）</header>
+  <header>
+  <div class="header-inner">
+    <div></div>
+    <div class="header-title">グループホーム 個人記録 WEBアプリ（初心者ガイド付き）</div>
+    <div class="header-actions">
+      <button type="button" class="header-btn" id="openManualBtn">📘 説明書</button>
+    </div>
+  </div>
+</header>
+
+  <!-- 説明書（モーダル） -->
+  <div class="modal-overlay" id="manualOverlay" aria-hidden="true">
+    <div class="manual-modal" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+      <div class="manual-header">
+        <div class="manual-title" id="manualTitle">このアプリの使い方（説明書）</div>
+        <div class="manual-actions">
+          <button type="button" class="manual-btn" id="printManualBtn">印刷</button>
+          <button type="button" class="manual-btn" id="closeManualBtn">閉じる</button>
+        </div>
+      </div>
+      <div class="manual-body" id="manualBody">
+        <div class="manual-section">
+          <h3>この説明書の見方</h3>
+          <div class="small">
+            迷ったらまずここを見ます。慣れている人は「記録一覧」「バックアップ」だけ読めばOKです。
+          </div>
+          <ul class="manual-ul">
+            <li>初心者：次の「まずここだけ」をそのまま順番に</li>
+            <li>困ったとき：一番下の「よくあるトラブル」</li>
+            <li>データ移行：バックアップ（JSON）→ 復元</li>
+          </ul>
+        </div>
+
+        <div class="manual-section">
+          <h3>まずここだけ（初心者は色付き枠だけでOK）</h3>
+          <div class="small">日々の入力はこの流れだけで完結します。</div>
+          <ul class="manual-ul">
+            <li>① 日付・利用者・記録者を選ぶ</li>
+            <li>② 自動入力したい支援項目をチェック（よく使う項目）</li>
+            <li>④ 日中活動は必要な日だけチェック</li>
+            <li>⑤ 💾 記録を保存（確定保存）</li>
+          </ul>
+          <div class="small" style="margin-top:10px;">
+            入力が難しい日は、色付き枠の <span class="manual-kbd">今日は未完成で全員作成</span> を押すだけでOKです（後日編集して完成させます）。
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>未完成の使い方（全員分の未完成を作成）</h3>
+          <div class="small">
+            どうしても入力できない日用。ボタン1回で、その日付の「利用者全員分」を未完成タグ付きで作成します。
+          </div>
+          <ul class="manual-ul">
+            <li>作成対象：画面の日付</li>
+            <li>スキップ：同日同利用者ですでに記録がある場合（確定/未完成どちらでも）</li>
+            <li>目印：タグ「未完成」が自動で付きます</li>
+          </ul>
+          <div class="small" style="margin-top:10px;">
+            作成後は記録一覧から「未完成のみ表示」をONにすると探しやすいです。
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>よく使う項目（この利用者）</h3>
+          <div class="small">
+            利用者ごとに、②のチェックの初期状態を保存できます。曜日ごとに分けられます。
+          </div>
+          <ul class="manual-ul">
+            <li>🛠 よく使う項目編集（この利用者）を開く</li>
+            <li>チェックを整える</li>
+            <li>保存ボタンで保存（平日/土日祝/この曜日）</li>
+          </ul>
+          <div class="small" style="margin-top:10px;">
+            便利な保存ボタンの意味：
+            <ul class="manual-ul">
+              <li><span class="manual-kbd">平日で保存</span>：月〜金をまとめて同じ設定に</li>
+              <li><span class="manual-kbd">土日祝で保存</span>：土・日・祝日をまとめて同じ設定に</li>
+              <li><span class="manual-kbd">この曜日で保存（火）</span>：その曜日だけ別設定に（火曜だけ別など）</li>
+            </ul>
+          </div>
+          <div class="small" style="margin-top:8px;">
+            注意：平日で保存を押すと月〜金が上書きされます。火曜だけ別にしたい場合は「この曜日で保存（火）」を使います。
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>土日祝の判定（自動）と「この日を土日扱い」</h3>
+          <div class="small">
+            基本はカレンダーで自動判定します（土日＋祝日）。「この日を土日扱い」は保険用の手動切替です。
+          </div>
+          <ul class="manual-ul">
+            <li>基本：日付が土日または祝日 → 土日祝のデフォルトが自動で効く</li>
+            <li>手動：「この日を土日扱い」をON → その日だけ土日祝として扱う</li>
+          </ul>
+          <div class="small" style="margin-top:8px;">
+            誤タップ対策：チェックボックス本体だけ反応＋ON時に確認が出ます（今の版）。
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>体調管理（血圧・体重は「測定」）</h3>
+          <div class="small">
+            体調系の文言は不自然になりやすいので、血圧・体重は「実施」ではなく「測定」で統一しています。
+          </div>
+          <ul class="manual-ul">
+            <li>血圧のみ → 体調管理：血圧を測定。</li>
+            <li>血圧＋体重 → 体調管理：血圧・体重を測定。</li>
+          </ul>
+          <div class="small" style="margin-top:8px;">
+            血圧欄の注意文：<span class="manual-kbd">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</span> は残しています。
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>日中活動（④）</h3>
+          <div class="small">必要な日だけチェックします。普段使わない日は無理に触らなくてOKです。</div>
+        </div>
+
+        <div class="manual-section">
+          <h3>キーワード（タグ）</h3>
+          <div class="small">普段は空でOK。必要なときだけ付けます（例：通院、体調不良、相談、夜間対応、未完成など）。</div>
+          <div class="small" style="margin-top:8px;">
+            タグは検索や未完成運用の目印に使います（一覧の「未完成のみ表示」もここを見ています）。
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>⑤ 記録を保存（確定保存）</h3>
+          <div class="small">
+            このボタンを押した内容が記録一覧に入ります。保存後に一覧で確認できます。
+          </div>
+          <ul class="manual-ul">
+            <li>保存前に日付・利用者・記録者を必ず確認</li>
+            <li>保存したら、一覧で当日分が入ったか確認</li>
+          </ul>
+        </div>
+
+        <div class="manual-section">
+          <h3>記録一覧</h3>
+          <ul class="manual-ul">
+            <li>編集：記録内容を修正できます（未完成で作った分もここで完成）</li>
+            <li>未完成のみ表示：未完成タグの記録だけ探せます</li>
+            <li>バックアップ：JSONで丸ごと保存</li>
+            <li>復元：JSONを読み込んで別PCでも同じ状態に戻せます</li>
+          </ul>
+        </div>
+
+        <div class="manual-section">
+          <h3>バックアップ（JSON）と復元</h3>
+          <div class="small">
+            Excel/CSVは提出用、JSONはアプリ丸ごと引っ越し用です。よく使う項目（曜日別）や設定も含めて保存します。
+          </div>
+          <ul class="manual-ul">
+            <li>バックアップ：記録一覧のバックアップボタン → JSONを保存</li>
+            <li>復元：復元ボタン → JSONを選ぶ → 画面を再読み込み</li>
+          </ul>
+          <div class="small" style="margin-top:8px;">
+            重要：復元は現在のデータを上書きします。必要なら先にバックアップしてから復元してください。
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>よくあるトラブル</h3>
+          <ul class="manual-ul">
+            <li>チェックが反映されない：保存先（平日/土日祝/曜日）を押し分けたか確認</li>
+            <li>火曜だけ別にしたのに戻る：平日で保存を押して月〜金を上書きしていないか確認</li>
+            <li>表示が崩れる：<span class="manual-kbd">Ctrl</span> + <span class="manual-kbd">F5</span> で強制更新</li>
+            <li>未完成が作れない：その日付で既に記録がある利用者はスキップされます（確定/未完成）</li>
+          </ul>
+        </div>
+</div>
+      </div>
+    </div>
+  </div>
+
 
 <!-- XLSXローカル読み込み（ネット不可時の救済） -->
 <div id="xlsxLoadMsg" style="display:none; max-width:1720px; margin:10px auto 0; padding:10px 12px; border-radius:12px; border:1px solid #fca5a5; background:#fef2f2; color:#991b1b; font-size:14px;">
@@ -7819,6 +8068,10 @@ function clearFavChecks() {
       if (dayHealthParent2 && dayHealthParent2.checked) {
         dayHealthSubs = Array.from(document.querySelectorAll('#favModalDaySupportMainCheckboxes .fav-modal-day-health-sub:checked')).map((x) => x.dataset.sub);
       }
+
+      const dayActivity = Array.from(document.querySelectorAll("#favModalDayActivityCheckboxes .fav-modal-day-activity-item:checked"))
+        .map((x)=>x.value);
+
 const newFav = { autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
       // dayType（平日 / 土日祝）ごとに保存
       let existing = favByResident[resident];
@@ -7841,9 +8094,7 @@ const newFav = { autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs
       applyFavToMainCheckboxes(resident);
 
       renderFavManager();
-
-      document.getElementById("favModal").classList.remove("show");
-      alert("保存しました（フォームに反映）");
+      showToast("よく使う項目を保存しました");
     }
 
     // ===== フォーム側：自動テンプレ編集モーダル（この利用者） =====
@@ -8787,6 +9038,79 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       <button type="button" class="btn-secondary" id="dnToastCloseBtn">閉じる</button>
     </div>
   </div>
+
+
+<script>
+(function(){
+  function el(id){ return document.getElementById(id); }
+
+  function openManual(){
+    const ov = el("manualOverlay");
+    if(!ov) return;
+    ov.classList.add("show");
+    ov.setAttribute("aria-hidden","false");
+  }
+  function closeManual(){
+    const ov = el("manualOverlay");
+    if(!ov) return;
+    ov.classList.remove("show");
+    ov.setAttribute("aria-hidden","true");
+  }
+
+  function printManual(){
+    const body = el("manualBody");
+    if(!body) return;
+    const w = window.open("", "_blank");
+    if(!w) return;
+    const css = `
+      body{ font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; padding:18px; line-height:1.6; }
+      h1{ font-size:18px; margin:0 0 12px 0; }
+      h3{ font-size:15px; margin:16px 0 6px 0; }
+      .sec{ border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin:0 0 12px 0; }
+      ul{ margin:6px 0 0 18px; }
+      .small{ font-size:13px; color:#111827; }
+    `;
+    w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>説明書</title><style>"+css+"</style></head><body>");
+    w.document.write("<h1>このアプリの使い方（説明書）</h1>");
+    // sections only
+    const secs = body.querySelectorAll(".manual-section");
+    secs.forEach(sec=>{
+      w.document.write("<div class='sec'>"+sec.innerHTML+"</div>");
+    });
+    w.document.write("</body></html>");
+    w.document.close();
+    w.focus();
+    w.print();
+  }
+
+  document.addEventListener("click", function(e){
+    const t = e.target;
+    if(!t) return;
+
+    if(t.id === "openManualBtn"){
+      openManual();
+      return;
+    }
+    if(t.id === "closeManualBtn"){
+      closeManual();
+      return;
+    }
+    if(t.id === "printManualBtn"){
+      printManual();
+      return;
+    }
+    // overlay click closes
+    if(t.id === "manualOverlay"){
+      closeManual();
+      return;
+    }
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") closeManual();
+  });
+})();
+</script>
 
 </body>
 </html>
