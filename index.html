@@ -145,16 +145,6 @@
     }
 
 
-    /* 左側フォームが広がりすぎないように固定（③以降のタグ/保存が横に伸びる対策） */
-    @media (min-width: 1100px){
-      .layout > section.card:first-child{
-        max-width: 760px;
-        width: 100%;
-        justify-self: start;
-      }
-    }
-
-
     /* ===== PC前提：右の記録一覧は常に右で追従 ===== */
     /* 記録一覧（右）：ページと一緒にスクロール（左右が“固定で動く”感じを避ける） */
     .records-panel{ align-self: start; }
@@ -804,13 +794,11 @@
       background: rgba(255,255,255,0.65);
     }
     .dn-subwrap{
-      display:flex;
-      flex-wrap: wrap;
+      display:inline-flex;
       align-items:center;
       gap:10px;
       font-size:12px;
       color:#1e3a8a;
-      max-width: 100%;
     }
     .dn-subwrap .paren{ opacity:.65; }
     .dn-subwrap.disabled{
@@ -839,7 +827,7 @@
       align-items:center;
       gap:4px;
       margin:0;
-      white-space:normal;
+      white-space:nowrap;
       padding: 2px 6px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
@@ -1195,15 +1183,6 @@
     .update-banner .close:hover{ filter:brightness(.95); }
     /* ===== ここまで：アップデート通知 ===== */
 
-
-/* --- fix: prevent horizontal overflow in tag/save sections --- */
-.small-text, #selectedTagsInfo, .beginner-hint, .beginner-zone, .advanced-zone {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-.btn-row, .tag-buttons {
-  max-width: 100%;
-}
 </style>
 
 <!-- Excelライブラリ（スタイル対応：xlsx-js-style）ローダー -->
@@ -1325,8 +1304,16 @@
         </div>
 
         <form id="recordForm">
-
-
+          <div class="draft-bar" id="draftBar" style="display:none;">
+            <div>
+              <div class="draft-title">下書きがあります</div>
+              <div class="draft-meta" id="draftMeta">復元できます。</div>
+            </div>
+            <div class="btn-row" style="margin-top:0;">
+              <button type="button" class="btn-secondary" id="draftRestoreBtn">復元</button>
+              <button type="button" class="btn-secondary" id="draftDiscardBtn">破棄</button>
+            </div>
+          </div>
 
           <!-- ★日付・利用者（初心者OK） -->
           <div class="beginner-zone">
@@ -1358,8 +1345,14 @@
             <span class="small-text" id="holidayName" style="margin-left:8px;"></span>
           </div>
 
-<div class="field vitals-compact" id="abnormalVitalsBox" style="margin-top:8px;">
-  <div class="vitals-title" style="font-weight:700; font-size:13px; margin-bottom:4px;">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
+<details class="field vitals-compact vitals-details" id="abnormalVitalsBox" style="margin-top:8px;">
+  <summary>
+    <div class="vitals-summary-left">
+      <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
+      <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
+    </div>
+    <div class="vitals-chevron">▼</div>
+  </summary>
   <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
   <div class="field-row-vitals" id="abnormalVitalsInputs" style="align-items:end;">
     <div class="field" style="margin-bottom:0;">
@@ -1384,7 +1377,7 @@
     </div>
   </div>
   <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-</div>
+</details>
 
 
           <!-- ★自動入力したい支援項目（初心者OK） -->
@@ -1516,9 +1509,7 @@
             <div class="btn-row" style="margin-top:10px;">
               <button type="submit" class="btn-beginner" id="saveButton">💾 記録を保存</button>
               <button type="button" class="btn-secondary" id="resetButton">🧹 入力リセット</button>
-            
-              <button type="button" class="btn-secondary" id="createUnfinishedAllBtn">🧩 全員分の未完成を作成</button>
-</div>
+            </div>
           </div>
 
         </form>
@@ -1777,8 +1768,7 @@
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn-primary" id="favSaveWeekdayBtn">💾 平日で保存</button>
-        <button type="button" class="btn-primary" id="favSaveHolidayBtn">💾 土日祝で保存</button>
+        <button type="button" class="btn-primary" id="favSaveBtn">💾 保存</button>
         <button type="button" class="btn-secondary" id="favApplyNowBtn">↪ 今すぐフォームへ反映</button>
         <button type="button" class="btn-secondary" id="favClearBtn">🧹 全解除</button>
       </div>
@@ -1982,23 +1972,6 @@
             ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
           </div>
           <div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
-          </div>
-          <textarea id="editNote" rows="10"></textarea>
-
-          
-
-
-
-        </div>
-
-        <div class="btn-row" style="margin-top:10px;">
-          <button type="button" class="btn-primary" id="editModalSaveBtn">💾 上書き保存</button>
-          <button type="button" class="btn-secondary" id="editModalCancelBtn">キャンセル</button>
-        </div>
-
-        <div class="small-text" style="margin-top:6px;">
-          ※ここで保存すると一覧が更新されます（左のフォームは触らなくてOK）
-        </div>
 
           <div class="daynote-template-box" style="margin-top:6px;">
             <div class="daynote-template-head">
@@ -2009,7 +1982,18 @@
           </div>
 
 
+          </div>
+          <textarea id="editNote" rows="10"></textarea>
+        </div>
 
+        <div class="btn-row" style="margin-top:10px;">
+          <button type="button" class="btn-primary" id="editModalSaveBtn">💾 上書き保存</button>
+          <button type="button" class="btn-secondary" id="editModalCancelBtn">キャンセル</button>
+        </div>
+
+        <div class="small-text" style="margin-top:6px;">
+          ※ここで保存すると一覧が更新されます（左のフォームは触らなくてOK）
+        </div>
       </div>
     </div>
   </div>
@@ -2036,9 +2020,8 @@
           <div class="checkbox-row checkbox-grid" id="favModalDaySupportMainCheckboxes"></div>
         </div>
 
-        <div class="btn-row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
-          <button type="button" class="btn-primary" id="favModalSaveWeekday">💾 平日で保存</button>
-          <button type="button" class="btn-primary" id="favModalSaveHoliday">💾 土日祝で保存</button>
+        <div class="btn-row" style="margin-top:10px;">
+          <button type="button" class="btn-primary" id="favModalSave">💾 保存</button>
           <button type="button" class="btn-secondary" id="favModalCancel">閉じる</button>
         </div>
       </div>
@@ -2903,8 +2886,15 @@
     }
 
     function refreshDraftBarForCurrent(){
-      // 下書きバーは表示しない（邪魔になりやすいため）
-      hideDraftBar();
+      const key = getDraftKey();
+      if(!key){ hideDraftBar(); return; }
+      const drafts = loadDrafts();
+      const d = drafts[key];
+      if(d && d.ts){
+        showDraftBar("最終保存：" + formatHM(d.ts) + "（下書き）");
+      } else {
+        hideDraftBar();
+      }
     }
 
     function clearDraftForCurrent(){
@@ -2930,12 +2920,14 @@
       saveDrafts(drafts);
 
       const st = document.getElementById("autosaveStatus");
-      if(st) st.textContent = "";
-      // 下書きバーは表示しない
-      refreshDraftBarForCurrent();
-}, 650);
+      if(st) st.textContent = "下書き保存：" + formatHM(drafts[key].ts);
 
-    function requestDraftSave(){ /* 下書き保存なし */ }
+      refreshDraftBarForCurrent();
+    }, 650);
+
+    function requestDraftSave(){
+      saveDraftDebounced();
+    }
 
     function tryRestoreDraft(){
       const key = getDraftKey();
@@ -2967,9 +2959,14 @@
     }
 
     function initDraftAutosave(){
-      // 下書き保存は使わない（表示もしない）
-      try { localStorage.removeItem(DRAFTS_KEY); } catch(e){}
-      // 旧下書き関連のイベントは登録しない
+      document.getElementById("draftRestoreBtn")?.addEventListener("click", tryRestoreDraft);
+      document.getElementById("draftDiscardBtn")?.addEventListener("click", clearDraftForCurrent);
+
+      const form = document.getElementById("recordForm");
+      if(form){
+        form.addEventListener("input", requestDraftSave);
+        form.addEventListener("change", requestDraftSave);
+      }
     }
 
     function initDayTypeHandlers(){
@@ -2983,7 +2980,7 @@
         updateDayTypeUI();
         const r = document.getElementById("resident")?.value || "";
         if(r && typeof applyFavToMainCheckboxes === "function") applyFavToMainCheckboxes(r);
-        // 下書き保存はしない
+        requestDraftSave();
       });
     }
 
@@ -4548,7 +4545,7 @@ tr.appendChild(tdSupport);
 
       // 折りたたみを初期状態に戻す
       const __vDetails = document.getElementById("abnormalVitalsBox");
-      if (__vDetails && __vDetails.tagName==="DETAILS") __vDetails.open = false;
+      if (__vDetails) __vDetails.open = false;
       const __tagDet = document.getElementById("tagDetails");
       if (__tagDet) __tagDet.open = false;
 
@@ -4769,175 +4766,6 @@ function handleRestoreFile(file) {
       renderRecords();
       resetForm();
     }
-    // ===== A) 全員分の未完成を作成（タグ：未完成） =====
-    function ensureTagExists(tagText) {
-      const t = String(tagText || "").trim();
-      if (!t) return;
-      if (!Array.isArray(TAG_LIST)) TAG_LIST = [];
-      if (!TAG_LIST.includes(t)) {
-        TAG_LIST.push(t);
-        try { saveTags(); } catch(e) {}
-      }
-    }
-
-    function buildAutoBathSentenceFromSubs(subs) {
-      const map = { prompt: "声かけ", watch: "見守り", assist: "介助" };
-      let picked = (Array.isArray(subs) ? subs : []).map((s) => map[s]).filter(Boolean);
-      if (!picked.length) picked = ["声かけ"];
-      return `入浴対応：${picked.join("・")}を実施。`;
-    }
-
-    
-    // 体調管理の日本語を自然に統一（血圧/体重/検温などは「測定」）
-    function normalizeHealthJapanese(sentence) {
-      const s = String(sentence || "").trim();
-      if (!s) return s;
-
-      // 旧形式「体調管理：血圧を実施。」などを救済
-      if (s.startsWith("体調管理：") && s.endsWith("を実施。")) {
-        const body = s.slice("体調管理：".length, -"を実施。".length).trim();
-        // 「血圧」「体重」「検温」「体温」「脈拍」だけなら「測定」にする
-        const items = body.split("・").map(x => x.trim()).filter(Boolean);
-        const measureOnly = items.length && items.every(x => ["血圧","体重","検温","体温","脈拍","SpO2","酸素飽和度"].includes(x));
-        if (measureOnly) {
-          return `体調管理：${items.join("・")}を測定。`;
-        }
-      }
-      return s;
-    }
-
-function buildAutoHealthSentenceFromSubs(subs) {
-      const map = { bp: "血圧", wt: "体重", temp: "検温", symp: "症状確認", rest: "安静見守り" };
-      const picked = (Array.isArray(subs) ? subs : []).map((s) => map[s]).filter(Boolean);
-      if (!picked.length) return "体調管理を実施。";
-
-      const measureSet = new Set(["血圧", "体重", "検温", "体温"]);
-      const measure = [];
-      const actions = [];
-      picked.forEach((p) => { if (measureSet.has(p)) measure.push(p); else actions.push(p); });
-
-      const parts = [];
-      if (measure.length) parts.push(`${measure.join("・")}を測定。`);
-      if (actions.length) parts.push(`${actions.join("・")}を実施。`);
-
-      return normalizeHealthJapanese(`体調管理：${parts.join("")}`);
-    }
-
-    function buildAutoCleanSentenceFromSubs(subs) {
-      const def = AUTO_ITEM_DEFS.find((d) => d.key === "clean_keep");
-      const baseLabel = (def && def.label) ? def.label : "清潔保持";
-      const picked = (Array.isArray(subs) ? subs : []).filter(Boolean);
-      if (picked.length) return `${baseLabel}：${picked.join("・")}を実施。`;
-      return (def && def.defaultText) ? String(def.defaultText).trim() : `${baseLabel}：必要な支援を行った。`;
-    }
-
-    function buildAutoItemsTextFromFav(fav, daySupportType) {
-      const checkedKeys = Array.isArray(fav?.autoKeys) ? fav.autoKeys.slice() : [];
-      if (!checkedKeys.length) return "";
-
-      const daySupportTypeLabel = daySupportType ? ("日中支援" + daySupportType) : "日中支援";
-      const lines = [];
-
-      checkedKeys.forEach((key) => {
-        if (key === "bathing") {
-          lines.push(buildAutoBathSentenceFromSubs(fav.autoBathSubs));
-          return;
-        }
-        if (key === "health") {
-          lines.push(buildAutoHealthSentenceFromSubs(fav.autoHealthSubs));
-          return;
-        }
-        if (key === "clean_keep") {
-          lines.push(buildAutoCleanSentenceFromSubs(fav.autoCleanSubs));
-          return;
-        }
-
-        const def = AUTO_ITEM_DEFS.find((d) => d.key === key);
-        if (!def) return;
-
-        let text = String(def.defaultText || "").trim();
-        if (!text) text = `${def.label}：支援を行った。`;
-        text = text.replaceAll("{{daySupportTypeLabel}}", daySupportTypeLabel);
-        lines.push(text);
-      });
-
-      return lines.join("\n").trim();
-    }
-
-    function makeUnfinishedRecord(dateStr, residentName, dayType) {
-      const daySupportType = ""; // 未完成自動作成では空（必要なら後で編集）
-      const fav = getFavForResident(residentName, dayType);
-
-      const inner = buildAutoItemsTextFromFav(fav, daySupportType);
-      const supportText = upsertAutoSupportBlock("", inner);
-
-      const recordData = {
-        id: (Date.now().toString() + "_" + Math.random().toString(16).slice(2)),
-        date: dateStr,
-        resident: residentName,
-        recorder: "",
-        medTaken: false,
-        support: supportText,
-        note: "",
-        hasSpecialNote: false,
-        tags: ["未完成"],
-        daySupportType,
-        dayActivityItems: Array.isArray(fav.dayActivity) ? fav.dayActivity : [],
-        daySupportMainItems: Array.isArray(fav.dayMain) ? fav.dayMain : [],
-        daySupportReasonItems: [],
-        daySupportBathingSubItems: Array.isArray(fav.dayBathingSubs) ? fav.dayBathingSubs : [],
-        daySupportHealthSubItems: Array.isArray(fav.dayHealthSubs) ? fav.dayHealthSubs : [],
-        abnormalVitalsOn: false,
-        abnormalWeight: "",
-        abnormalTemp: "",
-        abnormalBPsys: "",
-        abnormalBPdia: "",
-        abnormalPulse: ""
-      };
-
-      return recordData;
-    }
-
-    function createUnfinishedForAllResidents() {
-      const dateStr = document.getElementById("date")?.value || "";
-      if (!dateStr) { alert("先に日付を選択してください"); return; }
-
-      const residentsList = Array.isArray(residents) ? residents.slice() : [];
-      if (!residentsList.length) { alert("利用者が登録されていません"); return; }
-
-      if (!confirm(`【${dateStr}】の未完成記録を、利用者全員分まとめて作成します。\n（既に同日同利用者の記録がある場合はスキップします）\n\n作成しますか？`)) return;
-
-      ensureTagExists("未完成");
-
-      const dayType = getDayTypeFromDateStr(dateStr);
-
-      let created = 0;
-      let skippedConfirmed = 0;
-      let skippedUnfinished = 0;
-
-      residentsList.forEach((r) => {
-        const name = String(r || "").trim();
-        if (!name) return;
-
-        const existing = records.find((rec) => rec && rec.date === dateStr && rec.resident === name);
-        if (existing) {
-          const tags = Array.isArray(existing.tags) ? existing.tags : [];
-          if (tags.includes("未完成")) skippedUnfinished++;
-          else skippedConfirmed++;
-          return;
-        }
-
-        const rec = makeUnfinishedRecord(dateStr, name, dayType);
-        records.push(rec);
-        created++;
-      });
-
-      saveRecords();
-      renderRecords();
-
-      alert(`未完成を作成しました。\n作成：${created}件\nスキップ（確定あり）：${skippedConfirmed}件\nスキップ（未完成あり）：${skippedUnfinished}件`);
-    }
-
 
     // ★自動：利用者別テンプレ（選択）＋共通テンプレ（選択）＋チェック項目（選択）をまとめて追記
     function generateSupportText() {
@@ -5721,7 +5549,7 @@ function buildAutoBathSentence() {
       if (measure.length) parts.push(`${measure.join("・")}を測定。`);
       if (actions.length) parts.push(`${actions.join("・")}を実施。`);
 
-      return normalizeHealthJapanese(`体調管理：${parts.join("")}`);
+      return `体調管理：${parts.join("")}`;
     }
 
 
@@ -6167,7 +5995,7 @@ function setupAutoSupportAutoSync() {
       const __vP  = document.getElementById("abnormalPulse");
       [__vW, __vT, __vS, __vD, __vP].forEach((el) => {
         if (!el) return;
-        el.addEventListener("input", () => { const d = document.getElementById("abnormalVitalsBox"); if (d && d.tagName==="DETAILS") d.open = true; updateAutoNoteMain(); });
+        el.addEventListener("input", () => { const d = document.getElementById("abnormalVitalsBox"); if (d) d.open = true; updateAutoNoteMain(); });
       });
       // 初期UI（常時表示）
       syncAbnormalVitalsUI("main");
@@ -6627,7 +6455,7 @@ saveAutoItemDefs();
       setupCompound(dayHealthParent, dayHealthSubs, "血圧");
     }
 
-function saveFavFromManager(forceDayType) {
+function saveFavFromManager() {
       const res = document.getElementById("favResidentSelect")?.value;
       if (!res) { alert("対象の利用者を選択してください"); return; }
 
@@ -6664,34 +6492,9 @@ function saveFavFromManager(forceDayType) {
         if (dayHealthSubs.length === 0) dayHealthSubs = ["血圧"];
       }
 
-      const dayType = forceDayType || getCurrentDayType();
-      const prevBucket = getFavForResident(res, dayType);
+      const prev = getFavForResident(res);
 
-      const newFav = {
-        autoKeys,
-        dayMain,
-        dayActivity: Array.isArray(prevBucket.dayActivity) ? prevBucket.dayActivity : [],
-        autoBathSubs,
-        autoHealthSubs,
-        autoCleanSubs: Array.isArray(prevBucket.autoCleanSubs) ? prevBucket.autoCleanSubs : [],
-        dayBathingSubs,
-        dayHealthSubs
-      };
-
-      // dayType（平日 / 土日祝）ごとに保存
-      let existing = favByResident[res];
-      let container = null;
-      if (existing && typeof existing === "object" && !Array.isArray(existing) && ((existing.weekday && typeof existing.weekday==="object") || (existing.holiday && typeof existing.holiday==="object"))) {
-        container = existing;
-      } else if (existing && typeof existing === "object" && !Array.isArray(existing)) {
-        container = { weekday: existing, holiday: existing };
-      } else if (Array.isArray(existing)) {
-        container = { weekday: { autoKeys: existing }, holiday: { autoKeys: existing } };
-      } else {
-        container = { weekday: {}, holiday: {} };
-      }
-      container[dayType] = newFav;
-      favByResident[res] = container;
+      favByResident[res] = { ...prev, autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
       saveFavByResident();
       alert("保存しました。");
     }
@@ -7470,9 +7273,9 @@ function clearFavChecks() {
       document.getElementById("favModal").classList.add("show");
     }
 
-    function saveFavModal(forceDayType) {
+    function saveFavModal() {
       const resident = document.getElementById("resident")?.value;
-      const dayType = forceDayType || getCurrentDayType();
+      const dayType = document.getElementById("favModalDayType")?.value || getCurrentDayType();
       if (!resident) return;
 
       const autoKeys = Array.from(document.querySelectorAll("#favModalCheckboxes .fav-modal-item:checked"))
@@ -8076,15 +7879,15 @@ document.getElementById("date").value = toLocalISODate();
       }
       renderTemplateSelect();
 
-        if (document.getElementById("abnormalVitalsBox")?.tagName==="DETAILS") attachDetailsScrollPreserver("abnormalVitalsBox");
+        attachDetailsScrollPreserver("abnormalVitalsBox");
   attachDetailsScrollPreserver("editAbnormalVitalsBox");
 renderAllResidentScopedUIs();
 
       // ===== 基本イベント =====
       document.getElementById("recordForm").addEventListener("submit", handleSubmit);
       document.getElementById("resetButton").addEventListener("click", resetForm);
-      document.getElementById("createUnfinishedAllBtn")?.addEventListener("click", createUnfinishedForAllResidents);
-// 追加：任意項目トグル / 平日・土日祝 / 下書き自動保存
+
+      // 追加：任意項目トグル / 平日・土日祝 / 下書き自動保存
 
 function updateAdvancedToggleButtonLabel(){
   const btn = document.getElementById("toggleAdvancedBtn");
@@ -8261,11 +8064,8 @@ if (restoreBtn && restoreFile) {
 
       // よく使う項目（利用者別）
       document.getElementById("favResidentSelect").addEventListener("change", renderFavManager);
-      document.getElementById("favSaveWeekdayBtn")?.addEventListener("click", () => saveFavFromManager("weekday"));
-      document.getElementById("favSaveHolidayBtn")?.addEventListener("click", () => saveFavFromManager("holiday"));
-      // 互換：旧ボタンが残っている場合
-      document.getElementById("favSaveBtn")?.addEventListener("click", () => saveFavFromManager(getCurrentDayType()));
-document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowFromManager);
+      document.getElementById("favSaveBtn").addEventListener("click", saveFavFromManager);
+      document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowFromManager);
       document.getElementById("favClearBtn").addEventListener("click", clearFavChecks);
 
       // 自動テンプレ（利用者別）管理
@@ -8290,8 +8090,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       document.getElementById("favModalDayType")?.addEventListener("change", () => { if(document.getElementById("favModal")?.classList.contains("show")) openFavModalForCurrentResident(); });
       document.getElementById("favModalClose").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
       document.getElementById("favModalCancel").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
-      document.getElementById("favModalSaveWeekday").addEventListener("click", () => saveFavModal("weekday"));
-      document.getElementById("favModalSaveHoliday").addEventListener("click", () => saveFavModal("holiday"));
+      document.getElementById("favModalSave").addEventListener("click", saveFavModal);
       document.getElementById("favModal").addEventListener("click", (e) => { if (e.target.id === "favModal") document.getElementById("favModal").classList.remove("show"); });
 
       // 自動テンプレ小窓（rtModal）
