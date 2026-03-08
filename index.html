@@ -1394,11 +1394,11 @@
               <div class="small-text">※利用者別に設定した初期値がある場合は自動で反映されます</div>
             </div>
 
-            <div class="btn-row" style="margin-top:8px;">
-              <button type="button" class="btn-secondary" id="openFavModalBtn">🛠 よく使う項目編集（この利用者）</button>
-              <div class="small-text" id="mainFavModeHint" style="margin-top:6px;">現在：-</div>
-              <div class="small-text" style="margin-top:6px;">※平日/土日祝の初期チェック（②・④）はここで保存できます</div>
-            </div>
+            
+<div class="btn-row" style="margin-top:8px; flex-wrap:wrap;">
+  <button type="button" class="btn-secondary" id="openFavModalBtn">🛠 よく使う項目編集（この利用者）</button>
+</div>
+
 
             <div class="checkbox-row" id="autoItemCheckboxes" style="margin-top:8px;"></div>
           </div>
@@ -1787,11 +1787,13 @@
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn-primary" id="favSaveWeekdayBtn">💾 平日で保存</button>
-        <button type="button" class="btn-primary" id="favSaveHolidayBtn">💾 土日祝で保存</button>
+        <button type="button" class="btn-primary" id="favSaveWeekdayBtn">💾 平日一括で保存（月〜金）</button>
+        <button type="button" class="btn-primary" id="favSaveHolidayBtn">💾 土日祝一括で保存（土日＋祝日）</button>
+        <button type="button" class="btn-primary" id="favSaveThisDayBtn">💾 この曜日で保存</button>
         <button type="button" class="btn-secondary" id="favApplyNowBtn">↪ 今すぐフォームへ反映</button>
         <button type="button" class="btn-secondary" id="favClearBtn">🧹 全解除</button>
       </div>
+      <div class="small-text" id="favDayKeyInfo"></div>
       <div class="small-text" id="favManagerModeHint" style="margin-top:6px;">現在：-</div>
     </section>
 
@@ -2048,11 +2050,14 @@
         </div>
 
                 <div class="small-text" id="favModalModeHint" style="margin-top:6px;">現在：-</div>
+<div class="small-text" id="favModalDayKeyInfo" style="margin-top:4px;">※日付の曜日に応じたデフォルトが適用されます</div>
+
 
 <div class="btn-row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
           <button type="button" class="btn-primary" id="favModalSaveWeekday">💾 平日で保存</button>
           <button type="button" class="btn-primary" id="favModalSaveHoliday">💾 土日祝で保存</button>
-          <button type="button" class="btn-secondary" id="favModalCancel">閉じる</button>
+                    <button type="button" class="btn-primary" id="favModalSaveThisDay">💾 この曜日で保存</button>
+<button type="button" class="btn-secondary" id="favModalCancel">閉じる</button>
         </div>
       </div>
     </div>
@@ -2636,6 +2641,37 @@
       return "weekday";
     }
 
+    // 曜日キー（曜日ごとの「よく使う項目」用）
+    const DAY_KEYS = ["mon","tue","wed","thu","fri","sat","sun","holiday"];
+    const DOW_KEY_MAP = ["sun","mon","tue","wed","thu","fri","sat"]; // Date.getDay():0-6
+
+    function getDayKeyFromDateStr(dateStr){
+      if(!dateStr) return "mon";
+      const d = new Date(dateStr + "T00:00:00");
+      if(isNaN(d.getTime())) return "mon";
+      if(isJapaneseHoliday(d)) return "holiday";
+      const dow = d.getDay();
+      return DOW_KEY_MAP[dow] || "mon";
+    }
+
+    function isHolidayLikeDayKey(dayKey){
+      return dayKey === "holiday" || dayKey === "sat" || dayKey === "sun";
+    }
+
+    function dayKeyLabel(dayKey){
+      switch(dayKey){
+        case "mon": return "月";
+        case "tue": return "火";
+        case "wed": return "水";
+        case "thu": return "木";
+        case "fri": return "金";
+        case "sat": return "土";
+        case "sun": return "日";
+        case "holiday": return "祝日";
+        default: return dayKey;
+      }
+    }
+
     // 日本の祝日（2000-2099程度を想定）
     function nthWeekdayOfMonth(year, monthIndex, weekday, n){
       // monthIndex: 0-11, weekday: 0(Sun)-6
@@ -2756,10 +2792,11 @@
     }
 
     function getCurrentDayType(){
+      // 互換名：以前は weekday/holiday を返していたが、現在は曜日キー（mon..sun, holiday）を返す
       const dateStr = document.getElementById("date")?.value || "";
       const override = !!document.getElementById("holidayOverride")?.checked;
-      const base = getDayTypeFromDateStr(dateStr);
-      return override ? "holiday" : base;
+      const key = getDayKeyFromDateStr(dateStr);
+      return override ? "holiday" : key;
     }
 
     function updateDayTypeUI(){
@@ -2769,19 +2806,38 @@
       const dayType = getCurrentDayType();
       const holidayName = getHolidayNameByDateStr(dateStr);
       if(pill){
-        pill.textContent = (dayType === "holiday") ? "土日祝" : "平日";
+        pill.textContent = (isHolidayLikeDayKey(dayType)) ? "土日祝" : "平日";
         pill.classList.toggle("holiday", dayType === "holiday");
       }
       if(nm){
         nm.textContent = (dayType === "holiday" && holidayName) ? ("（" + holidayName + "）") : "";
       }
-      const modeLabel = (dayType === "holiday") ? "土日祝" : "平日";
+      const modeLabel = (dayType === "weekday") ? "平日" : (dayType === "holiday") ? "土日祝" : dayKeyLabel(dayType);
       const mainHint = document.getElementById("mainFavModeHint");
       if (mainHint) mainHint.textContent = "現在：" + modeLabel + "デフォルト";
+      const mainDayInfo = document.getElementById("mainFavDayKeyInfo");
+      if (mainDayInfo) mainDayInfo.textContent = "※この日付は「" + modeLabel + "」として適用されます";
+      const btnThisDay = document.getElementById("mainFavSaveThisDayBtn");
+      if (btnThisDay) btnThisDay.textContent = "💾 この曜日で保存（" + modeLabel + "）";
+      const actualDayKey = getDayKeyFromDateStr(dateStr);
+      const actualLabel = dayKeyLabel(actualDayKey);
+      const btnModalThisDay = document.getElementById("favModalSaveThisDay");
+      if (btnModalThisDay) btnModalThisDay.textContent = "💾 この曜日で保存（" + actualLabel + "）";
+      const favModalDayInfo = document.getElementById("favModalDayKeyInfo");
+      if (favModalDayInfo) favModalDayInfo.textContent = "※この日付は「" + actualLabel + "」として適用されます";
       const favModalHint = document.getElementById("favModalModeHint");
       if (favModalHint) favModalHint.textContent = "現在：" + modeLabel + "デフォルト";
       const favMgrHint = document.getElementById("favManagerModeHint");
       if (favMgrHint) favMgrHint.textContent = "現在：" + modeLabel + "デフォルト";
+      // 曜日別表示（よく使う項目）
+      const dk = dayType; // mon..sun / holiday
+      const dkLabel = dayKeyLabel(dk);
+      const dkMode = isHolidayLikeDayKey(dk) ? "土日祝" : "平日";
+      const favDayKeyInfo = document.getElementById("favDayKeyInfo");
+      if (favDayKeyInfo) favDayKeyInfo.textContent = "現在：" + dkLabel + "（" + dkMode + "）のデフォルト";
+      const favSaveThisDayBtn = document.getElementById("favSaveThisDayBtn");
+      if (favSaveThisDayBtn) favSaveThisDayBtn.textContent = "💾 この曜日で保存（" + dkLabel + "）";
+
 
     }
 
@@ -3816,36 +3872,63 @@ function saveAutoItemDefs() {
     // ===== 利用者別：よく使う項目（旧データ対策あり） =====
     function normalizeFavStore(obj) {
       const out = { ...(obj || {}) };
-      Object.keys(out).forEach((name) => {
-        const v = out[name];
 
-        const mapAutoKeys = (arr) => {
-          const a = Array.isArray(arr) ? arr.slice() : [];
-          // 旧キー → 新キーへ移行
-          const mapped = a.map((k) => (k === "med_manage" || k === "oral_check") ? "med_combo" : k);
-          // 重複除去
-          return Array.from(new Set(mapped));
+      const mapAutoKeys = (arr) => {
+        const a = Array.isArray(arr) ? arr.slice() : [];
+        const mapped = a.map((k) => (k === "med_manage" || k === "oral_check") ? "med_combo" : k);
+        return Array.from(new Set(mapped));
+      };
+
+      const normalizeBucket = (o) => {
+        const b = (o && typeof o === "object") ? o : {};
+        return {
+          autoKeys: mapAutoKeys(b.autoKeys),
+          dayMain: Array.isArray(b.dayMain) ? b.dayMain : [],
+          dayActivity: Array.isArray(b.dayActivity) ? b.dayActivity : [],
+          autoBathSubs: Array.isArray(b.autoBathSubs) ? b.autoBathSubs : [],
+          autoHealthSubs: Array.isArray(b.autoHealthSubs) ? b.autoHealthSubs : [],
+          autoCleanSubs: Array.isArray(b.autoCleanSubs) ? b.autoCleanSubs : [],
+          dayBathingSubs: Array.isArray(b.dayBathingSubs) ? b.dayBathingSubs : [],
+          dayHealthSubs: Array.isArray(b.dayHealthSubs) ? b.dayHealthSubs : [],
         };
+      };
 
-        // 旧形式：配列（autoKeysのみ）→ 新形式へ変換
+      const toDayKeyContainer = (v) => {
+        // 既に曜日キー（mon..sun/holiday）形式
+        if (v && typeof v === "object" && !Array.isArray(v) && DAY_KEYS.some((k) => v[k])) {
+          const base = v.mon || v.tue || v.wed || v.thu || v.fri || v.sat || v.sun || v.holiday || {};
+          const cont = {};
+          DAY_KEYS.forEach((k) => { cont[k] = normalizeBucket(v[k] || base); });
+          return cont;
+        }
+
+        // 旧：{ weekday, holiday }
+        if (v && typeof v === "object" && !Array.isArray(v) && (v.weekday || v.holiday)) {
+          const w = normalizeBucket(v.weekday || v.holiday || {});
+          const h = normalizeBucket(v.holiday || v.weekday || {});
+          return { mon: w, tue: w, wed: w, thu: w, fri: w, sat: h, sun: h, holiday: h };
+        }
+
+        // 旧：配列（autoKeysのみ）
         if (Array.isArray(v)) {
-          out[name] = { autoKeys: mapAutoKeys(v), dayMain: [], autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] };
-          return;
+          const b = normalizeBucket({ autoKeys: v });
+          return { mon: b, tue: b, wed: b, thu: b, fri: b, sat: b, sun: b, holiday: b };
         }
-        // 新形式：オブジェクト
+
+        // 旧：単一バケット
         if (v && typeof v === "object") {
-          out[name] = {
-            autoKeys: mapAutoKeys(v.autoKeys),
-            dayMain: Array.isArray(v.dayMain) ? v.dayMain : [],
-            autoBathSubs: Array.isArray(v.autoBathSubs) ? v.autoBathSubs : [],
-            autoHealthSubs: Array.isArray(v.autoHealthSubs) ? v.autoHealthSubs : [],
-            dayBathingSubs: Array.isArray(v.dayBathingSubs) ? v.dayBathingSubs : [],
-            dayHealthSubs: Array.isArray(v.dayHealthSubs) ? v.dayHealthSubs : [],
-          };
-          return;
+          const b = normalizeBucket(v);
+          return { mon: b, tue: b, wed: b, thu: b, fri: b, sat: b, sun: b, holiday: b };
         }
-        out[name] = { autoKeys: [], dayMain: [], autoBathSubs: [], autoHealthSubs: [], dayBathingSubs: [], dayHealthSubs: [] };
+
+        const empty = normalizeBucket({});
+        return { mon: empty, tue: empty, wed: empty, thu: empty, fri: empty, sat: empty, sun: empty, holiday: empty };
+      };
+
+      Object.keys(out).forEach((name) => {
+        out[name] = toDayKeyContainer(out[name]);
       });
+
       return out;
     }
 
@@ -3857,7 +3940,7 @@ function saveAutoItemDefs() {
     }
     function saveFavByResident() { saveJSON(FAV_BY_RESIDENT_KEY, favByResident); }
 
-    function getFavForResident(name, dayType = "weekday") {
+    function getFavForResident(name, dayKey = "mon") {
       const v = favByResident[name];
 
       const mapAutoKeys = (arr) => {
@@ -3866,7 +3949,7 @@ function saveAutoItemDefs() {
         return Array.from(new Set(mapped));
       };
 
-      const normalize = (obj) => {
+      const normalizeBucket = (obj) => {
         const o = (obj && typeof obj === "object") ? obj : {};
         return {
           autoKeys: mapAutoKeys(o.autoKeys),
@@ -3880,24 +3963,33 @@ function saveAutoItemDefs() {
         };
       };
 
-      // 旧形式対策（配列=autoKeysのみ）
-      if (Array.isArray(v)) return normalize({ autoKeys: v });
+      // 未設定
+      if (!v) return normalizeBucket({});
 
-      if (v && typeof v === "object") {
-        // 新形式：{ weekday: {...}, holiday: {...} }
-        if ((v.weekday && typeof v.weekday === "object") || (v.holiday && typeof v.holiday === "object")) {
-          const bucket = (dayType === "holiday") ? (v.holiday || v.weekday) : (v.weekday || v.holiday);
-          return normalize(bucket);
-        }
-        // 旧オブジェクト形式：そのまま両方に流用
-        return normalize(v);
+      // 互換：weekday/holiday を受け取った場合
+      if (dayKey === "weekday") dayKey = "mon";
+      if (dayKey === "holiday") dayKey = "holiday";
+
+      // 曜日キー形式（推奨）
+      if (v && typeof v === "object" && !Array.isArray(v) && DAY_KEYS.some((k) => v[k])) {
+        const base = v.mon || v.tue || v.wed || v.thu || v.fri || v.sat || v.sun || v.holiday || {};
+        return normalizeBucket(v[dayKey] || base);
       }
 
-      // 未設定ならデフォルト（② 自動入力の初期ON）
-      return normalize({ autoKeys: (DEFAULT_FAV_AUTO_KEYS || []).slice() });
+      // 旧：{ weekday, holiday }
+      if (v && typeof v === "object" && !Array.isArray(v) && (v.weekday || v.holiday)) {
+        const bucket = isHolidayLikeDayKey(dayKey) ? (v.holiday || v.weekday) : (v.weekday || v.holiday);
+        return normalizeBucket(bucket);
+      }
+
+      // 旧：配列（autoKeysのみ）
+      if (Array.isArray(v)) return normalizeBucket({ autoKeys: v });
+
+      // 旧：単一バケット
+      return normalizeBucket(v);
     }
 
-    function applyFavToMainCheckboxes(name) {
+function applyFavToMainCheckboxes(name) {
       updateDayTypeUI();
       const dayType = getCurrentDayType();
       const fav = getFavForResident(name, dayType);
@@ -6775,8 +6867,8 @@ function saveFavFromManager(forceDayType) {
         if (dayHealthSubs.length === 0) dayHealthSubs = ["血圧"];
       }
 
-      const dayType = forceDayType || getCurrentDayType();
-      const prevBucket = getFavForResident(res, dayType);
+      const dayKey = forceDayType || getCurrentDayType();
+      const prevBucket = getFavForResident(res, dayKey);
 
       const newFav = {
         autoKeys,
@@ -6789,24 +6881,111 @@ function saveFavFromManager(forceDayType) {
         dayHealthSubs
       };
 
-      // dayType（平日 / 土日祝）ごとに保存
-      let existing = favByResident[res];
-      let container = null;
-      if (existing && typeof existing === "object" && !Array.isArray(existing) && ((existing.weekday && typeof existing.weekday==="object") || (existing.holiday && typeof existing.holiday==="object"))) {
-        container = existing;
-      } else if (existing && typeof existing === "object" && !Array.isArray(existing)) {
-        container = { weekday: existing, holiday: existing };
-      } else if (Array.isArray(existing)) {
-        container = { weekday: { autoKeys: existing }, holiday: { autoKeys: existing } };
+      // 曜日キー（mon..sun/holiday）ごとに保存
+      const targetKey = forceDayType || getCurrentDayType(); // "weekday"/"holiday" または "mon".."sun"/"holiday"
+      // 既存を曜日キー形式に正規化（旧データもここで吸収）
+      const normalizedStore = normalizeFavStore({ __tmp__: favByResident[res] });
+      let container = normalizedStore.__tmp__;
+
+      const assignTo = (k) => { container[k] = newFav; };
+
+      if (targetKey === "weekday") {
+        ["mon","tue","wed","thu","fri"].forEach(assignTo);
+      } else if (targetKey === "holiday") {
+        ["sat","sun","holiday"].forEach(assignTo);
       } else {
-        container = { weekday: {}, holiday: {} };
+        assignTo(targetKey);
       }
-      container[dayType] = newFav;
+
+      favByResident[res] = container;
+saveFavByResident();
+      alert("保存しました。");
+    }
+
+
+
+    // ===== フォーム側（②ここだけOK）から「よく使う項目」を保存 =====
+    function saveFavFromMain(forceDayType){
+      const res = document.getElementById("resident")?.value;
+      if(!res){ alert("利用者を選択してください"); return; }
+
+      // ② 自動入力（フォーム側）
+      const autoKeys = Array.from(document.querySelectorAll("#autoItemCheckboxes .auto-item:checked")).map((x)=>x.value);
+
+      // ③ 日中支援（主な支援）
+      const dayMain = Array.from(document.querySelectorAll("#daySupportMainCheckboxes .day-main-item:checked")).map((x)=>x.value);
+
+      // ④ 日中活動（保存している場合のみ使う。未保存の人もいるので、前回値を残す）
+      const dayKey = forceDayType || getCurrentDayType();
+      const prevBucket = getFavForResident(res, dayKey);
+
+      // フォームの現在チェックを採用（未チェックなら前回を残すのではなく、現在を保存する）
+      const dayActivity = Array.from(document.querySelectorAll("#dayActivityCheckboxes .day-activity-item:checked")).map((x)=>x.value);
+
+      // ②サブ（入浴）
+      let autoBathSubs = [];
+      const bathParent = document.querySelector('#autoItemCheckboxes .auto-item[value="bathing"]');
+      if(bathParent && bathParent.checked){
+        autoBathSubs = Array.from(document.querySelectorAll('#autoItemCheckboxes .auto-bath-sub:checked')).map((x)=>x.dataset.sub);
+        if(autoBathSubs.length===0) autoBathSubs = ["prompt"];
+      }
+
+      // ②サブ（体調管理）
+      let autoHealthSubs = [];
+      const healthParent = document.querySelector('#autoItemCheckboxes .auto-item[value="health"]');
+      if(healthParent && healthParent.checked){
+        autoHealthSubs = Array.from(document.querySelectorAll('#autoItemCheckboxes .auto-health-sub:checked')).map((x)=>x.dataset.sub);
+        if(autoHealthSubs.length===0) autoHealthSubs = ["bp"];
+      }
+
+      // ②サブ（清潔保持）
+      const autoCleanSubs = Array.from(document.querySelectorAll('#autoItemCheckboxes .auto-clean-sub:checked')).map((x)=>x.dataset.sub);
+
+      // ③サブ（入浴/体調管理）
+      let dayBathingSubs = [];
+      const dayBathParent = Array.from(document.querySelectorAll('#daySupportMainCheckboxes .day-main-item')).find((x)=>x.value===BATHING_MAIN_KEY);
+      if(dayBathParent && dayBathParent.checked){
+        dayBathingSubs = Array.from(document.querySelectorAll('#daySupportMainCheckboxes .day-main-bathing-sub:checked')).map((x)=>x.dataset.sub);
+        if(dayBathingSubs.length===0) dayBathingSubs = ["声かけ"];
+      }
+
+      let dayHealthSubs = [];
+      const dayHealthParent = Array.from(document.querySelectorAll('#daySupportMainCheckboxes .day-main-item')).find((x)=>x.value===HEALTH_MAIN_KEY);
+      if(dayHealthParent && dayHealthParent.checked){
+        dayHealthSubs = Array.from(document.querySelectorAll('#daySupportMainCheckboxes .day-main-health-sub:checked')).map((x)=>x.dataset.sub);
+        if(dayHealthSubs.length===0) dayHealthSubs = ["血圧"];
+      }
+
+      const newFav = {
+        autoKeys,
+        dayMain,
+        dayActivity,
+        autoBathSubs,
+        autoHealthSubs,
+        autoCleanSubs: Array.isArray(autoCleanSubs) ? autoCleanSubs : [],
+        dayBathingSubs,
+        dayHealthSubs
+      };
+
+      // 既存を曜日キー形式に正規化（旧データもここで吸収）
+      const normalizedStore = normalizeFavStore({ __tmp__: favByResident[res] });
+      let container = normalizedStore.__tmp__;
+
+      const assignTo = (k)=>{ container[k] = newFav; };
+      const targetKey = forceDayType || getCurrentDayType();
+
+      if(targetKey === "weekday"){
+        ["mon","tue","wed","thu","fri"].forEach(assignTo);
+      }else if(targetKey === "holiday"){
+        ["sat","sun","holiday"].forEach(assignTo);
+      }else{
+        assignTo(targetKey);
+      }
+
       favByResident[res] = container;
       saveFavByResident();
       alert("保存しました。");
     }
-
 function applyFavNowFromManager() {
       const res = document.getElementById("favResidentSelect")?.value;
       if (!res) return;
@@ -8388,6 +8567,7 @@ if (restoreBtn && restoreFile) {
       document.getElementById("favResidentSelect").addEventListener("change", renderFavManager);
       document.getElementById("favSaveWeekdayBtn")?.addEventListener("click", () => saveFavFromManager("weekday"));
       document.getElementById("favSaveHolidayBtn")?.addEventListener("click", () => saveFavFromManager("holiday"));
+      document.getElementById("favSaveThisDayBtn")?.addEventListener("click", () => saveFavFromManager(getCurrentDayType()));
       // 互換：旧ボタンが残っている場合
       document.getElementById("favSaveBtn")?.addEventListener("click", () => saveFavFromManager(getCurrentDayType()));
 document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowFromManager);
@@ -8412,11 +8592,20 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
       // ===== フォーム側ボタン（小窓） =====
       document.getElementById("openFavModalBtn").addEventListener("click", openFavModalForCurrentResident);
+      // ②ここだけOK：フォームの現在チェックをそのまま保存（曜日/平日/土日祝）
+      document.getElementById("mainFavSaveWeekdayBtn")?.addEventListener("click", () => saveFavFromMain("weekday"));
+      document.getElementById("mainFavSaveHolidayBtn")?.addEventListener("click", () => saveFavFromMain("holiday"));
+      document.getElementById("mainFavSaveThisDayBtn")?.addEventListener("click", () => saveFavFromMain(getCurrentDayType()));
+
       document.getElementById("favModalDayType")?.addEventListener("change", () => { if(document.getElementById("favModal")?.classList.contains("show")) openFavModalForCurrentResident(); });
       document.getElementById("favModalClose").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
       document.getElementById("favModalCancel").addEventListener("click", () => document.getElementById("favModal").classList.remove("show"));
       document.getElementById("favModalSaveWeekday").addEventListener("click", () => saveFavModal("weekday"));
       document.getElementById("favModalSaveHoliday").addEventListener("click", () => saveFavModal("holiday"));
+      document.getElementById("favModalSaveThisDay")?.addEventListener("click", () => {
+        const ds = document.getElementById("date")?.value || "";
+        saveFavModal(getDayKeyFromDateStr(ds));
+      });
       document.getElementById("favModal").addEventListener("click", (e) => { if (e.target.id === "favModal") document.getElementById("favModal").classList.remove("show"); });
 
       // 自動テンプレ小窓（rtModal）
