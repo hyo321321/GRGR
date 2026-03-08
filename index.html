@@ -4787,7 +4787,26 @@ function handleRestoreFile(file) {
       return `入浴対応：${picked.join("・")}を実施。`;
     }
 
-    function buildAutoHealthSentenceFromSubs(subs) {
+    
+    // 体調管理の日本語を自然に統一（血圧/体重/検温などは「測定」）
+    function normalizeHealthJapanese(sentence) {
+      const s = String(sentence || "").trim();
+      if (!s) return s;
+
+      // 旧形式「体調管理：血圧を実施。」などを救済
+      if (s.startsWith("体調管理：") && s.endsWith("を実施。")) {
+        const body = s.slice("体調管理：".length, -"を実施。".length).trim();
+        // 「血圧」「体重」「検温」「体温」「脈拍」だけなら「測定」にする
+        const items = body.split("・").map(x => x.trim()).filter(Boolean);
+        const measureOnly = items.length && items.every(x => ["血圧","体重","検温","体温","脈拍","SpO2","酸素飽和度"].includes(x));
+        if (measureOnly) {
+          return `体調管理：${items.join("・")}を測定。`;
+        }
+      }
+      return s;
+    }
+
+function buildAutoHealthSentenceFromSubs(subs) {
       const map = { bp: "血圧", wt: "体重", temp: "検温", symp: "症状確認", rest: "安静見守り" };
       const picked = (Array.isArray(subs) ? subs : []).map((s) => map[s]).filter(Boolean);
       if (!picked.length) return "体調管理を実施。";
@@ -4801,7 +4820,7 @@ function handleRestoreFile(file) {
       if (measure.length) parts.push(`${measure.join("・")}を測定。`);
       if (actions.length) parts.push(`${actions.join("・")}を実施。`);
 
-      return `体調管理：${parts.join("")}`;
+      return normalizeHealthJapanese(`体調管理：${parts.join("")}`);
     }
 
     function buildAutoCleanSentenceFromSubs(subs) {
@@ -5702,7 +5721,7 @@ function buildAutoBathSentence() {
       if (measure.length) parts.push(`${measure.join("・")}を測定。`);
       if (actions.length) parts.push(`${actions.join("・")}を実施。`);
 
-      return `体調管理：${parts.join("")}`;
+      return normalizeHealthJapanese(`体調管理：${parts.join("")}`);
     }
 
 
