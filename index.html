@@ -145,6 +145,16 @@
     }
 
 
+    /* 左側フォームが広がりすぎないように固定（③以降のタグ/保存が横に伸びる対策） */
+    @media (min-width: 1100px){
+      .layout > section.card:first-child{
+        max-width: 760px;
+        width: 100%;
+        justify-self: start;
+      }
+    }
+
+
     /* ===== PC前提：右の記録一覧は常に右で追従 ===== */
     /* 記録一覧（右）：ページと一緒にスクロール（左右が“固定で動く”感じを避ける） */
     .records-panel{ align-self: start; }
@@ -1185,6 +1195,15 @@
     .update-banner .close:hover{ filter:brightness(.95); }
     /* ===== ここまで：アップデート通知 ===== */
 
+
+/* --- fix: prevent horizontal overflow in tag/save sections --- */
+.small-text, #selectedTagsInfo, .beginner-hint, .beginner-zone, .advanced-zone {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.btn-row, .tag-buttons {
+  max-width: 100%;
+}
 </style>
 
 <!-- Excelライブラリ（スタイル対応：xlsx-js-style）ローダー -->
@@ -1306,16 +1325,8 @@
         </div>
 
         <form id="recordForm">
-          <div class="draft-bar" id="draftBar" style="display:none;">
-            <div>
-              <div class="draft-title">下書きがあります</div>
-              <div class="draft-meta" id="draftMeta">復元できます。</div>
-            </div>
-            <div class="btn-row" style="margin-top:0;">
-              <button type="button" class="btn-secondary" id="draftRestoreBtn">復元</button>
-              <button type="button" class="btn-secondary" id="draftDiscardBtn">破棄</button>
-            </div>
-          </div>
+
+
 
           <!-- ★日付・利用者（初心者OK） -->
           <div class="beginner-zone">
@@ -2892,15 +2903,8 @@
     }
 
     function refreshDraftBarForCurrent(){
-      const key = getDraftKey();
-      if(!key){ hideDraftBar(); return; }
-      const drafts = loadDrafts();
-      const d = drafts[key];
-      if(d && d.ts){
-        showDraftBar("最終保存：" + formatHM(d.ts) + "（下書き）");
-      } else {
-        hideDraftBar();
-      }
+      // 下書きバーは表示しない（邪魔になりやすいため）
+      hideDraftBar();
     }
 
     function clearDraftForCurrent(){
@@ -2926,14 +2930,12 @@
       saveDrafts(drafts);
 
       const st = document.getElementById("autosaveStatus");
-      if(st) st.textContent = "下書き保存：" + formatHM(drafts[key].ts);
-
+      if(st) st.textContent = "";
+      // 下書きバーは表示しない
       refreshDraftBarForCurrent();
-    }, 650);
+}, 650);
 
-    function requestDraftSave(){
-      saveDraftDebounced();
-    }
+    function requestDraftSave(){ /* 下書き保存なし */ }
 
     function tryRestoreDraft(){
       const key = getDraftKey();
@@ -2965,14 +2967,9 @@
     }
 
     function initDraftAutosave(){
-      document.getElementById("draftRestoreBtn")?.addEventListener("click", tryRestoreDraft);
-      document.getElementById("draftDiscardBtn")?.addEventListener("click", clearDraftForCurrent);
-
-      const form = document.getElementById("recordForm");
-      if(form){
-        form.addEventListener("input", requestDraftSave);
-        form.addEventListener("change", requestDraftSave);
-      }
+      // 下書き保存は使わない（表示もしない）
+      try { localStorage.removeItem(DRAFTS_KEY); } catch(e){}
+      // 旧下書き関連のイベントは登録しない
     }
 
     function initDayTypeHandlers(){
@@ -2986,7 +2983,7 @@
         updateDayTypeUI();
         const r = document.getElementById("resident")?.value || "";
         if(r && typeof applyFavToMainCheckboxes === "function") applyFavToMainCheckboxes(r);
-        requestDraftSave();
+        // 下書き保存はしない
       });
     }
 
