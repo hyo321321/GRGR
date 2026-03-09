@@ -1322,6 +1322,7 @@
     <div class="header-title">グループホーム 個人記録 WEBアプリ（初心者ガイド付き）</div>
     <div class="header-actions">
       <button type="button" class="header-btn" id="openManualBtn">📘 説明書</button>
+      <button type="button" class="header-btn" id="openInboxBtn">📥 受信BOX</button>
     </div>
   </div>
 </header>
@@ -1487,6 +1488,51 @@
           </ul>
         </div>
 </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+<!-- LINE受信BOX（モーダル） -->
+  <div class="modal-overlay" id="inboxOverlay" aria-hidden="true">
+    <div class="manual-modal" role="dialog" aria-modal="true" aria-labelledby="inboxTitle" style="max-width:980px;">
+      <div class="manual-header">
+        <div class="manual-title" id="inboxTitle">LINE 受信BOX（取り込み）</div>
+        <div class="manual-actions">
+          <button type="button" class="manual-btn" id="refreshInboxBtn">更新</button>
+          <button type="button" class="manual-btn" id="closeInboxBtn">閉じる</button>
+        </div>
+      </div>
+      <div class="manual-body" id="inboxBody">
+        <div class="manual-section">
+          <h3>接続設定</h3>
+          <div class="note" style="margin-bottom:10px;">
+            受信BOXは、LINEから受け取ったメモを一時保管して、ここからこのアプリへ取り込みます（最終的な保存は⑤で行ってください）。
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:1; min-width:260px;">
+              <div class="label">エンドポイントURL</div>
+              <input type="text" id="inboxEndpoint" class="text" placeholder="例）https://xxxx.workers.dev" />
+            </div>
+            <div style="flex:1; min-width:220px;">
+              <div class="label">取込トークン</div>
+              <input type="password" id="inboxToken" class="text" placeholder="Bearerトークン" />
+            </div>
+            <div>
+              <button type="button" class="btn" id="saveInboxSettingsBtn">設定を保存</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>受信一覧</h3>
+          <div class="note" style="margin-bottom:10px;">
+            「取り込む」で、本文に追記（自動で該当欄を探します）。見つからない場合はクリップボードにコピーします。
+          </div>
+          <div id="inboxList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -9112,6 +9158,229 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 })();
 </script>
 
+
+<script>
+(function(){
+  const LS_ENDPOINT = "lineInboxEndpoint";
+    const LS_TOKEN = "lineInboxToken";
+  
+    const overlay = document.getElementById("inboxOverlay");
+    const openBtn = document.getElementById("openInboxBtn");
+    const closeBtn = document.getElementById("closeInboxBtn");
+    const refreshBtn = document.getElementById("refreshInboxBtn");
+    const endpointInput = document.getElementById("inboxEndpoint");
+    const tokenInput = document.getElementById("inboxToken");
+    const saveSettingsBtn = document.getElementById("saveInboxSettingsBtn");
+    const listEl = document.getElementById("inboxList");
+  
+    function safeToast(msg){
+      try { if (typeof showToast === "function") return showToast(msg); } catch(e){}
+      alert(msg);
+    }
+  
+    function openOverlay(){
+      if (!overlay) return;
+      overlay.setAttribute("aria-hidden","false");
+      overlay.style.display = "flex";
+      // 初期値
+      if (endpointInput) endpointInput.value = localStorage.getItem(LS_ENDPOINT) || "";
+      if (tokenInput) tokenInput.value = localStorage.getItem(LS_TOKEN) || "";
+      // 読み込み
+      loadMessages();
+    }
+    function closeOverlay(){
+      if (!overlay) return;
+      overlay.setAttribute("aria-hidden","true");
+      overlay.style.display = "none";
+    }
+  
+    async function loadMessages(){
+      if (!listEl) return;
+      listEl.innerHTML = "";
+      const endpoint = (endpointInput?.value || localStorage.getItem(LS_ENDPOINT) || "").trim();
+      const token = (tokenInput?.value || localStorage.getItem(LS_TOKEN) || "").trim();
+  
+      if (!endpoint){
+        listEl.innerHTML = '<div class="note">エンドポイントURLを設定してください。</div>';
+        return;
+      }
+      const url = endpoint.replace(/\/$/,"") + "/messages";
+      const headers = {};
+      if (token) headers["Authorization"] = "Bearer " + token;
+  
+      listEl.innerHTML = '<div class="note">読み込み中...</div>';
+  
+      try{
+        const res = await fetch(url, { headers });
+        if (!res.ok){
+          const t = await res.text().catch(()=> "");
+          throw new Error("HTTP " + res.status + " " + (t||""));
+        }
+        const data = await res.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+        if (items.length === 0){
+          listEl.innerHTML = '<div class="note">受信はまだありません。</div>';
+          return;
+        }
+        listEl.innerHTML = "";
+        items.forEach(item => renderItem(item, endpoint, token));
+      }catch(err){
+        listEl.innerHTML = '<div class="note">読み込みに失敗しました。URL/トークンを確認してください。</div>';
+        console.error(err);
+      }
+    }
+  
+    function renderItem(item, endpoint, token){
+      const card = document.createElement("div");
+      card.style.border = "1px solid #e5e7eb";
+      card.style.borderRadius = "10px";
+      card.style.padding = "10px";
+      card.style.background = "#fff";
+  
+      const meta = document.createElement("div");
+      meta.style.fontSize = "12px";
+      meta.style.opacity = "0.8";
+      const dt = item.ts ? new Date(item.ts) : null;
+      const dtStr = dt ? dt.toLocaleString("ja-JP") : "";
+      meta.textContent = `${item.from || ""} ${dtStr}`.trim();
+  
+      const pre = document.createElement("pre");
+      pre.style.whiteSpace = "pre-wrap";
+      pre.style.margin = "8px 0";
+      pre.style.fontFamily = "inherit";
+      pre.textContent = item.text || "";
+  
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "8px";
+      btnRow.style.flexWrap = "wrap";
+  
+      const btnImport = document.createElement("button");
+      btnImport.type = "button";
+      btnImport.className = "btn";
+      btnImport.textContent = "取り込む";
+      btnImport.onclick = async ()=> {
+        const ok = importIntoForm(item.text || "");
+        if (!ok){
+          // fallback: copy
+          try{
+            await navigator.clipboard.writeText(item.text || "");
+            safeToast("取り込む欄が見つからなかったので、クリップボードにコピーしました。貼り付けしてください。");
+          }catch(e){
+            safeToast("取り込む欄が見つかりませんでした。本文を手動でコピーして貼り付けしてください。");
+          }
+        }else{
+          safeToast("取り込みました。内容を確認して⑤で保存してください。");
+        }
+      };
+  
+      const btnCopy = document.createElement("button");
+      btnCopy.type = "button";
+      btnCopy.className = "btn";
+      btnCopy.textContent = "コピー";
+      btnCopy.onclick = async ()=> {
+        try{
+          await navigator.clipboard.writeText(item.text || "");
+          safeToast("コピーしました。");
+        }catch(e){
+          safeToast("コピーに失敗しました。");
+        }
+      };
+  
+      const btnDone = document.createElement("button");
+      btnDone.type = "button";
+      btnDone.className = "btn";
+      btnDone.textContent = "処理済みにする";
+      btnDone.onclick = async ()=> {
+        const endpoint0 = (endpointInput?.value || endpoint || "").trim();
+        const token0 = (tokenInput?.value || token || "").trim();
+        const url = endpoint0.replace(/\/$/,"") + "/markDone";
+        const headers = { "Content-Type":"application/json" };
+        if (token0) headers["Authorization"] = "Bearer " + token0;
+        try{
+          const res = await fetch(url, { method:"POST", headers, body: JSON.stringify({ id: item.id }) });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          safeToast("処理済みにしました。");
+          loadMessages();
+        }catch(err){
+          safeToast("処理済み更新に失敗しました。");
+          console.error(err);
+        }
+      };
+  
+      btnRow.appendChild(btnImport);
+      btnRow.appendChild(btnCopy);
+      btnRow.appendChild(btnDone);
+  
+      card.appendChild(meta);
+      card.appendChild(pre);
+      card.appendChild(btnRow);
+  
+      listEl.appendChild(card);
+    }
+  
+    // 取り込み：該当欄を探して追記（見つからなければfalse）
+    function importIntoForm(text){
+      if (!text) return false;
+  
+      // まず「業務日誌・利用者の活動状況（特記事項含む）」欄を探す
+      // 近い候補：idにnote/special/gyomu/nissi が入るtextarea
+      const candidates = [
+        document.querySelector('textarea#specialNote'),
+        document.querySelector('textarea#specialNotes'),
+        document.querySelector('textarea#note'),
+        document.querySelector('textarea[name="note"]'),
+        document.querySelector('textarea[id*="special"]'),
+        document.querySelector('textarea[id*="note"]'),
+        document.querySelector('textarea[id*="nissi"]'),
+        document.querySelector('textarea[id*="gyomu"]'),
+      ].filter(Boolean);
+  
+      // 次に「日中に行った主な支援」欄（支援本文）候補
+      const supportCandidates = [
+        document.querySelector('textarea#supportText'),
+        document.querySelector('textarea#support'),
+        document.querySelector('textarea[name="support"]'),
+        document.querySelector('textarea[id*="support"]'),
+        document.querySelector('textarea[id*="shien"]'),
+      ].filter(Boolean);
+  
+      const target = candidates[0] || supportCandidates[0];
+      if (!target) return false;
+  
+      const cur = target.value || "";
+      target.value = cur ? (cur + "\n" + text) : text;
+      target.dispatchEvent(new Event("input", { bubbles:true }));
+      target.focus();
+      return true;
+    }
+  
+    // settings save
+    function saveSettings(){
+      const endpoint = (endpointInput?.value || "").trim();
+      const token = (tokenInput?.value || "").trim();
+      if (endpoint) localStorage.setItem(LS_ENDPOINT, endpoint);
+      else localStorage.removeItem(LS_ENDPOINT);
+      if (token) localStorage.setItem(LS_TOKEN, token);
+      else localStorage.removeItem(LS_TOKEN);
+      safeToast("設定を保存しました。");
+    }
+  
+    // wire
+    if (openBtn) openBtn.addEventListener("click", openOverlay);
+    if (closeBtn) closeBtn.addEventListener("click", closeOverlay);
+    if (refreshBtn) refreshBtn.addEventListener("click", loadMessages);
+    if (saveSettingsBtn) saveSettingsBtn.addEventListener("click", saveSettings);
+  
+    if (overlay){
+      overlay.addEventListener("click", (e)=> { if (e.target === overlay) closeOverlay(); });
+      document.addEventListener("keydown", (e)=> {
+        if (e.key === "Escape" && overlay.style.display === "flex") closeOverlay();
+      });
+    }
+  }
+})();
+</script>
 </body>
 </html>
 
