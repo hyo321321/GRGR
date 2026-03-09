@@ -1308,83 +1308,63 @@
 
 
 /* Google共有の今日一覧 */
-.google-shared-box{
-  margin: 12px 0 14px;
-  border: 2px solid #bfdbfe;
-  background: #eff6ff;
-  border-radius: 16px;
-  padding: 12px;
+.google-today-box{
+  margin:12px 0 14px;
+  padding:12px;
+  border:1px solid #dbe4f0;
+  border-radius:12px;
+  background:#f8fbff;
 }
-.google-shared-head{
+.google-today-head{
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   gap:10px;
   flex-wrap:wrap;
-  margin-bottom:8px;
+  margin-bottom:10px;
 }
-.google-shared-title{
+.google-today-title{
   font-size:14px;
-  font-weight:800;
-  color:#1e3a8a;
-}
-.google-shared-meta{
-  font-size:12px;
-  color:#1d4ed8;
-}
-.google-shared-actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-.google-shared-status{
-  font-size:12px;
-  color:#475569;
-  margin-bottom:8px;
-  white-space:pre-wrap;
-}
-.google-shared-list{
-  display:grid;
-  gap:8px;
-}
-.google-shared-item{
-  border:1px solid #bfdbfe;
-  background:#fff;
-  border-radius:12px;
-  padding:10px;
-}
-.google-shared-item-top{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-bottom:6px;
-}
-.google-shared-time{
-  font-size:12px;
-  color:#64748b;
-}
-.google-shared-names{
-  font-size:12px;
-  color:#1e3a8a;
   font-weight:700;
+  color:#1f2937;
 }
-.google-shared-body{
-  white-space:pre-wrap;
-  word-break:break-word;
-  font-size:13px;
-  color:#0f172a;
+.google-today-status{
+  font-size:12px;
+  color:#6b7280;
 }
-.google-shared-empty{
-  padding:10px;
+.google-today-list{
+  display:grid;
+  gap:10px;
+}
+.google-today-empty{
   font-size:13px;
-  color:#64748b;
-  text-align:center;
+  color:#6b7280;
+  padding:6px 0;
+}
+.google-today-item{
+  border:1px solid #dbe4f0;
+  border-radius:10px;
   background:#fff;
-  border:1px dashed #bfdbfe;
-  border-radius:12px;
+  padding:10px;
 }
-
+.google-today-meta{
+  font-size:12px;
+  color:#6b7280;
+  margin-bottom:6px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.google-today-body{
+  white-space:pre-wrap;
+  font-size:14px;
+  color:#111827;
+}
+.google-today-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
 
 </style>
 
@@ -1983,20 +1963,23 @@
 
 
         
-
-        <div class="google-shared-box">
-          <div class="google-shared-head">
+        <div class="google-today-box">
+          <div class="google-today-head">
             <div>
-              <div class="google-shared-title">☁ Google共有の今日一覧</div>
-              <div class="google-shared-meta">初心者ページから送信された今日の記録を表示します。</div>
+              <div class="google-today-title">Google共有の今日一覧</div>
+              <div class="google-today-status" id="googleTodayStatus">読み込み待ちです。</div>
             </div>
-            <div class="google-shared-actions">
-              <button type="button" class="btn-secondary" id="googleTodayRefreshBtn" style="font-size:12px; padding:6px 10px;">🔄 更新</button>
+            <div class="google-today-actions">
+              <button type="button" class="btn-secondary" id="googleTodayRefreshBtn" style="font-size:12px; padding:6px 10px;">
+                🔄 更新
+              </button>
+              <button type="button" class="btn-secondary" onclick="window.open('easy_google_send_v2.html', '_blank')" style="font-size:12px; padding:6px 10px;">
+                ✍ かんたん記録ページ
+              </button>
             </div>
           </div>
-          <div class="google-shared-status" id="googleTodayStatus">読み込み待ちです。</div>
-          <div class="google-shared-list" id="googleTodayList">
-            <div class="google-shared-empty">ここにGoogle共有の今日の記録が表示されます。</div>
+          <div class="google-today-list" id="googleTodayList">
+            <div class="google-today-empty">まだ読み込まれていません。</div>
           </div>
         </div>
 
@@ -9400,7 +9383,67 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       ul{ margin:6px 0 0 18px; }
       .small{ font-size:13px; color:#111827; }
     `;
-    w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>説明書</title><style>"+css+"</style></head><body>");
+    w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>説明書</title><style>"+css+"
+/* Google共有の今日一覧 */
+.google-today-box{
+  margin:12px 0 14px;
+  padding:12px;
+  border:1px solid #dbe4f0;
+  border-radius:12px;
+  background:#f8fbff;
+}
+.google-today-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.google-today-title{
+  font-size:14px;
+  font-weight:700;
+  color:#1f2937;
+}
+.google-today-status{
+  font-size:12px;
+  color:#6b7280;
+}
+.google-today-list{
+  display:grid;
+  gap:10px;
+}
+.google-today-empty{
+  font-size:13px;
+  color:#6b7280;
+  padding:6px 0;
+}
+.google-today-item{
+  border:1px solid #dbe4f0;
+  border-radius:10px;
+  background:#fff;
+  padding:10px;
+}
+.google-today-meta{
+  font-size:12px;
+  color:#6b7280;
+  margin-bottom:6px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.google-today-body{
+  white-space:pre-wrap;
+  font-size:14px;
+  color:#111827;
+}
+.google-today-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+</style></head><body>");
     w.document.write("<h1>このアプリの使い方（説明書）</h1>");
     // sections only
     const secs = body.querySelectorAll(".manual-section");
@@ -9411,83 +9454,78 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 <script>
 (function(){
   const GOOGLE_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfn9njp22BWc1Ti3phZwP_INtEZ8HW4WMRMQJBLdFjAm3sqjree0BaUW6gNx0_Vk8U/exec';
-  const GOOGLE_AUTO_REFRESH_MS = 10000;
 
-  function gEl(id){ return document.getElementById(id); }
-
-  function esc(s){
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+  function escHtml(v){
+    return String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
-  function fmtDateTime(value){
-    if(!value) return '';
-    const d = new Date(value);
-    if(isNaN(d.getTime())) return String(value);
+  function formatGoogleDt(iso){
+    if(!iso) return "";
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return String(iso);
     const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    const hh = String(d.getHours()).padStart(2,'0');
-    const mm = String(d.getMinutes()).padStart(2,'0');
-    return `${y}/${m}/${day} ${hh}:${mm}`;
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const h = String(d.getHours()).padStart(2,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    return `${y}/${m}/${day} ${h}:${mm}`;
   }
 
-  function setGoogleStatus(msg){
-    const box = gEl('googleTodayStatus');
-    if(box) box.textContent = msg;
-  }
+  async function loadGoogleTodayList(){
+    const box = document.getElementById("googleTodayList");
+    const status = document.getElementById("googleTodayStatus");
+    if(!box || !status) return;
 
-  function renderGoogleToday(items){
-    const box = gEl('googleTodayList');
-    if(!box) return;
-    if(!Array.isArray(items) || !items.length){
-      box.innerHTML = '<div class="google-shared-empty">Google共有の今日の記録はありません。</div>';
-      return;
-    }
-    box.innerHTML = items.map(function(item){
-      return `
-        <div class="google-shared-item">
-          <div class="google-shared-item-top">
-            <div class="google-shared-time">${esc(fmtDateTime(item.timestamp || item.createdAt || ''))}</div>
-            <div class="google-shared-names">利用者: ${esc(item.userName || item.resident || '')} ／ 記録者: ${esc(item.staffName || item.recorder || '')}</div>
-          </div>
-          <div class="google-shared-body">${esc(item.body || item.text || '')}</div>
-        </div>
-      `;
-    }).join('');
-  }
+    status.textContent = "読み込み中…";
+    box.innerHTML = '<div class="google-today-empty">読み込み中…</div>';
 
-  async function loadGoogleToday(){
-    const list = gEl('googleTodayList');
-    if(list) list.innerHTML = '<div class="google-shared-empty">読み込み中...</div>';
-    setGoogleStatus('Google共有の今日一覧を読み込み中...');
-    try{
+    try {
       const res = await fetch(GOOGLE_WEB_APP_URL + '?mode=today', { cache: 'no-store' });
       const data = await res.json();
-      if(!res.ok || !data || data.ok === false){
-        const msg = (data && data.message) ? data.message : ('HTTP ' + res.status);
-        setGoogleStatus('読み込み失敗: ' + msg);
-        renderGoogleToday([]);
+
+      if(!data || !data.ok){
+        status.textContent = "読み込み失敗";
+        box.innerHTML = '<div class="google-today-empty">取得できませんでした。Apps Script のURLや公開設定を確認してください。</div>';
         return;
       }
+
       const items = Array.isArray(data.items) ? data.items : [];
-      setGoogleStatus('更新しました。Google共有 ' + items.length + ' 件');
-      renderGoogleToday(items);
-    }catch(err){
-      setGoogleStatus('通信エラー: ' + (err && err.message ? err.message : 'error'));
-      renderGoogleToday([]);
+      status.textContent = '最終更新: ' + formatGoogleDt(new Date().toISOString());
+
+      if(!items.length){
+        box.innerHTML = '<div class="google-today-empty">Google共有の今日の記録はありません。</div>';
+        return;
+      }
+
+      box.innerHTML = items.map(item => `
+        <div class="google-today-item">
+          <div class="google-today-meta">
+            <span>${escHtml(formatGoogleDt(item.timestamp || ""))}</span>
+            <span>利用者: ${escHtml(item.userName || "")}</span>
+            <span>記録者: ${escHtml(item.staffName || "")}</span>
+            <span>送信元: ${escHtml(item.source || "")}</span>
+          </div>
+          <div class="google-today-body">${escHtml(item.body || "")}</div>
+        </div>
+      `).join("");
+    } catch (e) {
+      status.textContent = "通信エラー";
+      box.innerHTML = '<div class="google-today-empty">通信エラーが発生しました。URLまたはネット接続を確認してください。</div>';
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    const btn = gEl('googleTodayRefreshBtn');
-    if(btn) btn.addEventListener('click', loadGoogleToday);
-    loadGoogleToday();
-    window.__googleTodayTimer = setInterval(loadGoogleToday, GOOGLE_AUTO_REFRESH_MS);
+  window.loadGoogleTodayList = loadGoogleTodayList;
+
+  document.addEventListener("DOMContentLoaded", function(){
+    const btn = document.getElementById("googleTodayRefreshBtn");
+    if(btn) btn.addEventListener("click", loadGoogleTodayList);
+    setTimeout(loadGoogleTodayList, 400);
+    setInterval(loadGoogleTodayList, 10000);
   });
 })();
 </script>
@@ -9523,6 +9561,86 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape") closeManual();
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  const GOOGLE_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfn9njp22BWc1Ti3phZwP_INtEZ8HW4WMRMQJBLdFjAm3sqjree0BaUW6gNx0_Vk8U/exec';
+
+  function escHtml(v){
+    return String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatGoogleDt(iso){
+    if(!iso) return "";
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return String(iso);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const h = String(d.getHours()).padStart(2,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    return `${y}/${m}/${day} ${h}:${mm}`;
+  }
+
+  async function loadGoogleTodayList(){
+    const box = document.getElementById("googleTodayList");
+    const status = document.getElementById("googleTodayStatus");
+    if(!box || !status) return;
+
+    status.textContent = "読み込み中…";
+    box.innerHTML = '<div class="google-today-empty">読み込み中…</div>';
+
+    try {
+      const res = await fetch(GOOGLE_WEB_APP_URL + '?mode=today', { cache: 'no-store' });
+      const data = await res.json();
+
+      if(!data || !data.ok){
+        status.textContent = "読み込み失敗";
+        box.innerHTML = '<div class="google-today-empty">取得できませんでした。Apps Script のURLや公開設定を確認してください。</div>';
+        return;
+      }
+
+      const items = Array.isArray(data.items) ? data.items : [];
+      status.textContent = '最終更新: ' + formatGoogleDt(new Date().toISOString());
+
+      if(!items.length){
+        box.innerHTML = '<div class="google-today-empty">Google共有の今日の記録はありません。</div>';
+        return;
+      }
+
+      box.innerHTML = items.map(item => `
+        <div class="google-today-item">
+          <div class="google-today-meta">
+            <span>${escHtml(formatGoogleDt(item.timestamp || ""))}</span>
+            <span>利用者: ${escHtml(item.userName || "")}</span>
+            <span>記録者: ${escHtml(item.staffName || "")}</span>
+            <span>送信元: ${escHtml(item.source || "")}</span>
+          </div>
+          <div class="google-today-body">${escHtml(item.body || "")}</div>
+        </div>
+      `).join("");
+    } catch (e) {
+      status.textContent = "通信エラー";
+      box.innerHTML = '<div class="google-today-empty">通信エラーが発生しました。URLまたはネット接続を確認してください。</div>';
+    }
+  }
+
+  window.loadGoogleTodayList = loadGoogleTodayList;
+
+  document.addEventListener("DOMContentLoaded", function(){
+    const btn = document.getElementById("googleTodayRefreshBtn");
+    if(btn) btn.addEventListener("click", loadGoogleTodayList);
+    setTimeout(loadGoogleTodayList, 400);
+    setInterval(loadGoogleTodayList, 10000);
   });
 })();
 </script>
