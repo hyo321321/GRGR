@@ -53,6 +53,15 @@
     textarea:focus, input:focus, select:focus { border-color: var(--primary); }
     .help { margin-top: 8px; color: var(--sub); font-size: 14px; }
     .select-like { appearance: none; }
+    .ai-box { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #f8fafc; margin-top: 14px; }
+    .ai-row { display: grid; gap: 12px; }
+    .ai-actions { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+    .ai-result { white-space: pre-wrap; background:#fff; border:2px solid var(--line); border-radius: 14px; padding: 14px; min-height: 120px; font-size: 16px; }
+    .btn-ai { background: #0f766e; }
+    .btn-ai:hover { background: #115e59; }
+    .btn-apply { background: #7c3aed; }
+    .btn-apply:hover { background: #6d28d9; }
+    .small-muted { color: var(--sub); font-size: 13px; }
     .grid { display: grid; gap: 14px; }
     .button-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
     button {
@@ -102,6 +111,7 @@
     @media (min-width: 720px) {
       .button-grid { grid-template-columns: 1fr 1fr; }
       .grid.two { grid-template-columns: 1fr 1fr; }
+      .ai-actions { grid-template-columns: 1fr 1fr; }
       button { min-height: 82px; font-size: 26px; }
     }
   </style>
@@ -145,6 +155,34 @@
     </section>
 
     <section class="card">
+      <h2 class="section-title">AI補助</h2>
+      <div class="small-muted">Geminiで文章を整えます。APIキーはこの端末だけに保存されます。</div>
+      <div class="ai-box">
+        <div class="ai-row">
+          <div>
+            <label for="geminiApiKey">Gemini APIキー</label>
+            <input id="geminiApiKey" type="password" placeholder="ここにGemini APIキーを入力" />
+          </div>
+          <div>
+            <label for="aiMode">整え方</label>
+            <select id="aiMode" class="select-like">
+              <option value="record">短め記録文</option>
+              <option value="medical">受診メモ風</option>
+              <option value="simple">やさしく簡潔</option>
+            </select>
+          </div>
+        </div>
+        <div class="ai-actions">
+          <button id="aiRunBtn" class="btn-ai" type="button">AIで整える</button>
+          <button id="aiApplyBtn" class="btn-apply" type="button">AI結果を本文へ入れる</button>
+        </div>
+        <div class="status" id="aiStatusText"></div>
+        <div id="aiResultBox" class="ai-result">ここにAIの整形結果が表示されます。</div>
+      </div>
+    </section>
+
+
+    <section class="card">
       <div class="button-grid">
         <button id="createBtn" class="btn-create">一括作成して送信</button>
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
@@ -170,6 +208,12 @@
     const copyBtn = document.getElementById("copyBtn");
     const outputBox = document.getElementById("outputBox");
     const statusText = document.getElementById("statusText");
+    const geminiApiKeyInput = document.getElementById("geminiApiKey");
+    const aiMode = document.getElementById("aiMode");
+    const aiRunBtn = document.getElementById("aiRunBtn");
+    const aiApplyBtn = document.getElementById("aiApplyBtn");
+    const aiStatusText = document.getElementById("aiStatusText");
+    const aiResultBox = document.getElementById("aiResultBox");
 
 
     const RESIDENTS_KEY = "group_home_residents_v1";
@@ -235,6 +279,99 @@
       return staffNameSelect.style.display !== "none"
         ? staffNameSelect.value.trim()
         : staffNameInput.value.trim();
+    }
+
+
+    const GEMINI_MODEL = "gemini-3-flash-preview";
+    const GEMINI_KEY_STORAGE = "easy_gemini_api_key_v1";
+
+    function loadGeminiKey() {
+      geminiApiKeyInput.value = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
+    }
+
+    function saveGeminiKey() {
+      localStorage.setItem(GEMINI_KEY_STORAGE, geminiApiKeyInput.value.trim());
+    }
+
+    function buildAiInstruction(mode, rawText) {
+      const common = "事実は変えず、余計な内容は足さず、短く実務的な日本語に整えてください。丁寧すぎる言い回しは避けてください。箇条書きではなく、そのまま記録欄へ貼れる文章で返してください。";
+      if (mode === "medical") {
+        return "以下の文章を受診メモ風に整えてください。『〜しました』『〜でした』を使いすぎず、短めで現場記録っぽい文にしてください。" + common + "\n\n原文:\n" + rawText;
+      }
+      if (mode === "simple") {
+        return "以下の文章をやさしく簡潔に整えてください。かたすぎる敬語は避け、読みやすい短文にしてください。" + common + "\n\n原文:\n" + rawText;
+      }
+      return "以下の文章を短めの業務日誌文に整えてください。現場で使う記録文らしく、簡潔で実務的な表現にしてください。『〜しました』『〜でした』は必要最小限にしてください。" + common + "\n\n原文:\n" + rawText;
+    }
+
+    async function runGeminiRewrite() {
+      const apiKey = geminiApiKeyInput.value.trim();
+      const raw = memoInput.value.trim();
+
+      if (!apiKey) {
+        aiStatusText.textContent = "先にGemini APIキーを入れてください。";
+        return;
+      }
+      if (!raw) {
+        aiStatusText.textContent = "先に本文を入力してください。";
+        return;
+      }
+
+      saveGeminiKey();
+      aiStatusText.textContent = "AIで整形中...";
+      aiResultBox.textContent = "";
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: buildAiInstruction(aiMode.value, raw) }
+                ]
+              }
+            ]
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          aiStatusText.textContent = "AIエラー: " + ((data && data.error && data.error.message) || "失敗しました");
+          return;
+        }
+
+        const resultText =
+          (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts
+            ? data.candidates[0].content.parts.map(p => p.text || "").join("")
+            : "").trim();
+
+        if (!resultText) {
+          aiStatusText.textContent = "AI結果が取得できませんでした。";
+          return;
+        }
+
+        aiResultBox.textContent = resultText;
+        aiStatusText.textContent = "AIで整えました。";
+      } catch (e) {
+        aiStatusText.textContent = "通信エラーが発生しました。";
+      }
+    }
+
+    function applyAiResultToMemo() {
+      const aiText = aiResultBox.textContent.trim();
+      if (!aiText || aiText === "ここにAIの整形結果が表示されます。") {
+        aiStatusText.textContent = "先にAIで整えてください。";
+        return;
+      }
+      memoInput.value = aiText;
+      outputBox.textContent = aiText;
+      aiStatusText.textContent = "AI結果を本文へ入れました。";
     }
 
     function normalizeText(text) {
@@ -313,6 +450,10 @@
     });
 
     setupNameInputs();
+    loadGeminiKey();
+    geminiApiKeyInput.addEventListener("change", saveGeminiKey);
+    aiRunBtn.addEventListener("click", runGeminiRewrite);
+    aiApplyBtn.addEventListener("click", applyAiResultToMemo);
 
     copyBtn.addEventListener("click", async () => {
       const text = outputBox.textContent.trim();
