@@ -1306,6 +1306,86 @@
 .inbox-item .btns{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
 .inbox-item .btns button{ padding:8px 10px; border-radius:10px; border:1px solid #d1d5db; background:#fff; cursor:pointer; }
 
+
+/* Google共有の今日一覧 */
+.google-shared-box{
+  margin: 12px 0 14px;
+  border: 2px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 16px;
+  padding: 12px;
+}
+.google-shared-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.google-shared-title{
+  font-size:14px;
+  font-weight:800;
+  color:#1e3a8a;
+}
+.google-shared-meta{
+  font-size:12px;
+  color:#1d4ed8;
+}
+.google-shared-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.google-shared-status{
+  font-size:12px;
+  color:#475569;
+  margin-bottom:8px;
+  white-space:pre-wrap;
+}
+.google-shared-list{
+  display:grid;
+  gap:8px;
+}
+.google-shared-item{
+  border:1px solid #bfdbfe;
+  background:#fff;
+  border-radius:12px;
+  padding:10px;
+}
+.google-shared-item-top{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:6px;
+}
+.google-shared-time{
+  font-size:12px;
+  color:#64748b;
+}
+.google-shared-names{
+  font-size:12px;
+  color:#1e3a8a;
+  font-weight:700;
+}
+.google-shared-body{
+  white-space:pre-wrap;
+  word-break:break-word;
+  font-size:13px;
+  color:#0f172a;
+}
+.google-shared-empty{
+  padding:10px;
+  font-size:13px;
+  color:#64748b;
+  text-align:center;
+  background:#fff;
+  border:1px dashed #bfdbfe;
+  border-radius:12px;
+}
+
+
 </style>
 
 <!-- Excelライブラリ（スタイル対応：xlsx-js-style）ローダー -->
@@ -1901,6 +1981,24 @@
           <span class="small-text" id="specialOnlyCount" style="margin-left:8px;"></span>
         </div>
 
+
+        
+
+        <div class="google-shared-box">
+          <div class="google-shared-head">
+            <div>
+              <div class="google-shared-title">☁ Google共有の今日一覧</div>
+              <div class="google-shared-meta">初心者ページから送信された今日の記録を表示します。</div>
+            </div>
+            <div class="google-shared-actions">
+              <button type="button" class="btn-secondary" id="googleTodayRefreshBtn" style="font-size:12px; padding:6px 10px;">🔄 更新</button>
+            </div>
+          </div>
+          <div class="google-shared-status" id="googleTodayStatus">読み込み待ちです。</div>
+          <div class="google-shared-list" id="googleTodayList">
+            <div class="google-shared-empty">ここにGoogle共有の今日の記録が表示されます。</div>
+          </div>
+        </div>
 
         <div class="table-wrapper" id="tableWrapper">
           <table>
@@ -9309,7 +9407,92 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     secs.forEach(sec=>{
       w.document.write("<div class='sec'>"+sec.innerHTML+"</div>");
     });
-    w.document.write("</body></html>");
+    w.document.write("
+<script>
+(function(){
+  const GOOGLE_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbySwdB6GRqkbmx7eHQ3sR7oqPNn-0-TFbaLalcA04iQi7Im9diDHnE09K0dp-aLE_g3/exec';
+  const GOOGLE_AUTO_REFRESH_MS = 10000;
+
+  function gEl(id){ return document.getElementById(id); }
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function fmtDateTime(value){
+    if(!value) return '';
+    const d = new Date(value);
+    if(isNaN(d.getTime())) return String(value);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    return `${y}/${m}/${day} ${hh}:${mm}`;
+  }
+
+  function setGoogleStatus(msg){
+    const box = gEl('googleTodayStatus');
+    if(box) box.textContent = msg;
+  }
+
+  function renderGoogleToday(items){
+    const box = gEl('googleTodayList');
+    if(!box) return;
+    if(!Array.isArray(items) || !items.length){
+      box.innerHTML = '<div class="google-shared-empty">Google共有の今日の記録はありません。</div>';
+      return;
+    }
+    box.innerHTML = items.map(function(item){
+      return `
+        <div class="google-shared-item">
+          <div class="google-shared-item-top">
+            <div class="google-shared-time">${esc(fmtDateTime(item.timestamp || item.createdAt || ''))}</div>
+            <div class="google-shared-names">利用者: ${esc(item.userName || item.resident || '')} ／ 記録者: ${esc(item.staffName || item.recorder || '')}</div>
+          </div>
+          <div class="google-shared-body">${esc(item.body || item.text || '')}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadGoogleToday(){
+    const list = gEl('googleTodayList');
+    if(list) list.innerHTML = '<div class="google-shared-empty">読み込み中...</div>';
+    setGoogleStatus('Google共有の今日一覧を読み込み中...');
+    try{
+      const res = await fetch(GOOGLE_WEB_APP_URL + '?mode=today', { cache: 'no-store' });
+      const data = await res.json();
+      if(!res.ok || !data || data.ok === false){
+        const msg = (data && data.message) ? data.message : ('HTTP ' + res.status);
+        setGoogleStatus('読み込み失敗: ' + msg);
+        renderGoogleToday([]);
+        return;
+      }
+      const items = Array.isArray(data.items) ? data.items : [];
+      setGoogleStatus('更新しました。Google共有 ' + items.length + ' 件');
+      renderGoogleToday(items);
+    }catch(err){
+      setGoogleStatus('通信エラー: ' + (err && err.message ? err.message : 'error'));
+      renderGoogleToday([]);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const btn = gEl('googleTodayRefreshBtn');
+    if(btn) btn.addEventListener('click', loadGoogleToday);
+    loadGoogleToday();
+    window.__googleTodayTimer = setInterval(loadGoogleToday, GOOGLE_AUTO_REFRESH_MS);
+  });
+})();
+</script>
+
+</body></html>");
     w.document.close();
     w.focus();
     w.print();
