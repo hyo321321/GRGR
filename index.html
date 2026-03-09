@@ -9423,8 +9423,18 @@ function renderItem(item, endpoint, token){
       else localStorage.removeItem(LS_ENDPOINT);
       if (token) localStorage.setItem(LS_TOKEN, token);
       else localStorage.removeItem(LS_TOKEN);
+      // 画面内にも「保存しました」を出す（トーストが見えない環境対策）
+      try{
+        const st=document.getElementById("inboxSavedStatus");
+        if(st){
+          const epTxt = endpoint ? ("保存済み： " + endpoint) : "未保存（エンドポイント未設定）";
+          st.innerHTML = '<span style="display:inline-block; padding:2px 8px; border-radius:999px; background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; font-weight:600; margin-right:8px;">保存しました</span>' + epTxt;
+          clearTimeout(st.__t);
+          st.__t = setTimeout(()=>{ st.textContent = epTxt; }, 2500);
+        }
+      }catch(e){}
+      // 既存トースト（あれば）も鳴らす
       safeToast("設定を保存しました。");
-      try{ const st=document.getElementById("inboxSavedStatus"); if(st){ st.textContent = endpoint ? ("保存済み： " + endpoint) : "未保存（エンドポイント未設定）"; } }catch(e){}
       // refresh list after saving
       loadMessages();
     }
