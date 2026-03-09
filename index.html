@@ -1501,7 +1501,7 @@
       <div class="manual-header">
         <div class="manual-title" id="inboxTitle">LINE 受信BOX（取り込み）</div>
         <div class="manual-actions">
-          <button type="button" class="manual-btn" id="refreshInboxBtn">更新</button>
+          <button type="button" class="manual-btn" id="refreshInboxBtn" onclick="window.__lineInboxLoad && window.__lineInboxLoad()">更新</button>
           <button type="button" class="manual-btn" id="closeInboxBtn">閉じる</button>
         </div>
       </div>
@@ -9238,7 +9238,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   
     async function loadMessages(){
       if (!listEl) return;
-      listEl.innerHTML = "";
+      listEl.innerHTML = '<div class="note">更新中...</div>';
       const endpoint = (endpointInput?.value || localStorage.getItem(LS_ENDPOINT) || "").trim();
       const token = (tokenInput?.value || localStorage.getItem(LS_TOKEN) || "").trim();
   
@@ -9272,7 +9272,10 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       }
     }
   
-    function renderItem(item, endpoint, token){
+    
+    // expose for inline onclick safety
+    window.__lineInboxLoad = loadMessages;
+function renderItem(item, endpoint, token){
       const card = document.createElement("div");
       card.style.border = "1px solid #e5e7eb";
       card.style.borderRadius = "10px";
