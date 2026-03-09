@@ -1522,6 +1522,7 @@
             </div>
             <div>
               <button type="button" class="btn" id="saveInboxSettingsBtn">設定を保存</button>
+              <div id="inboxSavedStatus" class="note" style="margin-top:6px; max-width:520px;"></div>
             </div>
           </div>
         </div>
@@ -9203,10 +9204,23 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
 <script>
 (function(){
-  const LS_ENDPOINT = "lineInboxEndpoint";
-    const LS_TOKEN = "lineInboxToken";
+  const LS_ENDPOINT = "ghLineInboxEndpoint";
+    const LS_ENDPOINT_OLD = "lineInboxEndpoint";
+    const LS_TOKEN = "ghLineInboxToken";
+    const LS_TOKEN_OLD = "lineInboxToken";
   
-    const overlay = document.getElementById("inboxOverlay");
+    
+
+    // migrate old keys (if existed)
+    try{
+      if(!localStorage.getItem(LS_ENDPOINT) && localStorage.getItem(LS_ENDPOINT_OLD)){
+        localStorage.setItem(LS_ENDPOINT, localStorage.getItem(LS_ENDPOINT_OLD));
+      }
+      if(!localStorage.getItem(LS_TOKEN) && localStorage.getItem(LS_TOKEN_OLD)){
+        localStorage.setItem(LS_TOKEN, localStorage.getItem(LS_TOKEN_OLD));
+      }
+    }catch(e){}
+const overlay = document.getElementById("inboxOverlay");
     const openBtn = document.getElementById("openInboxBtn");
     const closeBtn = document.getElementById("closeInboxBtn");
     const refreshBtn = document.getElementById("refreshInboxBtn");
@@ -9227,7 +9241,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       // 初期値
       if (endpointInput) endpointInput.value = localStorage.getItem(LS_ENDPOINT) || "";
       if (tokenInput) tokenInput.value = localStorage.getItem(LS_TOKEN) || "";
-      // 読み込み
+
+      try{ const st=document.getElementById("inboxSavedStatus"); if(st){ const ep=localStorage.getItem(LS_ENDPOINT)||""; st.textContent = ep ? ("保存済み： " + ep) : "未保存（エンドポイント未設定）"; } }catch(e){}      // 読み込み
       loadMessages();
     }
     function closeOverlay(){
@@ -9409,6 +9424,9 @@ function renderItem(item, endpoint, token){
       if (token) localStorage.setItem(LS_TOKEN, token);
       else localStorage.removeItem(LS_TOKEN);
       safeToast("設定を保存しました。");
+      try{ const st=document.getElementById("inboxSavedStatus"); if(st){ st.textContent = endpoint ? ("保存済み： " + endpoint) : "未保存（エンドポイント未設定）"; } }catch(e){}
+      // refresh list after saving
+      loadMessages();
     }
   
     // wire
