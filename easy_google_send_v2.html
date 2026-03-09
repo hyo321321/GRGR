@@ -40,7 +40,7 @@
     .card { padding: 18px; }
     .section-title { margin: 0 0 12px; font-size: 22px; }
     label { display: block; font-size: 16px; margin-bottom: 8px; font-weight: 600; }
-    textarea, input {
+    textarea, input, select {
       width: 100%;
       border: 2px solid var(--line);
       border-radius: 14px;
@@ -50,8 +50,9 @@
       background: #fff;
     }
     textarea { min-height: 220px; resize: vertical; }
-    textarea:focus, input:focus { border-color: var(--primary); }
+    textarea:focus, input:focus, select:focus { border-color: var(--primary); }
     .help { margin-top: 8px; color: var(--sub); font-size: 14px; }
+    .select-like { appearance: none; }
     .grid { display: grid; gap: 14px; }
     .button-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
     button {
@@ -112,19 +113,24 @@
       <p class="subtitle">Google送信版です。入力 → 一括作成 → Google保存 の流れで使えます。</p>
     </section>
 
+    
     <section class="card">
       <h2 class="section-title">基本情報</h2>
       <div class="grid two">
         <div>
-          <label for="userName">利用者名</label>
-          <input id="userName" type="text" placeholder="例）木村さん" />
+          <label for="userNameSelect">利用者名</label>
+          <select id="userNameSelect" class="select-like"></select>
+          <input id="userName" type="text" placeholder="利用者名を入力" style="display:none; margin-top:10px;" />
         </div>
         <div>
-          <label for="staffName">記録者名</label>
-          <input id="staffName" type="text" placeholder="例）兵頭" />
+          <label for="staffNameSelect">記録者名</label>
+          <select id="staffNameSelect" class="select-like"></select>
+          <input id="staffName" type="text" placeholder="記録者名を入力" style="display:none; margin-top:10px;" />
         </div>
       </div>
+      <div class="help">本体に登録済みの利用者名・記録者名を自動で候補表示します。候補が出ない端末では手入力に切り替わります。</div>
     </section>
+
 
     <section class="card">
       <h2 class="section-title">業務日誌記入欄</h2>
@@ -156,12 +162,80 @@
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfn9njp22BWc1Ti3phZwP_INtEZ8HW4WMRMQJBLdFjAm3sqjree0BaUW6gNx0_Vk8U/exec";
     const memoInput = document.getElementById("memoInput");
+    const userNameSelect = document.getElementById("userNameSelect");
+    const staffNameSelect = document.getElementById("staffNameSelect");
     const userNameInput = document.getElementById("userName");
     const staffNameInput = document.getElementById("staffName");
     const createBtn = document.getElementById("createBtn");
     const copyBtn = document.getElementById("copyBtn");
     const outputBox = document.getElementById("outputBox");
     const statusText = document.getElementById("statusText");
+
+
+    const RESIDENTS_KEY = "group_home_residents_v1";
+    const RECORDERS_KEY = "group_home_recorders_v1";
+
+    function loadListFromStorage(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(v => String(v || "").trim()).filter(Boolean);
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function fillSelect(selectEl, items, emptyLabel) {
+      const options = ['<option value="">' + emptyLabel + '</option>']
+        .concat(items.map(v => '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>'));
+      selectEl.innerHTML = options.join("");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function setupNameInputs() {
+      const residents = loadListFromStorage(RESIDENTS_KEY);
+      const recorders = loadListFromStorage(RECORDERS_KEY);
+
+      if (residents.length) {
+        fillSelect(userNameSelect, residents, "利用者を選択");
+        userNameSelect.style.display = "";
+        userNameInput.style.display = "none";
+      } else {
+        userNameSelect.style.display = "none";
+        userNameInput.style.display = "";
+      }
+
+      if (recorders.length) {
+        fillSelect(staffNameSelect, recorders, "記録者を選択");
+        staffNameSelect.style.display = "";
+        staffNameInput.style.display = "none";
+      } else {
+        staffNameSelect.style.display = "none";
+        staffNameInput.style.display = "";
+      }
+    }
+
+    function getSelectedUserName() {
+      return userNameSelect.style.display !== "none"
+        ? userNameSelect.value.trim()
+        : userNameInput.value.trim();
+    }
+
+    function getSelectedStaffName() {
+      return staffNameSelect.style.display !== "none"
+        ? staffNameSelect.value.trim()
+        : staffNameInput.value.trim();
+    }
 
     function normalizeText(text) {
       return String(text || "")
@@ -196,8 +270,8 @@
 
     async function sendToGoogle(recordText) {
       const payload = {
-        userName: userNameInput.value.trim(),
-        staffName: staffNameInput.value.trim(),
+        userName: getSelectedUserName(),
+        staffName: getSelectedStaffName(),
         body: recordText,
         source: "easy"
       };
@@ -237,6 +311,8 @@
         statusText.textContent = "通信エラーが発生しました。デプロイ設定かURLを確認してください。";
       }
     });
+
+    setupNameInputs();
 
     copyBtn.addEventListener("click", async () => {
       const text = outputBox.textContent.trim();
