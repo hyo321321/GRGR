@@ -1290,15 +1290,16 @@
 .inbox-modal { max-width: 900px; }
 .inbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 760px){ .inbox-grid{ grid-template-columns: 1fr; } }
-.inbox-field label{ display:block; font-size: 13px; color:#374151; margin-bottom:4px; }
+.inbox-field label{ display:block; font-size:13px; color:#374151; margin-bottom:4px; }
 .inbox-field input{ width:100%; padding:10px; border:1px solid #d1d5db; border-radius:10px; font-size:14px; }
 .inbox-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 .inbox-actions button{ padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; background:#fff; cursor:pointer; }
 .inbox-actions button.primary{ background:#111827; color:#fff; border-color:#111827; }
 .inbox-status{ margin-top:8px; font-size:13px; }
-.inbox-status .ok{ color:#065f46; }
-.inbox-status .ng{ color:#b91c1c; }
-.inbox-list{ margin-top:12px; border-top:1px solid #e5e7eb; padding-top:12px; max-height: 50vh; overflow:auto; }
+.inbox-status .ok{ color:#065f46; font-weight:700; }
+.inbox-status .ng{ color:#b91c1c; font-weight:700; }
+.inbox-status .meta{ color:#374151; }
+.inbox-list{ margin-top:12px; border-top:1px solid #e5e7eb; padding-top:12px; max-height:50vh; overflow:auto; }
 .inbox-item{ border:1px solid #e5e7eb; border-radius:12px; padding:10px; margin-bottom:10px; background:#fff; }
 .inbox-item .meta{ font-size:12px; color:#6b7280; margin-bottom:6px; display:flex; gap:10px; flex-wrap:wrap; }
 .inbox-item .text{ white-space:pre-wrap; font-size:14px; }
@@ -1583,45 +1584,7 @@
   });
 </script>
 
-  
-  <!-- LINE受信BOX（モーダル） -->
-  <div class="modal-overlay" id="inboxOverlay" aria-hidden="true" style="display:none;">
-    <div class="manual-modal inbox-modal" role="dialog" aria-modal="true" aria-labelledby="inboxTitle">
-      <div class="manual-header">
-        <div class="manual-title" id="inboxTitle">LINE受信BOX</div>
-        <div class="manual-actions">
-          <button type="button" class="manual-btn" id="inboxCloseBtn">閉じる</button>
-        </div>
-      </div>
-
-      <div class="manual-body">
-        <div class="small">
-          LINEに送った文章を受信して、このアプリに取り込みます。最終確認して⑤で保存します。
-        </div>
-
-        <div class="inbox-grid" style="margin-top:10px;">
-          <div class="inbox-field">
-            <label>エンドポイントURL（Cloudflare Workers）</label>
-            <input type="text" id="inboxEndpoint" placeholder="https://xxxx.workers.dev" />
-          </div>
-          <div class="inbox-field">
-            <label>取込トークン（APP_TOKEN）</label>
-            <input type="password" id="inboxToken" placeholder="GHLINE-..." />
-          </div>
-        </div>
-
-        <div class="inbox-actions">
-          <button type="button" class="primary" id="inboxSaveBtn">設定を保存</button>
-          <button type="button" id="inboxRefreshBtn">更新</button>
-        </div>
-
-        <div class="inbox-status" id="inboxStatus"></div>
-
-        <div class="inbox-list" id="inboxList"></div>
-      </div>
-    </div>
-  </div>
-<main>
+  <main>
     <div class="layout">
       <!-- 入力フォーム -->
       <section class="card">
@@ -9099,6 +9062,216 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   </div>
 
 
+  <!-- LINE受信BOX（モーダル） -->
+  <div class="modal-overlay" id="inboxOverlay" aria-hidden="true" style="display:none;">
+    <div class="manual-modal inbox-modal" role="dialog" aria-modal="true" aria-labelledby="inboxTitle">
+      <div class="manual-header">
+        <div class="manual-title" id="inboxTitle">LINE受信BOX</div>
+        <div class="manual-actions">
+          <button type="button" class="manual-btn" id="inboxCloseBtn">閉じる</button>
+        </div>
+      </div>
+      <div class="manual-body">
+        <div class="manual-section">
+          <h3>設定</h3>
+          <div class="small">Cloudflare Workers のURLと合言葉を入れて保存します。保存後は「更新」で受信を確認できます。</div>
+          <div class="inbox-grid" style="margin-top:10px;">
+            <div class="inbox-field">
+              <label for="inboxEndpoint">エンドポイントURL</label>
+              <input type="text" id="inboxEndpoint" placeholder="https://xxxx.workers.dev" />
+            </div>
+            <div class="inbox-field">
+              <label for="inboxToken">取込トークン</label>
+              <input type="password" id="inboxToken" placeholder="GHLINE-..." />
+            </div>
+          </div>
+          <div class="inbox-actions">
+            <button type="button" class="primary" id="inboxSaveBtn">設定を保存</button>
+            <button type="button" id="inboxRefreshBtn">更新</button>
+          </div>
+          <div class="inbox-status" id="inboxStatus"></div>
+        </div>
+        <div class="manual-section">
+          <h3>受信一覧</h3>
+          <div class="small">受信が無い時は「未処理の受信はありません」と表示されます。</div>
+          <div class="inbox-list" id="inboxList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const LS_ENDPOINT = "ghLineInboxEndpoint";
+  const LS_TOKEN = "ghLineInboxToken";
+
+  function qs(id){ return document.getElementById(id); }
+  function escapeHtml(s){
+    return String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function normalizeEndpoint(s){
+    return String(s||"").trim().replace(/\/+$/,"");
+  }
+  function setStatus(html){
+    const node = qs('inboxStatus');
+    if(node) node.innerHTML = html || '';
+  }
+  function renderSavedHint(prefix){
+    const ep = localStorage.getItem(LS_ENDPOINT) || '';
+    if(ep){
+      setStatus((prefix?'<span class="ok">'+escapeHtml(prefix)+'</span> ':'') + '<span class="meta">保存済み：'+escapeHtml(ep)+'</span>');
+    }else{
+      setStatus('<span class="ng">未設定</span> <span class="meta">エンドポイントURLと取込トークンを保存してください</span>');
+    }
+  }
+  function openInbox(){
+    const ov = qs('inboxOverlay');
+    if(!ov) return;
+    ov.style.display = 'flex';
+    ov.classList.add('show');
+    ov.setAttribute('aria-hidden','false');
+    const epEl = qs('inboxEndpoint');
+    const tkEl = qs('inboxToken');
+    if(epEl) epEl.value = localStorage.getItem(LS_ENDPOINT) || '';
+    if(tkEl) tkEl.value = localStorage.getItem(LS_TOKEN) || '';
+    renderSavedHint('');
+  }
+  function closeInbox(){
+    const ov = qs('inboxOverlay');
+    if(!ov) return;
+    ov.classList.remove('show');
+    ov.setAttribute('aria-hidden','true');
+    ov.style.display = 'none';
+  }
+  function saveInboxSettings(){
+    const ep = normalizeEndpoint((qs('inboxEndpoint')||{}).value || '');
+    const tk = String((qs('inboxToken')||{}).value || '').trim();
+    if(!ep || !tk){
+      setStatus('<span class="ng">保存できません</span> <span class="meta">URLと取込トークンを両方入力してください</span>');
+      return;
+    }
+    localStorage.setItem(LS_ENDPOINT, ep);
+    localStorage.setItem(LS_TOKEN, tk);
+    renderSavedHint('保存しました。');
+  }
+  async function markDone(id){
+    const ep = normalizeEndpoint(localStorage.getItem(LS_ENDPOINT)||'');
+    const tk = localStorage.getItem(LS_TOKEN) || '';
+    if(!ep || !tk || !id) return;
+    try{
+      await fetch(ep + '/markDone', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tk },
+        body: JSON.stringify({ id })
+      });
+      fetchMessages();
+    }catch(e){
+      setStatus('<span class="ng">処理済み更新に失敗</span> <span class="meta">'+escapeHtml(e && e.message ? e.message : 'error')+'</span>');
+    }
+  }
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text || '');
+      setStatus('<span class="ok">コピーしました。</span>');
+    }catch(e){
+      setStatus('<span class="ng">コピーに失敗</span>');
+    }
+  }
+  function appendToFirstTextarea(text){
+    const candidates = [
+      '#noteText', '#specialNote', '#specialNoteText', '#diaryNote',
+      "textarea[name='note']", "textarea[name='specialNote']",
+      '#supportText', '#supportContent', 'textarea'
+    ];
+    let target = null;
+    for(const sel of candidates){
+      target = document.querySelector(sel);
+      if(target) break;
+    }
+    if(!target) return false;
+    target.value = ((target.value || '').trim() ? (target.value + '\n') : '') + (text || '');
+    target.dispatchEvent(new Event('input', { bubbles:true }));
+    target.focus();
+    return true;
+  }
+  function renderList(items){
+    const wrap = qs('inboxList');
+    if(!wrap) return;
+    if(!items.length){
+      wrap.innerHTML = '<div class="small">未処理の受信はありません。</div>';
+      return;
+    }
+    wrap.innerHTML = items.map(it => {
+      const dt = new Date(it.ts || Date.now());
+      const when = isNaN(dt.getTime()) ? '' : dt.toLocaleString();
+      return `
+        <div class="inbox-item" data-id="${escapeHtml(it.id)}">
+          <div class="meta">
+            <span>受信：${escapeHtml(when)}</span>
+            <span>from：${escapeHtml(it.from || '')}</span>
+          </div>
+          <div class="text">${escapeHtml(it.text || '')}</div>
+          <div class="btns">
+            <button type="button" data-act="import">取り込む</button>
+            <button type="button" data-act="copy">コピー</button>
+            <button type="button" data-act="done">処理済みにする</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  async function fetchMessages(){
+    const ep = normalizeEndpoint(localStorage.getItem(LS_ENDPOINT)||'');
+    const tk = localStorage.getItem(LS_TOKEN) || '';
+    if(!ep || !tk){
+      renderSavedHint('');
+      return;
+    }
+    setStatus('<span class="meta">更新中…</span>');
+    try{
+      const res = await fetch(ep + '/messages', { headers:{ 'Authorization':'Bearer ' + tk } });
+      if(!res.ok){
+        const txt = await res.text().catch(()=>'');
+        setStatus('<span class="ng">読み込みに失敗</span> <span class="meta">'+escapeHtml(String(res.status) + ' ' + txt)+'</span>');
+        return;
+      }
+      const data = await res.json().catch(() => ({ items:[] }));
+      const items = Array.isArray(data.items) ? data.items : [];
+      setStatus('<span class="ok">更新しました。</span> <span class="meta">未処理 ' + items.length + ' 件</span>');
+      renderList(items);
+    }catch(e){
+      setStatus('<span class="ng">読み込みに失敗</span> <span class="meta">'+escapeHtml(e && e.message ? e.message : 'error')+'</span>');
+    }
+  }
+
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(!t) return;
+    if(t.id === 'openInboxBtn'){ openInbox(); return; }
+    if(t.id === 'inboxCloseBtn' || t.id === 'inboxOverlay'){ closeInbox(); return; }
+    if(t.id === 'inboxSaveBtn'){ saveInboxSettings(); return; }
+    if(t.id === 'inboxRefreshBtn'){ fetchMessages(); return; }
+    const act = t.getAttribute('data-act');
+    if(act){
+      const item = t.closest('.inbox-item');
+      const id = item ? item.getAttribute('data-id') : '';
+      const text = item ? (item.querySelector('.text')?.innerText || '') : '';
+      if(act === 'copy'){ copyText(text); return; }
+      if(act === 'done'){ markDone(id); return; }
+      if(act === 'import'){
+        const ok = appendToFirstTextarea(text);
+        if(ok){ setStatus('<span class="ok">取り込みました。</span>'); }
+        else { copyText(text); setStatus('<span class="ok">入力欄が見つからないためコピーしました。</span>'); }
+        return;
+      }
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeInbox();
+  });
+})();
+</script>
+
+
 <script>
 (function(){
   function el(id){ return document.getElementById(id); }
@@ -9136,388 +9309,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     secs.forEach(sec=>{
       w.document.write("<div class='sec'>"+sec.innerHTML+"</div>");
     });
-    w.document.write("
-<script>
-(function(){
-  const LS_ENDPOINT = "ghLineInboxEndpoint";
-  const LS_TOKEN = "ghLineInboxToken";
-
-  function qs(id){ return document.getElementById(id); }
-  function setStatus(html){ const el=qs("inboxStatus"); if(el) el.innerHTML = html || ""; }
-
-  function openInbox(){
-    const ov = qs("inboxOverlay");
-    if(!ov) return;
-    ov.style.display = "flex";
-    ov.setAttribute("aria-hidden","false");
-    // load settings
-    const ep = localStorage.getItem(LS_ENDPOINT) || "";
-    const tk = localStorage.getItem(LS_TOKEN) || "";
-    const epEl = qs("inboxEndpoint"); if(epEl) epEl.value = ep;
-    const tkEl = qs("inboxToken"); if(tkEl) tkEl.value = tk;
-    renderSavedHint();
-  }
-  function closeInbox(){
-    const ov = qs("inboxOverlay");
-    if(!ov) return;
-    ov.style.display = "none";
-    ov.setAttribute("aria-hidden","true");
-  }
-
-  function normalizeEndpoint(s){
-    s = (s||"").trim();
-    if(!s) return "";
-    // remove trailing slash
-    return s.replace(/\/+$/,"");
-  }
-
-  function renderSavedHint(){
-    const ep = localStorage.getItem(LS_ENDPOINT) || "";
-    if(ep){
-      setStatus('<span class="ok">保存済み：</span><span class="meta">'+escapeHtml(ep)+'</span>');
-    }else{
-      setStatus('<span class="ng">未設定：</span><span class="meta">エンドポイントURLとトークンを保存してください</span>');
-    }
-  }
-
-  function escapeHtml(s){
-    return String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  async function fetchMessages(){
-    const ep = normalizeEndpoint(localStorage.getItem(LS_ENDPOINT));
-    const tk = localStorage.getItem(LS_TOKEN) || "";
-    if(!ep || !tk){
-      renderSavedHint();
-      return;
-    }
-    setStatus('<span class="meta">更新中…</span>');
-    const res = await fetch(ep + "/messages", {
-      method: "GET",
-      headers: { "Authorization": "Bearer " + tk }
-    });
-    if(!res.ok){
-      const txt = await res.text().catch(()=> "");
-      setStatus('<span class="ng">読み込みに失敗：</span><span class="meta">'+escapeHtml(res.status + " " + (txt||""))+'</span>');
-      return;
-    }
-    const data = await res.json().catch(()=>({items:[]}));
-    const items = Array.isArray(data.items) ? data.items : [];
-    setStatus('<span class="ok">更新しました。</span><span class="meta">未処理 ' + items.length + ' 件</span>');
-    renderList(items, ep, tk);
-  }
-
-  function renderList(items, ep, tk){
-    const wrap = qs("inboxList");
-    if(!wrap) return;
-    if(!items.length){
-      wrap.innerHTML = '<div class="small">未処理の受信はありません。</div>';
-      return;
-    }
-    wrap.innerHTML = items.map(it=>{
-      const dt = new Date(it.ts || Date.now());
-      const when = dt.toLocaleString();
-      return `
-        <div class="inbox-item" data-id="${escapeHtml(it.id)}">
-          <div class="meta">
-            <span>受信：${escapeHtml(when)}</span>
-            <span>from：${escapeHtml(it.from || "")}</span>
-          </div>
-          <div class="text">${escapeHtml(it.text || "")}</div>
-          <div class="btns">
-            <button type="button" data-act="import">取り込む</button>
-            <button type="button" data-act="copy">コピー</button>
-            <button type="button" data-act="done">処理済みにする</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  function appendToFirstTextarea(text){
-    // 優先順位：業務日誌/特記事項系 → 支援内容系 → 最初のtextarea
-    const candidates = [
-      "#noteText", "#specialNote", "#specialNoteText", "#diaryNote",
-      "textarea[name='note']", "textarea[name='specialNote']",
-      "#supportText", "#supportContent", "textarea"
-    ];
-    let el = null;
-    for(const sel of candidates){
-      el = document.querySelector(sel);
-      if(el) break;
-    }
-    if(!el){
-      return false;
-    }
-    const v = el.value || "";
-    el.value = v ? (v + "\n" + text) : text;
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    el.focus();
-    return true;
-  }
-
-  async function markDone(id){
-    const ep = normalizeEndpoint(localStorage.getItem(LS_ENDPOINT));
-    const tk = localStorage.getItem(LS_TOKEN) || "";
-    if(!ep || !tk) return;
-    await fetch(ep + "/markDone", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
-    }).catch(()=>{});
-  }
-
-  function toast(msg, ok=true){
-    // 既存のトーストがある場合はそれを使う
-    try{
-      if(typeof window.showToast === "function"){ window.showToast(msg, ok ? "success":"error"); return; }
-    }catch(e){}
-    // フォールバック：ステータスに出す
-    setStatus('<span class="'+(ok?'ok':'ng')+'">'+escapeHtml(msg)+'</span>');
-  }
-
-  function saveSettings(){
-    const epEl = qs("inboxEndpoint");
-    const tkEl = qs("inboxToken");
-    const ep = normalizeEndpoint(epEl ? epEl.value : "");
-    const tk = (tkEl ? tkEl.value : "").trim();
-    if(!ep || !tk){
-      setStatus('<span class="ng">URLとトークンを入れてください。</span>');
-      return;
-    }
-    try{
-      localStorage.setItem(LS_ENDPOINT, ep);
-      localStorage.setItem(LS_TOKEN, tk);
-      setStatus('<span class="ok">保存しました。</span><span class="meta"> ' + escapeHtml(ep) + '</span>');
-      // すぐ反映確認
-      fetchMessages();
-    }catch(e){
-      setStatus('<span class="ng">保存できませんでした。</span><span class="meta">ブラウザ設定で保存がブロックされている可能性があります。</span>');
-    }
-  }
-
-  // event wiring
-  document.addEventListener("click", function(e){
-    const t = e.target;
-    if(!t) return;
-
-    if(t.id === "openInboxBtn"){ e.preventDefault(); openInbox(); return; }
-    if(t.id === "inboxCloseBtn"){ e.preventDefault(); closeInbox(); return; }
-    if(t.id === "inboxOverlay"){ closeInbox(); return; }
-
-    if(t.id === "inboxSaveBtn"){ e.preventDefault(); saveSettings(); return; }
-    if(t.id === "inboxRefreshBtn"){ e.preventDefault(); fetchMessages(); return; }
-
-    const item = t.closest && t.closest(".inbox-item");
-    if(item && item.dataset && item.dataset.id){
-      const id = item.dataset.id;
-      const txtEl = item.querySelector(".text");
-      const text = txtEl ? txtEl.textContent : "";
-      const act = t.getAttribute("data-act");
-      if(act === "copy"){
-        navigator.clipboard?.writeText(text).then(()=>toast("コピーしました")).catch(()=>toast("コピーできませんでした", false));
-      }
-      if(act === "import"){
-        const ok = appendToFirstTextarea(text);
-        if(ok) toast("取り込みました");
-        else toast("貼り付け先が見つかりませんでした（コピーしました）", false);
-        if(!ok){
-          navigator.clipboard?.writeText(text).catch(()=>{});
-        }
-      }
-      if(act === "done"){
-        markDone(id).then(()=>{ toast("処理済みにしました"); fetchMessages(); });
-      }
-    }
-  }, true);
-
-})();
-</script>
-
-
-<script>
-(function(){
-  function el(id){ return document.getElementById(id); }
-  function show(id){ const ov=el(id); if(!ov) return false; ov.classList.add("show"); ov.setAttribute("aria-hidden","false"); return true; }
-  function hide(id){ const ov=el(id); if(!ov) return false; ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); return true; }
-
-  // Manual
-  const openManualBtn = el("openManualBtn");
-  if(openManualBtn){
-    openManualBtn.addEventListener("click", function(e){ e.preventDefault(); show("manualOverlay"); }, {capture:true});
-  }
-  const closeManualBtn = el("closeManualBtn");
-  if(closeManualBtn){
-    closeManualBtn.addEventListener("click", function(e){ e.preventDefault(); hide("manualOverlay"); }, {capture:true});
-  }
-  const manualOverlay = el("manualOverlay");
-  if(manualOverlay){
-    manualOverlay.addEventListener("click", function(e){ if(e.target===manualOverlay) hide("manualOverlay"); }, {capture:true});
-  }
-  const printManualBtn = el("printManualBtn");
-  if(printManualBtn && typeof window.printManual !== "function"){
-    // if original printManual exists inside IIFE it is not global. Provide a minimal one.
-    printManualBtn.addEventListener("click", function(){
-      const body = el("manualBody");
-      if(!body) return;
-      const w = window.open("", "_blank");
-      if(!w) return;
-      w.document.open();
-      w.document.write("<html><head><meta charset='utf-8'><title>説明書</title></head><body>"+body.innerHTML+"</body></html>");
-      w.document.close();
-      w.focus();
-      w.print();
-    }, {capture:true});
-  }
-
-  // Inbox open/close always works
-  const openInboxBtn = el("openInboxBtn");
-  if(openInboxBtn){
-    openInboxBtn.addEventListener("click", function(e){ e.preventDefault(); show("inboxOverlay"); }, {capture:true});
-  }
-  const inboxCloseBtn = el("inboxCloseBtn");
-  if(inboxCloseBtn){
-    inboxCloseBtn.addEventListener("click", function(e){ e.preventDefault(); hide("inboxOverlay"); }, {capture:true});
-  }
-  const inboxOverlay = el("inboxOverlay");
-  if(inboxOverlay){
-    inboxOverlay.addEventListener("click", function(e){ if(e.target===inboxOverlay) hide("inboxOverlay"); }, {capture:true});
-  }
-
-  // Settings save + refresh (robust)
-  const LS_KEY = "gh_line_inbox_settings_v2";
-  function setStatus(html){
-    const st = el("inboxStatus");
-    if(st) st.innerHTML = html;
-  }
-  function loadSettings(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw) return null;
-      return JSON.parse(raw);
-    }catch(_){ return null; }
-  }
-  function saveSettings(s){
-    localStorage.setItem(LS_KEY, JSON.stringify(s));
-  }
-
-  const endpointEl = el("inboxEndpoint");
-  const tokenEl = el("inboxToken");
-  const saveBtn = el("inboxSaveBtn");
-  const refreshBtn = el("inboxRefreshBtn");
-
-  // init fields
-  const s0 = loadSettings();
-  if(s0){
-    if(endpointEl && !endpointEl.value) endpointEl.value = s0.endpoint || "";
-    if(tokenEl && !tokenEl.value) tokenEl.value = s0.token || "";
-    if(s0.endpoint){
-      setStatus("保存済み：<span class='mono'>"+s0.endpoint+"</span>");
-    }
-  }
-
-  async function fetchMessages(){
-    const s = loadSettings();
-    const listEl = el("inboxList");
-    if(!listEl) return;
-    listEl.innerHTML = "";
-    if(!s || !s.endpoint || !s.token){
-      setStatus("エンドポイントURLと合言葉を設定してください。");
-      return;
-    }
-    setStatus("更新中…");
-    try{
-      const res = await fetch(s.endpoint.replace(/\/$/,'') + "/messages", {
-        headers: { "Authorization": "Bearer " + s.token }
-      });
-      if(!res.ok){
-        setStatus("読み込み失敗（"+res.status+"）。URL/合言葉を確認してください。");
-        return;
-      }
-      const data = await res.json();
-      const items = Array.isArray(data.items) ? data.items : [];
-      if(items.length===0){
-        setStatus("受信なし（未処理0件）");
-        return;
-      }
-      setStatus("受信 "+items.length+"件");
-      for(const it of items){
-        const div = document.createElement("div");
-        div.className = "inbox-item";
-        div.dataset.id = it.id || "";
-        const dt = it.ts ? new Date(it.ts).toLocaleString() : "";
-        div.innerHTML = "<div class='meta'>"+dt+"</div><div class='text'></div><div class='actions'>"
-          + "<button type='button' class='mini-btn' data-act='copy'>コピー</button>"
-          + "<button type='button' class='mini-btn primary' data-act='import'>取り込み</button>"
-          + "<button type='button' class='mini-btn' data-act='done'>処理済み</button>"
-          + "</div>";
-        div.querySelector(".text").textContent = it.text || "";
-        listEl.appendChild(div);
-      }
-    }catch(e){
-      setStatus("読み込み失敗。ネットワークを確認してください。");
-    }
-  }
-
-  async function markDone(id){
-    const s = loadSettings();
-    if(!s) return;
-    await fetch(s.endpoint.replace(/\/$/,'') + "/markDone", {
-      method:"POST",
-      headers: { "Content-Type":"application/json", "Authorization":"Bearer " + s.token },
-      body: JSON.stringify({id})
-    }).catch(()=>{});
-  }
-
-  if(saveBtn){
-    saveBtn.addEventListener("click", function(e){
-      e.preventDefault();
-      const endpoint = (endpointEl ? endpointEl.value.trim() : "");
-      const token = (tokenEl ? tokenEl.value.trim() : "");
-      if(!endpoint || !token){
-        setStatus("URLと合言葉を入力してください。");
-        return;
-      }
-      saveSettings({endpoint, token});
-      setStatus("保存しました。保存済み：<span class='mono'>"+endpoint+"</span>");
-      // auto refresh
-      fetchMessages();
-    }, {capture:true});
-  }
-  if(refreshBtn){
-    refreshBtn.addEventListener("click", function(e){ e.preventDefault(); fetchMessages(); }, {capture:true});
-  }
-
-  // actions delegation
-  document.addEventListener("click", function(e){
-    const t = e.target;
-    if(!(t instanceof Element)) return;
-    const act = t.getAttribute("data-act");
-    if(!act) return;
-    const item = t.closest(".inbox-item");
-    if(!item) return;
-    const text = (item.querySelector(".text")||{}).textContent || "";
-    if(act==="copy"){
-      (navigator.clipboard?.writeText(text) || Promise.reject()).then(()=>setStatus("コピーしました")).catch(()=>setStatus("コピーできませんでした"));
-    } else if(act==="import"){
-      // try to append to first textarea
-      const tas = document.querySelectorAll("textarea");
-      if(tas && tas.length){
-        tas[0].value = (tas[0].value ? tas[0].value + "\n" : "") + text;
-        setStatus("取り込みました（先頭の入力欄へ追記）");
-      } else {
-        navigator.clipboard?.writeText(text).catch(()=>{});
-        setStatus("貼り付け先が見つからないためコピーしました");
-      }
-    } else if(act==="done"){
-      markDone(item.dataset.id).then(()=>{ setStatus("処理済みにしました"); fetchMessages(); });
-    }
-  }, true);
-
-})();
-</script>
-
-</body></html>");
+    w.document.write("</body></html>");
     w.document.close();
     w.focus();
     w.print();
@@ -9549,189 +9341,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape") closeManual();
   });
-})();
-</script>
-
-
-<script>
-(function(){
-  function el(id){ return document.getElementById(id); }
-  function show(id){ const ov=el(id); if(!ov) return false; ov.classList.add("show"); ov.setAttribute("aria-hidden","false"); return true; }
-  function hide(id){ const ov=el(id); if(!ov) return false; ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); return true; }
-
-  // Manual
-  const openManualBtn = el("openManualBtn");
-  if(openManualBtn){
-    openManualBtn.addEventListener("click", function(e){ e.preventDefault(); show("manualOverlay"); }, {capture:true});
-  }
-  const closeManualBtn = el("closeManualBtn");
-  if(closeManualBtn){
-    closeManualBtn.addEventListener("click", function(e){ e.preventDefault(); hide("manualOverlay"); }, {capture:true});
-  }
-  const manualOverlay = el("manualOverlay");
-  if(manualOverlay){
-    manualOverlay.addEventListener("click", function(e){ if(e.target===manualOverlay) hide("manualOverlay"); }, {capture:true});
-  }
-  const printManualBtn = el("printManualBtn");
-  if(printManualBtn && typeof window.printManual !== "function"){
-    // if original printManual exists inside IIFE it is not global. Provide a minimal one.
-    printManualBtn.addEventListener("click", function(){
-      const body = el("manualBody");
-      if(!body) return;
-      const w = window.open("", "_blank");
-      if(!w) return;
-      w.document.open();
-      w.document.write("<html><head><meta charset='utf-8'><title>説明書</title></head><body>"+body.innerHTML+"</body></html>");
-      w.document.close();
-      w.focus();
-      w.print();
-    }, {capture:true});
-  }
-
-  // Inbox open/close always works
-  const openInboxBtn = el("openInboxBtn");
-  if(openInboxBtn){
-    openInboxBtn.addEventListener("click", function(e){ e.preventDefault(); show("inboxOverlay"); }, {capture:true});
-  }
-  const inboxCloseBtn = el("inboxCloseBtn");
-  if(inboxCloseBtn){
-    inboxCloseBtn.addEventListener("click", function(e){ e.preventDefault(); hide("inboxOverlay"); }, {capture:true});
-  }
-  const inboxOverlay = el("inboxOverlay");
-  if(inboxOverlay){
-    inboxOverlay.addEventListener("click", function(e){ if(e.target===inboxOverlay) hide("inboxOverlay"); }, {capture:true});
-  }
-
-  // Settings save + refresh (robust)
-  const LS_KEY = "gh_line_inbox_settings_v2";
-  function setStatus(html){
-    const st = el("inboxStatus");
-    if(st) st.innerHTML = html;
-  }
-  function loadSettings(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw) return null;
-      return JSON.parse(raw);
-    }catch(_){ return null; }
-  }
-  function saveSettings(s){
-    localStorage.setItem(LS_KEY, JSON.stringify(s));
-  }
-
-  const endpointEl = el("inboxEndpoint");
-  const tokenEl = el("inboxToken");
-  const saveBtn = el("inboxSaveBtn");
-  const refreshBtn = el("inboxRefreshBtn");
-
-  // init fields
-  const s0 = loadSettings();
-  if(s0){
-    if(endpointEl && !endpointEl.value) endpointEl.value = s0.endpoint || "";
-    if(tokenEl && !tokenEl.value) tokenEl.value = s0.token || "";
-    if(s0.endpoint){
-      setStatus("保存済み：<span class='mono'>"+s0.endpoint+"</span>");
-    }
-  }
-
-  async function fetchMessages(){
-    const s = loadSettings();
-    const listEl = el("inboxList");
-    if(!listEl) return;
-    listEl.innerHTML = "";
-    if(!s || !s.endpoint || !s.token){
-      setStatus("エンドポイントURLと合言葉を設定してください。");
-      return;
-    }
-    setStatus("更新中…");
-    try{
-      const res = await fetch(s.endpoint.replace(/\/$/,'') + "/messages", {
-        headers: { "Authorization": "Bearer " + s.token }
-      });
-      if(!res.ok){
-        setStatus("読み込み失敗（"+res.status+"）。URL/合言葉を確認してください。");
-        return;
-      }
-      const data = await res.json();
-      const items = Array.isArray(data.items) ? data.items : [];
-      if(items.length===0){
-        setStatus("受信なし（未処理0件）");
-        return;
-      }
-      setStatus("受信 "+items.length+"件");
-      for(const it of items){
-        const div = document.createElement("div");
-        div.className = "inbox-item";
-        div.dataset.id = it.id || "";
-        const dt = it.ts ? new Date(it.ts).toLocaleString() : "";
-        div.innerHTML = "<div class='meta'>"+dt+"</div><div class='text'></div><div class='actions'>"
-          + "<button type='button' class='mini-btn' data-act='copy'>コピー</button>"
-          + "<button type='button' class='mini-btn primary' data-act='import'>取り込み</button>"
-          + "<button type='button' class='mini-btn' data-act='done'>処理済み</button>"
-          + "</div>";
-        div.querySelector(".text").textContent = it.text || "";
-        listEl.appendChild(div);
-      }
-    }catch(e){
-      setStatus("読み込み失敗。ネットワークを確認してください。");
-    }
-  }
-
-  async function markDone(id){
-    const s = loadSettings();
-    if(!s) return;
-    await fetch(s.endpoint.replace(/\/$/,'') + "/markDone", {
-      method:"POST",
-      headers: { "Content-Type":"application/json", "Authorization":"Bearer " + s.token },
-      body: JSON.stringify({id})
-    }).catch(()=>{});
-  }
-
-  if(saveBtn){
-    saveBtn.addEventListener("click", function(e){
-      e.preventDefault();
-      const endpoint = (endpointEl ? endpointEl.value.trim() : "");
-      const token = (tokenEl ? tokenEl.value.trim() : "");
-      if(!endpoint || !token){
-        setStatus("URLと合言葉を入力してください。");
-        return;
-      }
-      saveSettings({endpoint, token});
-      setStatus("保存しました。保存済み：<span class='mono'>"+endpoint+"</span>");
-      // auto refresh
-      fetchMessages();
-    }, {capture:true});
-  }
-  if(refreshBtn){
-    refreshBtn.addEventListener("click", function(e){ e.preventDefault(); fetchMessages(); }, {capture:true});
-  }
-
-  // actions delegation
-  document.addEventListener("click", function(e){
-    const t = e.target;
-    if(!(t instanceof Element)) return;
-    const act = t.getAttribute("data-act");
-    if(!act) return;
-    const item = t.closest(".inbox-item");
-    if(!item) return;
-    const text = (item.querySelector(".text")||{}).textContent || "";
-    if(act==="copy"){
-      (navigator.clipboard?.writeText(text) || Promise.reject()).then(()=>setStatus("コピーしました")).catch(()=>setStatus("コピーできませんでした"));
-    } else if(act==="import"){
-      // try to append to first textarea
-      const tas = document.querySelectorAll("textarea");
-      if(tas && tas.length){
-        tas[0].value = (tas[0].value ? tas[0].value + "\n" : "") + text;
-        setStatus("取り込みました（先頭の入力欄へ追記）");
-      } else {
-        navigator.clipboard?.writeText(text).catch(()=>{});
-        setStatus("貼り付け先が見つからないためコピーしました");
-      }
-    } else if(act==="done"){
-      markDone(item.dataset.id).then(()=>{ setStatus("処理済みにしました"); fetchMessages(); });
-    }
-  }, true);
-
 })();
 </script>
 
