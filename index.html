@@ -1315,6 +1315,28 @@
 .google-share-item .meta{ font-size:12px; color:#6b7280; margin-bottom:6px; display:flex; gap:10px; flex-wrap:wrap; }
 .google-share-item .text{ white-space:pre-wrap; font-size:14px; }
 .google-share-item .btns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.google-share-item.is-reflected{
+  opacity: 0.72;
+  background: #f9fafb;
+}
+.google-share-item .reflected-badge{
+  display:none;
+  font-size:12px;
+  color:#065f46;
+  background:#ecfdf5;
+  border:1px solid #a7f3d0;
+  border-radius:999px;
+  padding:2px 8px;
+}
+.google-share-item.is-reflected .reflected-badge{
+  display:inline-block;
+}
+.google-share-item .btns button.done{
+  background:#e5e7eb !important;
+  color:#374151 !important;
+  border-color:#d1d5db !important;
+}
+
 .google-share-item .btns button{ padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; background:#fff; cursor:pointer; }
 .google-share-item .btns button.primary{ background:#111827; color:#fff; border-color:#111827; }
 
@@ -9426,6 +9448,23 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 (function(){
   const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbzfn9njp22BWc1Ti3phZwP_INtEZ8HW4WMRMQJBLdFjAm3sqjree0BaUW6gNx0_Vk8U/exec';
   function qs(id){ return document.getElementById(id); }
+  const GOOGLE_REFLECTED_KEY = 'google_shared_reflected_v1';
+  function getReflectedMap(){
+    try{ const raw = localStorage.getItem(GOOGLE_REFLECTED_KEY); const obj = raw ? JSON.parse(raw) : {}; return obj && typeof obj === 'object' ? obj : {}; }catch(e){ return {}; }
+  }
+  function setReflectedMap(map){ localStorage.setItem(GOOGLE_REFLECTED_KEY, JSON.stringify(map)); }
+  function buildGoogleItemKey(item){
+    return [String(item && item.timestamp || ''), String(item && item.userName || ''), String(item && item.staffName || ''), String(item && item.body || '')].join('||');
+  }
+  function isGoogleItemReflected(item){
+    const map = getReflectedMap();
+    return !!map[buildGoogleItemKey(item)];
+  }
+  function markGoogleItemReflected(item){
+    const map = getReflectedMap();
+    map[buildGoogleItemKey(item)] = new Date().toISOString();
+    setReflectedMap(map);
+  }
   function escapeHtmlGoogle(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function formatGoogleDate(s){ const d = new Date(s || Date.now()); return isNaN(d.getTime()) ? '' : d.toLocaleString(); }
   function normalizeName(s){ return String(s||'').replace(/\s+/g,'').replace(/　/g,'').replace(/さん$/,'').trim(); }
