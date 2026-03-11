@@ -4980,6 +4980,7 @@ tr.appendChild(tdSupport);
       syncAbnormalVitalsUI("main");
       updateAutoNoteMain();
       clearDraftForCurrent();
+      window.pendingGoogleShareTargetId = "";
 
     }
 
@@ -5234,52 +5235,6 @@ function handleRestoreFile(file) {
 }
 
 
-    function findExistingRecordIndex(date, resident, excludeId = null) {
-      const targetDate = String(date || "").trim();
-      const targetResident = String(resident || "").trim();
-      return records.findIndex((r) => {
-        if (!r) return false;
-        if (excludeId && String(r.id) === String(excludeId)) return false;
-        return String(r.date || "").trim() === targetDate && String(r.resident || "").trim() === targetResident;
-      });
-    }
-
-    function setMainEditMode(record) {
-      if (!record) return;
-      editingRecordId = record.id;
-      const modeLabelEl = document.getElementById("modeLabel");
-      if (modeLabelEl) {
-        modeLabelEl.textContent = "既存記録を更新モード";
-        modeLabelEl.style.background = "#fef3c7";
-        modeLabelEl.style.color = "#92400e";
-      }
-      const saveBtn = document.getElementById("saveButton");
-      if (saveBtn) saveBtn.textContent = "♻️ 既存記録を更新";
-    }
-
-    function loadRecordIntoMainForm(record) {
-      if (!record) return;
-      if (document.getElementById("date")) document.getElementById("date").value = record.date || "";
-      if (document.getElementById("resident")) {
-        document.getElementById("resident").value = record.resident || "";
-        document.getElementById("resident").dispatchEvent(new Event('change', { bubbles:true }));
-      }
-      const recSel = document.getElementById("recorder");
-      if (recSel) {
-        ensureSelectHasValue(recSel, record.recorder || "");
-        recSel.value = record.recorder || "";
-      }
-      if (document.getElementById("support")) document.getElementById("support").value = record.support || "";
-      if (document.getElementById("note")) document.getElementById("note").value = record.note || "";
-      const special = document.getElementById("hasSpecialNote");
-      if (special) special.checked = !!record.hasSpecialNote;
-      const noteEl = document.getElementById("note");
-      if (noteEl) noteEl.classList.toggle("special-note-on", !!record.hasSpecialNote);
-      currentTags = Array.isArray(record.tags) ? [...record.tags] : [];
-      updateTagUI();
-      setMainEditMode(record);
-    }
-
     function handleSubmit(event) {
       event.preventDefault();
 
@@ -5295,8 +5250,8 @@ function handleRestoreFile(file) {
       const daySupportMainItems = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
       const daySupportReasonItems = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
 
-      const baseRecord = {
-        id: editingRecordId || Date.now().toString(),
+      const recordData = {
+        id: Date.now().toString(),
         date,
         resident,
         recorder: document.getElementById("recorder")?.value || "",        medTaken: false,
@@ -5317,35 +5272,22 @@ function handleRestoreFile(file) {
         abnormalPulse: (document.getElementById("abnormalPulse")?.value || "").trim(),
       };
 
-      if (editingRecordId) {
-        const idx = records.findIndex((r) => r.id === editingRecordId);
+      const pendingId = String(window.pendingGoogleShareTargetId || "").trim();
+      if (pendingId) {
+        const idx = records.findIndex((r) => String(r.id) === pendingId);
         if (idx >= 0) {
-          records[idx] = { ...records[idx], ...baseRecord };
+          recordData.id = records[idx].id;
+          records[idx] = { ...records[idx], ...recordData };
         } else {
-          const dupIdx = findExistingRecordIndex(date, resident);
-          if (dupIdx >= 0) records[dupIdx] = { ...records[dupIdx], ...baseRecord, id: records[dupIdx].id };
-          else records.push(baseRecord);
+          records.push(recordData);
         }
       } else {
-        const dupIdx = findExistingRecordIndex(date, resident);
-        if (dupIdx >= 0) {
-          const prevNote = String(records[dupIdx].note || '').trim();
-          const nextNote = String(baseRecord.note || '').trim();
-          const mergedNote = prevNote && nextNote && prevNote !== nextNote
-            ? (prevNote + '
-
-' + nextNote)
-            : (nextNote || prevNote);
-          records[dupIdx] = { ...records[dupIdx], ...baseRecord, id: records[dupIdx].id, note: mergedNote };
-          setMainEditMode(records[dupIdx]);
-        } else {
-          records.push(baseRecord);
-        }
+        records.push(recordData);
       }
-
       saveRecords();
-      showToast(editingRecordId ? "既存記録を更新しました" : "保存しました");
+      showToast(pendingId ? "更新しました" : "保存しました");
       renderRecords();
+      window.pendingGoogleShareTargetId = "";
       resetForm();
     }
     // ===== A) 全員分の未完成を作成（タグ：未完成） =====
@@ -9164,7 +9106,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
       </div>
       <div class="manual-body">
-        <div class="small">日付と利用者で絞り込みできます。本文へ反映すると、現在開いている本文欄の末尾へ改行追記します。</div>
+        <div class="small">日付と利用者で絞り込みできます。本文へ反映すると、既存の同日同利用者記録があればその本文へ追記します。</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-top:10px; margin-bottom:8px;">
           <div style="min-width:180px; flex:0 1 180px;">
             <label for="googleDateFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">日付</label>
@@ -9467,29 +9409,21 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 })();
 </script>
 
+
+
+
+
 <script>
 (function(){
   const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec';
-  const GOOGLE_HIDDEN_KEY = 'google_shared_hidden_v2';
   function qs(id){ return document.getElementById(id); }
-  function todayYmd(){
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
+  function escapeHtmlGoogle(s){
+    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
-  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function normalizeName(s){ return String(s||'').replace(/\s+/g,'').replace(/　/g,'').replace(/さん$/,'').trim(); }
-  function setStatus(html){ const node = qs('googleShareStatus'); if(node) node.innerHTML = html || ''; }
-  function getHiddenMap(){ try{ return JSON.parse(localStorage.getItem(GOOGLE_HIDDEN_KEY)||'{}') || {}; }catch(e){ return {}; } }
-  function setHiddenMap(map){ localStorage.setItem(GOOGLE_HIDDEN_KEY, JSON.stringify(map||{})); }
-  function hideItem(id){ if(!id) return; const map = getHiddenMap(); map[String(id)] = true; setHiddenMap(map); }
-  function unhideItem(id){ if(!id) return; const map = getHiddenMap(); delete map[String(id)]; setHiddenMap(map); }
-  function isHidden(id){ const map = getHiddenMap(); return !!map[String(id)]; }
-
+  function todayYmd(){ const d = new Date(); const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
   let allItems = [];
-
+  function setGoogleStatus(html){ const node = qs('googleShareStatus'); if(node) node.innerHTML = html || ''; }
   function findResidentValue(name){
     const sel = qs('resident');
     if(!sel) return '';
@@ -9503,7 +9437,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     });
     return hit ? hit.value : '';
   }
-
   function buildResidentOptions(){
     const sel = qs('googleResidentFilter');
     if(!sel) return;
@@ -9513,124 +9446,132 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     allItems.forEach(item => {
       const name = String(item.user || item.userName || '').trim();
       const key = normalizeName(name);
-      if(!name || !key || seen.has(key)) return;
+      if (!name || !key || seen.has(key)) return;
       seen.add(key);
       names.push(name);
     });
-    sel.innerHTML = '<option value="">全員表示</option>' + names.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+    sel.innerHTML = '<option value="">全員表示</option>' + names.map(name => `<option value="${escapeHtmlGoogle(name)}">${escapeHtmlGoogle(name)}</option>`).join('');
     if(current){
       const found = names.find(name => normalizeName(name) === normalizeName(current));
       sel.value = found || '';
     }
   }
-
   function getFilteredItems(){
     const residentFilter = String((qs('googleResidentFilter')||{}).value || '').trim();
     const target = normalizeName(residentFilter);
-    return allItems.filter(item => {
-      if(isHidden(item.id)) return false;
-      if(target && normalizeName(item.user || item.userName || '') !== target) return false;
-      return true;
-    });
+    return allItems.filter(item => !target || normalizeName(item.user || item.userName || '') === target);
   }
-
-  function renderList(){
+  function renderGoogleList(items){
     const wrap = qs('googleShareList');
     if(!wrap) return;
-    const items = getFilteredItems();
     if(!items.length){
       wrap.innerHTML = '<div class="small">共有履歴はありません。</div>';
       return;
     }
     wrap.innerHTML = items.map(item => `
-      <div class="google-share-item" data-google-id="${escapeHtml(item.id || '')}">
+      <div class="google-share-item">
         <div class="meta">
-          <span>日付：${escapeHtml(item.date || '')}</span>
-          <span>利用者：${escapeHtml(item.user || item.userName || '')}</span>
-          <span>記録者：${escapeHtml(item.staff || item.staffName || '')}</span>
-          <span>更新：${escapeHtml(item.updatedAt || item.createdAt || '')}</span>
+          <span>日付：${escapeHtmlGoogle(item.date || '')}</span>
+          <span>利用者：${escapeHtmlGoogle(item.user || item.userName || '')}</span>
+          <span>記録者：${escapeHtmlGoogle(item.staff || item.staffName || '')}</span>
+          <span>更新：${escapeHtmlGoogle(item.updatedAt || item.createdAt || '')}</span>
         </div>
-        <div class="text">${escapeHtml(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
+        <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
         <div class="btns">
-          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtml(item.id || '')}">この内容を本文へ反映</button>
-          <button type="button" data-google-act="delete" data-google-id="${escapeHtml(item.id || '')}">削除</button>
+          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容を本文へ反映</button>
+          <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(item.id || '')}">削除</button>
+          <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
         </div>
-      </div>
-    `).join('');
-    setStatus('<span class="ok">読み込みました。</span> <span class="meta">' + items.length + '件</span>');
+      </div>`).join('');
   }
-
-  async function fetchShared(){
+  function renderList(){
+    const items = getFilteredItems();
+    renderGoogleList(items);
+    setGoogleStatus('<span class="ok">読み込みました。</span> <span class="meta">' + items.length + '件</span>');
+  }
+  async function fetchGoogleShared(){
     const date = String((qs('googleDateFilter')||{}).value || '').trim() || todayYmd();
     const user = String((qs('googleResidentFilter')||{}).value || '').trim();
     const wrap = qs('googleShareList');
     if(wrap) wrap.innerHTML = '<div class="small">読み込み中…</div>';
-    setStatus('読み込み中…');
+    setGoogleStatus('読み込み中…');
     try{
-      const url = GOOGLE_SHARE_URL + '?action=listShared&date=' + encodeURIComponent(date) + '&user=' + encodeURIComponent(user);
-      const res = await fetch(url, { cache: 'no-store' });
+      const res = await fetch(GOOGLE_SHARE_URL + '?action=listShared&date=' + encodeURIComponent(date) + '&user=' + encodeURIComponent(user), { cache: 'no-store' });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
       renderList();
     }catch(e){
-      setStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtml(e && e.message ? e.message : 'error') + '</span>');
+      setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
       if(wrap) wrap.innerHTML = '<div class="small">読み込みに失敗しました。</div>';
     }
   }
-
-  function reflectItemById(id){
+  function loadRecordIntoMainForm(record){
+    if(!record) return;
+    if (typeof resetForm === 'function') resetForm();
+    const dateEl = qs('date'); if(dateEl) dateEl.value = record.date || '';
+    const residentEl = qs('resident');
+    if(residentEl){
+      const v = findResidentValue(record.resident || '');
+      residentEl.value = v || record.resident || '';
+      residentEl.dispatchEvent(new Event('change', { bubbles:true }));
+    }
+    const recorderEl = qs('recorder'); if(recorderEl) recorderEl.value = record.recorder || '';
+    const supportEl = qs('support'); if(supportEl) supportEl.value = record.support || '';
+    const noteEl = qs('note'); if(noteEl) noteEl.value = record.note || '';
+    const specialEl = qs('hasSpecialNote'); if(specialEl) specialEl.checked = !!record.hasSpecialNote;
+    currentTags = Array.isArray(record.tags) ? [...record.tags] : [];
+    if (typeof updateTagUI === 'function') updateTagUI();
+    if (typeof syncQuickButtonsAll === 'function') syncQuickButtonsAll();
+    document.querySelectorAll('.day-activity-item').forEach((el) => { el.checked = (record.dayActivityItems || []).includes(el.value); });
+    if (typeof applyDaySupportListsForResident === 'function') applyDaySupportListsForResident(record.resident || '');
+    document.querySelectorAll('.day-main-item').forEach((el) => { el.checked = (record.daySupportMainItems || []).includes(el.value); });
+    document.querySelectorAll('.day-reason-item').forEach((el) => { el.checked = (record.daySupportReasonItems || []).includes(el.value); });
+    if (typeof applyBathingSubSelected === 'function') applyBathingSubSelected(record.daySupportBathingSubItems || [], 'main');
+    if (typeof applyHealthSubSelected === 'function') applyHealthSubSelected(record.daySupportHealthSubItems || [], 'main');
+    if (typeof applyDaySupportTypeSelected === 'function') applyDaySupportTypeSelected(record.daySupportType || '', 'main');
+    ['abnormalWeight','abnormalTemp','abnormalBPsys','abnormalBPdia','abnormalPulse'].forEach((id)=>{ const el=qs(id); if(el) el.value = record[id] || ''; });
+    if (typeof syncAbnormalVitalsUI === 'function') syncAbnormalVitalsUI('main');
+    const modeLabel = qs('modeLabel');
+    if (modeLabel) {
+      modeLabel.textContent = 'Google共有から更新モード';
+      modeLabel.style.background = '#ecfdf5';
+      modeLabel.style.color = '#047857';
+    }
+    const saveBtn = qs('saveButton');
+    if (saveBtn) saveBtn.textContent = '💾 既存記録を更新';
+  }
+  function reflectGoogleItem(id){
     const item = allItems.find(v => String(v.id) === String(id));
     if(!item) return;
-    const note = qs('note');
-    if(!note){
-      alert('業務日誌欄が見つかりませんでした。');
-      return;
-    }
-
-    const resident = qs('resident');
-    const dateEl = qs('date');
-    const matched = findResidentValue(item.user || item.userName || '');
-    const targetDate = String(item.date || (dateEl && dateEl.value) || todayYmd()).trim();
-    const targetResident = (matched || item.user || item.userName || '').trim();
-
+    const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
+    const matchedResident = findResidentValue(item.user || item.userName || '');
+    const targetResident = (matchedResident || item.user || item.userName || '').trim();
     let existingRecord = null;
-    if(Array.isArray(window.records)){
-      existingRecord = window.records.find(r => {
-        if(!r) return false;
-        const sameDate = String(r.date || '').trim() === targetDate;
-        const sameResident = normalizeName(r.resident || '') === normalizeName(targetResident);
-        return sameDate && sameResident;
-      }) || null;
+    if(Array.isArray(records)){
+      existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
     }
-
-    if(existingRecord && typeof loadRecordIntoMainForm === 'function'){
+    if(existingRecord){
       loadRecordIntoMainForm(existingRecord);
-    } else {
-      if(dateEl) dateEl.value = targetDate;
-      if(resident && matched){
-        resident.value = matched;
-        resident.dispatchEvent(new Event('change', { bubbles:true }));
-      }
+      window.pendingGoogleShareTargetId = existingRecord.id;
+    }else{
+      window.pendingGoogleShareTargetId = '';
+      const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
+      const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
+      const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
     }
-
-    const noteNow = qs('note');
-    const currentText = String(noteNow && noteNow.value || '').trim();
+    const note = qs('note');
+    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
+    const currentText = String(note.value || '').trim();
     const add = String(item.text || item.body || '').trim();
     if(!add) return;
-
-    const merged = currentText ? (currentText + '
-
-' + add) : add;
-    noteNow.value = merged;
-    noteNow.dispatchEvent(new Event('input', { bubbles:true }));
-    noteNow.focus();
-
-    setStatus('<span class="ok">本文へ追記しました。共有履歴は削除していません。保存すると同日同利用者の記録を更新します。</span>');
+    note.value = currentText ? (currentText + '\n\n' + add) : add;
+    note.dispatchEvent(new Event('input', { bubbles:true }));
+    note.focus();
+    setGoogleStatus('<span class="ok">本文へ反映しました。共有履歴は削除していません。</span>');
   }
-
-  async function deleteItemById(id){
+  async function deleteGoogleItem(id){
     if(!id) return;
     if(!confirm('この共有履歴を削除しますか？')) return;
     try{
@@ -9641,65 +9582,71 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '削除できませんでした');
-      unhideItem(id);
       allItems = allItems.filter(v => String(v.id) !== String(id));
       renderList();
-      setStatus('<span class="ok">削除しました。</span>');
+      setGoogleStatus('<span class="ok">削除しました。</span>');
     }catch(e){
-      setStatus('<span class="ng">削除に失敗</span> <span class="meta">' + escapeHtml(e && e.message ? e.message : 'error') + '</span>');
+      setGoogleStatus('<span class="ng">削除に失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
     }
   }
-
+  async function copyGoogleText(text){
+    try{
+      await navigator.clipboard.writeText(String(text||''));
+      setGoogleStatus('<span class="ok">コピーしました。</span>');
+    }catch(e){
+      setGoogleStatus('<span class="ng">コピーに失敗</span>');
+    }
+  }
   function openGoogleShare(){
     const ov = qs('googleShareOverlay');
     if(!ov) return;
     const dateEl = qs('googleDateFilter');
     if(dateEl && !dateEl.value) dateEl.value = todayYmd();
-    ov.style.display = 'flex';
+    ov.style.display='flex';
     ov.classList.add('show');
     ov.setAttribute('aria-hidden','false');
-    fetchShared();
+    fetchGoogleShared();
   }
   function closeGoogleShare(){
     const ov = qs('googleShareOverlay');
     if(!ov) return;
     ov.classList.remove('show');
     ov.setAttribute('aria-hidden','true');
-    ov.style.display = 'none';
+    ov.style.display='none';
   }
-
-  function bindGoogleButtons(){
+  function bindGoogleShare(){
     const openBtn = qs('openGoogleShareBtn');
     const closeBtn = qs('googleShareCloseBtn');
     const refreshBtn = qs('googleShareRefreshBtn');
     const easyBtn = qs('googleShareOpenEasyBtn');
-    if(openBtn) openBtn.onclick = openGoogleShare;
-    if(closeBtn) closeBtn.onclick = closeGoogleShare;
-    if(refreshBtn) refreshBtn.onclick = fetchShared;
-    if(easyBtn) easyBtn.onclick = function(){ window.open('easy_google_send_v2.html', '_blank'); };
     const dateEl = qs('googleDateFilter');
     const residentEl = qs('googleResidentFilter');
-    if(dateEl) dateEl.onchange = fetchShared;
-    if(residentEl) residentEl.onchange = renderList;
+    if(openBtn) openBtn.addEventListener('click', openGoogleShare);
+    if(closeBtn) closeBtn.addEventListener('click', closeGoogleShare);
+    if(refreshBtn) refreshBtn.addEventListener('click', fetchGoogleShared);
+    if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2.html', '_blank'));
+    if(dateEl) dateEl.addEventListener('change', fetchGoogleShared);
+    if(residentEl) residentEl.addEventListener('change', renderList);
   }
-
   document.addEventListener('click', function(e){
     const t = e.target;
     if(!t) return;
     if(t.id === 'googleShareOverlay'){ closeGoogleShare(); return; }
     const act = t.getAttribute('data-google-act');
     const id = t.getAttribute('data-google-id') || '';
-    if(act === 'reflect'){ reflectItemById(id); return; }
-    if(act === 'delete'){ deleteItemById(id); return; }
+    if(act === 'reflect'){ reflectGoogleItem(id); return; }
+    if(act === 'delete'){ deleteGoogleItem(id); return; }
+    if(act === 'copy'){ copyGoogleText(t.getAttribute('data-google-text') || ''); return; }
   });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeGoogleShare(); });
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bindGoogleButtons);
-  }else{
-    bindGoogleButtons();
-  }
-  window.openGoogleShare = openGoogleShare;
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindGoogleShare); else bindGoogleShare();
 })();
 </script>
+
 </body>
 </html>
+
+
+
+
+
