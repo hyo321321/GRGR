@@ -1361,7 +1361,7 @@
     <div class="header-actions">
       <button type="button" class="header-btn" id="openManualBtn">📘 説明書</button>
       <button type="button" class="header-btn" id="openInboxBtn">📥 受信BOX</button>
-      <button type="button" class="header-btn" id="openGoogleShareBtn">☁ Google共有</button>
+      <button type="button" class="header-btn" id="openGoogleShareBtn" onclick="if(window.openGoogleShareModal){window.openGoogleShareModal(); return false;}">☁ Google共有</button>
     </div>
   </div>
 </header>
@@ -9588,6 +9588,20 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
   });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeGoogleShare(); });
+  window.openGoogleShareModal = openGoogleShare;
+  window.closeGoogleShareModal = closeGoogleShare;
+  document.addEventListener('DOMContentLoaded', function(){
+    const openBtn = qs('openGoogleShareBtn');
+    if(openBtn && !openBtn.dataset.googleBound){
+      openBtn.dataset.googleBound = '1';
+      openBtn.addEventListener('click', function(ev){ ev.preventDefault(); openGoogleShare(); });
+    }
+    const closeBtn = qs('googleShareCloseBtn');
+    if(closeBtn && !closeBtn.dataset.googleBound){
+      closeBtn.dataset.googleBound = '1';
+      closeBtn.addEventListener('click', function(ev){ ev.preventDefault(); closeGoogleShare(); });
+    }
+  });
 })();
 </script>
 
