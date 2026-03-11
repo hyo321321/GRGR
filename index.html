@@ -5329,7 +5329,14 @@ function handleRestoreFile(file) {
       } else {
         const dupIdx = findExistingRecordIndex(date, resident);
         if (dupIdx >= 0) {
-          records[dupIdx] = { ...records[dupIdx], ...baseRecord, id: records[dupIdx].id };
+          const prevNote = String(records[dupIdx].note || '').trim();
+          const nextNote = String(baseRecord.note || '').trim();
+          const mergedNote = prevNote && nextNote && prevNote !== nextNote
+            ? (prevNote + '
+
+' + nextNote)
+            : (nextNote || prevNote);
+          records[dupIdx] = { ...records[dupIdx], ...baseRecord, id: records[dupIdx].id, note: mergedNote };
           setMainEditMode(records[dupIdx]);
         } else {
           records.push(baseRecord);
@@ -9581,32 +9588,46 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       alert('業務日誌欄が見つかりませんでした。');
       return;
     }
+
     const resident = qs('resident');
-    const matched = findResidentValue(item.user || item.userName || '');
     const dateEl = qs('date');
+    const matched = findResidentValue(item.user || item.userName || '');
     const targetDate = String(item.date || (dateEl && dateEl.value) || todayYmd()).trim();
-    if(dateEl) dateEl.value = targetDate;
-    if(resident && matched){
-      resident.value = matched;
-      resident.dispatchEvent(new Event('change', { bubbles:true }));
+    const targetResident = (matched || item.user || item.userName || '').trim();
+
+    let existingRecord = null;
+    if(Array.isArray(window.records)){
+      existingRecord = window.records.find(r => {
+        if(!r) return false;
+        const sameDate = String(r.date || '').trim() === targetDate;
+        const sameResident = normalizeName(r.resident || '') === normalizeName(targetResident);
+        return sameDate && sameResident;
+      }) || null;
     }
 
-    if(typeof findExistingRecordIndex === 'function' && typeof loadRecordIntoMainForm === 'function'){
-      const targetResident = (resident && resident.value) ? resident.value : (matched || '');
-      const existingIdx = findExistingRecordIndex(targetDate, targetResident);
-      if(existingIdx >= 0 && window.records && records[existingIdx]){
-        loadRecordIntoMainForm(records[existingIdx]);
+    if(existingRecord && typeof loadRecordIntoMainForm === 'function'){
+      loadRecordIntoMainForm(existingRecord);
+    } else {
+      if(dateEl) dateEl.value = targetDate;
+      if(resident && matched){
+        resident.value = matched;
+        resident.dispatchEvent(new Event('change', { bubbles:true }));
       }
     }
 
+    const noteNow = qs('note');
+    const currentText = String(noteNow && noteNow.value || '').trim();
     const add = String(item.text || item.body || '').trim();
     if(!add) return;
-    note.value = ((note.value || '').trim() ? (note.value + '\n\n') : '') + add;
-    note.dispatchEvent(new Event('input', { bubbles:true }));
-    note.focus();
-    hideItem(item.id);
-    renderList();
-    setStatus('<span class="ok">既存記録に追記する状態で本文へ反映しました。保存すると同日同利用者の記録を更新します。</span>');
+
+    const merged = currentText ? (currentText + '
+
+' + add) : add;
+    noteNow.value = merged;
+    noteNow.dispatchEvent(new Event('input', { bubbles:true }));
+    noteNow.focus();
+
+    setStatus('<span class="ok">本文へ追記しました。共有履歴は削除していません。保存すると同日同利用者の記録を更新します。</span>');
   }
 
   async function deleteItemById(id){
