@@ -5234,6 +5234,52 @@ function handleRestoreFile(file) {
 }
 
 
+    function findExistingRecordIndex(date, resident, excludeId = null) {
+      const targetDate = String(date || "").trim();
+      const targetResident = String(resident || "").trim();
+      return records.findIndex((r) => {
+        if (!r) return false;
+        if (excludeId && String(r.id) === String(excludeId)) return false;
+        return String(r.date || "").trim() === targetDate && String(r.resident || "").trim() === targetResident;
+      });
+    }
+
+    function setMainEditMode(record) {
+      if (!record) return;
+      editingRecordId = record.id;
+      const modeLabelEl = document.getElementById("modeLabel");
+      if (modeLabelEl) {
+        modeLabelEl.textContent = "既存記録を更新モード";
+        modeLabelEl.style.background = "#fef3c7";
+        modeLabelEl.style.color = "#92400e";
+      }
+      const saveBtn = document.getElementById("saveButton");
+      if (saveBtn) saveBtn.textContent = "♻️ 既存記録を更新";
+    }
+
+    function loadRecordIntoMainForm(record) {
+      if (!record) return;
+      if (document.getElementById("date")) document.getElementById("date").value = record.date || "";
+      if (document.getElementById("resident")) {
+        document.getElementById("resident").value = record.resident || "";
+        document.getElementById("resident").dispatchEvent(new Event('change', { bubbles:true }));
+      }
+      const recSel = document.getElementById("recorder");
+      if (recSel) {
+        ensureSelectHasValue(recSel, record.recorder || "");
+        recSel.value = record.recorder || "";
+      }
+      if (document.getElementById("support")) document.getElementById("support").value = record.support || "";
+      if (document.getElementById("note")) document.getElementById("note").value = record.note || "";
+      const special = document.getElementById("hasSpecialNote");
+      if (special) special.checked = !!record.hasSpecialNote;
+      const noteEl = document.getElementById("note");
+      if (noteEl) noteEl.classList.toggle("special-note-on", !!record.hasSpecialNote);
+      currentTags = Array.isArray(record.tags) ? [...record.tags] : [];
+      updateTagUI();
+      setMainEditMode(record);
+    }
+
     function handleSubmit(event) {
       event.preventDefault();
 
@@ -5249,8 +5295,8 @@ function handleRestoreFile(file) {
       const daySupportMainItems = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
       const daySupportReasonItems = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
 
-      const recordData = {
-        id: Date.now().toString(),
+      const baseRecord = {
+        id: editingRecordId || Date.now().toString(),
         date,
         resident,
         recorder: document.getElementById("recorder")?.value || "",        medTaken: false,
@@ -5271,9 +5317,27 @@ function handleRestoreFile(file) {
         abnormalPulse: (document.getElementById("abnormalPulse")?.value || "").trim(),
       };
 
-      records.push(recordData);
+      if (editingRecordId) {
+        const idx = records.findIndex((r) => r.id === editingRecordId);
+        if (idx >= 0) {
+          records[idx] = { ...records[idx], ...baseRecord };
+        } else {
+          const dupIdx = findExistingRecordIndex(date, resident);
+          if (dupIdx >= 0) records[dupIdx] = { ...records[dupIdx], ...baseRecord, id: records[dupIdx].id };
+          else records.push(baseRecord);
+        }
+      } else {
+        const dupIdx = findExistingRecordIndex(date, resident);
+        if (dupIdx >= 0) {
+          records[dupIdx] = { ...records[dupIdx], ...baseRecord, id: records[dupIdx].id };
+          setMainEditMode(records[dupIdx]);
+        } else {
+          records.push(baseRecord);
+        }
+      }
+
       saveRecords();
-      showToast("保存しました");
+      showToast(editingRecordId ? "既存記録を更新しました" : "保存しました");
       renderRecords();
       resetForm();
     }
@@ -9519,10 +9583,22 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
     const resident = qs('resident');
     const matched = findResidentValue(item.user || item.userName || '');
+    const dateEl = qs('date');
+    const targetDate = String(item.date || (dateEl && dateEl.value) || todayYmd()).trim();
+    if(dateEl) dateEl.value = targetDate;
     if(resident && matched){
       resident.value = matched;
       resident.dispatchEvent(new Event('change', { bubbles:true }));
     }
+
+    if(typeof findExistingRecordIndex === 'function' && typeof loadRecordIntoMainForm === 'function'){
+      const targetResident = (resident && resident.value) ? resident.value : (matched || '');
+      const existingIdx = findExistingRecordIndex(targetDate, targetResident);
+      if(existingIdx >= 0 && window.records && records[existingIdx]){
+        loadRecordIntoMainForm(records[existingIdx]);
+      }
+    }
+
     const add = String(item.text || item.body || '').trim();
     if(!add) return;
     note.value = ((note.value || '').trim() ? (note.value + '\n\n') : '') + add;
@@ -9530,7 +9606,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     note.focus();
     hideItem(item.id);
     renderList();
-    setStatus('<span class="ok">本文へ反映しました。</span>');
+    setStatus('<span class="ok">既存記録に追記する状態で本文へ反映しました。保存すると同日同利用者の記録を更新します。</span>');
   }
 
   async function deleteItemById(id){
