@@ -9354,14 +9354,40 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       ul{ margin:6px 0 0 18px; }
       .small{ font-size:13px; color:#111827; }
     `;
-    w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>説明書</title><style>"+css+"</style></head><body>");
-    w.document.write("<h1>このアプリの使い方（説明書）</h1>");
-    // sections only
-    const secs = body.querySelectorAll(".manual-section");
-    secs.forEach(sec=>{
-      w.document.write("<div class='sec'>"+sec.innerHTML+"</div>");
-    });
-    w.document.write("
+    w.document.write("</body></html>");
+    w.document.close();
+    w.focus();
+    w.print();
+  }
+
+  document.addEventListener("click", function(e){
+    const t = e.target;
+    if(!t) return;
+
+    if(t.id === "openManualBtn"){
+      openManual();
+      return;
+    }
+    if(t.id === "closeManualBtn"){
+      closeManual();
+      return;
+    }
+    if(t.id === "printManualBtn"){
+      printManual();
+      return;
+    }
+    if(t.id === "manualOverlay"){
+      closeManual();
+      return;
+    }
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") closeManual();
+  });
+})();
+</script>
+
 <script>
 (function(){
   const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec';
