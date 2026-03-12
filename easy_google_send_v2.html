@@ -248,10 +248,6 @@
       <div class="ai-box">
         <div class="ai-row">
           <div>
-            <label for="geminiApiKey">Gemini APIキー</label>
-            <input id="geminiApiKey" type="password" placeholder="ここにGemini APIキーを入力" />
-          </div>
-          <div>
             <label for="aiMode">整え方</label>
             <select id="aiMode" class="select-like">
               <option value="record">短め記録文</option>
@@ -308,6 +304,28 @@
       <h2 class="section-title">作成結果</h2>
       <div id="outputBox" class="output">ここに作成結果が表示されます。</div>
     </section>
+
+    <section class="card">
+      <h2 class="section-title">AI設定</h2>
+      <div class="small-muted">Gemini APIキーはこの端末だけに保存されます。</div>
+
+      <div id="apiKeyClosedBox" style="margin-top:10px; display:none;">
+        <div class="help" style="margin-top:0;">Gemini APIキーは設定済みです。</div>
+        <div style="margin-top:10px;">
+          <button id="toggleApiKeyBtn" class="btn-copy" type="button">変更する</button>
+        </div>
+      </div>
+
+      <div id="apiKeyOpenBox" style="margin-top:10px; display:none;">
+        <label for="geminiApiKey">Gemini APIキー</label>
+        <input id="geminiApiKey" type="password" placeholder="ここにGemini APIキーを入力" />
+        <div class="help">誤操作防止のため一番下へ移動しています。</div>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="saveApiKeyBtn" class="btn-ai" type="button">保存する</button>
+          <button id="closeApiKeyBtn" class="btn-copy" type="button">閉じる</button>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -327,6 +345,11 @@
     const aiApplyBtn = document.getElementById("aiApplyBtn");
     const aiStatusText = document.getElementById("aiStatusText");
     const aiResultBox = document.getElementById("aiResultBox");
+    const toggleApiKeyBtn = document.getElementById("toggleApiKeyBtn");
+    const saveApiKeyBtn = document.getElementById("saveApiKeyBtn");
+    const closeApiKeyBtn = document.getElementById("closeApiKeyBtn");
+    const apiKeyClosedBox = document.getElementById("apiKeyClosedBox");
+    const apiKeyOpenBox = document.getElementById("apiKeyOpenBox");
     const sharedDate = document.getElementById("sharedDate");
     const sharedUserFilter = document.getElementById("sharedUserFilter");
     const loadSharedBtn = document.getElementById("loadSharedBtn");
@@ -414,6 +437,36 @@
 
     function saveGeminiKey() {
       localStorage.setItem(GEMINI_KEY_STORAGE, geminiApiKeyInput.value.trim());
+      updateApiKeyVisibility();
+    }
+
+    function updateApiKeyVisibility() {
+      const hasKey = !!localStorage.getItem(GEMINI_KEY_STORAGE);
+
+      if (hasKey) {
+        apiKeyClosedBox.style.display = "";
+        apiKeyOpenBox.style.display = "none";
+      } else {
+        apiKeyClosedBox.style.display = "none";
+        apiKeyOpenBox.style.display = "";
+      }
+    }
+
+    function openApiKeyEditor() {
+      apiKeyClosedBox.style.display = "none";
+      apiKeyOpenBox.style.display = "";
+      geminiApiKeyInput.focus();
+    }
+
+    function closeApiKeyEditor() {
+      const hasKey = !!(geminiApiKeyInput.value.trim() || localStorage.getItem(GEMINI_KEY_STORAGE));
+      if (hasKey) {
+        apiKeyClosedBox.style.display = "";
+        apiKeyOpenBox.style.display = "none";
+      } else {
+        apiKeyClosedBox.style.display = "none";
+        apiKeyOpenBox.style.display = "";
+      }
     }
 
     function buildAiInstruction(mode, rawText) {
@@ -432,7 +485,7 @@
       const raw = memoInput.value.trim();
 
       if (!apiKey) {
-        aiStatusText.textContent = "先にGemini APIキーを入れてください。";
+        aiStatusText.textContent = "一番下のAI設定からGemini APIキーを入れてください。";
         return;
       }
       if (!raw) {
@@ -789,6 +842,13 @@
       }
     });
 
+    toggleApiKeyBtn.addEventListener("click", openApiKeyEditor);
+    saveApiKeyBtn.addEventListener("click", () => {
+      saveGeminiKey();
+      aiStatusText.textContent = "APIキーを保存しました。";
+      closeApiKeyEditor();
+    });
+    closeApiKeyBtn.addEventListener("click", closeApiKeyEditor);
     geminiApiKeyInput.addEventListener("change", saveGeminiKey);
     aiRunBtn.addEventListener("click", runGeminiRewrite);
     aiApplyBtn.addEventListener("click", applyAiResultToMemo);
@@ -806,6 +866,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       setupNameInputs();
       loadGeminiKey();
+      updateApiKeyVisibility();
       sharedDate.value = todayYmd();
       loadSharedRecords();
     });
