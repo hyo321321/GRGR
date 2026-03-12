@@ -457,24 +457,6 @@ ${recordText}` : recordText;
     }
 
 
-      mainCheckStatus.textContent = "確認中...";
-      mainCheckBox.textContent = "";
-
-      try {
-        const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
-        const json = await res.json();
-
-        if (!json.ok) {
-          mainCheckStatus.textContent = "確認失敗: " + (json.message || "unknown");
-          return;
-        }
-
-        mainCheckStatus.textContent = "確認しました。";
-        mainCheckBox.textContent = json.text || "まだ記録はありません。";
-      } catch (e) {
-        mainCheckStatus.textContent = "確認に失敗しました。";
-      }
-    }
 
     createBtn.addEventListener("click", async () => {
       const raw = memoInput.value.trim();
