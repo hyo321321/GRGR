@@ -4884,18 +4884,21 @@ tr.appendChild(tdSupport);
         const tdActions = document.createElement("td");
 
         const viewBtn = document.createElement("button");
+        viewBtn.type = "button";
         viewBtn.textContent = "詳細";
         viewBtn.className = "btn-secondary";
         viewBtn.style.fontSize = "12px";
         viewBtn.onclick = () => showRecordDetail(record.id);
 
         const editBtn = document.createElement("button");
+        editBtn.type = "button";
         editBtn.textContent = "編集";
         editBtn.className = "btn-secondary";
         editBtn.style.fontSize = "12px";
         editBtn.onclick = () => openEditModal(record.id);
 
         const delBtn = document.createElement("button");
+        delBtn.type = "button";
         delBtn.textContent = "削除";
         delBtn.className = "btn-danger";
         delBtn.style.fontSize = "12px";
@@ -9587,12 +9590,27 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
   };
 
+  function bindPreventEnterSubmit(targetForm){
+    if (!targetForm) return;
+    targetForm.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      const t = e.target;
+      if (!t) return;
+      const tag = (t.tagName || '').toUpperCase();
+      if (tag === 'TEXTAREA') return;
+      if (tag === 'INPUT' || tag === 'SELECT') {
+        e.preventDefault();
+      }
+    });
+  }
+
   function rebindSubmitAndEditHandlers(){
     const form = document.getElementById('recordForm');
     if (form) {
       const fresh = form.cloneNode(true);
       form.parentNode.replaceChild(fresh, form);
       fresh.addEventListener('submit', window.handleSubmit);
+      bindPreventEnterSubmit(fresh);
       const resetButton = document.getElementById('resetButton');
       if (resetButton && typeof resetForm === 'function') {
         resetButton.onclick = resetForm;
@@ -10103,12 +10121,27 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
   };
 
+  function bindPreventEnterSubmit(targetForm){
+    if (!targetForm) return;
+    targetForm.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      const t = e.target;
+      if (!t) return;
+      const tag = (t.tagName || '').toUpperCase();
+      if (tag === 'TEXTAREA') return;
+      if (tag === 'INPUT' || tag === 'SELECT') {
+        e.preventDefault();
+      }
+    });
+  }
+
   function rebindSubmitAndEditHandlers(){
     const form = document.getElementById('recordForm');
     if (form) {
       const fresh = form.cloneNode(true);
       form.parentNode.replaceChild(fresh, form);
       fresh.addEventListener('submit', window.handleSubmit);
+      bindPreventEnterSubmit(fresh);
       const resetButton = document.getElementById('resetButton');
       if (resetButton && typeof resetForm === 'function') {
         resetButton.onclick = resetForm;
