@@ -4575,21 +4575,19 @@ function formatDateWithDow(iso) {
 
     function populateRecorderSelect(selectEl, placeholderText = "（選択）") {
       if (!selectEl) return;
-      const cur = String(selectEl.value || "").trim();
-      const fromRecords = Array.from(new Set((Array.isArray(records) ? records : []).map((r) => String((r && r.recorder) || "").trim()).filter(Boolean)));
-      const names = Array.from(new Set([...(Array.isArray(recorders) ? recorders : []), ...fromRecords]));
+      const cur = selectEl.value;
       selectEl.innerHTML = "";
       const ph = document.createElement("option");
       ph.value = "";
       ph.textContent = placeholderText;
       selectEl.appendChild(ph);
-      names.forEach((name) => {
+      (recorders || []).forEach((name) => {
         const opt = document.createElement("option");
         opt.value = name;
         opt.textContent = name;
         selectEl.appendChild(opt);
       });
-      selectEl.value = (cur && names.includes(cur)) ? cur : "";
+      selectEl.value = (cur && (recorders || []).includes(cur)) ? cur : "";
     }
 
     function ensureSelectHasValue(selectEl, value) {
@@ -7610,7 +7608,6 @@ function clearFavChecks() {
       if (!record) return;
 
       editingRecordId = id;
-      window.editingRecordId = id;
 
       // 利用者がrecords由来で未登録なら追加
       if (record.resident && !residents.includes(record.resident)) {
@@ -7625,21 +7622,16 @@ function clearFavChecks() {
       document.getElementById("editDate").value = record.date || "";
       document.getElementById("editResident").value = record.resident || "";
       const __er = document.getElementById("editRecorder");
-      if (__er) {
-        const __rv = String(record.recorder || "").trim();
-        if (__rv) {
-          try{
-            if (!Array.isArray(recorders)) recorders = [];
-            if (!recorders.includes(__rv)) {
-              recorders.push(__rv);
-              if (typeof saveRecorders === 'function') saveRecorders();
-            }
-          }catch(_e){}
-        }
-        if (typeof renderRecorderSelects === 'function') renderRecorderSelects();
-        ensureSelectHasValue(__er, __rv);
-        __er.value = __rv;
+      if (record.recorder && !(recorders || []).includes(record.recorder)) {
+        recorders.push(record.recorder);
+        saveRecorders();
+        renderRecorderSelects();
       }
+      if (__er) {
+        ensureSelectHasValue(__er, record.recorder || "");
+        __er.value = record.recorder || "";
+      }
+      window.editingRecordId = id;
       const _ets = document.getElementById("editTimeSlot");
       if (_ets) _ets.value = record.timeSlot || "日中";
       const _ec = document.getElementById("editCondition");
@@ -7697,7 +7689,6 @@ function clearFavChecks() {
     function closeEditModal() {
       document.getElementById("editModal").classList.remove("show");
       editingRecordId = null;
-      window.editingRecordId = null;
       editTags = [];
     }
 
@@ -9442,13 +9433,18 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     try{
       const next = await fetchMainRecordsRemote({});
       window.records = next;
-      try{ records = next; }catch(_e){}
-      try{
-        const fromRemote = Array.from(new Set((next || []).map((r) => String((r && r.recorder) || '').trim()).filter(Boolean)));
-        const merged = Array.from(new Set([...(Array.isArray(recorders) ? recorders : []), ...fromRemote]));
-        recorders = merged;
-        if (typeof saveRecorders === 'function') saveRecorders();
-      }catch(_e){}
+      try { records = next; } catch(e) {}
+      try {
+        const names = Array.from(new Set((next || []).map(r => (r && r.recorder ? String(r.recorder).trim() : '')).filter(Boolean)));
+        let changed = false;
+        names.forEach((name) => {
+          if (!(recorders || []).includes(name)) {
+            recorders.push(name);
+            changed = true;
+          }
+        });
+        if (changed) saveRecorders();
+      } catch(e) {}
       localBackupSave();
       if (typeof renderRecords === 'function') renderRecords();
       if (typeof renderResidentSelects === 'function') renderResidentSelects();
@@ -9574,15 +9570,14 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   window.saveEditModal = async function(){
     if (!window.editingRecordId) return;
-    const sourceRecords = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
-    const idx = sourceRecords.findIndex((r) => r && r.id === window.editingRecordId);
-    if (idx < 0) { alert('編集対象が見つかりません'); return; }
+    const idx = Array.isArray(window.records) ? window.records.findIndex((r) => r.id === window.editingRecordId) : -1;
+    if (idx < 0) return;
 
     const resident = document.getElementById('editResident').value;
     const date = document.getElementById('editDate').value;
     if (!resident || !date) { alert('日付と利用者は必須です'); return; }
 
-    const updated = buildRecordDataFromEditForm(sourceRecords[idx]);
+    const updated = buildRecordDataFromEditForm(window.records[idx]);
     try{
       await saveMainRecordRemote(updated);
       await syncRemoteRecordsAndRender();
@@ -9787,7 +9782,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       residentEl.value = v || record.resident || '';
       residentEl.dispatchEvent(new Event('change', { bubbles:true }));
     }
-    const recorderEl = qs('recorder'); if(recorderEl){ if (typeof ensureSelectHasValue === 'function') ensureSelectHasValue(recorderEl, record.recorder || ''); recorderEl.value = record.recorder || ''; }
+    const recorderEl = qs('recorder'); if(recorderEl) recorderEl.value = record.recorder || '';
     const supportEl = qs('support'); if(supportEl) supportEl.value = record.support || '';
     const noteEl = qs('note'); if(noteEl) noteEl.value = record.note || '';
     const specialEl = qs('hasSpecialNote'); if(specialEl) specialEl.checked = !!record.hasSpecialNote;
@@ -9966,13 +9961,18 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     try{
       const next = await fetchMainRecordsRemote({});
       window.records = next;
-      try{ records = next; }catch(_e){}
-      try{
-        const fromRemote = Array.from(new Set((next || []).map((r) => String((r && r.recorder) || '').trim()).filter(Boolean)));
-        const merged = Array.from(new Set([...(Array.isArray(recorders) ? recorders : []), ...fromRemote]));
-        recorders = merged;
-        if (typeof saveRecorders === 'function') saveRecorders();
-      }catch(_e){}
+      try { records = next; } catch(e) {}
+      try {
+        const names = Array.from(new Set((next || []).map(r => (r && r.recorder ? String(r.recorder).trim() : '')).filter(Boolean)));
+        let changed = false;
+        names.forEach((name) => {
+          if (!(recorders || []).includes(name)) {
+            recorders.push(name);
+            changed = true;
+          }
+        });
+        if (changed) saveRecorders();
+      } catch(e) {}
       localBackupSave();
       if (typeof renderRecords === 'function') renderRecords();
       if (typeof renderResidentSelects === 'function') renderResidentSelects();
@@ -10098,15 +10098,14 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   window.saveEditModal = async function(){
     if (!window.editingRecordId) return;
-    const sourceRecords = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
-    const idx = sourceRecords.findIndex((r) => r && r.id === window.editingRecordId);
-    if (idx < 0) { alert('編集対象が見つかりません'); return; }
+    const idx = Array.isArray(window.records) ? window.records.findIndex((r) => r.id === window.editingRecordId) : -1;
+    if (idx < 0) return;
 
     const resident = document.getElementById('editResident').value;
     const date = document.getElementById('editDate').value;
     if (!resident || !date) { alert('日付と利用者は必須です'); return; }
 
-    const updated = buildRecordDataFromEditForm(sourceRecords[idx]);
+    const updated = buildRecordDataFromEditForm(window.records[idx]);
     try{
       await saveMainRecordRemote(updated);
       await syncRemoteRecordsAndRender();
