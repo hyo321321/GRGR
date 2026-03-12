@@ -153,7 +153,7 @@
 
     <section class="card">
       <div class="button-grid">
-        <button id="createBtn" class="btn-create">一括作成して送信</button>
+        <button id="createBtn" class="btn-create" type="button">一括作成して送信</button>
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
       </div>
       <div class="status" id="statusText"></div>
@@ -425,24 +425,73 @@
       });
     }
 
+    function joinRecordTexts(baseText, addedText) {
+      const first = normalizeText(baseText || "");
+      const second = normalizeText(addedText || "");
+      if (!first) return second;
+      if (!second) return first;
+      return `${first}
+${second}`;
+    }
+
+    async function fetchExistingMainRecord(user, date) {
+      const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, { cache: "no-store" });
+      return await res.json();
+    }
+
+    function buildMainRawPayload(existingRecord, nextText, date, user, staff) {
+      const raw = (existingRecord && existingRecord.raw && typeof existingRecord.raw === "object") ? existingRecord.raw : {};
+      return {
+        ...raw,
+        id: (raw && raw.id) || (existingRecord && existingRecord.id) || `${Date.now()}`,
+        date: date,
+        resident: user,
+        recorder: staff,
+        medTaken: !!raw.medTaken,
+        support: typeof raw.support === "string" ? raw.support : "",
+        note: nextText,
+        hasSpecialNote: !!raw.hasSpecialNote,
+        tags: Array.isArray(raw.tags) ? raw.tags : [],
+        daySupportType: raw.daySupportType || "",
+        dayActivityItems: Array.isArray(raw.dayActivityItems) ? raw.dayActivityItems : [],
+        daySupportMainItems: Array.isArray(raw.daySupportMainItems) ? raw.daySupportMainItems : [],
+        daySupportReasonItems: Array.isArray(raw.daySupportReasonItems) ? raw.daySupportReasonItems : [],
+        daySupportBathingSubItems: Array.isArray(raw.daySupportBathingSubItems) ? raw.daySupportBathingSubItems : [],
+        daySupportHealthSubItems: Array.isArray(raw.daySupportHealthSubItems) ? raw.daySupportHealthSubItems : [],
+        abnormalVitalsOn: !!raw.abnormalVitalsOn,
+        abnormalWeight: raw.abnormalWeight || "",
+        abnormalTemp: raw.abnormalTemp || "",
+        abnormalBPsys: raw.abnormalBPsys || "",
+        abnormalBPdia: raw.abnormalBPdia || "",
+        abnormalPulse: raw.abnormalPulse || "",
+        timeSlot: raw.timeSlot || "日中",
+        condition: raw.condition || "良好",
+        mental: raw.mental || "安定"
+      };
+    }
+
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
+      const staff = getSelectedStaffName();
       const date = getTodayYmd();
-      const existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`).then(r => r.json());
+      const existing = await fetchExistingMainRecord(user, date);
+      const existingRecord = existing && existing.record ? existing.record : null;
+      const existingText = existingRecord ? (existingRecord.text || ((existingRecord.raw && existingRecord.raw.note) || "")) : "";
+      const nextFullText = joinRecordTexts(existingText, recordText);
 
       const payload = {
         action: "saveMainRecord",
         date: date,
         user: user,
-        staff: getSelectedStaffName(),
+        staff: staff,
         text: recordText,
-        status: "",
-        tags: [],
-        raw: {},
-        appendMode: existing && existing.record ? "append" : ""
+        status: existingRecord && typeof existingRecord.status === "string" ? existingRecord.status : "",
+        tags: existingRecord && Array.isArray(existingRecord.tags) ? existingRecord.tags : [],
+        raw: buildMainRawPayload(existingRecord, nextFullText, date, user, staff),
+        appendMode: existingRecord ? "append" : ""
       };
 
-      if (existing && existing.record && existing.record.id) payload.id = existing.record.id;
+      if (existingRecord && existingRecord.id) payload.id = existingRecord.id;
       return await postJson(payload);
     }
 
@@ -459,8 +508,7 @@
       mainCheckBox.textContent = "";
 
       try {
-        const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
-        const json = await res.json();
+        const json = await fetchExistingMainRecord(user, date);
 
         if (!json.ok) {
           mainCheckStatus.textContent = "確認失敗: " + (json.message || "unknown");
