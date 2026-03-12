@@ -2444,6 +2444,8 @@
     const RESIDENTS_KEY = "group_home_residents_v1";
     const RECORDERS_KEY = "group_home_recorders_v1";
     const TEMPLATES_KEY = "group_home_support_templates_v1";
+    const MAIN_RECORD_URL = "https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec";
+    const MAIN_REMOTE_ENABLED = true;
 
     // 自動入力（支援項目）
     const AUTO_ITEM_DEFS_KEY = "group_home_auto_item_defs_v1";
@@ -3729,7 +3731,7 @@
       showDayNoteToast(`業務日誌に追記しました：${tplName || ""}（${p}）`, "");
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("dnToastCloseBtn")?.addEventListener("click", hideDayNoteToast);
       document.getElementById("dnToastJumpBtn")?.addEventListener("click", () => { hideDayNoteToast(); jumpToNote(); });
 
@@ -4137,7 +4139,65 @@ function saveAutoItemDefs() {
       }
     }
 
-    function saveRecords() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+    let __mainRecordsSyncTimer = null;
+    let __mainRecordsSyncPromise = Promise.resolve();
+
+    function saveRecordsMirror() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function queueMainRecordsSync() {
+      if (!MAIN_REMOTE_ENABLED) return;
+      if (__mainRecordsSyncTimer) clearTimeout(__mainRecordsSyncTimer);
+      __mainRecordsSyncTimer = setTimeout(() => {
+        __mainRecordsSyncTimer = null;
+        __mainRecordsSyncPromise = syncMainRecordsRemote(records).catch((e) => {
+          console.error('syncMainRecordsRemote error', e);
+          showToast('Google保存に失敗しました');
+        });
+      }, 250);
+    }
+
+    function saveRecords() {
+      saveRecordsMirror();
+      queueMainRecordsSync();
+    }
+
+    async function flushMainRecordsSync() {
+      if (!MAIN_REMOTE_ENABLED) return;
+      if (__mainRecordsSyncTimer) {
+        clearTimeout(__mainRecordsSyncTimer);
+        __mainRecordsSyncTimer = null;
+        __mainRecordsSyncPromise = syncMainRecordsRemote(records).catch((e) => {
+          console.error('syncMainRecordsRemote error', e);
+          throw e;
+        });
+      }
+      return __mainRecordsSyncPromise;
+    }
+
+    async function fetchMainRecordsRemote() {
+      if (!MAIN_REMOTE_ENABLED) return loadRecords();
+      const res = await fetch(MAIN_RECORD_URL + '?action=getMainRecords', { cache: 'no-store' });
+      const data = await res.json();
+      if (!data || !data.ok) throw new Error((data && data.message) || '記録取得に失敗しました');
+      return Array.isArray(data.records) ? data.records : [];
+    }
+
+    async function syncMainRecordsRemote(recordsArr) {
+      if (!MAIN_REMOTE_ENABLED) return { ok: true };
+      const res = await fetch(MAIN_RECORD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'syncMainRecords',
+          records: Array.isArray(recordsArr) ? recordsArr : []
+        })
+      });
+      const data = await res.json();
+      if (!data || !data.ok) throw new Error((data && data.message) || '記録保存に失敗しました');
+      return data;
+    }
 
     function loadResidents() {
       try {
@@ -4980,14 +5040,19 @@ tr.appendChild(tdSupport);
       syncAbnormalVitalsUI("main");
       updateAutoNoteMain();
       clearDraftForCurrent();
-      window.pendingGoogleShareTargetId = "";
 
     }
 
-    function deleteRecord(id) {
+    async function deleteRecord(id) {
       if (!confirm("この記録を削除しますか？")) return;
       records = records.filter((r) => r.id !== id);
-      saveRecords();
+      saveRecordsMirror();
+      try {
+        await flushMainRecordsSync();
+      } catch (e) {
+        alert("Google保存に失敗しました: " + (e?.message || e));
+        return;
+      }
       renderRecords();
     }
 
@@ -5235,7 +5300,7 @@ function handleRestoreFile(file) {
 }
 
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
       event.preventDefault();
 
       const date = document.getElementById("date").value;
@@ -5272,22 +5337,16 @@ function handleRestoreFile(file) {
         abnormalPulse: (document.getElementById("abnormalPulse")?.value || "").trim(),
       };
 
-      const pendingId = String(window.pendingGoogleShareTargetId || "").trim();
-      if (pendingId) {
-        const idx = records.findIndex((r) => String(r.id) === pendingId);
-        if (idx >= 0) {
-          recordData.id = records[idx].id;
-          records[idx] = { ...records[idx], ...recordData };
-        } else {
-          records.push(recordData);
-        }
-      } else {
-        records.push(recordData);
+      records.push(recordData);
+      saveRecordsMirror();
+      try {
+        await flushMainRecordsSync();
+        showToast("保存しました");
+      } catch (e) {
+        alert("Google保存に失敗しました: " + (e?.message || e));
+        return;
       }
-      saveRecords();
-      showToast(pendingId ? "更新しました" : "保存しました");
       renderRecords();
-      window.pendingGoogleShareTargetId = "";
       resetForm();
     }
     // ===== A) 全員分の未完成を作成（タグ：未完成） =====
@@ -5419,7 +5478,7 @@ function buildAutoHealthSentenceFromSubs(subs) {
       return recordData;
     }
 
-    function createUnfinishedForAllResidents() {
+    async function createUnfinishedForAllResidents() {
       const dateStr = document.getElementById("date")?.value || "";
       if (!dateStr) { alert("先に日付を選択してください"); return; }
 
@@ -5453,7 +5512,8 @@ function buildAutoHealthSentenceFromSubs(subs) {
         created++;
       });
 
-      saveRecords();
+      saveRecordsMirror();
+      try { await flushMainRecordsSync(); } catch (e) { alert("Google保存に失敗しました: " + (e?.message || e)); }
       renderRecords();
 
       alert(`未完成を作成しました。\n作成：${created}件\nスキップ（確定あり）：${skippedConfirmed}件\nスキップ（未完成あり）：${skippedUnfinished}件`);
@@ -7766,7 +7826,7 @@ function clearFavChecks() {
       syncDaySupportTypeCompositeInWrap(wrapMain, "edit");
     }
 
-    function saveEditModal() {
+    async function saveEditModal() {
       if (!editingRecordId) return;
       const idx = records.findIndex((r) => r.id === editingRecordId);
       if (idx < 0) return;
@@ -7802,7 +7862,13 @@ function clearFavChecks() {
       };
 
       records[idx] = updated;
-      saveRecords();
+      saveRecordsMirror();
+      try {
+        await flushMainRecordsSync();
+      } catch (e) {
+        alert("Google保存に失敗しました: " + (e?.message || e));
+        return;
+      }
       renderRecords();
       closeEditModal();
       alert("保存しました");
@@ -8640,6 +8706,15 @@ document.getElementById("date").value = toLocalISODate();
       if (__pTo) __pTo.value = __todayStr;
 
       records = loadRecords();
+      try {
+        const remoteRecords = await fetchMainRecordsRemote();
+        if (Array.isArray(remoteRecords)) {
+          records = remoteRecords;
+          saveRecordsMirror();
+        }
+      } catch (e) {
+        console.error('fetchMainRecordsRemote error', e);
+      }
       residents = loadResidents();
       recorders = loadRecorders();
       templates = loadTemplates();
@@ -9098,21 +9173,16 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   <div class="modal-overlay" id="googleShareOverlay" aria-hidden="true" style="display:none;">
     <div class="manual-modal google-share-modal" role="dialog" aria-modal="true" aria-labelledby="googleShareTitle">
       <div class="manual-header">
-        <div class="manual-title" id="googleShareTitle">☁ Google共有</div>
+        <div class="manual-title" id="googleShareTitle">☁ Google共有の今日一覧</div>
         <div class="manual-actions">
           <button type="button" class="manual-btn" id="googleShareOpenEasyBtn">かんたん記録ページ</button>
           <button type="button" class="manual-btn" id="googleShareRefreshBtn">更新</button>
-          <button type="button" class="btn-beginner" id="googleShareSaveMainBtn">💾 記録を保存</button>
           <button type="button" class="manual-btn" id="googleShareCloseBtn">閉じる</button>
         </div>
       </div>
       <div class="manual-body">
-        <div class="small">日付と利用者で絞り込みできます。本文へ反映すると、既存の同日同利用者記録があればその本文へ追記します。</div>
+        <div class="small">利用者名を見て、その人の業務日誌欄へ反映できます。</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-top:10px; margin-bottom:8px;">
-          <div style="min-width:180px; flex:0 1 180px;">
-            <label for="googleDateFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">日付</label>
-            <input type="date" id="googleDateFilter" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff;">
-          </div>
           <div style="min-width:220px; flex:1 1 220px;">
             <label for="googleResidentFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">利用者で絞り込み</label>
             <select id="googleResidentFilter" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff;">
@@ -9121,7 +9191,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
           </div>
         </div>
         <div class="google-share-status" id="googleShareStatus">読み込み待ちです。</div>
-        <div class="small" style="margin-top:6px; color:#6b7280;">反映したら、モーダル内の「本体を保存」でそのまま保存できます。複数件を続けて反映したい時にも使えます。</div>
         <div class="google-share-list" id="googleShareList">
           <div class="small">まだ読み込まれていません。</div>
         </div>
@@ -9376,7 +9445,41 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     secs.forEach(sec=>{
       w.document.write("<div class='sec'>"+sec.innerHTML+"</div>");
     });
-    w.document.write("</body></html>");
+    w.document.write("
+<script>
+(function(){
+  const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec';
+  function qs(id){ return document.getElementById(id); }
+  function escapeHtmlGoogle(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function formatGoogleDate(s){ const d = new Date(s || Date.now()); return isNaN(d.getTime()) ? '' : d.toLocaleString(); }
+  function normalizeName(s){ return String(s||'').replace(/\s+/g,'').replace(/　/g,'').replace(/さん$/,'').trim(); }
+  function openGoogleShare(){ const ov = qs('googleShareOverlay'); if(!ov) return; ov.style.display='flex'; ov.classList.add('show'); ov.setAttribute('aria-hidden','false'); fetchGoogleShared(); }
+  function closeGoogleShare(){ const ov = qs('googleShareOverlay'); if(!ov) return; ov.classList.remove('show'); ov.setAttribute('aria-hidden','true'); ov.style.display='none'; }
+  function setGoogleStatus(html){ const node = qs('googleShareStatus'); if(node) node.innerHTML = html || ''; }
+  function findResidentValue(name){ const sel = qs('resident'); if(!sel) return ''; const target = normalizeName(name); if(!target) return ''; const opts = Array.from(sel.options || []); const hit = opts.find(opt => { const v = normalizeName(opt.value); const t = normalizeName(opt.textContent || ''); return target === v || target === t || (v && target.includes(v)) || (t && target.includes(t)) || (v && v.includes(target)) || (t && t.includes(target)); }); return hit ? hit.value : ''; }
+  async function copyGoogleText(text){ try{ await navigator.clipboard.writeText(text || ''); setGoogleStatus('<span class="ok">コピーしました。</span>'); }catch(e){ setGoogleStatus('<span class="ng">コピーに失敗</span>'); } }
+  function reflectToNote(userName, text, staffName){ const resident = qs('resident'); const note = qs('note'); if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; } const matched = findResidentValue(userName || ''); if(resident && matched){ resident.value = matched; resident.dispatchEvent(new Event('change', { bubbles:true })); } const add = String(text || '').trim(); if(!add) return; const staff = String(staffName || '').trim(); const merged = staff ? (add + '\n記録者 ' + staff) : add; note.value = ((note.value || '').trim() ? (note.value + '\n') : '') + merged; note.dispatchEvent(new Event('input', { bubbles:true })); note.focus(); setGoogleStatus(matched ? '<span class="ok">' + escapeHtmlGoogle(userName || '') + ' の業務日誌欄へ反映しました。</span>' : '<span class="ok">業務日誌欄へ反映しました（利用者は自動選択できませんでした）。</span>'); closeGoogleShare(); }
+  function renderGoogleList(items){ const wrap = qs('googleShareList'); if(!wrap) return; if(!items.length){ wrap.innerHTML = '<div class="small">Google共有の今日の記録はありません。</div>'; return; } wrap.innerHTML = items.map(item => `
+      <div class="google-share-item">
+        <div class="meta">
+          <span>受信：${escapeHtmlGoogle(formatGoogleDate(item.timestamp || ''))}</span>
+          <span>利用者：${escapeHtmlGoogle(item.userName || '')}</span>
+          <span>記録者：${escapeHtmlGoogle(item.staffName || '')}</span>
+          <span>送信元：${escapeHtmlGoogle(item.source || '')}</span>
+        </div>
+        <div class="text">${escapeHtmlGoogle(item.body || '')}</div>
+        <div class="btns">
+          <button type="button" class="primary" data-google-act="reflect" data-google-user="${escapeHtmlGoogle(item.userName || '')}" data-google-text="${escapeHtmlGoogle(item.body || '')}" data-google-staff="${escapeHtmlGoogle(item.staffName || '')}">この内容を本文へ反映</button>
+          <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.body || '')}">コピー</button>
+        </div>
+      </div>`).join(''); }
+  async function fetchGoogleShared(){ setGoogleStatus('読み込み中…'); const wrap = qs('googleShareList'); if(wrap) wrap.innerHTML = '<div class="small">読み込み中…</div>'; try{ const res = await fetch(GOOGLE_SHARE_URL + '?mode=today', { cache: 'no-store' }); const data = await res.json(); if(!data || !data.ok) throw new Error(data && data.message ? data.message : '取得できませんでした'); const items = Array.isArray(data.items) ? data.items : []; setGoogleStatus('<span class="ok">読み込みました。</span> <span class="meta">' + items.length + '件</span>'); renderGoogleList(items); }catch(e){ setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>'); } }
+  document.addEventListener('click', function(e){ const t = e.target; if(!t) return; if(t.id === 'openGoogleShareBtn'){ openGoogleShare(); return; } if(t.id === 'googleShareCloseBtn' || t.id === 'googleShareOverlay'){ closeGoogleShare(); return; } if(t.id === 'googleShareRefreshBtn'){ fetchGoogleShared(); return; } if(t.id === 'googleShareOpenEasyBtn'){ window.open('easy_google_send_v2.html', '_blank'); return; } const act = t.getAttribute('data-google-act'); if(act){ const text = t.getAttribute('data-google-text') || ''; const user = t.getAttribute('data-google-user') || ''; const staff = t.getAttribute('data-google-staff') || ''; if(act === 'copy'){ copyGoogleText(text); return; } if(act === 'reflect'){ reflectToNote(user, text, staff); return; } } });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeGoogleShare(); });
+})();
+</script>
+
+</body></html>");
     w.document.close();
     w.focus();
     w.print();
@@ -9412,291 +9515,76 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 </script>
 
 
-
-
-
 <script>
 (function(){
   const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec';
   function qs(id){ return document.getElementById(id); }
-  function escapeHtmlGoogle(s){
-    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
+  const GOOGLE_REFLECTED_KEY = 'google_shared_reflected_v1';
+  function getReflectedMap(){ try{ const raw = localStorage.getItem(GOOGLE_REFLECTED_KEY); const obj = raw ? JSON.parse(raw) : {}; return obj && typeof obj === 'object' ? obj : {}; }catch(e){ return {}; } }
+  function setReflectedMap(map){ localStorage.setItem(GOOGLE_REFLECTED_KEY, JSON.stringify(map)); }
+  function buildGoogleItemKey(item){ return [String(item && item.timestamp || ''), String(item && item.userName || ''), String(item && item.staffName || ''), String(item && item.body || '')].join('||'); }
+  function isGoogleItemReflected(item){ const map = getReflectedMap(); return !!map[buildGoogleItemKey(item)]; }
+  function markGoogleItemReflected(item){ const map = getReflectedMap(); map[buildGoogleItemKey(item)] = new Date().toISOString(); setReflectedMap(map); }
+  function escapeHtmlGoogle(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function formatGoogleDate(s){ const d = new Date(s || Date.now()); return isNaN(d.getTime()) ? '' : d.toLocaleString(); }
   function normalizeName(s){ return String(s||'').replace(/\s+/g,'').replace(/　/g,'').replace(/さん$/,'').trim(); }
-  function todayYmd(){ const d = new Date(); const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
-  let allItems = [];
-  let reflectedGoogleIds = [];
-  function loadReflectedGoogleIds(){
-    try{ reflectedGoogleIds = JSON.parse(localStorage.getItem('googleShareReflectedIds_v1') || '[]'); if(!Array.isArray(reflectedGoogleIds)) reflectedGoogleIds = []; }catch(e){ reflectedGoogleIds = []; }
-  }
-  function saveReflectedGoogleIds(){
-    try{ localStorage.setItem('googleShareReflectedIds_v1', JSON.stringify(reflectedGoogleIds)); }catch(e){}
-  }
-  function isGoogleItemReflected(id){
-    return reflectedGoogleIds.includes(String(id||''));
-  }
-  function markGoogleItemReflected(id){
-    const key = String(id||'').trim();
-    if(!key) return;
-    if(!reflectedGoogleIds.includes(key)){
-      reflectedGoogleIds.push(key);
-      saveReflectedGoogleIds();
-    }
-  }
-  function setGoogleStatus(html){ const node = qs('googleShareStatus'); if(node) node.innerHTML = html || ''; }
-  function findResidentValue(name){
-    const sel = qs('resident');
-    if(!sel) return '';
-    const target = normalizeName(name);
-    if(!target) return '';
-    const opts = Array.from(sel.options || []);
-    const hit = opts.find(opt => {
-      const v = normalizeName(opt.value);
-      const t = normalizeName(opt.textContent || '');
-      return target === v || target === t || (v && target.includes(v)) || (t && target.includes(t)) || (v && v.includes(target)) || (t && t.includes(target));
-    });
-    return hit ? hit.value : '';
-  }
-  function buildResidentOptions(){
-    const sel = qs('googleResidentFilter');
-    if(!sel) return;
-    const current = sel.value || '';
+  let googleShareItems = [];
+  function buildGoogleResidentNames(){
     const names = [];
     const seen = new Set();
-    allItems.forEach(item => {
-      const name = String(item.user || item.userName || '').trim();
+    const fromResidents = Array.isArray(window.residents) ? window.residents : [];
+    const fromItems = googleShareItems.map(it => String((it && it.userName) || '').trim()).filter(Boolean);
+    [...fromResidents, ...fromItems].forEach(name => {
       const key = normalizeName(name);
-      if (!name || !key || seen.has(key)) return;
+      if(!name || !key || seen.has(key)) return;
       seen.add(key);
       names.push(name);
     });
+    return names;
+  }
+  function populateGoogleResidentFilter(){
+    const sel = qs('googleResidentFilter');
+    if(!sel) return;
+    const current = sel.value || '';
+    const names = buildGoogleResidentNames();
     sel.innerHTML = '<option value="">全員表示</option>' + names.map(name => `<option value="${escapeHtmlGoogle(name)}">${escapeHtmlGoogle(name)}</option>`).join('');
     if(current){
       const found = names.find(name => normalizeName(name) === normalizeName(current));
       sel.value = found || '';
     }
   }
-  function getFilteredItems(){
-    const residentFilter = String((qs('googleResidentFilter')||{}).value || '').trim();
-    const target = normalizeName(residentFilter);
-    return allItems.filter(item => !target || normalizeName(item.user || item.userName || '') === target);
+  function getFilteredGoogleItems(){
+    const sel = qs('googleResidentFilter');
+    const selected = sel ? String(sel.value || '').trim() : '';
+    if(!selected) return googleShareItems.slice();
+    const target = normalizeName(selected);
+    return googleShareItems.filter(it => normalizeName((it && it.userName) || '') === target);
   }
-  function renderGoogleList(items){
-    const wrap = qs('googleShareList');
-    if(!wrap) return;
-    if(!items.length){
-      wrap.innerHTML = '<div class="small">共有履歴はありません。</div>';
-      return;
-    }
-    wrap.innerHTML = items.map(item => `
-      <div class="google-share-item">
+  function openGoogleShare(){ const ov = qs('googleShareOverlay'); if(!ov) return; ov.style.display='flex'; ov.classList.add('show'); ov.setAttribute('aria-hidden','false'); fetchGoogleShared(); }
+  function closeGoogleShare(){ const ov = qs('googleShareOverlay'); if(!ov) return; ov.classList.remove('show'); ov.setAttribute('aria-hidden','true'); ov.style.display='none'; }
+  function setGoogleStatus(html){ const node = qs('googleShareStatus'); if(node) node.innerHTML = html || ''; }
+  function findResidentValue(name){ const sel = qs('resident'); if(!sel) return ''; const target = normalizeName(name); if(!target) return ''; const opts = Array.from(sel.options || []); const hit = opts.find(opt => { const v = normalizeName(opt.value); const t = normalizeName(opt.textContent || ''); return target === v || target === t || (v && target.includes(v)) || (t && target.includes(t)) || (v && v.includes(target)) || (t && t.includes(target)); }); return hit ? hit.value : ''; }
+  async function copyGoogleText(text){ try{ await navigator.clipboard.writeText(text || ''); setGoogleStatus('<span class="ok">コピーしました。</span>'); }catch(e){ setGoogleStatus('<span class="ng">コピーに失敗</span>'); } }
+  function reflectToNote(userName, text, staffName, itemKey){ const resident = qs('resident'); const note = qs('note'); if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; } const matched = findResidentValue(userName || ''); if(resident && matched){ resident.value = matched; resident.dispatchEvent(new Event('change', { bubbles:true })); } const add = String(text || '').trim(); if(!add) return; const staff = String(staffName || '').trim(); const merged = staff ? (add + '\n記録者 ' + staff) : add; note.value = ((note.value || '').trim() ? (note.value + '\n') : '') + merged; note.dispatchEvent(new Event('input', { bubbles:true })); note.focus(); const item = googleShareItems.find(it => buildGoogleItemKey(it) === String(itemKey || '')); if(item){ markGoogleItemReflected(item); } const filtered = getFilteredGoogleItems(); renderGoogleList(filtered); setGoogleStatus(matched ? '<span class="ok">' + escapeHtmlGoogle(userName || '') + ' の業務日誌欄へ反映しました。</span>' : '<span class="ok">業務日誌欄へ反映しました（利用者は自動選択できませんでした）。</span>'); }
+  function renderGoogleList(items){ const wrap = qs('googleShareList'); if(!wrap) return; if(!items.length){ wrap.innerHTML = '<div class="small">Google共有の今日の記録はありません。</div>'; return; } wrap.innerHTML = items.map(item => { const done = isGoogleItemReflected(item); const itemKey = buildGoogleItemKey(item); return `
+      <div class="google-share-item ${done ? 'is-reflected' : ''}">
         <div class="meta">
-          <span>日付：${escapeHtmlGoogle(item.date || '')}</span>
-          <span>利用者：${escapeHtmlGoogle(item.user || item.userName || '')}</span>
-          <span>記録者：${escapeHtmlGoogle(item.staff || item.staffName || '')}</span>
-          <span>更新：${escapeHtmlGoogle(item.updatedAt || item.createdAt || '')}</span>
-          ${isGoogleItemReflected(item.id) ? '<span style="display:inline-block; padding:2px 8px; border-radius:999px; background:#dcfce7; color:#166534; font-weight:700;">反映済み</span>' : ''}
+          <span>受信：${escapeHtmlGoogle(formatGoogleDate(item.timestamp || ''))}</span>
+          <span>利用者：${escapeHtmlGoogle(item.userName || '')}</span>
+          <span>記録者：${escapeHtmlGoogle(item.staffName || '')}</span>
+          <span>送信元：${escapeHtmlGoogle(item.source || '')}</span>
+          <span class="reflected-badge">反映済み</span>
         </div>
-        <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
+        <div class="text">${escapeHtmlGoogle(item.body || '')}</div>
         <div class="btns">
-          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">${isGoogleItemReflected(item.id) ? '反映済み・もう一度反映' : 'この内容を本文へ反映'}</button>
-          <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(item.id || '')}">削除</button>
-          <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
+          <button type="button" class="primary ${done ? 'done' : ''}" data-google-act="reflect" data-google-user="${escapeHtmlGoogle(item.userName || '')}" data-google-text="${escapeHtmlGoogle(item.body || '')}" data-google-staff="${escapeHtmlGoogle(item.staffName || '')}" data-google-key="${escapeHtmlGoogle(itemKey)}">${done ? '反映済み' : 'この内容を本文へ反映'}</button>
+          <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.body || '')}">コピー</button>
         </div>
-      </div>`).join('');
-  }
-  function renderList(){
-    const items = getFilteredItems();
-    renderGoogleList(items);
-    setGoogleStatus('<span class="ok">読み込みました。</span> <span class="meta">' + items.length + '件</span>');
-  }
-  async function fetchGoogleShared(){
-    const date = String((qs('googleDateFilter')||{}).value || '').trim() || todayYmd();
-    const user = String((qs('googleResidentFilter')||{}).value || '').trim();
-    const wrap = qs('googleShareList');
-    if(wrap) wrap.innerHTML = '<div class="small">読み込み中…</div>';
-    setGoogleStatus('読み込み中…');
-    try{
-      const res = await fetch(GOOGLE_SHARE_URL + '?action=listShared&date=' + encodeURIComponent(date) + '&user=' + encodeURIComponent(user), { cache: 'no-store' });
-      const data = await res.json();
-      if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
-      allItems = Array.isArray(data.records) ? data.records : [];
-      buildResidentOptions();
-      renderList();
-    }catch(e){
-      setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
-      if(wrap) wrap.innerHTML = '<div class="small">読み込みに失敗しました。</div>';
-    }
-  }
-  function loadRecordIntoMainForm(record){
-    if(!record) return;
-    if (typeof resetForm === 'function') resetForm();
-    const dateEl = qs('date'); if(dateEl) dateEl.value = record.date || '';
-    const residentEl = qs('resident');
-    if(residentEl){
-      const v = findResidentValue(record.resident || '');
-      residentEl.value = v || record.resident || '';
-      residentEl.dispatchEvent(new Event('change', { bubbles:true }));
-    }
-    const recorderEl = qs('recorder'); if(recorderEl) recorderEl.value = record.recorder || '';
-    const supportEl = qs('support'); if(supportEl) supportEl.value = record.support || '';
-    const noteEl = qs('note'); if(noteEl) noteEl.value = record.note || '';
-    const specialEl = qs('hasSpecialNote'); if(specialEl) specialEl.checked = !!record.hasSpecialNote;
-    currentTags = Array.isArray(record.tags) ? [...record.tags] : [];
-    if (typeof updateTagUI === 'function') updateTagUI();
-    if (typeof syncQuickButtonsAll === 'function') syncQuickButtonsAll();
-    document.querySelectorAll('.day-activity-item').forEach((el) => { el.checked = (record.dayActivityItems || []).includes(el.value); });
-    if (typeof applyDaySupportListsForResident === 'function') applyDaySupportListsForResident(record.resident || '');
-    document.querySelectorAll('.day-main-item').forEach((el) => { el.checked = (record.daySupportMainItems || []).includes(el.value); });
-    document.querySelectorAll('.day-reason-item').forEach((el) => { el.checked = (record.daySupportReasonItems || []).includes(el.value); });
-    if (typeof applyBathingSubSelected === 'function') applyBathingSubSelected(record.daySupportBathingSubItems || [], 'main');
-    if (typeof applyHealthSubSelected === 'function') applyHealthSubSelected(record.daySupportHealthSubItems || [], 'main');
-    if (typeof applyDaySupportTypeSelected === 'function') applyDaySupportTypeSelected(record.daySupportType || '', 'main');
-    ['abnormalWeight','abnormalTemp','abnormalBPsys','abnormalBPdia','abnormalPulse'].forEach((id)=>{ const el=qs(id); if(el) el.value = record[id] || ''; });
-    if (typeof syncAbnormalVitalsUI === 'function') syncAbnormalVitalsUI('main');
-    const modeLabel = qs('modeLabel');
-    if (modeLabel) {
-      modeLabel.textContent = 'Google共有から更新モード';
-      modeLabel.style.background = '#ecfdf5';
-      modeLabel.style.color = '#047857';
-    }
-    const saveBtn = qs('saveButton');
-    if (saveBtn) saveBtn.textContent = '💾 既存記録を更新';
-  }
-  function reflectGoogleItem(id){
-    const item = allItems.find(v => String(v.id) === String(id));
-    if(!item) return;
-    const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
-    const matchedResident = findResidentValue(item.user || item.userName || '');
-    const targetResident = (matchedResident || item.user || item.userName || '').trim();
-    const currentDate = String((qs('date') && qs('date').value) || '').trim();
-    const currentResident = String((qs('resident') && qs('resident').value) || '').trim();
-    const sameTargetAlreadyOpen = currentDate === targetDate && normalizeName(currentResident) === normalizeName(targetResident);
-
-    let existingRecord = null;
-    if(Array.isArray(records)){
-      existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
-    }
-
-    if(!sameTargetAlreadyOpen){
-      if(existingRecord){
-        loadRecordIntoMainForm(existingRecord);
-        window.pendingGoogleShareTargetId = existingRecord.id;
-      }else{
-        window.pendingGoogleShareTargetId = '';
-        const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
-        const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
-        const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
-      }
-    }
-
-    const note = qs('note');
-    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
-    const currentText = String(note.value || '').trim();
-    const add = String(item.text || item.body || '').trim();
-    if(!add) return;
-
-    if(currentText === add || currentText.endsWith('\n\n' + add) || currentText.endsWith(add)){
-      setGoogleStatus('<span class="ok">すでに同じ内容が本文に入っています。</span>');
-      markGoogleItemReflected(id);
-      renderList();
-      return;
-    }
-
-    note.value = currentText ? (currentText + '\n\n' + add) : add;
-    note.dispatchEvent(new Event('input', { bubbles:true }));
-    note.focus();
-    markGoogleItemReflected(id);
-    renderList();
-    setGoogleStatus('<span class="ok">本文へ反映しました。必要ならモーダル内の「本体を保存」を押してください。</span>');
-  }
-  async function deleteGoogleItem(id){
-    if(!id) return;
-    if(!confirm('この共有履歴を削除しますか？')) return;
-    try{
-      const res = await fetch(GOOGLE_SHARE_URL, {
-        method:'POST',
-        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteShared', id:id })
-      });
-      const data = await res.json();
-      if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '削除できませんでした');
-      allItems = allItems.filter(v => String(v.id) !== String(id));
-      renderList();
-      setGoogleStatus('<span class="ok">削除しました。</span>');
-    }catch(e){
-      setGoogleStatus('<span class="ng">削除に失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
-    }
-  }
-  async function copyGoogleText(text){
-    try{
-      await navigator.clipboard.writeText(String(text||''));
-      setGoogleStatus('<span class="ok">コピーしました。</span>');
-    }catch(e){
-      setGoogleStatus('<span class="ng">コピーに失敗</span>');
-    }
-  }
-  function saveMainFromGoogleModal(){
-    const form = qs('recordForm');
-    if(!form){ alert('本体フォームが見つかりません。'); return; }
-    const resident = String((qs('resident') && qs('resident').value) || '').trim();
-    if(!resident){
-      alert('先に利用者を確認してください。');
-      return;
-    }
-    if(typeof form.requestSubmit === 'function'){
-      form.requestSubmit();
-    }else{
-      const evt = new Event('submit', { bubbles:true, cancelable:true });
-      form.dispatchEvent(evt);
-    }
-    setGoogleStatus('<span class="ok">本体を保存しました。続けて別の共有文も反映できます。</span>');
-  }
-  function openGoogleShare(){
-    const ov = qs('googleShareOverlay');
-    if(!ov) return;
-    const dateEl = qs('googleDateFilter');
-    if(dateEl && !dateEl.value) dateEl.value = todayYmd();
-    ov.style.display='flex';
-    ov.classList.add('show');
-    ov.setAttribute('aria-hidden','false');
-    fetchGoogleShared();
-  }
-  function closeGoogleShare(){
-    const ov = qs('googleShareOverlay');
-    if(!ov) return;
-    ov.classList.remove('show');
-    ov.setAttribute('aria-hidden','true');
-    ov.style.display='none';
-  }
-  function bindGoogleShare(){
-    const openBtn = qs('openGoogleShareBtn');
-    const closeBtn = qs('googleShareCloseBtn');
-    const refreshBtn = qs('googleShareRefreshBtn');
-    const saveBtn = qs('googleShareSaveMainBtn');
-    const easyBtn = qs('googleShareOpenEasyBtn');
-    const dateEl = qs('googleDateFilter');
-    const residentEl = qs('googleResidentFilter');
-    if(openBtn) openBtn.addEventListener('click', openGoogleShare);
-    if(closeBtn) closeBtn.addEventListener('click', closeGoogleShare);
-    if(refreshBtn) refreshBtn.addEventListener('click', fetchGoogleShared);
-    if(saveBtn) saveBtn.addEventListener('click', saveMainFromGoogleModal);
-    if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2.html', '_blank'));
-    if(dateEl) dateEl.addEventListener('change', fetchGoogleShared);
-    if(residentEl) residentEl.addEventListener('change', renderList);
-  }
-  document.addEventListener('click', function(e){
-    const t = e.target;
-    if(!t) return;
-    if(t.id === 'googleShareOverlay'){ closeGoogleShare(); return; }
-    const act = t.getAttribute('data-google-act');
-    const id = t.getAttribute('data-google-id') || '';
-    if(act === 'reflect'){ reflectGoogleItem(id); return; }
-    if(act === 'delete'){ deleteGoogleItem(id); return; }
-    if(act === 'copy'){ copyGoogleText(t.getAttribute('data-google-text') || ''); return; }
-  });
+      </div>`; }).join(''); }
+  async function fetchGoogleShared(){ setGoogleStatus('読み込み中…'); const wrap = qs('googleShareList'); if(wrap) wrap.innerHTML = '<div class="small">読み込み中…</div>'; try{ const res = await fetch(GOOGLE_SHARE_URL + '?mode=today', { cache: 'no-store' }); const data = await res.json(); if(!data || !data.ok) throw new Error(data && data.message ? data.message : '取得できませんでした'); googleShareItems = Array.isArray(data.items) ? data.items : []; populateGoogleResidentFilter(); const items = getFilteredGoogleItems(); setGoogleStatus('<span class="ok">読み込みました。</span> <span class="meta">' + items.length + '件</span>'); renderGoogleList(items); }catch(e){ setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>'); } }
+  document.addEventListener('click', function(e){ const t = e.target; if(!t) return; if(t.id === 'openGoogleShareBtn'){ openGoogleShare(); return; } if(t.id === 'googleShareCloseBtn' || t.id === 'googleShareOverlay'){ closeGoogleShare(); return; } if(t.id === 'googleShareRefreshBtn'){ fetchGoogleShared(); return; } if(t.id === 'googleShareOpenEasyBtn'){ window.open('easy_google_send_v2.html', '_blank'); return; } const act = t.getAttribute('data-google-act'); if(act){ const text = t.getAttribute('data-google-text') || ''; const user = t.getAttribute('data-google-user') || ''; const staff = t.getAttribute('data-google-staff') || ''; const itemKey = t.getAttribute('data-google-key') || ''; if(act === 'copy'){ copyGoogleText(text); return; } if(act === 'reflect'){ reflectToNote(user, text, staff, itemKey); return; } } });
+  document.addEventListener('change', function(e){ const t = e.target; if(!t) return; if(t.id === 'googleResidentFilter'){ const items = getFilteredGoogleItems(); setGoogleStatus('<span class="ok">絞り込み表示</span> <span class="meta">' + items.length + '件</span>'); renderGoogleList(items); return; } });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeGoogleShare(); });
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ loadReflectedGoogleIds(); bindGoogleShare(); }); else { loadReflectedGoogleIds(); bindGoogleShare(); }
 })();
 </script>
 
