@@ -293,7 +293,7 @@
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
       </div>
       <div class="status" id="statusText"></div>
-      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec</div>
+      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycbzKjHRRr4B3pTCdRWAxSgGfCgK9Ndp3ycJ5bqUY0UnL6QJjBaGuvnDvEUi1EkvOWYeW/exec</div>
     </section>
 
     <section class="card">
@@ -332,10 +332,10 @@
       <div class="small-muted">送信後に、本体へ入っている今日の業務日誌・利用者の活動状況（特記事項含む）を下で確認できます。</div>
       <div class="main-confirm-box">
         <div class="main-confirm-head">
-          <button id="loadMainRecordBtn" class="btn-shared-load" type="button">本体の今日の記録を確認</button>
+          <button id="loadMainRecordBtn" class="btn-shared-load" type="button">Google保存の今日の記録を確認</button>
           <div id="mainRecordStatus" class="status"></div>
         </div>
-        <div id="mainRecordBox" class="main-confirm-text">ここに本体の現在の記録内容が表示されます。</div>
+        <div id="mainRecordBox" class="main-confirm-text">ここにGoogle保存の現在の記録内容が表示されます。</div>
       </div>
     </section>
 
@@ -363,7 +363,7 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKjHRRr4B3pTCdRWAxSgGfCgK9Ndp3ycJ5bqUY0UnL6QJjBaGuvnDvEUi1EkvOWYeW/exec";
     const memoInput = document.getElementById("memoInput");
     const userNameSelect = document.getElementById("userNameSelect");
     const staffNameSelect = document.getElementById("staffNameSelect");
@@ -398,10 +398,6 @@
     const RECORDERS_KEY = "group_home_recorders_v1";
     const GEMINI_MODEL = "gemini-3-flash-preview";
     const GEMINI_KEY_STORAGE = "easy_gemini_api_key_v1";
-
-    const MAIN_STORAGE_KEY = "group_home_records_v1";
-    const MAIN_RESIDENTS_KEY = "group_home_residents_v1";
-    const MAIN_RECORDERS_KEY = "group_home_recorders_v1";
     const HIDDEN_SHARED_IDS_KEY = "easy_google_hidden_shared_ids_v1";
 
     function loadListFromStorage(key) {
@@ -620,114 +616,6 @@
       }
 
       return joined;
-    }
-
-
-    function loadJsonArraySafe(key) {
-      try {
-        const raw = localStorage.getItem(key);
-        const arr = JSON.parse(raw || "[]");
-        return Array.isArray(arr) ? arr : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveJsonArraySafe(key, arr) {
-      localStorage.setItem(key, JSON.stringify(Array.isArray(arr) ? arr : []));
-    }
-
-    function ensureValueInListStorage(key, value) {
-      const v = String(value || "").trim();
-      if (!v) return;
-      const list = loadJsonArraySafe(key);
-      if (!list.includes(v)) {
-        list.push(v);
-        saveJsonArraySafe(key, list);
-      }
-    }
-
-    function buildMainRecordSkeleton(date, resident, recorder, note) {
-      return {
-        id: Date.now().toString(),
-        date: date,
-        resident: resident,
-        recorder: recorder || "",
-        medTaken: false,
-        support: "",
-        note: note || "",
-        hasSpecialNote: false,
-        tags: [],
-        daySupportType: "",
-        dayActivityItems: [],
-        daySupportMainItems: [],
-        daySupportReasonItems: [],
-        daySupportBathingSubItems: [],
-        daySupportHealthSubItems: [],
-        abnormalVitalsOn: false,
-        abnormalWeight: "",
-        abnormalTemp: "",
-        abnormalBPsys: "",
-        abnormalBPdia: "",
-        abnormalPulse: ""
-      };
-    }
-
-    function upsertMainRecordLocal(noteText) {
-      const date = todayYmd();
-      const resident = getSelectedUserName();
-      const recorder = getSelectedStaffName();
-      const addText = String(noteText || "").trim();
-
-      if (!resident || !addText) {
-        return { ok: false, message: "利用者名または本文がありません。" };
-      }
-
-      const records = loadJsonArraySafe(MAIN_STORAGE_KEY);
-      const idx = records.findIndex(r =>
-        String(r && r.date || "") === date &&
-        String(r && r.resident || "").trim() === resident
-      );
-
-      if (idx >= 0) {
-        const existing = records[idx] || {};
-        const oldNote = String(existing.note || "").trim();
-        const mergedNote = oldNote ? `${oldNote}\n\n${addText}` : addText;
-
-        records[idx] = {
-          ...existing,
-          date: date,
-          resident: resident,
-          recorder: recorder || String(existing.recorder || ""),
-          note: mergedNote
-        };
-
-        saveJsonArraySafe(MAIN_STORAGE_KEY, records);
-        ensureValueInListStorage(MAIN_RESIDENTS_KEY, resident);
-        ensureValueInListStorage(MAIN_RECORDERS_KEY, recorder);
-
-        return { ok: true, mode: "update", record: records[idx] };
-      }
-
-      const record = buildMainRecordSkeleton(date, resident, recorder, addText);
-      records.push(record);
-      saveJsonArraySafe(MAIN_STORAGE_KEY, records);
-      ensureValueInListStorage(MAIN_RESIDENTS_KEY, resident);
-      ensureValueInListStorage(MAIN_RECORDERS_KEY, recorder);
-
-      return { ok: true, mode: "create", record: record };
-    }
-
-    function getMainRecordLocal(date, resident) {
-      const records = loadJsonArraySafe(MAIN_STORAGE_KEY);
-      for (let i = records.length - 1; i >= 0; i--) {
-        const row = records[i] || {};
-        if (String(row.date || "") === String(date || "") &&
-            String(row.resident || "").trim() === String(resident || "").trim()) {
-          return row;
-        }
-      }
-      return null;
     }
 
     async function sendToGoogle(recordText) {
@@ -955,19 +843,35 @@
       const userName = getSelectedUserName();
       if (!userName) {
         mainRecordStatus.textContent = "先に利用者を選んでください。";
-        mainRecordBox.textContent = "ここに本体の現在の記録内容が表示されます。";
+        mainRecordBox.textContent = "ここにGoogle保存の現在の記録内容が表示されます。";
         return;
       }
 
       const date = todayYmd();
-      const row = getMainRecordLocal(date, userName);
+      mainRecordStatus.textContent = "Google保存の記録を確認中...";
 
-      if (row && String(row.note || "").trim()) {
-        mainRecordBox.textContent = String(row.note || "").trim();
-        mainRecordStatus.textContent = `本体の今日の記録を表示しました。利用者: ${userName}`;
-      } else {
-        mainRecordBox.textContent = "まだ本体に今日の記録はありません。";
-        mainRecordStatus.textContent = `本体に今日の記録はありません。利用者: ${userName}`;
+      try {
+        const url = `${WEB_APP_URL}?action=getMainRecord&date=${encodeURIComponent(date)}&user=${encodeURIComponent(userName)}`;
+        const res = await fetch(url, { method: "GET" });
+        const result = await res.json();
+
+        if (!result || !result.ok) {
+          mainRecordStatus.textContent = "Google保存の確認に失敗しました。";
+          mainRecordBox.textContent = "Apps Script 側に getMainRecord がまだ入っていない可能性があります。";
+          return;
+        }
+
+        const recordText = String(result.text || "").trim();
+        if (recordText) {
+          mainRecordBox.textContent = recordText;
+          mainRecordStatus.textContent = `Google保存の今日の記録を表示しました。利用者: ${userName}`;
+        } else {
+          mainRecordBox.textContent = "まだGoogle保存に今日の記録はありません。";
+          mainRecordStatus.textContent = `Google保存に今日の記録はありません。利用者: ${userName}`;
+        }
+      } catch (e) {
+        mainRecordStatus.textContent = "Google保存の確認に失敗しました。";
+        mainRecordBox.textContent = "通信エラーが発生しました。Apps Script のデプロイとURLを確認してください。";
       }
     }
 
@@ -987,16 +891,7 @@
         const result = await sendToGoogle(created);
 
         if (result.ok) {
-          const localSave = upsertMainRecordLocal(created);
-
-          if (localSave.ok) {
-            statusText.textContent = localSave.mode === "create"
-              ? "Googleへ保存しました。本体の記録一覧も新規作成しました。"
-              : "Googleへ保存しました。本体の今日の記録へ追記しました。";
-          } else {
-            statusText.textContent = "Googleへ保存しました。本体保存はできませんでした。";
-          }
-
+          statusText.textContent = "Googleへ保存しました。";
           await loadMainRecordForSelectedUser();
         } else {
           statusText.textContent = "保存失敗: " + (result.message || "不明なエラー");
