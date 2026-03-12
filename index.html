@@ -9765,7 +9765,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
         <div class="btns">
           <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容を本文へ反映</button>
-          <button type="button" class="primary" data-google-act="save" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容を保存</button>
           <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(item.id || '')}">削除</button>
           <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
         </div>
@@ -9831,7 +9830,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   }
   function reflectGoogleItem(id){
     const item = allItems.find(v => String(v.id) === String(id));
-    if(!item) return false;
+    if(!item) return;
     const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
     const matchedResident = findResidentValue(item.user || item.userName || '');
     const targetResident = (matchedResident || item.user || item.userName || '').trim();
@@ -9849,34 +9848,14 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
     }
     const note = qs('note');
-    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return false; }
+    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
     const currentText = String(note.value || '').trim();
     const add = String(item.text || item.body || '').trim();
-    if(!add) return false;
-    note.value = currentText ? (currentText + '
-
-' + add) : add;
+    if(!add) return;
+    note.value = currentText ? (currentText + '\n\n' + add) : add;
     note.dispatchEvent(new Event('input', { bubbles:true }));
     note.focus();
     setGoogleStatus('<span class="ok">本文へ反映しました。共有履歴は削除していません。</span>');
-    return true;
-  }
-
-  function saveGoogleItem(id){
-    const ok = reflectGoogleItem(id);
-    if(!ok) return;
-    const form = qs('recordForm');
-    const saveBtn = qs('saveButton');
-    setGoogleStatus('<span class="ok">保存しています…</span>');
-    try{
-      if(form && typeof form.requestSubmit === 'function'){
-        form.requestSubmit(saveBtn || undefined);
-      }else if(saveBtn){
-        saveBtn.click();
-      }
-    }catch(e){
-      setGoogleStatus('<span class="ng">保存を開始できません</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
-    }
   }
   async function deleteGoogleItem(id){
     if(!id) return;
@@ -9942,7 +9921,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const act = t.getAttribute('data-google-act');
     const id = t.getAttribute('data-google-id') || '';
     if(act === 'reflect'){ reflectGoogleItem(id); return; }
-    if(act === 'save'){ saveGoogleItem(id); return; }
     if(act === 'delete'){ deleteGoogleItem(id); return; }
     if(act === 'copy'){ copyGoogleText(t.getAttribute('data-google-text') || ''); return; }
   });
@@ -9952,14 +9930,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 </script>
 
 
-<script>
-(function(){
-  </script>
-
 </body>
 </html>
-
-
-
-
 
