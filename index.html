@@ -9390,7 +9390,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
     return {
       id: raw.id || rec.id || String(Date.now()),
-      _serverId: rec && rec.id ? String(rec.id) : '',
       date: raw.date || rec.date || '',
       resident: raw.resident || rec.user || '',
       recorder: raw.recorder || rec.staff || '',
@@ -9577,15 +9576,10 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
     try{
-      const target = Array.isArray(window.records)
-        ? window.records.find((r) => String(r.id) === String(id))
-        : null;
-      const deleteId = String((target && (target._serverId || target.id)) || id || '').trim();
-      if (!deleteId) throw new Error('削除IDが取得できませんでした');
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
+        body: JSON.stringify({ action:'deleteMainRecord', id:id })
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
@@ -9596,27 +9590,12 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
   };
 
-  function bindPreventEnterSubmit(targetForm){
-    if (!targetForm) return;
-    targetForm.addEventListener('keydown', function(e){
-      if (e.key !== 'Enter') return;
-      const t = e.target;
-      if (!t) return;
-      const tag = (t.tagName || '').toUpperCase();
-      if (tag === 'TEXTAREA') return;
-      if (tag === 'INPUT' || tag === 'SELECT') {
-        e.preventDefault();
-      }
-    });
-  }
-
   function rebindSubmitAndEditHandlers(){
     const form = document.getElementById('recordForm');
     if (form) {
       const fresh = form.cloneNode(true);
       form.parentNode.replaceChild(fresh, form);
       fresh.addEventListener('submit', window.handleSubmit);
-      bindPreventEnterSubmit(fresh);
       const resetButton = document.getElementById('resetButton');
       if (resetButton && typeof resetForm === 'function') {
         resetButton.onclick = resetForm;
@@ -9923,10 +9902,17 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     try{ localStorage.setItem('group_home_records_v1', JSON.stringify(Array.isArray(window.records) ? window.records : [])); }catch(e){}
   }
 
+  function buildFallbackId(rec, raw){
+    const base = [raw.date || rec.date || '', raw.resident || rec.user || '', raw.recorder || rec.staff || '', raw.note || rec.text || ''].join('|');
+    return base ? ('tmp_' + base) : ('tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2,8));
+  }
+
   function serverRecordToLocal(rec){
     const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
+    const serverId = String(rec?.id || raw.id || '').trim();
     return {
-      id: raw.id || rec.id || String(Date.now()),
+      id: String(raw.id || serverId || buildFallbackId(rec || {}, raw)),
+      _serverId: serverId,
       date: raw.date || rec.date || '',
       resident: raw.resident || rec.user || '',
       recorder: raw.recorder || rec.staff || '',
@@ -10068,7 +10054,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   }
 
   window.handleSubmit = async function(event){
-    event.preventDefault();
+    if (event) event.preventDefault();
 
     const date = document.getElementById('date').value;
     const resident = document.getElementById('resident').value;
@@ -10113,10 +10099,15 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
     try{
+      const target = Array.isArray(window.records)
+        ? window.records.find((r) => String(r.id) === String(id))
+        : null;
+      const deleteId = String((target && (target._serverId || target.id)) || id || '').trim();
+      if (!deleteId || deleteId.indexOf('tmp_') === 0) throw new Error('対象が見つかりません');
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id:id })
+        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
@@ -10128,7 +10119,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   };
 
   function bindPreventEnterSubmit(targetForm){
-    if (!targetForm) return;
+    if (!targetForm || targetForm.dataset.enterGuardBound === '1') return;
+    targetForm.dataset.enterGuardBound = '1';
     targetForm.addEventListener('keydown', function(e){
       if (e.key !== 'Enter') return;
       const t = e.target;
