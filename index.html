@@ -7604,10 +7604,16 @@ function clearFavChecks() {
 
     // ===== 編集モーダル（記録編集） =====
     function openEditModal(id) {
-      const record = records.find((r) => r.id === id);
+      const record = records.find((r) => r.id === id) || ((window.records || []).find((r) => r.id === id));
       if (!record) return;
 
       editingRecordId = id;
+      window.editingRecordId = id;
+
+      if (record.recorder && !(recorders || []).includes(record.recorder)) {
+        recorders.push(record.recorder);
+        saveRecorders();
+      }
 
       // 利用者がrecords由来で未登録なら追加
       if (record.resident && !residents.includes(record.resident)) {
@@ -7622,16 +7628,10 @@ function clearFavChecks() {
       document.getElementById("editDate").value = record.date || "";
       document.getElementById("editResident").value = record.resident || "";
       const __er = document.getElementById("editRecorder");
-      if (record.recorder && !(recorders || []).includes(record.recorder)) {
-        recorders.push(record.recorder);
-        saveRecorders();
-        renderRecorderSelects();
-      }
       if (__er) {
         ensureSelectHasValue(__er, record.recorder || "");
         __er.value = record.recorder || "";
       }
-      window.editingRecordId = id;
       const _ets = document.getElementById("editTimeSlot");
       if (_ets) _ets.value = record.timeSlot || "日中";
       const _ec = document.getElementById("editCondition");
@@ -7689,6 +7689,7 @@ function clearFavChecks() {
     function closeEditModal() {
       document.getElementById("editModal").classList.remove("show");
       editingRecordId = null;
+      window.editingRecordId = null;
       editTags = [];
     }
 
@@ -9391,8 +9392,10 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   function serverRecordToLocal(rec){
     const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
+    const serverId = String(raw.id || rec.id || rec.serverId || '');
     return {
-      id: raw.id || rec.id || String(Date.now()),
+      id: serverId || String(Date.now()),
+      _serverId: serverId,
       date: raw.date || rec.date || '',
       resident: raw.resident || rec.user || '',
       recorder: raw.recorder || rec.staff || '',
@@ -9433,18 +9436,13 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     try{
       const next = await fetchMainRecordsRemote({});
       window.records = next;
-      try { records = next; } catch(e) {}
-      try {
-        const names = Array.from(new Set((next || []).map(r => (r && r.recorder ? String(r.recorder).trim() : '')).filter(Boolean)));
-        let changed = false;
-        names.forEach((name) => {
-          if (!(recorders || []).includes(name)) {
-            recorders.push(name);
-            changed = true;
-          }
-        });
-        if (changed) saveRecorders();
-      } catch(e) {}
+      records = next;
+      const remoteResidents = [...new Set(next.map(r => (r.resident || '').trim()).filter(Boolean))];
+      remoteResidents.forEach((name) => { if (!residents.includes(name)) residents.push(name); });
+      const remoteRecorders = [...new Set(next.map(r => (r.recorder || '').trim()).filter(Boolean))];
+      remoteRecorders.forEach((name) => { if (!recorders.includes(name)) recorders.push(name); });
+      saveResidents();
+      saveRecorders();
       localBackupSave();
       if (typeof renderRecords === 'function') renderRecords();
       if (typeof renderResidentSelects === 'function') renderResidentSelects();
@@ -9546,7 +9544,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   }
 
   window.handleSubmit = async function(event){
-    event.preventDefault();
+    if (event) event.preventDefault();
 
     const date = document.getElementById('date').value;
     const resident = document.getElementById('resident').value;
@@ -9569,15 +9567,19 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   };
 
   window.saveEditModal = async function(){
-    if (!window.editingRecordId) return;
-    const idx = Array.isArray(window.records) ? window.records.findIndex((r) => r.id === window.editingRecordId) : -1;
+    const targetId = window.editingRecordId || editingRecordId;
+    if (!targetId) return;
+    const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : records;
+    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => r.id === targetId) : -1;
     if (idx < 0) return;
 
     const resident = document.getElementById('editResident').value;
     const date = document.getElementById('editDate').value;
     if (!resident || !date) { alert('日付と利用者は必須です'); return; }
 
-    const updated = buildRecordDataFromEditForm(window.records[idx]);
+    const updated = buildRecordDataFromEditForm(baseRecords[idx]);
+    updated.id = String(baseRecords[idx]._serverId || baseRecords[idx].id || targetId);
+    updated._serverId = String(baseRecords[idx]._serverId || baseRecords[idx].id || targetId);
     try{
       await saveMainRecordRemote(updated);
       await syncRemoteRecordsAndRender();
@@ -9591,10 +9593,13 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
     try{
+      const rec = (Array.isArray(window.records) ? window.records : records).find((r) => r.id === id) || (Array.isArray(records) ? records.find((r) => r.id === id) : null);
+      const deleteId = String((rec && (rec._serverId || rec.id)) || id || '');
+      if (!deleteId) throw new Error('対象が見つかりません');
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id:id })
+        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
@@ -9605,26 +9610,42 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
   };
 
+  function preventAutoSubmitOnEnter(){
+    document.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+        }
+      });
+    });
+  }
+
+  function forceButtonTypes(){
+    document.querySelectorAll('button').forEach((btn) => {
+      if (!btn.closest('#recordForm')) return;
+      if (btn.id === 'editModalSaveBtn') return;
+      if (btn.type !== 'submit' && btn.id !== 'saveButton') btn.type = 'button';
+    });
+    document.querySelectorAll('.record-action-btn, .support-toggle, #recordsTable button').forEach((btn) => {
+      if (!btn.type) btn.type = 'button';
+    });
+  }
+
   function rebindSubmitAndEditHandlers(){
     const form = document.getElementById('recordForm');
     if (form) {
-      const fresh = form.cloneNode(true);
-      form.parentNode.replaceChild(fresh, form);
-      fresh.addEventListener('submit', window.handleSubmit);
-      const resetButton = document.getElementById('resetButton');
-      if (resetButton && typeof resetForm === 'function') {
-        resetButton.onclick = resetForm;
-      }
+      form.onsubmit = window.handleSubmit;
     }
     const saveBtn = document.getElementById('editModalSaveBtn');
     if (saveBtn) {
-      const freshBtn = saveBtn.cloneNode(true);
-      saveBtn.parentNode.replaceChild(freshBtn, saveBtn);
-      freshBtn.addEventListener('click', window.saveEditModal);
+      saveBtn.type = 'button';
+      saveBtn.onclick = window.saveEditModal;
     }
   }
 
   function rebindAfterDom(){
+    forceButtonTypes();
+    preventAutoSubmitOnEnter();
     try{
       rebindSubmitAndEditHandlers();
     }catch(e){ console.error(e); }
@@ -9911,261 +9932,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
 <script>
 (function(){
-  const MAIN_API_URL = 'https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec';
-
-  function localBackupSave(){
-    try{ localStorage.setItem('group_home_records_v1', JSON.stringify(Array.isArray(window.records) ? window.records : [])); }catch(e){}
-  }
-
-  function serverRecordToLocal(rec){
-    const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
-    return {
-      id: raw.id || rec.id || String(Date.now()),
-      date: raw.date || rec.date || '',
-      resident: raw.resident || rec.user || '',
-      recorder: raw.recorder || rec.staff || '',
-      medTaken: !!raw.medTaken,
-      support: raw.support || '',
-      note: raw.note || rec.text || '',
-      hasSpecialNote: !!raw.hasSpecialNote,
-      tags: Array.isArray(raw.tags) ? raw.tags : (Array.isArray(rec.tags) ? rec.tags : []),
-      daySupportType: raw.daySupportType || '',
-      dayActivityItems: Array.isArray(raw.dayActivityItems) ? raw.dayActivityItems : [],
-      daySupportMainItems: Array.isArray(raw.daySupportMainItems) ? raw.daySupportMainItems : [],
-      daySupportReasonItems: Array.isArray(raw.daySupportReasonItems) ? raw.daySupportReasonItems : [],
-      daySupportBathingSubItems: Array.isArray(raw.daySupportBathingSubItems) ? raw.daySupportBathingSubItems : [],
-      daySupportHealthSubItems: Array.isArray(raw.daySupportHealthSubItems) ? raw.daySupportHealthSubItems : [],
-      abnormalVitalsOn: !!raw.abnormalVitalsOn,
-      abnormalWeight: raw.abnormalWeight || '',
-      abnormalTemp: raw.abnormalTemp || '',
-      abnormalBPsys: raw.abnormalBPsys || '',
-      abnormalBPdia: raw.abnormalBPdia || '',
-      abnormalPulse: raw.abnormalPulse || '',
-      timeSlot: raw.timeSlot || '日中',
-      condition: raw.condition || '良好',
-      mental: raw.mental || '安定'
-    };
-  }
-
-  async function fetchMainRecordsRemote(params){
-    const q = new URLSearchParams({ action: 'getRecords' });
-    if (params && params.date) q.set('date', params.date);
-    if (params && params.user) q.set('user', params.user);
-    const res = await fetch(MAIN_API_URL + '?' + q.toString(), { cache: 'no-store' });
-    const data = await res.json();
-    if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '記録取得に失敗しました');
-    return Array.isArray(data.records) ? data.records.map(serverRecordToLocal) : [];
-  }
-
-  async function syncRemoteRecordsAndRender(){
-    try{
-      const next = await fetchMainRecordsRemote({});
-      window.records = next;
-      try { records = next; } catch(e) {}
-      try {
-        const names = Array.from(new Set((next || []).map(r => (r && r.recorder ? String(r.recorder).trim() : '')).filter(Boolean)));
-        let changed = false;
-        names.forEach((name) => {
-          if (!(recorders || []).includes(name)) {
-            recorders.push(name);
-            changed = true;
-          }
-        });
-        if (changed) saveRecorders();
-      } catch(e) {}
-      localBackupSave();
-      if (typeof renderRecords === 'function') renderRecords();
-      if (typeof renderResidentSelects === 'function') renderResidentSelects();
-      if (typeof renderRecorderSelects === 'function') renderRecorderSelects();
-    }catch(e){
-      console.error('syncRemoteRecordsAndRender error', e);
-    }
-  }
-
-  function buildRecordDataFromMainForm(){
-    const date = document.getElementById('date').value;
-    const resident = document.getElementById('resident').value;
-    const daySupportType = typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('main') : '';
-    const dayActivityItems = Array.from(document.querySelectorAll('.day-activity-item:checked')).map((el) => el.value);
-    const daySupportMainItems = Array.from(document.querySelectorAll('.day-main-item:checked')).map((el) => el.value);
-    const daySupportReasonItems = Array.from(document.querySelectorAll('.day-reason-item:checked')).map((el) => el.value);
-    return {
-      id: String(window.pendingGoogleShareTargetId || '').trim() || Date.now().toString(),
-      date,
-      resident,
-      recorder: document.getElementById('recorder')?.value || '',
-      medTaken: false,
-      support: document.getElementById('support').value,
-      note: document.getElementById('note').value,
-      hasSpecialNote: !!document.getElementById('hasSpecialNote')?.checked,
-      tags: Array.isArray(window.currentTags) ? [...window.currentTags] : [],
-      daySupportType,
-      dayActivityItems,
-      daySupportMainItems,
-      daySupportReasonItems,
-      daySupportBathingSubItems: typeof getBathingSubSelected === 'function' ? getBathingSubSelected('main') : [],
-      daySupportHealthSubItems: typeof getHealthSubSelected === 'function' ? getHealthSubSelected('main') : [],
-      abnormalVitalsOn: !!((document.getElementById('abnormalWeight')?.value || '').trim() || (document.getElementById('abnormalTemp')?.value || '').trim() || (document.getElementById('abnormalBPsys')?.value || '').trim() || (document.getElementById('abnormalBPdia')?.value || '').trim() || (document.getElementById('abnormalPulse')?.value || '').trim()),
-      abnormalWeight: (document.getElementById('abnormalWeight')?.value || '').trim(),
-      abnormalTemp: (document.getElementById('abnormalTemp')?.value || '').trim(),
-      abnormalBPsys: (document.getElementById('abnormalBPsys')?.value || '').trim(),
-      abnormalBPdia: (document.getElementById('abnormalBPdia')?.value || '').trim(),
-      abnormalPulse: (document.getElementById('abnormalPulse')?.value || '').trim(),
-      timeSlot: document.getElementById('timeSlot')?.value || '日中',
-      condition: document.getElementById('condition')?.value || '良好',
-      mental: document.getElementById('mental')?.value || '安定'
-    };
-  }
-
-  function buildRecordDataFromEditForm(existing){
-    const resident = document.getElementById('editResident').value;
-    const date = document.getElementById('editDate').value;
-    const activityItems = Array.from(document.querySelectorAll('.edit-day-activity-item:checked')).map((x) => x.value);
-    const mainItems = Array.from(document.querySelectorAll('.edit-day-main-item:checked')).map((x) => x.value);
-    const reasonItems = Array.from(document.querySelectorAll('.edit-day-reason-item:checked')).map((x) => x.value);
-    return {
-      ...(existing || {}),
-      date,
-      resident,
-      recorder: document.getElementById('editRecorder')?.value || '',
-      medTaken: false,
-      support: document.getElementById('editSupport').value,
-      note: document.getElementById('editNote').value,
-      hasSpecialNote: !!document.getElementById('editHasSpecialNote')?.checked,
-      tags: Array.isArray(window.editTags) ? [...window.editTags] : [],
-      daySupportType: typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('edit') : '',
-      dayActivityItems: activityItems,
-      daySupportMainItems: mainItems,
-      daySupportReasonItems: reasonItems,
-      daySupportBathingSubItems: typeof getBathingSubSelected === 'function' ? getBathingSubSelected('edit') : [],
-      daySupportHealthSubItems: typeof getHealthSubSelected === 'function' ? getHealthSubSelected('edit') : [],
-      abnormalVitalsOn: !!((document.getElementById('editAbnormalWeight')?.value || '').trim() || (document.getElementById('editAbnormalTemp')?.value || '').trim() || (document.getElementById('editAbnormalBPsys')?.value || '').trim() || (document.getElementById('editAbnormalBPdia')?.value || '').trim() || (document.getElementById('editAbnormalPulse')?.value || '').trim()),
-      abnormalWeight: (document.getElementById('editAbnormalWeight')?.value || '').trim(),
-      abnormalTemp: (document.getElementById('editAbnormalTemp')?.value || '').trim(),
-      abnormalBPsys: (document.getElementById('editAbnormalBPsys')?.value || '').trim(),
-      abnormalBPdia: (document.getElementById('editAbnormalBPdia')?.value || '').trim(),
-      abnormalPulse: (document.getElementById('editAbnormalPulse')?.value || '').trim(),
-      timeSlot: document.getElementById('editTimeSlot')?.value || existing?.timeSlot || '日中',
-      condition: document.getElementById('editCondition')?.value || existing?.condition || '良好',
-      mental: document.getElementById('editMental')?.value || existing?.mental || '安定'
-    };
-  }
-
-  async function saveMainRecordRemote(recordData){
-    const payload = {
-      action: 'saveMainRecord',
-      id: recordData.id,
-      date: recordData.date,
-      user: recordData.resident,
-      staff: recordData.recorder,
-      text: recordData.note || '',
-      status: recordData.hasSpecialNote ? 'special' : '',
-      tags: recordData.tags || [],
-      raw: recordData
-    };
-    const res = await fetch(MAIN_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
-    return data;
-  }
-
-  window.handleSubmit = async function(event){
-    event.preventDefault();
-
-    const date = document.getElementById('date').value;
-    const resident = document.getElementById('resident').value;
-    if (!date || !resident) {
-      alert('日付と利用者は必須です。');
-      return;
-    }
-
-    const recordData = buildRecordDataFromMainForm();
-
-    try{
-      await saveMainRecordRemote(recordData);
-      await syncRemoteRecordsAndRender();
-      if (typeof showToast === 'function') showToast(recordData.id && window.pendingGoogleShareTargetId ? '更新しました' : '保存しました');
-      window.pendingGoogleShareTargetId = '';
-      if (typeof resetForm === 'function') resetForm();
-    }catch(e){
-      alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
-    }
-  };
-
-  window.saveEditModal = async function(){
-    if (!window.editingRecordId) return;
-    const idx = Array.isArray(window.records) ? window.records.findIndex((r) => r.id === window.editingRecordId) : -1;
-    if (idx < 0) return;
-
-    const resident = document.getElementById('editResident').value;
-    const date = document.getElementById('editDate').value;
-    if (!resident || !date) { alert('日付と利用者は必須です'); return; }
-
-    const updated = buildRecordDataFromEditForm(window.records[idx]);
-    try{
-      await saveMainRecordRemote(updated);
-      await syncRemoteRecordsAndRender();
-      if (typeof closeEditModal === 'function') closeEditModal();
-      alert('保存しました');
-    }catch(e){
-      alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
-    }
-  };
-
-  window.deleteRecord = async function(id){
-    if (!confirm('この記録を削除しますか？')) return;
-    try{
-      const res = await fetch(MAIN_API_URL, {
-        method:'POST',
-        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id:id })
-      });
-      const data = await res.json();
-      if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
-      await syncRemoteRecordsAndRender();
-      if (typeof showToast === 'function') showToast('削除しました');
-    }catch(e){
-      alert('削除に失敗しました: ' + (e && e.message ? e.message : e));
-    }
-  };
-
-  function rebindSubmitAndEditHandlers(){
-    const form = document.getElementById('recordForm');
-    if (form) {
-      const fresh = form.cloneNode(true);
-      form.parentNode.replaceChild(fresh, form);
-      fresh.addEventListener('submit', window.handleSubmit);
-      const resetButton = document.getElementById('resetButton');
-      if (resetButton && typeof resetForm === 'function') {
-        resetButton.onclick = resetForm;
-      }
-    }
-    const saveBtn = document.getElementById('editModalSaveBtn');
-    if (saveBtn) {
-      const freshBtn = saveBtn.cloneNode(true);
-      saveBtn.parentNode.replaceChild(freshBtn, saveBtn);
-      freshBtn.addEventListener('click', window.saveEditModal);
-    }
-  }
-
-  function rebindAfterDom(){
-    try{
-      rebindSubmitAndEditHandlers();
-    }catch(e){ console.error(e); }
-    syncRemoteRecordsAndRender();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', rebindAfterDom);
-  } else {
-    rebindAfterDom();
-  }
-})();
-</script>
+  </script>
 
 </body>
 </html>
