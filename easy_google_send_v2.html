@@ -165,7 +165,6 @@
       <div id="outputBox" class="output">ここに作成結果が表示されます。</div>
     </section>
 
-
     <section class="card">
       <h2 class="section-title">AI設定</h2>
       <div id="apiKeyClosedBox">
@@ -418,14 +417,18 @@
       const user = getSelectedUserName();
       const staff = getSelectedStaffName();
       const date = getTodayYmd();
-      const existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`).then(r => r.json());
 
-      const previousText = String((existing && existing.text) || (existing && existing.record && (existing.record.text || existing.record.note)) || "").trim();
-      const mergedText = previousText ? `${previousText}
+      let existing = null;
+      try {
+        existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, { cache: "no-store" }).then(r => r.json());
+      } catch (e) {
+        existing = null;
+      }
+
+      const existingText = String((existing && (existing.text || (existing.record && existing.record.text) || (existing.record && existing.record.note))) || "").trim();
+      const mergedText = existingText ? `${existingText}
 
 ${recordText}` : recordText;
-      const baseRecord = (existing && existing.record) ? existing.record : {};
-      const baseRaw = (baseRecord && typeof baseRecord.raw === "object" && baseRecord.raw) ? baseRecord.raw : {};
 
       const payload = {
         action: "saveMainRecord",
@@ -434,18 +437,17 @@ ${recordText}` : recordText;
         staff: staff,
         text: recordText,
         status: "",
-        tags: Array.isArray(baseRecord.tags) ? baseRecord.tags : [],
+        tags: [],
         raw: {
-          ...baseRaw,
-          id: baseRaw.id || baseRecord.id || "",
           date: date,
           resident: user,
+          user: user,
           recorder: staff,
-          support: String(baseRaw.support || baseRecord.support || "").trim(),
+          staff: staff,
+          support: "",
           note: mergedText,
-          tags: Array.isArray(baseRaw.tags) ? baseRaw.tags : (Array.isArray(baseRecord.tags) ? baseRecord.tags : []),
-          hasSpecialNote: !!(baseRaw.hasSpecialNote || baseRecord.hasSpecialNote),
-          source: "easy_google_send_v2"
+          text: mergedText,
+          tags: []
         },
         appendMode: existing && existing.record ? "append" : ""
       };
