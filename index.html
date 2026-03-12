@@ -7004,7 +7004,7 @@ saveAutoItemDefs();
       const resident = resSel.value || residents[0] || "";
       if (!resSel.value && resident) resSel.value = resident;
 
-      const fav = getFavForResident(resident, getCurrentDayType());
+      const fav = getFavForResident(resident);
       const autoSet = new Set(fav.autoKeys || []);
       const daySet  = new Set(fav.dayMain || []);
 
@@ -7341,44 +7341,15 @@ function applyFavNowFromManager() {
         if (dayHealthSubs.length === 0) dayHealthSubs = ["血圧"];
       }
 
+      const prev = getFavForResident(res);
+
+      favByResident[res] = { ...prev, autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
+      saveFavByResident();
+
       const current = document.getElementById("resident")?.value;
       if (current === res) {
-        updateDayTypeUI();
-
-        const autoSet = new Set(autoKeys);
-        document.querySelectorAll("#autoItemCheckboxes .auto-item").forEach((cb) => {
-          cb.checked = autoSet.has(cb.value);
-        });
-        setupAutoBathCompound();
-        setupAutoHealthCompound();
-        setupAutoCleanCompound();
-
-        const autoWrap = document.getElementById("autoItemCheckboxes");
-        if (autoWrap) {
-          autoWrap.querySelectorAll('.auto-bath-sub').forEach((cb) => {
-            cb.checked = autoSet.has("bathing") && autoBathSubs.includes(cb.dataset.sub);
-          });
-          autoWrap.querySelectorAll('.auto-health-sub').forEach((cb) => {
-            cb.checked = autoSet.has("health") && autoHealthSubs.includes(cb.dataset.sub);
-          });
-        }
-
-        const daySet = new Set(dayMain);
-        document.querySelectorAll("#daySupportMainCheckboxes .day-main-item").forEach((cb) => {
-          cb.checked = daySet.has(cb.value);
-        });
-        syncDaySupportMainCompoundStates();
-
-        const dayWrap = document.getElementById("daySupportMainCheckboxes");
-        if (dayWrap) {
-          dayWrap.querySelectorAll('.day-main-bathing-sub').forEach((cb) => {
-            cb.checked = daySet.has(BATHING_MAIN_KEY) && dayBathingSubs.includes(cb.dataset.sub);
-          });
-          dayWrap.querySelectorAll('.day-main-health-sub').forEach((cb) => {
-            cb.checked = daySet.has(HEALTH_MAIN_KEY) && dayHealthSubs.includes(cb.dataset.sub);
-          });
-          syncDaySupportMainCompoundStates();
-        }
+        applyDaySupportListsForResident(res);
+        applyFavToMainCheckboxes(res);
       }
       alert("フォームへ反映しました。");
     }
@@ -7637,6 +7608,7 @@ function clearFavChecks() {
       if (!record) return;
 
       editingRecordId = id;
+      window.editingRecordId = id;
 
       // 利用者がrecords由来で未登録なら追加
       if (record.resident && !residents.includes(record.resident)) {
@@ -7712,6 +7684,7 @@ function clearFavChecks() {
     function closeEditModal() {
       document.getElementById("editModal").classList.remove("show");
       editingRecordId = null;
+      window.editingRecordId = null;
       editTags = [];
     }
 
