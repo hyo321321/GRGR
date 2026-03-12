@@ -9109,6 +9109,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         <div class="manual-actions">
           <button type="button" class="manual-btn" id="googleShareOpenEasyBtn">かんたん記録ページ</button>
           <button type="button" class="manual-btn" id="googleShareRefreshBtn">更新</button>
+          <button type="button" class="manual-btn" id="googleShareQuickSaveBtn">保存</button>
           <button type="button" class="manual-btn" id="googleShareCloseBtn">閉じる</button>
         </div>
       </div>
@@ -9904,12 +9905,22 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const openBtn = qs('openGoogleShareBtn');
     const closeBtn = qs('googleShareCloseBtn');
     const refreshBtn = qs('googleShareRefreshBtn');
+    const saveBtn = qs('googleShareQuickSaveBtn');
     const easyBtn = qs('googleShareOpenEasyBtn');
     const dateEl = qs('googleDateFilter');
     const residentEl = qs('googleResidentFilter');
     if(openBtn) openBtn.addEventListener('click', openGoogleShare);
     if(closeBtn) closeBtn.addEventListener('click', closeGoogleShare);
     if(refreshBtn) refreshBtn.addEventListener('click', fetchGoogleShared);
+    if(saveBtn) saveBtn.addEventListener('click', async () => {
+      try{
+        if(typeof window.handleSubmit === 'function'){
+          await window.handleSubmit();
+        }
+      }catch(e){
+        alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
+      }
+    });
     if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2.html', '_blank'));
     if(dateEl) dateEl.addEventListener('change', fetchGoogleShared);
     if(residentEl) residentEl.addEventListener('change', renderList);
