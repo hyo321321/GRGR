@@ -413,6 +413,10 @@
       });
     }
 
+    function makeNewMainRecordId(user, date) {
+      return `easy_${date}_${String(user || "").replace(/\s+/g, "")}_${Date.now()}`;
+    }
+
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const staff = getSelectedStaffName();
@@ -425,34 +429,63 @@
         existing = null;
       }
 
-      const existingText = String((existing && (existing.text || (existing.record && existing.record.text) || (existing.record && existing.record.note))) || "").trim();
+      const existingRecord = existing && existing.record ? existing.record : null;
+      const existingId = String(
+        (existingRecord && (existingRecord.id || (existingRecord.raw && existingRecord.raw.id))) ||
+        (existing && existing.id) ||
+        ""
+      ).trim();
+      const recordId = existingId || makeNewMainRecordId(user, date);
+
+      const existingText = String(
+        (existing && (existing.text || existing.note)) ||
+        (existingRecord && (existingRecord.text || existingRecord.note || (existingRecord.raw && existingRecord.raw.note))) ||
+        ""
+      ).trim();
       const mergedText = existingText ? `${existingText}
 
 ${recordText}` : recordText;
 
+      const rawRecord = {
+        id: recordId,
+        date: date,
+        resident: user,
+        recorder: staff,
+        medTaken: false,
+        support: "",
+        note: mergedText,
+        hasSpecialNote: false,
+        tags: [],
+        daySupportType: "",
+        dayActivityItems: [],
+        daySupportMainItems: [],
+        daySupportReasonItems: [],
+        daySupportBathingSubItems: [],
+        daySupportHealthSubItems: [],
+        abnormalVitalsOn: false,
+        abnormalWeight: "",
+        abnormalTemp: "",
+        abnormalBPsys: "",
+        abnormalBPdia: "",
+        abnormalPulse: "",
+        timeSlot: "日中",
+        condition: "良好",
+        mental: "安定"
+      };
+
       const payload = {
         action: "saveMainRecord",
+        id: recordId,
         date: date,
         user: user,
         staff: staff,
-        text: recordText,
+        text: mergedText,
         status: "",
         tags: [],
-        raw: {
-          date: date,
-          resident: user,
-          user: user,
-          recorder: staff,
-          staff: staff,
-          support: "",
-          note: mergedText,
-          text: mergedText,
-          tags: []
-        },
-        appendMode: existing && existing.record ? "append" : ""
+        raw: rawRecord,
+        appendMode: existingRecord ? "append" : ""
       };
 
-      if (existing && existing.record && existing.record.id) payload.id = existing.record.id;
       return await postJson(payload);
     }
 
