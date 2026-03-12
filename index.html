@@ -9102,6 +9102,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         <div class="manual-actions">
           <button type="button" class="manual-btn" id="googleShareOpenEasyBtn">かんたん記録ページ</button>
           <button type="button" class="manual-btn" id="googleShareRefreshBtn">更新</button>
+          <button type="button" class="manual-btn" id="googleShareSaveMainBtn">本体を保存</button>
           <button type="button" class="manual-btn" id="googleShareCloseBtn">閉じる</button>
         </div>
       </div>
@@ -9120,6 +9121,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
           </div>
         </div>
         <div class="google-share-status" id="googleShareStatus">読み込み待ちです。</div>
+        <div class="small" style="margin-top:6px; color:#6b7280;">反映したら、モーダル内の「本体を保存」でそのまま保存できます。複数件を続けて反映したい時にも使えます。</div>
         <div class="google-share-list" id="googleShareList">
           <div class="small">まだ読み込まれていません。</div>
         </div>
@@ -9423,6 +9425,24 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   function normalizeName(s){ return String(s||'').replace(/\s+/g,'').replace(/　/g,'').replace(/さん$/,'').trim(); }
   function todayYmd(){ const d = new Date(); const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
   let allItems = [];
+  let reflectedGoogleIds = [];
+  function loadReflectedGoogleIds(){
+    try{ reflectedGoogleIds = JSON.parse(localStorage.getItem('googleShareReflectedIds_v1') || '[]'); if(!Array.isArray(reflectedGoogleIds)) reflectedGoogleIds = []; }catch(e){ reflectedGoogleIds = []; }
+  }
+  function saveReflectedGoogleIds(){
+    try{ localStorage.setItem('googleShareReflectedIds_v1', JSON.stringify(reflectedGoogleIds)); }catch(e){}
+  }
+  function isGoogleItemReflected(id){
+    return reflectedGoogleIds.includes(String(id||''));
+  }
+  function markGoogleItemReflected(id){
+    const key = String(id||'').trim();
+    if(!key) return;
+    if(!reflectedGoogleIds.includes(key)){
+      reflectedGoogleIds.push(key);
+      saveReflectedGoogleIds();
+    }
+  }
   function setGoogleStatus(html){ const node = qs('googleShareStatus'); if(node) node.innerHTML = html || ''; }
   function findResidentValue(name){
     const sel = qs('resident');
@@ -9475,10 +9495,11 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
           <span>利用者：${escapeHtmlGoogle(item.user || item.userName || '')}</span>
           <span>記録者：${escapeHtmlGoogle(item.staff || item.staffName || '')}</span>
           <span>更新：${escapeHtmlGoogle(item.updatedAt || item.createdAt || '')}</span>
+          ${isGoogleItemReflected(item.id) ? '<span style="display:inline-block; padding:2px 8px; border-radius:999px; background:#dcfce7; color:#166534; font-weight:700;">反映済み</span>' : ''}
         </div>
         <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
         <div class="btns">
-          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容を本文へ反映</button>
+          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">${isGoogleItemReflected(item.id) ? '反映済み・もう一度反映' : 'この内容を本文へ反映'}</button>
           <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(item.id || '')}">削除</button>
           <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
         </div>
@@ -9548,28 +9569,46 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
     const matchedResident = findResidentValue(item.user || item.userName || '');
     const targetResident = (matchedResident || item.user || item.userName || '').trim();
+    const currentDate = String((qs('date') && qs('date').value) || '').trim();
+    const currentResident = String((qs('resident') && qs('resident').value) || '').trim();
+    const sameTargetAlreadyOpen = currentDate === targetDate && normalizeName(currentResident) === normalizeName(targetResident);
+
     let existingRecord = null;
     if(Array.isArray(records)){
       existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
     }
-    if(existingRecord){
-      loadRecordIntoMainForm(existingRecord);
-      window.pendingGoogleShareTargetId = existingRecord.id;
-    }else{
-      window.pendingGoogleShareTargetId = '';
-      const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
-      const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
-      const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
+
+    if(!sameTargetAlreadyOpen){
+      if(existingRecord){
+        loadRecordIntoMainForm(existingRecord);
+        window.pendingGoogleShareTargetId = existingRecord.id;
+      }else{
+        window.pendingGoogleShareTargetId = '';
+        const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
+        const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
+        const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
+      }
     }
+
     const note = qs('note');
     if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
     const currentText = String(note.value || '').trim();
     const add = String(item.text || item.body || '').trim();
     if(!add) return;
+
+    if(currentText === add || currentText.endsWith('\n\n' + add) || currentText.endsWith(add)){
+      setGoogleStatus('<span class="ok">すでに同じ内容が本文に入っています。</span>');
+      markGoogleItemReflected(id);
+      renderList();
+      return;
+    }
+
     note.value = currentText ? (currentText + '\n\n' + add) : add;
     note.dispatchEvent(new Event('input', { bubbles:true }));
     note.focus();
-    setGoogleStatus('<span class="ok">本文へ反映しました。共有履歴は削除していません。</span>');
+    markGoogleItemReflected(id);
+    renderList();
+    setGoogleStatus('<span class="ok">本文へ反映しました。必要ならモーダル内の「本体を保存」を押してください。</span>');
   }
   async function deleteGoogleItem(id){
     if(!id) return;
@@ -9597,6 +9636,22 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       setGoogleStatus('<span class="ng">コピーに失敗</span>');
     }
   }
+  function saveMainFromGoogleModal(){
+    const form = qs('recordForm');
+    if(!form){ alert('本体フォームが見つかりません。'); return; }
+    const resident = String((qs('resident') && qs('resident').value) || '').trim();
+    if(!resident){
+      alert('先に利用者を確認してください。');
+      return;
+    }
+    if(typeof form.requestSubmit === 'function'){
+      form.requestSubmit();
+    }else{
+      const evt = new Event('submit', { bubbles:true, cancelable:true });
+      form.dispatchEvent(evt);
+    }
+    setGoogleStatus('<span class="ok">本体を保存しました。続けて別の共有文も反映できます。</span>');
+  }
   function openGoogleShare(){
     const ov = qs('googleShareOverlay');
     if(!ov) return;
@@ -9618,12 +9673,14 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const openBtn = qs('openGoogleShareBtn');
     const closeBtn = qs('googleShareCloseBtn');
     const refreshBtn = qs('googleShareRefreshBtn');
+    const saveBtn = qs('googleShareSaveMainBtn');
     const easyBtn = qs('googleShareOpenEasyBtn');
     const dateEl = qs('googleDateFilter');
     const residentEl = qs('googleResidentFilter');
     if(openBtn) openBtn.addEventListener('click', openGoogleShare);
     if(closeBtn) closeBtn.addEventListener('click', closeGoogleShare);
     if(refreshBtn) refreshBtn.addEventListener('click', fetchGoogleShared);
+    if(saveBtn) saveBtn.addEventListener('click', saveMainFromGoogleModal);
     if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2.html', '_blank'));
     if(dateEl) dateEl.addEventListener('change', fetchGoogleShared);
     if(residentEl) residentEl.addEventListener('change', renderList);
@@ -9639,7 +9696,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     if(act === 'copy'){ copyGoogleText(t.getAttribute('data-google-text') || ''); return; }
   });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeGoogleShare(); });
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindGoogleShare); else bindGoogleShare();
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ loadReflectedGoogleIds(); bindGoogleShare(); }); else { loadReflectedGoogleIds(); bindGoogleShare(); }
 })();
 </script>
 
