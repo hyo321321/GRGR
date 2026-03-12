@@ -4884,21 +4884,18 @@ tr.appendChild(tdSupport);
         const tdActions = document.createElement("td");
 
         const viewBtn = document.createElement("button");
-        viewBtn.type = "button";
         viewBtn.textContent = "詳細";
         viewBtn.className = "btn-secondary";
         viewBtn.style.fontSize = "12px";
         viewBtn.onclick = () => showRecordDetail(record.id);
 
         const editBtn = document.createElement("button");
-        editBtn.type = "button";
         editBtn.textContent = "編集";
         editBtn.className = "btn-secondary";
         editBtn.style.fontSize = "12px";
         editBtn.onclick = () => openEditModal(record.id);
 
         const delBtn = document.createElement("button");
-        delBtn.type = "button";
         delBtn.textContent = "削除";
         delBtn.className = "btn-danger";
         delBtn.style.fontSize = "12px";
@@ -7007,7 +7004,7 @@ saveAutoItemDefs();
       const resident = resSel.value || residents[0] || "";
       if (!resSel.value && resident) resSel.value = resident;
 
-      const fav = getFavForResident(resident);
+      const fav = getFavForResident(resident, getCurrentDayType());
       const autoSet = new Set(fav.autoKeys || []);
       const daySet  = new Set(fav.dayMain || []);
 
@@ -7344,15 +7341,44 @@ function applyFavNowFromManager() {
         if (dayHealthSubs.length === 0) dayHealthSubs = ["血圧"];
       }
 
-      const prev = getFavForResident(res);
-
-      favByResident[res] = { ...prev, autoKeys, dayMain, autoBathSubs, autoHealthSubs, dayBathingSubs, dayHealthSubs };
-      saveFavByResident();
-
       const current = document.getElementById("resident")?.value;
       if (current === res) {
-        applyDaySupportListsForResident(res);
-        applyFavToMainCheckboxes(res);
+        updateDayTypeUI();
+
+        const autoSet = new Set(autoKeys);
+        document.querySelectorAll("#autoItemCheckboxes .auto-item").forEach((cb) => {
+          cb.checked = autoSet.has(cb.value);
+        });
+        setupAutoBathCompound();
+        setupAutoHealthCompound();
+        setupAutoCleanCompound();
+
+        const autoWrap = document.getElementById("autoItemCheckboxes");
+        if (autoWrap) {
+          autoWrap.querySelectorAll('.auto-bath-sub').forEach((cb) => {
+            cb.checked = autoSet.has("bathing") && autoBathSubs.includes(cb.dataset.sub);
+          });
+          autoWrap.querySelectorAll('.auto-health-sub').forEach((cb) => {
+            cb.checked = autoSet.has("health") && autoHealthSubs.includes(cb.dataset.sub);
+          });
+        }
+
+        const daySet = new Set(dayMain);
+        document.querySelectorAll("#daySupportMainCheckboxes .day-main-item").forEach((cb) => {
+          cb.checked = daySet.has(cb.value);
+        });
+        syncDaySupportMainCompoundStates();
+
+        const dayWrap = document.getElementById("daySupportMainCheckboxes");
+        if (dayWrap) {
+          dayWrap.querySelectorAll('.day-main-bathing-sub').forEach((cb) => {
+            cb.checked = daySet.has(BATHING_MAIN_KEY) && dayBathingSubs.includes(cb.dataset.sub);
+          });
+          dayWrap.querySelectorAll('.day-main-health-sub').forEach((cb) => {
+            cb.checked = daySet.has(HEALTH_MAIN_KEY) && dayHealthSubs.includes(cb.dataset.sub);
+          });
+          syncDaySupportMainCompoundStates();
+        }
       }
       alert("フォームへ反映しました。");
     }
@@ -9388,10 +9414,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   function serverRecordToLocal(rec){
     const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
-    const serverId = String(rec?.id || raw?.id || '').trim();
     return {
       id: raw.id || rec.id || String(Date.now()),
-      _serverId: serverId,
       date: raw.date || rec.date || '',
       resident: raw.resident || rec.user || '',
       recorder: raw.recorder || rec.staff || '',
@@ -9577,14 +9601,11 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
-    const hit = Array.isArray(window.records) ? window.records.find((r) => String(r.id) === String(id)) : null;
-    const deleteId = String(hit?._serverId || hit?.id || id || '').trim();
-    if (!deleteId) { alert('削除に失敗しました: 対象IDがありません'); return; }
     try{
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
+        body: JSON.stringify({ action:'deleteMainRecord', id:id })
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
@@ -9598,25 +9619,19 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   function rebindSubmitAndEditHandlers(){
     const form = document.getElementById('recordForm');
     if (form) {
-      form.onsubmit = window.handleSubmit;
-      form.addEventListener('keydown', function(e){
-        const t = e.target;
-        if (!t) return;
-        const tag = (t.tagName || '').toUpperCase();
-        if (e.key === 'Enter' && (tag === 'INPUT' || tag === 'SELECT')) {
-          e.preventDefault();
-        }
-      });
+      const fresh = form.cloneNode(true);
+      form.parentNode.replaceChild(fresh, form);
+      fresh.addEventListener('submit', window.handleSubmit);
       const resetButton = document.getElementById('resetButton');
       if (resetButton && typeof resetForm === 'function') {
-        resetButton.type = 'button';
         resetButton.onclick = resetForm;
       }
     }
     const saveBtn = document.getElementById('editModalSaveBtn');
     if (saveBtn) {
-      saveBtn.type = 'button';
-      saveBtn.onclick = window.saveEditModal;
+      const freshBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(freshBtn, saveBtn);
+      freshBtn.addEventListener('click', window.saveEditModal);
     }
   }
 
@@ -9905,7 +9920,251 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 </script>
 
 
+<script>
+(function(){
+  const MAIN_API_URL = 'https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec';
 
+  function localBackupSave(){
+    try{ localStorage.setItem('group_home_records_v1', JSON.stringify(Array.isArray(window.records) ? window.records : [])); }catch(e){}
+  }
+
+  function serverRecordToLocal(rec){
+    const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
+    return {
+      id: raw.id || rec.id || String(Date.now()),
+      date: raw.date || rec.date || '',
+      resident: raw.resident || rec.user || '',
+      recorder: raw.recorder || rec.staff || '',
+      medTaken: !!raw.medTaken,
+      support: raw.support || '',
+      note: raw.note || rec.text || '',
+      hasSpecialNote: !!raw.hasSpecialNote,
+      tags: Array.isArray(raw.tags) ? raw.tags : (Array.isArray(rec.tags) ? rec.tags : []),
+      daySupportType: raw.daySupportType || '',
+      dayActivityItems: Array.isArray(raw.dayActivityItems) ? raw.dayActivityItems : [],
+      daySupportMainItems: Array.isArray(raw.daySupportMainItems) ? raw.daySupportMainItems : [],
+      daySupportReasonItems: Array.isArray(raw.daySupportReasonItems) ? raw.daySupportReasonItems : [],
+      daySupportBathingSubItems: Array.isArray(raw.daySupportBathingSubItems) ? raw.daySupportBathingSubItems : [],
+      daySupportHealthSubItems: Array.isArray(raw.daySupportHealthSubItems) ? raw.daySupportHealthSubItems : [],
+      abnormalVitalsOn: !!raw.abnormalVitalsOn,
+      abnormalWeight: raw.abnormalWeight || '',
+      abnormalTemp: raw.abnormalTemp || '',
+      abnormalBPsys: raw.abnormalBPsys || '',
+      abnormalBPdia: raw.abnormalBPdia || '',
+      abnormalPulse: raw.abnormalPulse || '',
+      timeSlot: raw.timeSlot || '日中',
+      condition: raw.condition || '良好',
+      mental: raw.mental || '安定'
+    };
+  }
+
+  async function fetchMainRecordsRemote(params){
+    const q = new URLSearchParams({ action: 'getRecords' });
+    if (params && params.date) q.set('date', params.date);
+    if (params && params.user) q.set('user', params.user);
+    const res = await fetch(MAIN_API_URL + '?' + q.toString(), { cache: 'no-store' });
+    const data = await res.json();
+    if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '記録取得に失敗しました');
+    return Array.isArray(data.records) ? data.records.map(serverRecordToLocal) : [];
+  }
+
+  async function syncRemoteRecordsAndRender(){
+    try{
+      const next = await fetchMainRecordsRemote({});
+      window.records = next;
+      localBackupSave();
+      if (typeof renderRecords === 'function') renderRecords();
+      if (typeof renderResidentSelects === 'function') renderResidentSelects();
+      if (typeof renderRecorderSelects === 'function') renderRecorderSelects();
+    }catch(e){
+      console.error('syncRemoteRecordsAndRender error', e);
+    }
+  }
+
+  function buildRecordDataFromMainForm(){
+    const date = document.getElementById('date').value;
+    const resident = document.getElementById('resident').value;
+    const daySupportType = typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('main') : '';
+    const dayActivityItems = Array.from(document.querySelectorAll('.day-activity-item:checked')).map((el) => el.value);
+    const daySupportMainItems = Array.from(document.querySelectorAll('.day-main-item:checked')).map((el) => el.value);
+    const daySupportReasonItems = Array.from(document.querySelectorAll('.day-reason-item:checked')).map((el) => el.value);
+    return {
+      id: String(window.pendingGoogleShareTargetId || '').trim() || Date.now().toString(),
+      date,
+      resident,
+      recorder: document.getElementById('recorder')?.value || '',
+      medTaken: false,
+      support: document.getElementById('support').value,
+      note: document.getElementById('note').value,
+      hasSpecialNote: !!document.getElementById('hasSpecialNote')?.checked,
+      tags: Array.isArray(window.currentTags) ? [...window.currentTags] : [],
+      daySupportType,
+      dayActivityItems,
+      daySupportMainItems,
+      daySupportReasonItems,
+      daySupportBathingSubItems: typeof getBathingSubSelected === 'function' ? getBathingSubSelected('main') : [],
+      daySupportHealthSubItems: typeof getHealthSubSelected === 'function' ? getHealthSubSelected('main') : [],
+      abnormalVitalsOn: !!((document.getElementById('abnormalWeight')?.value || '').trim() || (document.getElementById('abnormalTemp')?.value || '').trim() || (document.getElementById('abnormalBPsys')?.value || '').trim() || (document.getElementById('abnormalBPdia')?.value || '').trim() || (document.getElementById('abnormalPulse')?.value || '').trim()),
+      abnormalWeight: (document.getElementById('abnormalWeight')?.value || '').trim(),
+      abnormalTemp: (document.getElementById('abnormalTemp')?.value || '').trim(),
+      abnormalBPsys: (document.getElementById('abnormalBPsys')?.value || '').trim(),
+      abnormalBPdia: (document.getElementById('abnormalBPdia')?.value || '').trim(),
+      abnormalPulse: (document.getElementById('abnormalPulse')?.value || '').trim(),
+      timeSlot: document.getElementById('timeSlot')?.value || '日中',
+      condition: document.getElementById('condition')?.value || '良好',
+      mental: document.getElementById('mental')?.value || '安定'
+    };
+  }
+
+  function buildRecordDataFromEditForm(existing){
+    const resident = document.getElementById('editResident').value;
+    const date = document.getElementById('editDate').value;
+    const activityItems = Array.from(document.querySelectorAll('.edit-day-activity-item:checked')).map((x) => x.value);
+    const mainItems = Array.from(document.querySelectorAll('.edit-day-main-item:checked')).map((x) => x.value);
+    const reasonItems = Array.from(document.querySelectorAll('.edit-day-reason-item:checked')).map((x) => x.value);
+    return {
+      ...(existing || {}),
+      date,
+      resident,
+      recorder: document.getElementById('editRecorder')?.value || '',
+      medTaken: false,
+      support: document.getElementById('editSupport').value,
+      note: document.getElementById('editNote').value,
+      hasSpecialNote: !!document.getElementById('editHasSpecialNote')?.checked,
+      tags: Array.isArray(window.editTags) ? [...window.editTags] : [],
+      daySupportType: typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('edit') : '',
+      dayActivityItems: activityItems,
+      daySupportMainItems: mainItems,
+      daySupportReasonItems: reasonItems,
+      daySupportBathingSubItems: typeof getBathingSubSelected === 'function' ? getBathingSubSelected('edit') : [],
+      daySupportHealthSubItems: typeof getHealthSubSelected === 'function' ? getHealthSubSelected('edit') : [],
+      abnormalVitalsOn: !!((document.getElementById('editAbnormalWeight')?.value || '').trim() || (document.getElementById('editAbnormalTemp')?.value || '').trim() || (document.getElementById('editAbnormalBPsys')?.value || '').trim() || (document.getElementById('editAbnormalBPdia')?.value || '').trim() || (document.getElementById('editAbnormalPulse')?.value || '').trim()),
+      abnormalWeight: (document.getElementById('editAbnormalWeight')?.value || '').trim(),
+      abnormalTemp: (document.getElementById('editAbnormalTemp')?.value || '').trim(),
+      abnormalBPsys: (document.getElementById('editAbnormalBPsys')?.value || '').trim(),
+      abnormalBPdia: (document.getElementById('editAbnormalBPdia')?.value || '').trim(),
+      abnormalPulse: (document.getElementById('editAbnormalPulse')?.value || '').trim(),
+      timeSlot: document.getElementById('editTimeSlot')?.value || existing?.timeSlot || '日中',
+      condition: document.getElementById('editCondition')?.value || existing?.condition || '良好',
+      mental: document.getElementById('editMental')?.value || existing?.mental || '安定'
+    };
+  }
+
+  async function saveMainRecordRemote(recordData){
+    const payload = {
+      action: 'saveMainRecord',
+      id: recordData.id,
+      date: recordData.date,
+      user: recordData.resident,
+      staff: recordData.recorder,
+      text: recordData.note || '',
+      status: recordData.hasSpecialNote ? 'special' : '',
+      tags: recordData.tags || [],
+      raw: recordData
+    };
+    const res = await fetch(MAIN_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+    return data;
+  }
+
+  window.handleSubmit = async function(event){
+    event.preventDefault();
+
+    const date = document.getElementById('date').value;
+    const resident = document.getElementById('resident').value;
+    if (!date || !resident) {
+      alert('日付と利用者は必須です。');
+      return;
+    }
+
+    const recordData = buildRecordDataFromMainForm();
+
+    try{
+      await saveMainRecordRemote(recordData);
+      await syncRemoteRecordsAndRender();
+      if (typeof showToast === 'function') showToast(recordData.id && window.pendingGoogleShareTargetId ? '更新しました' : '保存しました');
+      window.pendingGoogleShareTargetId = '';
+      if (typeof resetForm === 'function') resetForm();
+    }catch(e){
+      alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
+    }
+  };
+
+  window.saveEditModal = async function(){
+    if (!window.editingRecordId) return;
+    const idx = Array.isArray(window.records) ? window.records.findIndex((r) => r.id === window.editingRecordId) : -1;
+    if (idx < 0) return;
+
+    const resident = document.getElementById('editResident').value;
+    const date = document.getElementById('editDate').value;
+    if (!resident || !date) { alert('日付と利用者は必須です'); return; }
+
+    const updated = buildRecordDataFromEditForm(window.records[idx]);
+    try{
+      await saveMainRecordRemote(updated);
+      await syncRemoteRecordsAndRender();
+      if (typeof closeEditModal === 'function') closeEditModal();
+      alert('保存しました');
+    }catch(e){
+      alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
+    }
+  };
+
+  window.deleteRecord = async function(id){
+    if (!confirm('この記録を削除しますか？')) return;
+    try{
+      const res = await fetch(MAIN_API_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action:'deleteMainRecord', id:id })
+      });
+      const data = await res.json();
+      if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
+      await syncRemoteRecordsAndRender();
+      if (typeof showToast === 'function') showToast('削除しました');
+    }catch(e){
+      alert('削除に失敗しました: ' + (e && e.message ? e.message : e));
+    }
+  };
+
+  function rebindSubmitAndEditHandlers(){
+    const form = document.getElementById('recordForm');
+    if (form) {
+      const fresh = form.cloneNode(true);
+      form.parentNode.replaceChild(fresh, form);
+      fresh.addEventListener('submit', window.handleSubmit);
+      const resetButton = document.getElementById('resetButton');
+      if (resetButton && typeof resetForm === 'function') {
+        resetButton.onclick = resetForm;
+      }
+    }
+    const saveBtn = document.getElementById('editModalSaveBtn');
+    if (saveBtn) {
+      const freshBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(freshBtn, saveBtn);
+      freshBtn.addEventListener('click', window.saveEditModal);
+    }
+  }
+
+  function rebindAfterDom(){
+    try{
+      rebindSubmitAndEditHandlers();
+    }catch(e){ console.error(e); }
+    syncRemoteRecordsAndRender();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', rebindAfterDom);
+  } else {
+    rebindAfterDom();
+  }
+})();
+</script>
 
 </body>
 </html>
