@@ -15,12 +15,8 @@
       --primary-hover: #1d4ed8;
       --orange: #ea580c;
       --orange-hover: #c2410c;
-      --green: #0f766e;
-      --green-hover: #115e59;
-      --violet: #7c3aed;
-      --violet-hover: #6d28d9;
-      --red: #dc2626;
-      --red-hover: #b91c1c;
+      --green: #16a34a;
+      --green-hover: #15803d;
       --shadow: 0 6px 20px rgba(0,0,0,0.08);
       --radius: 18px;
     }
@@ -63,19 +59,19 @@
     .ai-row { display: grid; gap: 12px; }
     .ai-actions { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
     .ai-result { white-space: pre-wrap; background:#fff; border:2px solid var(--line); border-radius: 14px; padding: 14px; min-height: 120px; font-size: 16px; }
-    .btn-ai { background: var(--green); }
-    .btn-ai:hover { background: var(--green-hover); }
-    .btn-apply { background: var(--violet); }
-    .btn-apply:hover { background: var(--violet-hover); }
+    .btn-ai { background: #0f766e; }
+    .btn-ai:hover { background: #115e59; }
+    .btn-apply { background: #7c3aed; }
+    .btn-apply:hover { background: #6d28d9; }
     .small-muted { color: var(--sub); font-size: 13px; }
     .grid { display: grid; gap: 14px; }
     .button-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
     button {
       border: none;
       border-radius: 16px;
-      min-height: 72px;
-      padding: 16px;
-      font-size: 24px;
+      min-height: 56px;
+      padding: 12px 16px;
+      font-size: 18px;
       font-weight: 700;
       cursor: pointer;
       color: #fff;
@@ -83,148 +79,21 @@
       -webkit-tap-highlight-color: transparent;
     }
     button:active { transform: scale(0.99); }
-    .btn-create { background: var(--primary); }
+    .btn-create { background: var(--primary); min-height: 72px; font-size: 24px; }
     .btn-create:hover { background: var(--primary-hover); }
-    .btn-copy {
-      background: var(--orange);
-      min-height: 56px;
-      font-size: 18px;
-      padding: 12px 16px;
-    }
+    .btn-copy { background: var(--orange); }
     .btn-copy:hover { background: var(--orange-hover); }
-    .status {
-      margin-top: 12px;
-      font-size: 15px;
-      color: var(--sub);
-      min-height: 24px;
-      white-space: pre-wrap;
-    }
-    .output {
-      white-space: pre-wrap;
-      background: #f8fafc;
-      border: 2px solid var(--line);
-      border-radius: 14px;
-      padding: 16px;
-      min-height: 120px;
-      font-size: 17px;
-    }
-    .note {
-      font-size: 13px;
-      color: var(--sub);
-      margin-top: 8px;
-      word-break: break-all;
-    }
-
-    .shared-box {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      background: #f8fafc;
-      margin-top: 12px;
-    }
-    .shared-filter-row {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .shared-card {
-      background: #fff;
-      border: 2px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      margin-top: 10px;
-    }
-    .shared-user {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .shared-meta {
-      color: var(--sub);
-      font-size: 13px;
-      margin-bottom: 8px;
-      word-break: break-word;
-    }
-    .shared-text {
-      white-space: pre-wrap;
-      background: #f8fafc;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 15px;
-    }
-    .shared-actions {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .btn-shared-load {
-      background: var(--primary);
-      min-height: 56px;
-      font-size: 18px;
-      padding: 12px 16px;
-    }
-    .btn-shared-load:hover { background: var(--primary-hover); }
-    .btn-reflect {
-      background: var(--violet);
-      min-height: 56px;
-      font-size: 18px;
-      padding: 12px 16px;
-    }
-    .btn-reflect:hover { background: var(--violet-hover); }
-    .btn-delete-shared {
-      background: var(--red);
-      min-height: 56px;
-      font-size: 18px;
-      padding: 12px 16px;
-    }
-    .btn-delete-shared:hover { background: var(--red-hover); }
-    .shared-empty {
-      color: var(--sub);
-      padding: 12px 4px;
-      font-size: 15px;
-    }
-    .warn-box {
-      margin-top: 10px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #fff7ed;
-      border: 1px solid #fed7aa;
-      color: #9a3412;
-      font-size: 14px;
-      white-space: pre-wrap;
-    }
-
-
-    .main-confirm-box {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      background: #f8fafc;
-      margin-top: 12px;
-    }
-    .main-confirm-head {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .main-confirm-text {
-      white-space: pre-wrap;
-      background: #fff;
-      border: 2px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      min-height: 120px;
-      font-size: 16px;
-    }
+    .btn-check { background: var(--green); }
+    .btn-check:hover { background: var(--green-hover); }
+    .status { margin-top: 12px; font-size: 15px; color: var(--sub); min-height: 24px; white-space: pre-wrap; }
+    .output { white-space: pre-wrap; background: #f8fafc; border: 2px solid var(--line); border-radius: 14px; padding: 16px; min-height: 120px; font-size: 17px; }
+    .note { font-size: 13px; color: var(--sub); margin-top: 8px; word-break: break-all; }
     @media (min-width: 720px) {
       .button-grid { grid-template-columns: 1fr 1fr; }
       .grid.two { grid-template-columns: 1fr 1fr; }
       .ai-actions { grid-template-columns: 1fr 1fr; }
-      .shared-filter-row { grid-template-columns: 1fr 1fr 1fr; align-items: end; }
-      .shared-actions { grid-template-columns: 1fr 1fr; }
-      button { min-height: 82px; font-size: 26px; }
+      button { min-height: 60px; }
+      .btn-create { min-height: 82px; font-size: 26px; }
     }
   </style>
 </head>
@@ -232,7 +101,7 @@
   <div class="wrap">
     <section class="title-card">
       <h1 class="title">かんたん記録ページ</h1>
-      <p class="subtitle">Google送信版です。入力 → 一括作成 → Google保存 の流れで使えます。</p>
+      <p class="subtitle">Google共有へ送信しつつ、本体記録も同時に作成します。</p>
     </section>
 
     <section class="card">
@@ -249,24 +118,19 @@
           <input id="staffName" type="text" placeholder="記録者名を入力" style="display:none; margin-top:10px;" />
         </div>
       </div>
-      <div class="help">本体に登録済みの利用者名・記録者名を自動で候補表示します。候補が出ない端末では手入力に切り替わります。</div>
+      <div class="help">本体に登録済みの利用者名・記録者名を自動で候補表示します。</div>
     </section>
 
     <section class="card">
       <h2 class="section-title">業務日誌記入欄</h2>
       <label for="memoInput">ここにメモを入力してください</label>
-      <textarea id="memoInput" placeholder="例）
-木村さん受診終わりました。
-血液検査問題なし。
-最近朝起きにくいことを伝えました。
-服薬変更なし。
-次回4/2受診です。"></textarea>
-      <div class="help">短文でも大丈夫です。「一括作成」で文を整えて、そのままGoogleへ送れます。</div>
+      <textarea id="memoInput" placeholder="例）&#10;木村さん受診終わりました。&#10;血液検査問題なし。&#10;最近朝起きにくいことを伝えました。&#10;服薬変更なし。&#10;次回4/2受診です。"></textarea>
+      <div class="help">「一括作成して送信」で Google共有 と 本体記録 を同時に保存します。</div>
     </section>
 
     <section class="card">
       <h2 class="section-title">AI補助</h2>
-      <div class="small-muted">Geminiで文章を整えます。APIキーはこの端末だけに保存されます。</div>
+      <div class="small-muted">Geminiで文章を整えます。</div>
       <div class="ai-box">
         <div class="ai-row">
           <div>
@@ -293,33 +157,7 @@
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
       </div>
       <div class="status" id="statusText"></div>
-      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycbzKjHRRr4B3pTCdRWAxSgGfCgK9Ndp3ycJ5bqUY0UnL6QJjBaGuvnDvEUi1EkvOWYeW/exec</div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">☁ Google共有</h2>
-      <div class="help">日付と利用者で共有履歴を読み込めます。本文へ反映すると、今の本文の下に改行して追記され、反映した共有履歴は自動で隠れます。</div>
-      <div class="shared-box">
-        <div class="shared-filter-row">
-          <div>
-            <label for="sharedDate">共有日付</label>
-            <input type="date" id="sharedDate" />
-          </div>
-          <div>
-            <label for="sharedUserFilter">利用者絞り込み</label>
-            <select id="sharedUserFilter" class="select-like">
-              <option value="">全利用者</option>
-            </select>
-          </div>
-          <div>
-            <label>&nbsp;</label>
-            <button id="loadSharedBtn" class="btn-shared-load" type="button">履歴を読み込み</button>
-          </div>
-        </div>
-        <div id="sharedStatus" class="status"></div>
-        <div id="sharedList" class="shared-empty">ここに共有履歴が表示されます。</div>
-        <div id="sharedWarnBox" class="warn-box" style="display:none;"></div>
-      </div>
+      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec</div>
     </section>
 
     <section class="card">
@@ -328,32 +166,26 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">本体の確認</h2>
-      <div class="small-muted">送信後に、本体へ入っている今日の業務日誌・利用者の活動状況（特記事項含む）を下で確認できます。</div>
-      <div class="main-confirm-box">
-        <div class="main-confirm-head">
-          <button id="loadMainRecordBtn" class="btn-shared-load" type="button">Google保存の今日の記録を確認</button>
-          <div id="mainRecordStatus" class="status"></div>
-        </div>
-        <div id="mainRecordBox" class="main-confirm-text">ここにGoogle保存の現在の記録内容が表示されます。</div>
+      <h2 class="section-title">Google保存の今日の記録確認</h2>
+      <div class="button-grid" style="grid-template-columns:1fr;">
+        <button id="checkMainBtn" class="btn-check" type="button">本体の今日の記録を確認</button>
       </div>
+      <div class="status" id="mainCheckStatus"></div>
+      <div id="mainCheckBox" class="output">ここに今日の記録内容が表示されます。</div>
     </section>
 
     <section class="card">
       <h2 class="section-title">AI設定</h2>
-      <div class="small-muted">Gemini APIキーはこの端末だけに保存されます。</div>
-
-      <div id="apiKeyClosedBox" style="margin-top:10px; display:none;">
-        <div class="help" style="margin-top:0;">Gemini APIキーは設定済みです。</div>
+      <div id="apiKeyClosedBox">
+        <div class="small-muted">Gemini APIキーは設定済みです。</div>
         <div style="margin-top:10px;">
           <button id="toggleApiKeyBtn" class="btn-copy" type="button">変更する</button>
         </div>
       </div>
-
-      <div id="apiKeyOpenBox" style="margin-top:10px; display:none;">
+      <div id="apiKeyOpenBox" style="display:none;">
         <label for="geminiApiKey">Gemini APIキー</label>
         <input id="geminiApiKey" type="password" placeholder="ここにGemini APIキーを入力" />
-        <div class="help">誤操作防止のため一番下へ移動しています。</div>
+        <div class="help">この端末のみに保存されます。</div>
         <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
           <button id="saveApiKeyBtn" class="btn-ai" type="button">保存する</button>
           <button id="closeApiKeyBtn" class="btn-copy" type="button">閉じる</button>
@@ -363,7 +195,7 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKjHRRr4B3pTCdRWAxSgGfCgK9Ndp3ycJ5bqUY0UnL6QJjBaGuvnDvEUi1EkvOWYeW/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzssik9vJwh2RZfRloRcGq4FzDJW48GhTCQYeLFTKqp3a5ZrMoM43znsSYL3hyCXIG0/exec";
     const memoInput = document.getElementById("memoInput");
     const userNameSelect = document.getElementById("userNameSelect");
     const staffNameSelect = document.getElementById("staffNameSelect");
@@ -379,26 +211,19 @@
     const aiApplyBtn = document.getElementById("aiApplyBtn");
     const aiStatusText = document.getElementById("aiStatusText");
     const aiResultBox = document.getElementById("aiResultBox");
+    const checkMainBtn = document.getElementById("checkMainBtn");
+    const mainCheckStatus = document.getElementById("mainCheckStatus");
+    const mainCheckBox = document.getElementById("mainCheckBox");
     const toggleApiKeyBtn = document.getElementById("toggleApiKeyBtn");
     const saveApiKeyBtn = document.getElementById("saveApiKeyBtn");
     const closeApiKeyBtn = document.getElementById("closeApiKeyBtn");
     const apiKeyClosedBox = document.getElementById("apiKeyClosedBox");
     const apiKeyOpenBox = document.getElementById("apiKeyOpenBox");
-    const sharedDate = document.getElementById("sharedDate");
-    const sharedUserFilter = document.getElementById("sharedUserFilter");
-    const loadSharedBtn = document.getElementById("loadSharedBtn");
-    const sharedStatus = document.getElementById("sharedStatus");
-    const sharedList = document.getElementById("sharedList");
-    const sharedWarnBox = document.getElementById("sharedWarnBox");
-    const loadMainRecordBtn = document.getElementById("loadMainRecordBtn");
-    const mainRecordStatus = document.getElementById("mainRecordStatus");
-    const mainRecordBox = document.getElementById("mainRecordBox");
 
     const RESIDENTS_KEY = "group_home_residents_v1";
     const RECORDERS_KEY = "group_home_recorders_v1";
     const GEMINI_MODEL = "gemini-3-flash-preview";
     const GEMINI_KEY_STORAGE = "easy_gemini_api_key_v1";
-    const HIDDEN_SHARED_IDS_KEY = "easy_google_hidden_shared_ids_v1";
 
     function loadListFromStorage(key) {
       try {
@@ -413,7 +238,7 @@
     }
 
     function fillSelect(selectEl, items, emptyLabel) {
-      const options = ['<option value="">' + escapeHtml(emptyLabel) + '</option>']
+      const options = ['<option value="">' + emptyLabel + '</option>']
         .concat(items.map(v => '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>'));
       selectEl.innerHTML = options.join("");
     }
@@ -425,10 +250,6 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
-    }
-
-    function escapeAttr(str) {
-      return escapeHtml(str).replace(/`/g, "&#96;");
     }
 
     function setupNameInputs() {
@@ -452,20 +273,22 @@
         staffNameSelect.style.display = "none";
         staffNameInput.style.display = "";
       }
-
-      syncSharedUserFilter();
     }
 
     function getSelectedUserName() {
-      return userNameSelect.style.display !== "none"
-        ? userNameSelect.value.trim()
-        : userNameInput.value.trim();
+      return userNameSelect.style.display !== "none" ? userNameSelect.value.trim() : userNameInput.value.trim();
     }
 
     function getSelectedStaffName() {
-      return staffNameSelect.style.display !== "none"
-        ? staffNameSelect.value.trim()
-        : staffNameInput.value.trim();
+      return staffNameSelect.style.display !== "none" ? staffNameSelect.value.trim() : staffNameInput.value.trim();
+    }
+
+    function getTodayYmd() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
     }
 
     function loadGeminiKey() {
@@ -479,7 +302,6 @@
 
     function updateApiKeyVisibility() {
       const hasKey = !!localStorage.getItem(GEMINI_KEY_STORAGE);
-
       if (hasKey) {
         apiKeyClosedBox.style.display = "";
         apiKeyOpenBox.style.display = "none";
@@ -492,29 +314,21 @@
     function openApiKeyEditor() {
       apiKeyClosedBox.style.display = "none";
       apiKeyOpenBox.style.display = "";
-      geminiApiKeyInput.focus();
     }
 
     function closeApiKeyEditor() {
-      const hasKey = !!(geminiApiKeyInput.value.trim() || localStorage.getItem(GEMINI_KEY_STORAGE));
+      const hasKey = geminiApiKeyInput.value.trim() || localStorage.getItem(GEMINI_KEY_STORAGE);
       if (hasKey) {
         apiKeyClosedBox.style.display = "";
         apiKeyOpenBox.style.display = "none";
-      } else {
-        apiKeyClosedBox.style.display = "none";
-        apiKeyOpenBox.style.display = "";
       }
     }
 
     function buildAiInstruction(mode, rawText) {
-      const common = "事実は変えず、余計な内容は足さず、短く実務的な日本語に整えてください。丁寧すぎる言い回しは避けてください。箇条書きではなく、そのまま記録欄へ貼れる文章で返してください。";
-      if (mode === "medical") {
-        return "以下の文章を受診メモ風に整えてください。『〜しました』『〜でした』を使いすぎず、短めで現場記録っぽい文にしてください。" + common + "\n\n原文:\n" + rawText;
-      }
-      if (mode === "simple") {
-        return "以下の文章をやさしく簡潔に整えてください。かたすぎる敬語は避け、読みやすい短文にしてください。" + common + "\n\n原文:\n" + rawText;
-      }
-      return "以下の文章を短めの業務日誌文に整えてください。現場で使う記録文らしく、簡潔で実務的な表現にしてください。『〜しました』『〜でした』は必要最小限にしてください。" + common + "\n\n原文:\n" + rawText;
+      const common = "事実は変えず、余計な内容は足さず、短く実務的な日本語に整えてください。箇条書きではなく、そのまま記録欄へ貼れる文章で返してください。";
+      if (mode === "medical") return "以下の文章を受診メモ風に整えてください。" + common + "\n\n原文:\n" + rawText;
+      if (mode === "simple") return "以下の文章をやさしく簡潔に整えてください。" + common + "\n\n原文:\n" + rawText;
+      return "以下の文章を短めの業務日誌文に整えてください。" + common + "\n\n原文:\n" + rawText;
     }
 
     async function runGeminiRewrite() {
@@ -522,7 +336,8 @@
       const raw = memoInput.value.trim();
 
       if (!apiKey) {
-        aiStatusText.textContent = "一番下のAI設定からGemini APIキーを入れてください。";
+        aiStatusText.textContent = "先にGemini APIキーを入れてください。";
+        openApiKeyEditor();
         return;
       }
       if (!raw) {
@@ -541,28 +356,18 @@
             "Content-Type": "application/json",
             "x-goog-api-key": apiKey
           },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: buildAiInstruction(aiMode.value, raw) }
-                ]
-              }
-            ]
-          })
+          body: JSON.stringify({ contents: [{ parts: [{ text: buildAiInstruction(aiMode.value, raw) }] }] })
         });
 
         const data = await res.json();
-
         if (!res.ok) {
           aiStatusText.textContent = "AIエラー: " + ((data && data.error && data.error.message) || "失敗しました");
           return;
         }
 
-        const resultText =
-          (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts
-            ? data.candidates[0].content.parts.map(p => p.text || "").join("")
-            : "").trim();
+        const resultText = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts
+          ? data.candidates[0].content.parts.map(p => p.text || "").join("")
+          : "").trim();
 
         if (!resultText) {
           aiStatusText.textContent = "AI結果が取得できませんでした。";
@@ -588,296 +393,95 @@
     }
 
     function normalizeText(text) {
-      return String(text || "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .replace(/[ \t]+/g, " ")
-        .trim();
+      return String(text || "").replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").replace(/[ \t]+/g, " ").trim();
     }
 
     function simpleCreateRecord(rawText) {
       const text = normalizeText(rawText);
       if (!text) return "";
-
-      const lines = text
-        .split("\n")
-        .map(v => v.trim())
-        .filter(Boolean);
-
+      const lines = text.split("\n").map(v => v.trim()).filter(Boolean);
       let joined = lines.join("。");
-      joined = joined
-        .replace(/。。+/g, "。")
-        .replace(/、。/g, "。")
-        .replace(/\s*。\s*/g, "。")
-        .trim();
-
-      if (joined && !/[。！？]$/.test(joined)) {
-        joined += "。";
-      }
-
+      joined = joined.replace(/。。+/g, "。").replace(/、。/g, "。").replace(/\s*。\s*/g, "。").trim();
+      if (joined && !/[。！？]$/.test(joined)) joined += "。";
       return joined;
     }
 
-    async function sendToGoogle(recordText) {
-      const payload = {
+    async function postJson(payload) {
+      const res = await fetch(WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    }
+
+    async function saveShared(recordText) {
+      return await postJson({
+        action: "saveShared",
         userName: getSelectedUserName(),
         staffName: getSelectedStaffName(),
         body: recordText,
         source: "easy"
+      });
+    }
+
+    async function saveMainRecord(recordText) {
+      const user = getSelectedUserName();
+      const date = getTodayYmd();
+      const existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`).then(r => r.json());
+
+      const payload = {
+        action: "saveMainRecord",
+        date: date,
+        user: user,
+        staff: getSelectedStaffName(),
+        text: recordText,
+        status: "",
+        tags: [],
+        raw: {},
+        appendMode: existing && existing.record ? "append" : ""
       };
 
-      const res = await fetch(WEB_APP_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      return await res.json();
+      if (existing && existing.record && existing.record.id) payload.id = existing.record.id;
+      return await postJson(payload);
     }
 
-    function todayYmd() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
+    async function checkMainRecord() {
+      const user = getSelectedUserName();
+      const date = getTodayYmd();
 
-    function syncSharedUserFilter() {
-      const current = sharedUserFilter.value;
-      const residents = loadListFromStorage(RESIDENTS_KEY);
-      fillSelect(sharedUserFilter, residents, "全利用者");
-      if (residents.includes(current)) {
-        sharedUserFilter.value = current;
-      } else {
-        sharedUserFilter.value = "";
-      }
-    }
-
-    function getHiddenSharedIds() {
-      try {
-        const raw = localStorage.getItem(HIDDEN_SHARED_IDS_KEY);
-        const arr = JSON.parse(raw || "[]");
-        return Array.isArray(arr) ? arr : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function setHiddenSharedIds(ids) {
-      localStorage.setItem(HIDDEN_SHARED_IDS_KEY, JSON.stringify(ids));
-    }
-
-    function hideSharedRecordLocal(id) {
-      const ids = getHiddenSharedIds();
-      if (!ids.includes(id)) {
-        ids.push(id);
-        setHiddenSharedIds(ids);
-      }
-    }
-
-    function unhideSharedRecordLocal(id) {
-      const ids = getHiddenSharedIds().filter(v => v !== id);
-      setHiddenSharedIds(ids);
-    }
-
-    function showSharedWarn(message) {
-      sharedWarnBox.style.display = "block";
-      sharedWarnBox.textContent = message;
-    }
-
-    function hideSharedWarn() {
-      sharedWarnBox.style.display = "none";
-      sharedWarnBox.textContent = "";
-    }
-
-    function renderSharedRecords(records) {
-      const hiddenIds = getHiddenSharedIds();
-      const visible = records.filter(r => !hiddenIds.includes(String(r.id || "")));
-
-      if (!visible.length) {
-        sharedList.innerHTML = '<div class="shared-empty">共有履歴はありません。</div>';
+      if (!user) {
+        mainCheckStatus.textContent = "先に利用者を選んでください。";
         return;
       }
 
-      sharedList.innerHTML = visible.map(r => {
-        const id = String(r.id || "");
-        const user = String(r.user || r.userName || "");
-        const staff = String(r.staff || r.staffName || "");
-        const date = String(r.date || "");
-        const updatedAt = String(r.updatedAt || r.createdAt || r.timestamp || "");
-        const text = String(r.text || r.body || "");
-
-        return `
-          <div class="shared-card" data-id="${escapeAttr(id)}">
-            <div class="shared-user">${escapeHtml(user || '利用者名なし')}</div>
-            <div class="shared-meta">日付: ${escapeHtml(date)}　記録者: ${escapeHtml(staff || '未入力')}　更新: ${escapeHtml(updatedAt || '-')}</div>
-            <div class="shared-text">${escapeHtml(text)}</div>
-            <div class="shared-actions">
-              <button type="button" class="btn-reflect" onclick="reflectSharedRecordById('${escapeAttr(id)}')">本文へ反映</button>
-              <button type="button" class="btn-delete-shared" onclick="deleteSharedRecord('${escapeAttr(id)}')">削除</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    let lastSharedRecords = [];
-
-    async function loadSharedRecords() {
-      const date = sharedDate.value || todayYmd();
-      const user = sharedUserFilter.value.trim();
-      sharedStatus.textContent = "共有履歴を読み込み中...";
-      sharedList.innerHTML = '<div class="shared-empty">読み込み中...</div>';
-      hideSharedWarn();
+      mainCheckStatus.textContent = "確認中...";
+      mainCheckBox.textContent = "";
 
       try {
-        const url = `${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`;
-        const res = await fetch(url, { method: "GET" });
-        const result = await res.json();
+        const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
+        const json = await res.json();
 
-        if (!result || !result.ok) {
-          sharedStatus.textContent = "共有履歴の読み込みに失敗しました。";
-          sharedList.innerHTML = '<div class="shared-empty">共有履歴を取得できませんでした。</div>';
-          showSharedWarn("Apps Script 側に listShared がまだ入っていない可能性があります。今回の .html は共有一覧・削除ボタンの画面まで入っていますが、履歴表示と削除を動かすには Apps Script 側も listShared / deleteShared 対応が必要です。");
+        if (!json.ok) {
+          mainCheckStatus.textContent = "確認失敗: " + (json.message || "unknown");
           return;
         }
 
-        lastSharedRecords = Array.isArray(result.records) ? result.records : [];
-        renderSharedRecords(lastSharedRecords);
-        sharedStatus.textContent = `共有履歴を読み込みました。${lastSharedRecords.length}件`;
+        mainCheckStatus.textContent = "確認しました。";
+        mainCheckBox.textContent = json.text || "まだ記録はありません。";
       } catch (e) {
-        sharedStatus.textContent = "共有履歴の読み込みに失敗しました。";
-        sharedList.innerHTML = '<div class="shared-empty">共有履歴を取得できませんでした。</div>';
-        showSharedWarn("Apps Script 側に listShared がまだないか、CORS・デプロイ設定が未反映の可能性があります。");
-      }
-    }
-
-    function findSharedRecordById(id) {
-      return lastSharedRecords.find(r => String(r.id || "") === String(id));
-    }
-
-    function mergeStaffName(newStaff) {
-      newStaff = String(newStaff || "").trim();
-      if (!newStaff) return;
-
-      if (staffNameSelect.style.display !== "none") {
-        const exists = Array.from(staffNameSelect.options).some(opt => opt.value === newStaff);
-        if (exists) {
-          staffNameSelect.value = newStaff;
-        }
-        return;
-      }
-
-      const oldVal = staffNameInput.value.trim();
-      if (!oldVal) {
-        staffNameInput.value = newStaff;
-        return;
-      }
-      const list = oldVal.split("、").map(v => v.trim()).filter(Boolean);
-      if (!list.includes(newStaff)) list.push(newStaff);
-      staffNameInput.value = list.join("、");
-    }
-
-    function reflectSharedRecordById(id) {
-      const record = findSharedRecordById(id);
-      if (!record) {
-        sharedStatus.textContent = "反映する共有履歴が見つかりませんでした。";
-        return;
-      }
-
-      const incomingText = String(record.text || record.body || "").trim();
-      if (!incomingText) {
-        sharedStatus.textContent = "反映する本文がありません。";
-        return;
-      }
-
-      const oldText = memoInput.value.trim();
-      memoInput.value = oldText ? `${oldText}\n\n${incomingText}` : incomingText;
-      outputBox.textContent = memoInput.value.trim();
-      mergeStaffName(record.staff || record.staffName || "");
-      hideSharedRecordLocal(String(id));
-      renderSharedRecords(lastSharedRecords);
-      sharedStatus.textContent = "本文へ反映しました。反映した共有履歴は非表示にしました。";
-    }
-
-    async function deleteSharedRecord(id) {
-      if (!confirm("この共有履歴を削除しますか？")) return;
-
-      sharedStatus.textContent = "削除中...";
-      hideSharedWarn();
-
-      try {
-        const res = await fetch(WEB_APP_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify({
-            action: "deleteShared",
-            id: id
-          })
-        });
-
-        const result = await res.json();
-
-        if (!result || !result.ok) {
-          sharedStatus.textContent = "削除に失敗しました。";
-          showSharedWarn("Apps Script 側に deleteShared がまだ入っていない可能性があります。");
-          return;
-        }
-
-        unhideSharedRecordLocal(String(id));
-        await loadSharedRecords();
-        sharedStatus.textContent = "共有履歴を削除しました。";
-      } catch (e) {
-        sharedStatus.textContent = "削除に失敗しました。";
-        showSharedWarn("Apps Script 側に deleteShared がまだないか、デプロイが未反映の可能性があります。");
-      }
-    }
-
-
-    async function loadMainRecordForSelectedUser() {
-      const userName = getSelectedUserName();
-      if (!userName) {
-        mainRecordStatus.textContent = "先に利用者を選んでください。";
-        mainRecordBox.textContent = "ここにGoogle保存の現在の記録内容が表示されます。";
-        return;
-      }
-
-      const date = todayYmd();
-      mainRecordStatus.textContent = "Google保存の記録を確認中...";
-
-      try {
-        const url = `${WEB_APP_URL}?action=getMainRecord&date=${encodeURIComponent(date)}&user=${encodeURIComponent(userName)}`;
-        const res = await fetch(url, { method: "GET" });
-        const result = await res.json();
-
-        if (!result || !result.ok) {
-          mainRecordStatus.textContent = "Google保存の確認に失敗しました。";
-          mainRecordBox.textContent = "Apps Script 側に getMainRecord がまだ入っていない可能性があります。";
-          return;
-        }
-
-        const recordText = String(result.text || "").trim();
-        if (recordText) {
-          mainRecordBox.textContent = recordText;
-          mainRecordStatus.textContent = `Google保存の今日の記録を表示しました。利用者: ${userName}`;
-        } else {
-          mainRecordBox.textContent = "まだGoogle保存に今日の記録はありません。";
-          mainRecordStatus.textContent = `Google保存に今日の記録はありません。利用者: ${userName}`;
-        }
-      } catch (e) {
-        mainRecordStatus.textContent = "Google保存の確認に失敗しました。";
-        mainRecordBox.textContent = "通信エラーが発生しました。Apps Script のデプロイとURLを確認してください。";
+        mainCheckStatus.textContent = "確認に失敗しました。";
       }
     }
 
     createBtn.addEventListener("click", async () => {
       const raw = memoInput.value.trim();
+      const user = getSelectedUserName();
 
+      if (!user) {
+        statusText.textContent = "先に利用者を選んでください。";
+        return;
+      }
       if (!raw) {
         statusText.textContent = "先に入力してください。";
         return;
@@ -888,27 +492,31 @@
       statusText.textContent = "送信中...";
 
       try {
-        const result = await sendToGoogle(created);
-
-        if (result.ok) {
-          statusText.textContent = "Googleへ保存しました。";
-          await loadMainRecordForSelectedUser();
-        } else {
-          statusText.textContent = "保存失敗: " + (result.message || "不明なエラー");
+        const sharedResult = await saveShared(created);
+        if (!sharedResult.ok) {
+          statusText.textContent = "Google共有保存失敗: " + (sharedResult.message || "不明なエラー");
+          return;
         }
+
+        const mainResult = await saveMainRecord(created);
+        if (!mainResult.ok) {
+          statusText.textContent = "本体保存失敗: " + (mainResult.message || "不明なエラー");
+          return;
+        }
+
+        statusText.textContent = "Google共有と本体記録を保存しました。";
+        await checkMainRecord();
       } catch (e) {
-        statusText.textContent = "通信エラーが発生しました。デプロイ設定かURLを確認してください。";
+        statusText.textContent = "通信エラーが発生しました。";
       }
     });
 
     copyBtn.addEventListener("click", async () => {
       const text = outputBox.textContent.trim();
-
       if (!text || text === "ここに作成結果が表示されます。") {
         statusText.textContent = "コピーする結果がありません。";
         return;
       }
-
       try {
         await navigator.clipboard.writeText(text);
         statusText.textContent = "結果をコピーしました。";
@@ -917,6 +525,9 @@
       }
     });
 
+    checkMainBtn.addEventListener("click", checkMainRecord);
+    aiRunBtn.addEventListener("click", runGeminiRewrite);
+    aiApplyBtn.addEventListener("click", applyAiResultToMemo);
     toggleApiKeyBtn.addEventListener("click", openApiKeyEditor);
     saveApiKeyBtn.addEventListener("click", () => {
       saveGeminiKey();
@@ -924,29 +535,10 @@
       closeApiKeyEditor();
     });
     closeApiKeyBtn.addEventListener("click", closeApiKeyEditor);
-    geminiApiKeyInput.addEventListener("change", saveGeminiKey);
-    aiRunBtn.addEventListener("click", runGeminiRewrite);
-    aiApplyBtn.addEventListener("click", applyAiResultToMemo);
-    loadSharedBtn.addEventListener("click", loadSharedRecords);
-    sharedUserFilter.addEventListener("change", loadSharedRecords);
-    sharedDate.addEventListener("change", loadSharedRecords);
-    loadMainRecordBtn.addEventListener("click", loadMainRecordForSelectedUser);
 
-    userNameSelect.addEventListener("change", () => {
-      if (userNameSelect.value) {
-        sharedUserFilter.value = userNameSelect.value;
-        loadSharedRecords();
-        loadMainRecordForSelectedUser();
-      }
-    });
-
-    document.addEventListener("DOMContentLoaded", () => {
-      setupNameInputs();
-      loadGeminiKey();
-      updateApiKeyVisibility();
-      sharedDate.value = todayYmd();
-      loadSharedRecords();
-    });
+    setupNameInputs();
+    loadGeminiKey();
+    updateApiKeyVisibility();
   </script>
 </body>
 </html>
