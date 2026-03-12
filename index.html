@@ -7623,9 +7623,10 @@ function clearFavChecks() {
       document.getElementById("editDate").value = record.date || "";
       document.getElementById("editResident").value = record.resident || "";
       const __er = document.getElementById("editRecorder");
+      const __recorderValue = record.recorder || record.staff || "";
       if (__er) {
-        ensureSelectHasValue(__er, record.recorder || "");
-        __er.value = record.recorder || "";
+        ensureSelectHasValue(__er, __recorderValue);
+        __er.value = __recorderValue;
       }
       const _ets = document.getElementById("editTimeSlot");
       if (_ets) _ets.value = record.timeSlot || "日中";
@@ -7665,6 +7666,7 @@ function clearFavChecks() {
       if (__en) __en.classList.toggle("special-note-on", !!record.hasSpecialNote);
       // タグ
       editTags = Array.isArray(record.tags) ? [...record.tags] : [];
+      window.editTags = [...editTags];
       renderEditTagButtons();
 
       // 日中活動チェック
@@ -7686,6 +7688,7 @@ function clearFavChecks() {
       editingRecordId = null;
       window.editingRecordId = null;
       editTags = [];
+      window.editTags = [];
     }
 
     function renderEditDaySupportCheckboxes(resident, checkedMainArr, checkedReasonArr) {
@@ -8642,6 +8645,7 @@ document.getElementById("date").value = toLocalISODate();
       if (__pTo) __pTo.value = __todayStr;
 
       records = loadRecords();
+      window.records = records;
       residents = loadResidents();
       recorders = loadRecorders();
       templates = loadTemplates();
@@ -9428,7 +9432,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   async function syncRemoteRecordsAndRender(){
     try{
       const next = await fetchMainRecordsRemote({});
-      window.records = next;
+      records = Array.isArray(next) ? next : [];
+      window.records = records;
       localBackupSave();
       if (typeof renderRecords === 'function') renderRecords();
       if (typeof renderResidentSelects === 'function') renderResidentSelects();
@@ -9944,7 +9949,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   async function syncRemoteRecordsAndRender(){
     try{
       const next = await fetchMainRecordsRemote({});
-      window.records = next;
+      records = Array.isArray(next) ? next : [];
+      window.records = records;
       localBackupSave();
       if (typeof renderRecords === 'function') renderRecords();
       if (typeof renderResidentSelects === 'function') renderResidentSelects();
