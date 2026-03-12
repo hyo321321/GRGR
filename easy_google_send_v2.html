@@ -196,6 +196,28 @@
       white-space: pre-wrap;
     }
 
+
+    .main-confirm-box {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #f8fafc;
+      margin-top: 12px;
+    }
+    .main-confirm-head {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .main-confirm-text {
+      white-space: pre-wrap;
+      background: #fff;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      min-height: 120px;
+      font-size: 16px;
+    }
     @media (min-width: 720px) {
       .button-grid { grid-template-columns: 1fr 1fr; }
       .grid.two { grid-template-columns: 1fr 1fr; }
@@ -306,6 +328,18 @@
     </section>
 
     <section class="card">
+      <h2 class="section-title">本体の確認</h2>
+      <div class="small-muted">送信後に、本体へ入っている今日の業務日誌・利用者の活動状況（特記事項含む）を下で確認できます。</div>
+      <div class="main-confirm-box">
+        <div class="main-confirm-head">
+          <button id="loadMainRecordBtn" class="btn-shared-load" type="button">本体の今日の記録を確認</button>
+          <div id="mainRecordStatus" class="status"></div>
+        </div>
+        <div id="mainRecordBox" class="main-confirm-text">ここに本体の現在の記録内容が表示されます。</div>
+      </div>
+    </section>
+
+    <section class="card">
       <h2 class="section-title">AI設定</h2>
       <div class="small-muted">Gemini APIキーはこの端末だけに保存されます。</div>
 
@@ -356,6 +390,9 @@
     const sharedStatus = document.getElementById("sharedStatus");
     const sharedList = document.getElementById("sharedList");
     const sharedWarnBox = document.getElementById("sharedWarnBox");
+    const loadMainRecordBtn = document.getElementById("loadMainRecordBtn");
+    const mainRecordStatus = document.getElementById("mainRecordStatus");
+    const mainRecordBox = document.getElementById("mainRecordBox");
 
     const RESIDENTS_KEY = "group_home_residents_v1";
     const RECORDERS_KEY = "group_home_recorders_v1";
@@ -801,6 +838,43 @@
       }
     }
 
+
+    async function loadMainRecordForSelectedUser() {
+      const userName = getSelectedUserName();
+      if (!userName) {
+        mainRecordStatus.textContent = "先に利用者を選んでください。";
+        mainRecordBox.textContent = "ここに本体の現在の記録内容が表示されます。";
+        return;
+      }
+
+      const date = todayYmd();
+      mainRecordStatus.textContent = "本体の記録を確認中...";
+
+      try {
+        const url = `${WEB_APP_URL}?action=getMainRecord&date=${encodeURIComponent(date)}&user=${encodeURIComponent(userName)}`;
+        const res = await fetch(url, { method: "GET" });
+        const result = await res.json();
+
+        if (!result || !result.ok) {
+          mainRecordStatus.textContent = "本体の確認に失敗しました。";
+          mainRecordBox.textContent = "Apps Script 側に getMainRecord がまだ入っていない可能性があります。";
+          return;
+        }
+
+        const recordText = String(result.text || "").trim();
+        if (recordText) {
+          mainRecordBox.textContent = recordText;
+          mainRecordStatus.textContent = `本体の今日の記録を表示しました。利用者: ${userName}`;
+        } else {
+          mainRecordBox.textContent = "まだ本体に今日の記録はありません。";
+          mainRecordStatus.textContent = `本体に今日の記録はありません。利用者: ${userName}`;
+        }
+      } catch (e) {
+        mainRecordStatus.textContent = "本体の確認に失敗しました。";
+        mainRecordBox.textContent = "通信エラーが発生しました。Apps Script のデプロイとURLを確認してください。";
+      }
+    }
+
     createBtn.addEventListener("click", async () => {
       const raw = memoInput.value.trim();
 
@@ -818,6 +892,7 @@
 
         if (result.ok) {
           statusText.textContent = "Googleへ保存しました。";
+          await loadMainRecordForSelectedUser();
         } else {
           statusText.textContent = "保存失敗: " + (result.message || "不明なエラー");
         }
@@ -855,11 +930,13 @@
     loadSharedBtn.addEventListener("click", loadSharedRecords);
     sharedUserFilter.addEventListener("change", loadSharedRecords);
     sharedDate.addEventListener("change", loadSharedRecords);
+    loadMainRecordBtn.addEventListener("click", loadMainRecordForSelectedUser);
 
     userNameSelect.addEventListener("change", () => {
       if (userNameSelect.value) {
         sharedUserFilter.value = userNameSelect.value;
         loadSharedRecords();
+        loadMainRecordForSelectedUser();
       }
     });
 
