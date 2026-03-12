@@ -88,6 +88,18 @@
     .status { margin-top: 12px; font-size: 15px; color: var(--sub); min-height: 24px; white-space: pre-wrap; }
     .output { white-space: pre-wrap; background: #f8fafc; border: 2px solid var(--line); border-radius: 14px; padding: 16px; min-height: 120px; font-size: 17px; }
     .note { font-size: 13px; color: var(--sub); margin-top: 8px; word-break: break-all; }
+    .name-control { display:grid; gap:10px; }
+    .name-switch-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .name-switch-btn {
+      min-height: 44px;
+      padding: 10px 14px;
+      font-size: 15px;
+      border-radius: 12px;
+      background: #eef2ff;
+      color: #1e3a8a;
+      border: 1px solid #c7d2fe;
+    }
+    .name-switch-btn:hover { background:#e0e7ff; }
     @media (min-width: 720px) {
       .button-grid { grid-template-columns: 1fr 1fr; }
       .grid.two { grid-template-columns: 1fr 1fr; }
@@ -107,15 +119,21 @@
     <section class="card">
       <h2 class="section-title">基本情報</h2>
       <div class="grid two">
-        <div>
+        <div class="name-control">
           <label for="userNameSelect">利用者名</label>
           <select id="userNameSelect" class="select-like"></select>
-          <input id="userName" type="text" placeholder="利用者名を入力" style="display:none; margin-top:10px;" />
+          <input id="userName" type="text" placeholder="利用者名を入力" style="display:none;" />
+          <div class="name-switch-row">
+            <button id="userNameToggleBtn" class="name-switch-btn" type="button">手入力に切替</button>
+          </div>
         </div>
-        <div>
+        <div class="name-control">
           <label for="staffNameSelect">記録者名</label>
           <select id="staffNameSelect" class="select-like"></select>
-          <input id="staffName" type="text" placeholder="記録者名を入力" style="display:none; margin-top:10px;" />
+          <input id="staffName" type="text" placeholder="記録者名を入力" style="display:none;" />
+          <div class="name-switch-row">
+            <button id="staffNameToggleBtn" class="name-switch-btn" type="button">手入力に切替</button>
+          </div>
         </div>
       </div>
       <div class="help">本体に登録済みの利用者名・記録者名を自動で候補表示します。</div>
@@ -201,6 +219,8 @@
     const staffNameSelect = document.getElementById("staffNameSelect");
     const userNameInput = document.getElementById("userName");
     const staffNameInput = document.getElementById("staffName");
+    const userNameToggleBtn = document.getElementById("userNameToggleBtn");
+    const staffNameToggleBtn = document.getElementById("staffNameToggleBtn");
     const createBtn = document.getElementById("createBtn");
     const copyBtn = document.getElementById("copyBtn");
     const outputBox = document.getElementById("outputBox");
@@ -252,26 +272,49 @@
         .replace(/'/g, "&#39;");
     }
 
+    function setNameInputMode(kind, mode) {
+      const isUser = kind === "user";
+      const selectEl = isUser ? userNameSelect : staffNameSelect;
+      const inputEl = isUser ? userNameInput : staffNameInput;
+      const toggleBtn = isUser ? userNameToggleBtn : staffNameToggleBtn;
+      const emptyLabel = isUser ? "利用者を選択" : "記録者を選択";
+      const canSelect = Array.isArray(selectEl.__items) && selectEl.__items.length > 0;
+
+      if (mode === "input" || !canSelect) {
+        if (selectEl.value && !inputEl.value.trim()) inputEl.value = selectEl.value;
+        selectEl.style.display = "none";
+        inputEl.style.display = "";
+        if (toggleBtn) toggleBtn.textContent = canSelect ? "候補から選ぶ" : emptyLabel + "の候補なし";
+        if (toggleBtn) toggleBtn.disabled = !canSelect;
+        return;
+      }
+
+      if (inputEl.value.trim()) selectEl.value = inputEl.value.trim();
+      inputEl.style.display = "none";
+      selectEl.style.display = "";
+      if (toggleBtn) toggleBtn.textContent = "手入力に切替";
+      if (toggleBtn) toggleBtn.disabled = false;
+    }
+
     function setupNameInputs() {
       const residents = loadListFromStorage(RESIDENTS_KEY);
       const recorders = loadListFromStorage(RECORDERS_KEY);
 
+      userNameSelect.__items = residents;
+      staffNameSelect.__items = recorders;
+
       if (residents.length) {
         fillSelect(userNameSelect, residents, "利用者を選択");
-        userNameSelect.style.display = "";
-        userNameInput.style.display = "none";
+        setNameInputMode("user", "select");
       } else {
-        userNameSelect.style.display = "none";
-        userNameInput.style.display = "";
+        setNameInputMode("user", "input");
       }
 
       if (recorders.length) {
         fillSelect(staffNameSelect, recorders, "記録者を選択");
-        staffNameSelect.style.display = "";
-        staffNameInput.style.display = "none";
+        setNameInputMode("staff", "select");
       } else {
-        staffNameSelect.style.display = "none";
-        staffNameInput.style.display = "";
+        setNameInputMode("staff", "input");
       }
     }
 
@@ -580,6 +623,12 @@
       closeApiKeyEditor();
     });
     closeApiKeyBtn.addEventListener("click", closeApiKeyEditor);
+    userNameToggleBtn.addEventListener("click", () => {
+      setNameInputMode("user", userNameSelect.style.display === "none" ? "select" : "input");
+    });
+    staffNameToggleBtn.addEventListener("click", () => {
+      setNameInputMode("staff", staffNameSelect.style.display === "none" ? "select" : "input");
+    });
 
     setupNameInputs();
     loadGeminiKey();
