@@ -153,7 +153,7 @@
 
     <section class="card">
       <div class="button-grid">
-        <button id="createBtn" class="btn-create" type="button">一括作成して送信</button>
+        <button id="createBtn" class="btn-create">一括作成して送信</button>
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
       </div>
       <div class="status" id="statusText"></div>
@@ -163,6 +163,15 @@
     <section class="card">
       <h2 class="section-title">作成結果</h2>
       <div id="outputBox" class="output">ここに作成結果が表示されます。</div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Google保存の今日の記録確認</h2>
+      <div class="button-grid" style="grid-template-columns:1fr;">
+        <button id="checkMainBtn" class="btn-check" type="button">本体の今日の記録を確認</button>
+      </div>
+      <div class="status" id="mainCheckStatus"></div>
+      <div id="mainCheckBox" class="output">ここに今日の記録内容が表示されます。</div>
     </section>
 
     <section class="card">
@@ -202,6 +211,9 @@
     const aiApplyBtn = document.getElementById("aiApplyBtn");
     const aiStatusText = document.getElementById("aiStatusText");
     const aiResultBox = document.getElementById("aiResultBox");
+    const checkMainBtn = document.getElementById("checkMainBtn");
+    const mainCheckStatus = document.getElementById("mainCheckStatus");
+    const mainCheckBox = document.getElementById("mainCheckBox");
     const toggleApiKeyBtn = document.getElementById("toggleApiKeyBtn");
     const saveApiKeyBtn = document.getElementById("saveApiKeyBtn");
     const closeApiKeyBtn = document.getElementById("closeApiKeyBtn");
@@ -413,83 +425,99 @@
       });
     }
 
-    function makeNewMainRecordId(user, date) {
-      return `easy_${date}_${String(user || "").replace(/\s+/g, "")}_${Date.now()}`;
+    function buildEasyMainRecord(recordText, existingRecord) {
+      const user = getSelectedUserName();
+      const staff = getSelectedStaffName();
+      const date = getTodayYmd();
+      const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
+      const existingText = normalizeText(existing && existing.text ? existing.text : "");
+      const newText = normalizeText(recordText);
+      const mergedText = existingText ? (existingText + "
+
+" + newText) : newText;
+      const id = String((existing && existing.id) || Date.now());
+
+      const rawBase = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
+      const tags = Array.isArray(rawBase.tags) ? rawBase.tags : [];
+
+      const raw = {
+        ...rawBase,
+        id,
+        date,
+        resident: user,
+        recorder: staff,
+        medTaken: !!rawBase.medTaken,
+        support: String(rawBase.support || ""),
+        note: mergedText,
+        hasSpecialNote: !!rawBase.hasSpecialNote,
+        tags,
+        daySupportType: String(rawBase.daySupportType || ""),
+        dayActivityItems: Array.isArray(rawBase.dayActivityItems) ? rawBase.dayActivityItems : [],
+        daySupportMainItems: Array.isArray(rawBase.daySupportMainItems) ? rawBase.daySupportMainItems : [],
+        daySupportReasonItems: Array.isArray(rawBase.daySupportReasonItems) ? rawBase.daySupportReasonItems : [],
+        daySupportBathingSubItems: Array.isArray(rawBase.daySupportBathingSubItems) ? rawBase.daySupportBathingSubItems : [],
+        daySupportHealthSubItems: Array.isArray(rawBase.daySupportHealthSubItems) ? rawBase.daySupportHealthSubItems : [],
+        abnormalVitalsOn: !!rawBase.abnormalVitalsOn,
+        abnormalWeight: String(rawBase.abnormalWeight || ""),
+        abnormalTemp: String(rawBase.abnormalTemp || ""),
+        abnormalBPsys: String(rawBase.abnormalBPsys || ""),
+        abnormalBPdia: String(rawBase.abnormalBPdia || ""),
+        abnormalPulse: String(rawBase.abnormalPulse || ""),
+        timeSlot: String(rawBase.timeSlot || "日中"),
+        condition: String(rawBase.condition || "良好"),
+        mental: String(rawBase.mental || "安定")
+      };
+
+      return {
+        action: "saveMainRecord",
+        id,
+        date,
+        user,
+        staff,
+        text: mergedText,
+        status: raw.hasSpecialNote ? "special" : "",
+        tags,
+        raw,
+        appendMode: existing ? "append" : ""
+      };
     }
 
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
-      const staff = getSelectedStaffName();
       const date = getTodayYmd();
-
-      let existing = null;
-      try {
-        existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, { cache: "no-store" }).then(r => r.json());
-      } catch (e) {
-        existing = null;
-      }
-
+      const existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`).then(r => r.json());
       const existingRecord = existing && existing.record ? existing.record : null;
-      const existingId = String(
-        (existingRecord && (existingRecord.id || (existingRecord.raw && existingRecord.raw.id))) ||
-        (existing && existing.id) ||
-        ""
-      ).trim();
-      const recordId = existingId || makeNewMainRecordId(user, date);
-
-      const existingText = String(
-        (existing && (existing.text || existing.note)) ||
-        (existingRecord && (existingRecord.text || existingRecord.note || (existingRecord.raw && existingRecord.raw.note))) ||
-        ""
-      ).trim();
-      const mergedText = existingText ? `${existingText}
-
-${recordText}` : recordText;
-
-      const rawRecord = {
-        id: recordId,
-        date: date,
-        resident: user,
-        recorder: staff,
-        medTaken: false,
-        support: "",
-        note: mergedText,
-        hasSpecialNote: false,
-        tags: [],
-        daySupportType: "",
-        dayActivityItems: [],
-        daySupportMainItems: [],
-        daySupportReasonItems: [],
-        daySupportBathingSubItems: [],
-        daySupportHealthSubItems: [],
-        abnormalVitalsOn: false,
-        abnormalWeight: "",
-        abnormalTemp: "",
-        abnormalBPsys: "",
-        abnormalBPdia: "",
-        abnormalPulse: "",
-        timeSlot: "日中",
-        condition: "良好",
-        mental: "安定"
-      };
-
-      const payload = {
-        action: "saveMainRecord",
-        id: recordId,
-        date: date,
-        user: user,
-        staff: staff,
-        text: mergedText,
-        status: "",
-        tags: [],
-        raw: rawRecord,
-        appendMode: existingRecord ? "append" : ""
-      };
-
+      const payload = buildEasyMainRecord(recordText, existingRecord);
       return await postJson(payload);
     }
 
+    async function checkMainRecord() {
+      const user = getSelectedUserName();
+      const date = getTodayYmd();
 
+      if (!user) {
+        mainCheckStatus.textContent = "先に利用者を選んでください。";
+        return;
+      }
+
+      mainCheckStatus.textContent = "確認中...";
+      mainCheckBox.textContent = "";
+
+      try {
+        const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
+        const json = await res.json();
+
+        if (!json.ok) {
+          mainCheckStatus.textContent = "確認失敗: " + (json.message || "unknown");
+          return;
+        }
+
+        mainCheckStatus.textContent = "確認しました。";
+        mainCheckBox.textContent = json.text || "まだ記録はありません。";
+      } catch (e) {
+        mainCheckStatus.textContent = "確認に失敗しました。";
+      }
+    }
 
     createBtn.addEventListener("click", async () => {
       const raw = memoInput.value.trim();
@@ -522,6 +550,7 @@ ${recordText}` : recordText;
         }
 
         statusText.textContent = "Google共有と本体記録を保存しました。";
+        await checkMainRecord();
       } catch (e) {
         statusText.textContent = "通信エラーが発生しました。";
       }
@@ -541,6 +570,7 @@ ${recordText}` : recordText;
       }
     });
 
+    checkMainBtn.addEventListener("click", checkMainRecord);
     aiRunBtn.addEventListener("click", runGeminiRewrite);
     aiApplyBtn.addEventListener("click", applyAiResultToMemo);
     toggleApiKeyBtn.addEventListener("click", openApiKeyEditor);
