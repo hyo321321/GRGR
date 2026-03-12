@@ -9390,6 +9390,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
     return {
       id: raw.id || rec.id || String(Date.now()),
+      _serverId: rec && rec.id ? String(rec.id) : '',
       date: raw.date || rec.date || '',
       resident: raw.resident || rec.user || '',
       recorder: raw.recorder || rec.staff || '',
@@ -9576,10 +9577,15 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
     try{
+      const target = Array.isArray(window.records)
+        ? window.records.find((r) => String(r.id) === String(id))
+        : null;
+      const deleteId = String((target && (target._serverId || target.id)) || id || '').trim();
+      if (!deleteId) throw new Error('削除IDが取得できませんでした');
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id:id })
+        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
