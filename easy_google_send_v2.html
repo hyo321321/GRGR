@@ -443,28 +443,23 @@
       const res = await fetch(WEB_APP_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        cache: "no-store"
       });
 
       const rawText = await res.text();
-      let data = null;
-
+      let json = null;
       try {
-        data = rawText ? JSON.parse(rawText) : {};
+        json = rawText ? JSON.parse(rawText) : null;
       } catch (e) {
-        data = {
-          ok: res.ok,
-          message: rawText || res.statusText || "",
-          rawText
-        };
+        json = null;
       }
 
-      if (!data || typeof data !== "object") data = {};
-      if (typeof data.ok !== "boolean") data.ok = !!res.ok;
-      if (!data.message && !data.error && rawText && !/^\s*[\[{]/.test(rawText)) {
-        data.message = rawText;
+      if (json && typeof json === "object") return json;
+      if (res.ok) {
+        return { ok: true, message: rawText || "ok" };
       }
-      return data;
+      return { ok: false, message: rawText || "通信に失敗しました。" };
     }
 
     async function saveShared(recordText) {
@@ -482,12 +477,18 @@
     }
 
     async function fetchTodayMainRecords(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
+      const res = await fetch(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}&_=${Date.now()}`, {
         cache: "no-store"
       });
-      const json = await res.json();
+      const rawText = await res.text();
+      let json = null;
+      try {
+        json = rawText ? JSON.parse(rawText) : null;
+      } catch (e) {
+        json = null;
+      }
       if (!json || !json.ok) {
-        throw new Error((json && (json.message || json.error)) || "unknown");
+        throw new Error((json && (json.message || json.error)) || rawText || "unknown");
       }
       const rows = Array.isArray(json.records) ? json.records : [];
       const targetUserKey = normalizeNameKey(user);
@@ -500,26 +501,6 @@
     }
 
 
-    async function fetchTodaySharedForUser(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, {
-        cache: "no-store"
-      });
-      const json = await res.json();
-      if (!json || !json.ok) {
-        throw new Error((json && (json.message || json.error)) || "共有取得に失敗しました。");
-      }
-      const rows = Array.isArray(json.records) ? json.records : [];
-      const targetUserKey = normalizeNameKey(user);
-      return rows.filter((row) => {
-        const rowDate = String(row.date || date || "").trim();
-        const rowUser = String(row.user || row.userName || "").trim();
-        return rowDate === date && normalizeNameKey(rowUser) === targetUserKey;
-      });
-    }
-
-    function buildMergedSharedText(rows) {
-      return rows.map((row) => normalizeText(row.text || row.body || "")).filter(Boolean).join("\n\n").trim();
-    }
 
     function buildMergedMainText(rows) {
       return rows.map((row) => {
@@ -580,17 +561,19 @@
       };
     }
 
-    function pickLatestMainRecord(rows) {
-      if (!Array.isArray(rows) || !rows.length) return null;
-      return rows[rows.length - 1] || null;
-    }
-
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
-      const existingRows = await fetchTodayMainRecords(user, date);
-      const existingRecord = pickLatestMainRecord(existingRows);
+      let existingRows = [];
+      try {
+        existingRows = await fetchTodayMainRecords(user, date);
+      } catch (e) {
+        existingRows = [];
+      }
+      const existingRecord = existingRows.length ? existingRows[0] : null;
       const payload = buildEasyMainRecord(recordText, existingRecord);
+      payload.createIfMissing = true;
+      payload.source = "easy";
       return await postJson(payload);
     }
 
@@ -608,8 +591,8 @@
 
       try {
         const mainRows = await fetchTodayMainRecords(user, date);
-        const latestMain = pickLatestMainRecord(mainRows);
-        const displayText = latestMain ? buildMergedMainText([latestMain]) : "";
+        const latestRow = mainRows.length ? mainRows[mainRows.length - 1] : null;
+        const displayText = latestRow ? buildMergedMainText([latestRow]) : "";
 
         if (!displayText) {
           mainCheckStatus.textContent = "確認しました。";
