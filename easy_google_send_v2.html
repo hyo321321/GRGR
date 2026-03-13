@@ -524,7 +524,7 @@
       const date = getTodayYmd();
       const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
       const existingRaw = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
-      const existingId = String(existingRaw.id || existing._serverId || existing.id || existing.serverId || "").trim();
+      const existingId = String(existingRaw.id || (existing && existing._serverId) || (existing && existing.id) || (existing && existing.serverId) || "").trim();
       const cleanText = normalizeText(recordText);
       const id = existingId || `easy-${date}-${normalizeNameKey(user)}-${Date.now()}`;
       const tags = Array.isArray(existingRaw.tags) ? existingRaw.tags : (Array.isArray(existing && existing.tags) ? existing.tags : []);
