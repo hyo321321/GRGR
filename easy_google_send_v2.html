@@ -447,19 +447,20 @@
         cache: "no-store"
       });
 
-      const rawText = await res.text();
+      const text = await res.text();
       let json = null;
+
       try {
-        json = rawText ? JSON.parse(rawText) : null;
+        json = text ? JSON.parse(text) : {};
       } catch (e) {
-        json = null;
+        json = { ok: res.ok, rawText: text };
       }
 
-      if (json && typeof json === "object") return json;
-      if (res.ok) {
-        return { ok: true, message: rawText || "ok" };
+      if (!res.ok) {
+        throw new Error((json && (json.message || json.error || json.rawText)) || "HTTP error");
       }
-      return { ok: false, message: rawText || "通信に失敗しました。" };
+
+      return json;
     }
 
     async function saveShared(recordText) {
@@ -477,18 +478,12 @@
     }
 
     async function fetchTodayMainRecords(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}&_=${Date.now()}`, {
+      const res = await fetch(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
         cache: "no-store"
       });
-      const rawText = await res.text();
-      let json = null;
-      try {
-        json = rawText ? JSON.parse(rawText) : null;
-      } catch (e) {
-        json = null;
-      }
+      const json = await res.json();
       if (!json || !json.ok) {
-        throw new Error((json && (json.message || json.error)) || rawText || "unknown");
+        throw new Error((json && (json.message || json.error)) || "unknown");
       }
       const rows = Array.isArray(json.records) ? json.records : [];
       const targetUserKey = normalizeNameKey(user);
@@ -501,6 +496,26 @@
     }
 
 
+    async function fetchTodaySharedForUser(user, date) {
+      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, {
+        cache: "no-store"
+      });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        throw new Error((json && (json.message || json.error)) || "共有取得に失敗しました。");
+      }
+      const rows = Array.isArray(json.records) ? json.records : [];
+      const targetUserKey = normalizeNameKey(user);
+      return rows.filter((row) => {
+        const rowDate = String(row.date || date || "").trim();
+        const rowUser = String(row.user || row.userName || "").trim();
+        return rowDate === date && normalizeNameKey(rowUser) === targetUserKey;
+      });
+    }
+
+    function buildMergedSharedText(rows) {
+      return rows.map((row) => normalizeText(row.text || row.body || "")).filter(Boolean).join("\n\n").trim();
+    }
 
     function buildMergedMainText(rows) {
       return rows.map((row) => {
@@ -564,16 +579,11 @@
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
-      let existingRows = [];
-      try {
-        existingRows = await fetchTodayMainRecords(user, date);
-      } catch (e) {
-        existingRows = [];
-      }
+      const existingRows = await fetchTodayMainRecords(user, date);
       const existingRecord = existingRows.length ? existingRows[0] : null;
-      const payload = buildEasyMainRecord(recordText, existingRecord);
+      const payload = buildEasyMainRecord(normalizeText(recordText), existingRecord);
       payload.createIfMissing = true;
-      payload.source = "easy";
+      payload.appendMode = "";
       return await postJson(payload);
     }
 
@@ -591,17 +601,16 @@
 
       try {
         const mainRows = await fetchTodayMainRecords(user, date);
-        const latestRow = mainRows.length ? mainRows[mainRows.length - 1] : null;
-        const displayText = latestRow ? buildMergedMainText([latestRow]) : "";
+        const mainMerged = buildMergedMainText(mainRows);
 
-        if (!displayText) {
+        if (!mainMerged) {
           mainCheckStatus.textContent = "確認しました。";
           mainCheckBox.textContent = "まだ今日の記録はありません。";
           return;
         }
 
         mainCheckStatus.textContent = "確認しました。";
-        mainCheckBox.textContent = displayText;
+        mainCheckBox.textContent = mainMerged;
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
       }
