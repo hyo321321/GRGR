@@ -440,26 +440,32 @@
     }
 
     async function postJson(payload) {
-      const res = await fetch(WEB_APP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-        cache: "no-store"
-      });
+      try {
+        const res = await fetch(WEB_APP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload),
+          cache: "no-store"
+        });
+        return { ok: true, opaque: true, type: res && res.type ? res.type : "opaque" };
+      } catch (e) {
+        throw new Error((e && e.message) ? e.message : "POST failed");
+      }
+    }
 
+    async function fetchJsonSafe(url) {
+      const res = await fetch(url, { cache: "no-store" });
       const text = await res.text();
       let json = null;
-
       try {
         json = text ? JSON.parse(text) : {};
       } catch (e) {
-        json = { ok: res.ok, rawText: text };
+        throw new Error("JSON parse error");
       }
-
-      if (!res.ok) {
-        throw new Error((json && (json.message || json.error || json.rawText)) || "HTTP error");
+      if (!res.ok || !json || json.ok === false) {
+        throw new Error((json && (json.message || json.error)) || `HTTP ${res.status}`);
       }
-
       return json;
     }
 
@@ -478,13 +484,7 @@
     }
 
     async function fetchTodayMainRecords(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
-        cache: "no-store"
-      });
-      const json = await res.json();
-      if (!json || !json.ok) {
-        throw new Error((json && (json.message || json.error)) || "unknown");
-      }
+      const json = await fetchJsonSafe(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
       const rows = Array.isArray(json.records) ? json.records : [];
       const targetUserKey = normalizeNameKey(user);
       return rows.filter((row) => {
@@ -497,13 +497,7 @@
 
 
     async function fetchTodaySharedForUser(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, {
-        cache: "no-store"
-      });
-      const json = await res.json();
-      if (!json || !json.ok) {
-        throw new Error((json && (json.message || json.error)) || "共有取得に失敗しました。");
-      }
+      const json = await fetchJsonSafe(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`);
       const rows = Array.isArray(json.records) ? json.records : [];
       const targetUserKey = normalizeNameKey(user);
       return rows.filter((row) => {
@@ -532,7 +526,7 @@
       const existingRaw = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
       const existingId = String(existingRaw.id || existing._serverId || existing.id || existing.serverId || "").trim();
       const cleanText = normalizeText(recordText);
-      const id = existingId || `easy-${date}-${normalizeNameKey(user)}`;
+      const id = existingId || `easy-${date}-${normalizeNameKey(user)}-${Date.now()}`;
       const tags = Array.isArray(existingRaw.tags) ? existingRaw.tags : (Array.isArray(existing && existing.tags) ? existing.tags : []);
 
       const raw = {
@@ -635,22 +629,30 @@
       statusText.textContent = "送信中...";
 
       try {
-        const sharedResult = await saveShared(created);
-        if (!sharedResult.ok) {
-          statusText.textContent = "Google共有保存失敗: " + (sharedResult.message || "不明なエラー");
-          return;
+        await saveShared(created);
+        await saveMainRecord(created);
+
+        let verified = false;
+        for (let i = 0; i < 5; i++) {
+          await new Promise(r => setTimeout(r, 700));
+          try {
+            const rows = await fetchTodayMainRecords(user, getTodayYmd());
+            const merged = buildMergedMainText(rows);
+            if (merged) {
+              verified = true;
+              break;
+            }
+          } catch (verifyErr) {}
         }
 
-        const mainResult = await saveMainRecord(created);
-        if (!mainResult.ok) {
-          statusText.textContent = "本体保存失敗: " + (mainResult.message || "不明なエラー");
-          return;
+        if (verified) {
+          statusText.textContent = "Google共有と本体記録を保存しました。";
+        } else {
+          statusText.textContent = "送信しました。反映確認中です。";
         }
-
-        statusText.textContent = "Google共有と本体記録を保存しました。";
         await checkMainRecord();
       } catch (e) {
-        statusText.textContent = "通信エラーが発生しました。";
+        statusText.textContent = "通信エラーが発生しました。" + ((e && e.message) ? " " + e.message : "");
       }
     });
 
