@@ -106,7 +106,7 @@
   <div class="wrap">
     <section class="title-card">
       <h1 class="title">かんたん記録ページ</h1>
-      <p class="subtitle">Google共有へ送信しつつ、本体記録も同時に作成します。</p>
+      <p class="subtitle">Google共有へ保存し、本体側では同じ日・同じ利用者の記録へまとめます。</p>
     </section>
 
     <section class="card">
@@ -140,7 +140,7 @@
       <h2 class="section-title">業務日誌記入欄</h2>
       <label for="memoInput">ここにメモを入力してください</label>
       <textarea id="memoInput" placeholder="例）&#10;木村さん受診終わりました。&#10;血液検査問題なし。&#10;最近朝起きにくいことを伝えました。&#10;服薬変更なし。&#10;次回4/2受診です。"></textarea>
-      <div class="help">「一括作成して送信」で Google共有 と 本体記録 を同時に保存します。</div>
+      <div class="help">「一括作成して送信」で Google共有 に保存します。本体側では同じ日・同じ利用者の記録へまとめます。</div>
     </section>
 
     <section class="card">
@@ -181,9 +181,9 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">Google保存の今日の記録確認</h2>
+      <h2 class="section-title">Google共有の今日の記録確認</h2>
       <div class="button-grid" style="grid-template-columns:1fr;">
-        <button id="checkMainBtn" class="btn-check" type="button">本体の今日の記録を確認</button>
+        <button id="checkMainBtn" class="btn-check" type="button">今日の共有記録を確認</button>
       </div>
       <div class="status" id="mainCheckStatus"></div>
       <div id="mainCheckBox" class="output">ここに今日の記録内容が表示されます。</div>
@@ -634,14 +634,7 @@
           return;
         }
 
-        const mainResult = await saveMainRecord(created);
-        if (!mainResult.ok) {
-          statusText.textContent = "Google共有は保存しました。本体反映は本体側の自動取込で続けます。";
-          await checkMainRecord();
-          return;
-        }
-
-        statusText.textContent = "Google共有と本体記録を送信しました。";
+        statusText.textContent = "Google共有へ保存しました。本体には初回1件だけ作成し、以後は同じ今日の記録へ追記されます。";
         await checkMainRecord();
       } catch (e) {
         statusText.textContent = "通信エラーが発生しました。";
