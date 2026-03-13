@@ -9788,6 +9788,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
+      await autoImportSharedItems(allItems);
       renderList();
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
@@ -9884,6 +9885,129 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       setGoogleStatus('<span class="ng">コピーに失敗</span>');
     }
   }
+
+  const MAIN_API_URL_FOR_SHARED = 'https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec';
+  let googleSharedAutoImportTimer = null;
+  let googleSharedImportRunning = false;
+
+  function getMainRecordsArray(){
+    if (Array.isArray(window.records)) return window.records;
+    if (typeof records !== 'undefined' && Array.isArray(records)) return records;
+    return [];
+  }
+
+  function hasSameMainRecordForShared(item){
+    const targetDate = String(item && item.date || '').trim();
+    const targetResident = normalizeName(item && (item.user || item.userName || item.resident || ''));
+    const targetText = String(item && (item.text || item.body || '') || '').trim();
+    return getMainRecordsArray().some(function(r){
+      const sameDate = String((r && r.date) || '').trim() === targetDate;
+      const sameResident = normalizeName((r && r.resident) || '') === targetResident;
+      if (!sameDate || !sameResident) return false;
+      const note = String((r && r.note) || '').trim();
+      return !targetText || note === targetText || note.indexOf(targetText) >= 0;
+    });
+  }
+
+  function sharedItemToMainPayload(item){
+    const resident = String(item.user || item.userName || item.resident || '').trim();
+    const recorder = String(item.staff || item.staffName || item.recorder || '').trim();
+    const note = String(item.text || item.body || '').trim();
+    const date = String(item.date || todayYmd()).trim();
+    const serverId = String(item.mainRecordId || ('shared_' + String(item.id || Date.now()))).trim();
+    const raw = {
+      id: serverId,
+      date: date,
+      resident: resident,
+      recorder: recorder,
+      medTaken: false,
+      support: '',
+      note: note,
+      hasSpecialNote: false,
+      tags: [],
+      daySupportType: '',
+      dayActivityItems: [],
+      daySupportMainItems: [],
+      daySupportReasonItems: [],
+      daySupportBathingSubItems: [],
+      daySupportHealthSubItems: [],
+      abnormalVitalsOn: false,
+      abnormalWeight: '',
+      abnormalTemp: '',
+      abnormalBPsys: '',
+      abnormalBPdia: '',
+      abnormalPulse: '',
+      timeSlot: '日中',
+      condition: '良好',
+      mental: '安定'
+    };
+    return {
+      action: 'saveMainRecord',
+      id: serverId,
+      date: date,
+      user: resident,
+      staff: recorder,
+      text: note,
+      status: '',
+      tags: [],
+      raw: raw
+    };
+  }
+
+  async function saveSharedItemToMain(item){
+    const payload = sharedItemToMainPayload(item);
+    const res = await fetch(MAIN_API_URL_FOR_SHARED, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '本体保存に失敗しました');
+    const localRec = Object.assign({}, payload.raw, { _serverId: String(payload.id || '') });
+    const list = getMainRecordsArray();
+    if (!list.some(function(r){ return String((r && (r._serverId || r.id)) || '') === String(localRec._serverId || localRec.id || ''); })) {
+      list.unshift(localRec);
+      window.records = list;
+      try { records = list; } catch(e) {}
+      if (typeof renderRecords === 'function') renderRecords();
+    }
+    return data;
+  }
+
+  async function autoImportSharedItems(items){
+    if (googleSharedImportRunning) return;
+    const list = Array.isArray(items) ? items : [];
+    if (!list.length) return;
+    googleSharedImportRunning = true;
+    try{
+      for (const item of list) {
+        const resident = String(item && (item.user || item.userName || item.resident || '') || '').trim();
+        const date = String(item && item.date || '').trim();
+        const textBody = String(item && (item.text || item.body || '') || '').trim();
+        if (!resident || !date || !textBody) continue;
+        if (hasSameMainRecordForShared(item)) continue;
+        await saveSharedItemToMain(item);
+      }
+    }catch(e){
+      console.error('autoImportSharedItems error', e);
+    }finally{
+      googleSharedImportRunning = false;
+    }
+  }
+
+  async function fetchGoogleSharedTodayForAutoImport(){
+    try{
+      const res = await fetch(GOOGLE_SHARE_URL + '?action=listShared&date=' + encodeURIComponent(todayYmd()) + '&user=', { cache: 'no-store' });
+      const data = await res.json();
+      if(!data || !data.ok) return;
+      const items = Array.isArray(data.records) ? data.records : [];
+      await autoImportSharedItems(items);
+    }catch(e){
+      console.error('fetchGoogleSharedTodayForAutoImport error', e);
+    }
+  }
+
+
   function openGoogleShare(){
     const ov = qs('googleShareOverlay');
     if(!ov) return;
@@ -9919,7 +10043,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         alert('保存処理が見つかりません。');
       }
     });
-    if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2_fixed_v2.html', '_blank'));
+    if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2_fixed_v4.html', '_blank'));
     if(dateEl) dateEl.addEventListener('change', fetchGoogleShared);
     if(residentEl) residentEl.addEventListener('change', renderList);
   }
@@ -9934,7 +10058,20 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     if(act === 'copy'){ copyGoogleText(t.getAttribute('data-google-text') || ''); return; }
   });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeGoogleShare(); });
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindGoogleShare); else bindGoogleShare();
+  function startGoogleSharedAutoImport(){
+    if (googleSharedAutoImportTimer) clearInterval(googleSharedAutoImportTimer);
+    fetchGoogleSharedTodayForAutoImport();
+    googleSharedAutoImportTimer = setInterval(fetchGoogleSharedTodayForAutoImport, 15000);
+  }
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){
+      bindGoogleShare();
+      startGoogleSharedAutoImport();
+    });
+  } else {
+    bindGoogleShare();
+    startGoogleSharedAutoImport();
+  }
 })();
 </script>
 
