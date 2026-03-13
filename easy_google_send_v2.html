@@ -469,14 +469,23 @@
       return json;
     }
 
-    async function saveShared(recordText) {
-      return await postJson({
-        action: "saveShared",
-        userName: getSelectedUserName(),
-        staffName: getSelectedStaffName(),
-        body: recordText,
-        source: "easy"
-      });
+    async function saveBoth(recordText) {
+      const user = getSelectedUserName();
+      const staff = getSelectedStaffName();
+      const date = getTodayYmd();
+      const payload = buildEasyMainRecord(normalizeText(recordText), null);
+      payload.action = "saveBoth";
+      payload.userName = user;
+      payload.staffName = staff;
+      payload.body = normalizeText(recordText);
+      payload.source = "easy";
+      payload.date = date;
+      payload.user = user;
+      payload.staff = staff;
+      payload.text = normalizeText(recordText);
+      payload.createIfMissing = true;
+      payload.appendMode = "";
+      return await postJson(payload);
     }
 
     function normalizeNameKey(value) {
@@ -540,7 +549,7 @@
         resident: user,
         recorder: staff,
         source: "easy",
-        createdFrom: "easy_google_send_v2_complete_v11",
+        createdFrom: "easy_google_send_v2_complete_v12",
         medTaken: !!existingRaw.medTaken,
         support: String(existingRaw.support || ""),
         note: cleanText,
@@ -635,8 +644,7 @@
       statusText.textContent = "送信中...";
 
       try {
-        await saveShared(created);
-        await saveMainRecord(created);
+        await saveBoth(created);
 
         let verified = false;
         for (let i = 0; i < 5; i++) {
