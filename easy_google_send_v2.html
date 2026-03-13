@@ -88,6 +88,9 @@
     .status { margin-top: 12px; font-size: 15px; color: var(--sub); min-height: 24px; white-space: pre-wrap; }
     .output { white-space: pre-wrap; background: #f8fafc; border: 2px solid var(--line); border-radius: 14px; padding: 16px; min-height: 120px; font-size: 17px; }
     .note { font-size: 13px; color: var(--sub); margin-top: 8px; word-break: break-all; }
+    .name-tools { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .name-switch { background:#475569; min-height:44px; font-size:15px; padding:10px 14px; border-radius:12px; }
+    .name-switch:hover { background:#334155; }
     @media (min-width: 720px) {
       .button-grid { grid-template-columns: 1fr 1fr; }
       .grid.two { grid-template-columns: 1fr 1fr; }
@@ -111,18 +114,18 @@
           <label for="userNameSelect">利用者名</label>
           <select id="userNameSelect" class="select-like"></select>
           <input id="userName" type="text" placeholder="利用者名を入力" style="display:none; margin-top:10px;" />
-          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-            <button id="userSelectModeBtn" class="btn-copy" type="button" style="min-height:44px; font-size:14px; padding:8px 12px;">候補から選ぶ</button>
-            <button id="userInputModeBtn" class="btn-copy" type="button" style="min-height:44px; font-size:14px; padding:8px 12px;">手入力</button>
+          <div class="name-tools">
+            <button id="userUseSelectBtn" class="name-switch" type="button">候補から選ぶ</button>
+            <button id="userUseInputBtn" class="name-switch" type="button">手入力</button>
           </div>
         </div>
         <div>
           <label for="staffNameSelect">記録者名</label>
           <select id="staffNameSelect" class="select-like"></select>
           <input id="staffName" type="text" placeholder="記録者名を入力" style="display:none; margin-top:10px;" />
-          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-            <button id="staffSelectModeBtn" class="btn-copy" type="button" style="min-height:44px; font-size:14px; padding:8px 12px;">候補から選ぶ</button>
-            <button id="staffInputModeBtn" class="btn-copy" type="button" style="min-height:44px; font-size:14px; padding:8px 12px;">手入力</button>
+          <div class="name-tools">
+            <button id="staffUseSelectBtn" class="name-switch" type="button">候補から選ぶ</button>
+            <button id="staffUseInputBtn" class="name-switch" type="button">手入力</button>
           </div>
         </div>
       </div>
@@ -209,10 +212,10 @@
     const staffNameSelect = document.getElementById("staffNameSelect");
     const userNameInput = document.getElementById("userName");
     const staffNameInput = document.getElementById("staffName");
-    const userSelectModeBtn = document.getElementById("userSelectModeBtn");
-    const userInputModeBtn = document.getElementById("userInputModeBtn");
-    const staffSelectModeBtn = document.getElementById("staffSelectModeBtn");
-    const staffInputModeBtn = document.getElementById("staffInputModeBtn");
+    const userUseSelectBtn = document.getElementById("userUseSelectBtn");
+    const userUseInputBtn = document.getElementById("userUseInputBtn");
+    const staffUseSelectBtn = document.getElementById("staffUseSelectBtn");
+    const staffUseInputBtn = document.getElementById("staffUseInputBtn");
     const createBtn = document.getElementById("createBtn");
     const copyBtn = document.getElementById("copyBtn");
     const outputBox = document.getElementById("outputBox");
@@ -264,23 +267,21 @@
         .replace(/'/g, "&#39;");
     }
 
-    function setUserInputMode(mode) {
-      if (mode === "input") {
-        userNameSelect.style.display = "none";
-        userNameInput.style.display = "";
-      } else {
-        userNameSelect.style.display = "";
-        userNameInput.style.display = "none";
+    function setUserMode(mode) {
+      const useInput = mode === "input";
+      userNameSelect.style.display = useInput ? "none" : "";
+      userNameInput.style.display = useInput ? "" : "none";
+      if (useInput) {
+        userNameInput.focus();
       }
     }
 
-    function setStaffInputMode(mode) {
-      if (mode === "input") {
-        staffNameSelect.style.display = "none";
-        staffNameInput.style.display = "";
-      } else {
-        staffNameSelect.style.display = "";
-        staffNameInput.style.display = "none";
+    function setStaffMode(mode) {
+      const useInput = mode === "input";
+      staffNameSelect.style.display = useInput ? "none" : "";
+      staffNameInput.style.display = useInput ? "" : "none";
+      if (useInput) {
+        staffNameInput.focus();
       }
     }
 
@@ -290,36 +291,29 @@
 
       if (residents.length) {
         fillSelect(userNameSelect, residents, "利用者を選択");
-        setUserInputMode("select");
+        setUserMode("select");
       } else {
-        setUserInputMode("input");
+        setUserMode("input");
       }
 
       if (recorders.length) {
         fillSelect(staffNameSelect, recorders, "記録者を選択");
-        setStaffInputMode("select");
+        setStaffMode("select");
       } else {
-        setStaffInputMode("input");
+        setStaffMode("input");
       }
     }
 
     function getSelectedUserName() {
-      return userNameSelect.style.display !== "none" ? userNameSelect.value.trim() : userNameInput.value.trim();
+      const fromSelect = userNameSelect.style.display !== "none" ? userNameSelect.value.trim() : "";
+      const fromInput = userNameInput.value.trim();
+      return fromSelect || fromInput;
     }
 
     function getSelectedStaffName() {
-      return staffNameSelect.style.display !== "none" ? staffNameSelect.value.trim() : staffNameInput.value.trim();
-    }
-
-    function normalizeName(value) {
-      return String(value || "").replace(/\s+/g, "").replace(/　/g, "").replace(/さん$/, "").trim();
-    }
-
-    function isTodayRecordForUser(record, user, date) {
-      if (!record || typeof record !== "object") return false;
-      const recordDate = String(record.date || "").trim();
-      const recordUser = String(record.user || record.userName || record.resident || (record.raw && record.raw.resident) || "").trim();
-      return recordDate === String(date || "").trim() && normalizeName(recordUser) === normalizeName(user);
+      const fromSelect = staffNameSelect.style.display !== "none" ? staffNameSelect.value.trim() : "";
+      const fromInput = staffNameInput.value.trim();
+      return fromSelect || fromInput;
     }
 
     function getTodayYmd() {
@@ -464,15 +458,42 @@
       });
     }
 
+    function normalizeNameKey(value) {
+      return String(value || "").replace(/\s+/g, "").replace(/　/g, "").trim();
+    }
+
+    function buildEasyRecordId(user, date) {
+      return "easy_" + date + "_" + normalizeNameKey(user);
+    }
+
+    async function fetchTodaySharedForUser(user, date) {
+      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, { cache: "no-store" });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        throw new Error((json && (json.message || json.error)) || "共有取得に失敗しました。");
+      }
+      const records = Array.isArray(json.records) ? json.records : [];
+      return records.filter(item => {
+        const itemUser = String(item.user || item.userName || "").trim();
+        const itemDate = String(item.date || date).trim();
+        return normalizeNameKey(itemUser) === normalizeNameKey(user) && itemDate === date;
+      });
+    }
+
+    function buildMergedSharedText(records) {
+      const parts = records
+        .map(item => normalizeText(item.text || item.body || ""))
+        .filter(Boolean);
+      return parts.join("\n\n").trim();
+    }
+
     function buildEasyMainRecord(recordText, existingRecord) {
       const user = getSelectedUserName();
       const staff = getSelectedStaffName();
       const date = getTodayYmd();
       const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
-      const existingText = normalizeText(existing && existing.text ? existing.text : "");
-      const newText = normalizeText(recordText);
-      const mergedText = existingText ? (existingText + "\n\n" + newText) : newText;
-      const id = String((existing && existing.id) || Date.now());
+      const mergedText = normalizeText(recordText);
+      const id = buildEasyRecordId(user, date);
 
       const rawBase = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
       const tags = Array.isArray(rawBase.tags) ? rawBase.tags : [];
@@ -514,22 +535,16 @@
         text: mergedText,
         status: raw.hasSpecialNote ? "special" : "",
         tags,
-        raw,
-        appendMode: existing ? "append" : ""
+        raw
       };
     }
 
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
-      let existingRecord = null;
-      try {
-        const existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, { cache: "no-store" }).then(r => r.json());
-        if (existing && existing.ok && isTodayRecordForUser(existing.record, user, date)) {
-          existingRecord = existing.record;
-        }
-      } catch (e) {}
-      const payload = buildEasyMainRecord(recordText, existingRecord);
+      const todayShared = await fetchTodaySharedForUser(user, date);
+      const mergedText = buildMergedSharedText(todayShared);
+      const payload = buildEasyMainRecord(mergedText || recordText, null);
       return await postJson(payload);
     }
 
@@ -546,21 +561,10 @@
       mainCheckBox.textContent = "";
 
       try {
-        const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, { cache: "no-store" });
-        const json = await res.json();
-
-        if (!json.ok) {
-          mainCheckStatus.textContent = "確認失敗: " + (json.message || "unknown");
-          return;
-        }
-
-        if (isTodayRecordForUser(json.record, user, date)) {
-          mainCheckStatus.textContent = "今日の記録を確認しました。";
-          mainCheckBox.textContent = json.text || (json.record && json.record.text) || "まだ今日の記録はありません。";
-        } else {
-          mainCheckStatus.textContent = "今日の記録はまだありません。";
-          mainCheckBox.textContent = "まだ今日の記録はありません。";
-        }
+        const records = await fetchTodaySharedForUser(user, date);
+        const mergedText = buildMergedSharedText(records);
+        mainCheckStatus.textContent = "確認しました。";
+        mainCheckBox.textContent = mergedText || "まだ今日の記録はありません。";
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました。";
       }
@@ -617,11 +621,11 @@
       }
     });
 
+    userUseSelectBtn.addEventListener("click", () => setUserMode("select"));
+    userUseInputBtn.addEventListener("click", () => setUserMode("input"));
+    staffUseSelectBtn.addEventListener("click", () => setStaffMode("select"));
+    staffUseInputBtn.addEventListener("click", () => setStaffMode("input"));
     checkMainBtn.addEventListener("click", checkMainRecord);
-    if (userSelectModeBtn) userSelectModeBtn.addEventListener("click", () => setUserInputMode("select"));
-    if (userInputModeBtn) userInputModeBtn.addEventListener("click", () => setUserInputMode("input"));
-    if (staffSelectModeBtn) staffSelectModeBtn.addEventListener("click", () => setStaffInputMode("select"));
-    if (staffInputModeBtn) staffInputModeBtn.addEventListener("click", () => setStaffInputMode("input"));
     aiRunBtn.addEventListener("click", runGeminiRewrite);
     aiApplyBtn.addEventListener("click", applyAiResultToMemo);
     toggleApiKeyBtn.addEventListener("click", openApiKeyEditor);
