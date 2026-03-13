@@ -445,7 +445,26 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       });
-      return await res.json();
+
+      const rawText = await res.text();
+      let data = null;
+
+      try {
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch (e) {
+        data = {
+          ok: res.ok,
+          message: rawText || res.statusText || "",
+          rawText
+        };
+      }
+
+      if (!data || typeof data !== "object") data = {};
+      if (typeof data.ok !== "boolean") data.ok = !!res.ok;
+      if (!data.message && !data.error && rawText && !/^\s*[\[{]/.test(rawText)) {
+        data.message = rawText;
+      }
+      return data;
     }
 
     async function saveShared(recordText) {
@@ -561,11 +580,16 @@
       };
     }
 
+    function pickLatestMainRecord(rows) {
+      if (!Array.isArray(rows) || !rows.length) return null;
+      return rows[rows.length - 1] || null;
+    }
+
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
       const existingRows = await fetchTodayMainRecords(user, date);
-      const existingRecord = getLatestMainRow(existingRows);
+      const existingRecord = pickLatestMainRecord(existingRows);
       const payload = buildEasyMainRecord(recordText, existingRecord);
       return await postJson(payload);
     }
@@ -584,17 +608,17 @@
 
       try {
         const mainRows = await fetchTodayMainRecords(user, date);
-        const latestRow = getLatestMainRow(mainRows);
-        const latestText = getMainRowText(latestRow);
+        const latestMain = pickLatestMainRecord(mainRows);
+        const displayText = latestMain ? buildMergedMainText([latestMain]) : "";
 
-        if (!latestText) {
+        if (!displayText) {
           mainCheckStatus.textContent = "確認しました。";
-          mainCheckBox.textContent = "まだ本体の今日の記録はありません。";
+          mainCheckBox.textContent = "まだ今日の記録はありません。";
           return;
         }
 
-        mainCheckStatus.textContent = "確認しました。（本体の今日の最新1件のみ表示）";
-        mainCheckBox.textContent = latestText;
+        mainCheckStatus.textContent = "確認しました。";
+        mainCheckBox.textContent = displayText;
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
       }
