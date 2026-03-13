@@ -465,9 +465,7 @@
       const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
       const existingText = normalizeText(existing && existing.text ? existing.text : "");
       const newText = normalizeText(recordText);
-      const mergedText = existingText ? (existingText + "
-
-" + newText) : newText;
+      const mergedText = existingText ? (existingText + "\n\n" + newText) : newText;
       const id = String((existing && existing.id) || Date.now());
 
       const rawBase = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
