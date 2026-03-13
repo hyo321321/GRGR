@@ -499,18 +499,14 @@
     }
 
     function buildMergedSharedText(rows) {
-      return rows.map((row) => normalizeText(row.text || row.body || "")).filter(Boolean).join("
-
-").trim();
+      return rows.map((row) => normalizeText(row.text || row.body || "")).filter(Boolean).join("\n\n").trim();
     }
 
     function buildMergedMainText(rows) {
       return rows.map((row) => {
         const raw = (row && row.raw && typeof row.raw === "object") ? row.raw : {};
         return normalizeText(raw.note || row.text || row.note || "");
-      }).filter(Boolean).join("
-
-").trim();
+      }).filter(Boolean).join("\n\n").trim();
     }
 
     function buildEasyMainRecord(recordText, existingRecord) {
