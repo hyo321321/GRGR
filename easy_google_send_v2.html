@@ -561,14 +561,29 @@
       };
     }
 
+    function mergeMainText(existingText, newText) {
+      const a = normalizeText(existingText);
+      const b = normalizeText(newText);
+      if (!a) return b;
+      if (!b) return a;
+      if (a === b) return a;
+      if (a.includes(b)) return a;
+      if (b.includes(a)) return b;
+      return `${a}
+
+${b}`.trim();
+    }
+
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
-      const sharedRows = await fetchTodaySharedForUser(user, date);
-      const sharedMerged = buildMergedSharedText(sharedRows) || normalizeText(recordText);
       const existingRows = await fetchTodayMainRecords(user, date);
       const existingRecord = existingRows.length ? existingRows[0] : null;
-      const payload = buildEasyMainRecord(sharedMerged, existingRecord);
+      const existingText = buildMergedMainText(existingRows);
+      const mergedText = mergeMainText(existingText, recordText);
+      const payload = buildEasyMainRecord(mergedText, existingRecord);
+      payload.forceCreate = !existingRecord;
+      payload.source = "easy";
       return await postJson(payload);
     }
 
@@ -585,25 +600,17 @@
       mainCheckBox.textContent = "";
 
       try {
-        const [mainRows, sharedRows] = await Promise.all([
-          fetchTodayMainRecords(user, date),
-          fetchTodaySharedForUser(user, date)
-        ]);
-
+        const mainRows = await fetchTodayMainRecords(user, date);
         const mainMerged = buildMergedMainText(mainRows);
-        const sharedMerged = buildMergedSharedText(sharedRows);
-        const displayText = sharedMerged || mainMerged;
 
-        if (!displayText) {
+        if (!mainMerged) {
           mainCheckStatus.textContent = "確認しました。";
-          mainCheckBox.textContent = "まだ今日の記録はありません。";
+          mainCheckBox.textContent = "まだ本体の今日の記録はありません。";
           return;
         }
 
-        mainCheckStatus.textContent = mainMerged && sharedMerged && normalizeText(mainMerged) !== normalizeText(sharedMerged)
-          ? "確認しました。（共有の今日内容を表示中）"
-          : "確認しました。";
-        mainCheckBox.textContent = displayText;
+        mainCheckStatus.textContent = "確認しました。（本体の今日の記録のみ表示）";
+        mainCheckBox.textContent = mainMerged;
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
       }
