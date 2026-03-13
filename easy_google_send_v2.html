@@ -561,29 +561,15 @@
       };
     }
 
-    function mergeMainText(existingText, newText) {
-      const a = normalizeText(existingText);
-      const b = normalizeText(newText);
-      if (!a) return b;
-      if (!b) return a;
-      if (a === b) return a;
-      if (a.includes(b)) return a;
-      if (b.includes(a)) return b;
-      return `${a}
-
-${b}`.trim();
-    }
-
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
       const existingRows = await fetchTodayMainRecords(user, date);
-      const existingRecord = existingRows.length ? existingRows[0] : null;
-      const existingText = buildMergedMainText(existingRows);
-      const mergedText = mergeMainText(existingText, recordText);
-      const payload = buildEasyMainRecord(mergedText, existingRecord);
+      const existingRecord = getLatestMainRow(existingRows);
+      const payload = buildEasyMainRecord(recordText, existingRecord);
       payload.forceCreate = !existingRecord;
       payload.source = "easy";
+      payload.replaceTodayNote = true;
       return await postJson(payload);
     }
 
@@ -601,16 +587,17 @@ ${b}`.trim();
 
       try {
         const mainRows = await fetchTodayMainRecords(user, date);
-        const mainMerged = buildMergedMainText(mainRows);
+        const latestRow = getLatestMainRow(mainRows);
+        const latestText = getMainRowText(latestRow);
 
-        if (!mainMerged) {
+        if (!latestText) {
           mainCheckStatus.textContent = "確認しました。";
           mainCheckBox.textContent = "まだ本体の今日の記録はありません。";
           return;
         }
 
-        mainCheckStatus.textContent = "確認しました。（本体の今日の記録のみ表示）";
-        mainCheckBox.textContent = mainMerged;
+        mainCheckStatus.textContent = "確認しました。（本体の今日の最新1件のみ表示）";
+        mainCheckBox.textContent = latestText;
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
       }
