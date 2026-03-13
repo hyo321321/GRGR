@@ -9819,9 +9819,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
           const updated = JSON.parse(JSON.stringify(existingRecord));
           updated.id = String(existingRecord._serverId || existingRecord.id || '');
           updated._serverId = String(existingRecord._serverId || existingRecord.id || '');
-          updated.note = currentNote ? (currentNote + '
-
-' + textToAdd) : textToAdd;
+          updated.note = currentNote ? (currentNote + '\n\n' + textToAdd) : textToAdd;
           if(!updated.recorder && (item.staff || item.staffName)) updated.recorder = String(item.staff || item.staffName || '');
           await saveMainRecordRemote(updated);
           appended += 1;
