@@ -55,11 +55,6 @@
     textarea:focus, input:focus, select:focus { border-color: var(--primary); }
     .help { margin-top: 8px; color: var(--sub); font-size: 14px; }
     .select-like { appearance: none; }
-    .name-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .mini-btn { border:none; border-radius:999px; padding:8px 12px; min-height:auto; font-size:13px; font-weight:700; cursor:pointer; color:#1f2937; background:#e5e7eb; }
-    .mini-btn.active { background:#2563eb; color:#fff; }
-    .mini-help { margin-top:8px; color: var(--sub); font-size: 13px; }
-
     .ai-box { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #f8fafc; margin-top: 14px; }
     .ai-row { display: grid; gap: 12px; }
     .ai-actions { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
@@ -93,6 +88,9 @@
     .status { margin-top: 12px; font-size: 15px; color: var(--sub); min-height: 24px; white-space: pre-wrap; }
     .output { white-space: pre-wrap; background: #f8fafc; border: 2px solid var(--line); border-radius: 14px; padding: 16px; min-height: 120px; font-size: 17px; }
     .note { font-size: 13px; color: var(--sub); margin-top: 8px; word-break: break-all; }
+    .name-tools { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .name-switch { background:#475569; min-height:44px; font-size:15px; padding:10px 14px; border-radius:12px; }
+    .name-switch:hover { background:#334155; }
     @media (min-width: 720px) {
       .button-grid { grid-template-columns: 1fr 1fr; }
       .grid.two { grid-template-columns: 1fr 1fr; }
@@ -106,7 +104,7 @@
   <div class="wrap">
     <section class="title-card">
       <h1 class="title">かんたん記録ページ</h1>
-      <p class="subtitle">Google共有へ保存し、本体側では同じ日・同じ利用者の記録へまとめます。</p>
+      <p class="subtitle">Google共有へ送信しつつ、本体記録も同時に作成します。</p>
     </section>
 
     <section class="card">
@@ -114,23 +112,21 @@
       <div class="grid two">
         <div>
           <label for="userNameSelect">利用者名</label>
-          <div class="name-row">
-            <button type="button" class="mini-btn" id="userSelectModeBtn">候補から選ぶ</button>
-            <button type="button" class="mini-btn" id="userInputModeBtn">手入力</button>
-          </div>
-          <select id="userNameSelect" class="select-like" style="margin-top:10px;"></select>
+          <select id="userNameSelect" class="select-like"></select>
           <input id="userName" type="text" placeholder="利用者名を入力" style="display:none; margin-top:10px;" />
-          <div class="mini-help" id="userNameHelp"></div>
+          <div class="name-tools">
+            <button id="userUseSelectBtn" class="name-switch" type="button">候補から選ぶ</button>
+            <button id="userUseInputBtn" class="name-switch" type="button">手入力</button>
+          </div>
         </div>
         <div>
           <label for="staffNameSelect">記録者名</label>
-          <div class="name-row">
-            <button type="button" class="mini-btn" id="staffSelectModeBtn">候補から選ぶ</button>
-            <button type="button" class="mini-btn" id="staffInputModeBtn">手入力</button>
-          </div>
-          <select id="staffNameSelect" class="select-like" style="margin-top:10px;"></select>
+          <select id="staffNameSelect" class="select-like"></select>
           <input id="staffName" type="text" placeholder="記録者名を入力" style="display:none; margin-top:10px;" />
-          <div class="mini-help" id="staffNameHelp"></div>
+          <div class="name-tools">
+            <button id="staffUseSelectBtn" class="name-switch" type="button">候補から選ぶ</button>
+            <button id="staffUseInputBtn" class="name-switch" type="button">手入力</button>
+          </div>
         </div>
       </div>
       <div class="help">本体に登録済みの利用者名・記録者名を自動で候補表示します。</div>
@@ -140,7 +136,7 @@
       <h2 class="section-title">業務日誌記入欄</h2>
       <label for="memoInput">ここにメモを入力してください</label>
       <textarea id="memoInput" placeholder="例）&#10;木村さん受診終わりました。&#10;血液検査問題なし。&#10;最近朝起きにくいことを伝えました。&#10;服薬変更なし。&#10;次回4/2受診です。"></textarea>
-      <div class="help">「一括作成して送信」で Google共有 に保存します。本体側では同じ日・同じ利用者の記録へまとめます。</div>
+      <div class="help">「一括作成して送信」で Google共有 と 本体記録 を同時に保存します。</div>
     </section>
 
     <section class="card">
@@ -181,9 +177,9 @@
     </section>
 
     <section class="card">
-      <h2 class="section-title">Google共有の今日の記録確認</h2>
+      <h2 class="section-title">Google保存の今日の記録確認</h2>
       <div class="button-grid" style="grid-template-columns:1fr;">
-        <button id="checkMainBtn" class="btn-check" type="button">今日の共有記録を確認</button>
+        <button id="checkMainBtn" class="btn-check" type="button">本体の今日の記録を確認</button>
       </div>
       <div class="status" id="mainCheckStatus"></div>
       <div id="mainCheckBox" class="output">ここに今日の記録内容が表示されます。</div>
@@ -216,12 +212,10 @@
     const staffNameSelect = document.getElementById("staffNameSelect");
     const userNameInput = document.getElementById("userName");
     const staffNameInput = document.getElementById("staffName");
-    const userSelectModeBtn = document.getElementById("userSelectModeBtn");
-    const userInputModeBtn = document.getElementById("userInputModeBtn");
-    const staffSelectModeBtn = document.getElementById("staffSelectModeBtn");
-    const staffInputModeBtn = document.getElementById("staffInputModeBtn");
-    const userNameHelp = document.getElementById("userNameHelp");
-    const staffNameHelp = document.getElementById("staffNameHelp");
+    const userUseSelectBtn = document.getElementById("userUseSelectBtn");
+    const userUseInputBtn = document.getElementById("userUseInputBtn");
+    const staffUseSelectBtn = document.getElementById("staffUseSelectBtn");
+    const staffUseInputBtn = document.getElementById("staffUseInputBtn");
     const createBtn = document.getElementById("createBtn");
     const copyBtn = document.getElementById("copyBtn");
     const outputBox = document.getElementById("outputBox");
@@ -251,25 +245,10 @@
         const raw = localStorage.getItem(key);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
-
-        if (Array.isArray(parsed)) {
-          return parsed.map(v => {
-            if (typeof v === "string") return v.trim();
-            if (v && typeof v === "object") {
-              return String(v.name || v.label || v.value || "").trim();
-            }
-            return String(v || "").trim();
-          }).filter(Boolean);
-        }
-
-        if (parsed && typeof parsed === "object") {
-          return Object.values(parsed).map(v => String(v || "").trim()).filter(Boolean);
-        }
-
-        return [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(v => String(v || "").trim()).filter(Boolean);
       } catch (e) {
-        const raw = localStorage.getItem(key) || "";
-        return raw.split(/\r?\n|,/).map(v => String(v || "").trim()).filter(Boolean);
+        return [];
       }
     }
 
@@ -288,56 +267,53 @@
         .replace(/'/g, "&#39;");
     }
 
-    let userNameMode = "input";
-    let staffNameMode = "input";
-
-    function applyNameMode(kind, mode) {
-      const isUser = kind === "user";
-      const selectEl = isUser ? userNameSelect : staffNameSelect;
-      const inputEl = isUser ? userNameInput : staffNameInput;
-      const selectBtn = isUser ? userSelectModeBtn : staffSelectModeBtn;
-      const inputBtn = isUser ? userInputModeBtn : staffInputModeBtn;
-      const helpEl = isUser ? userNameHelp : staffNameHelp;
-      const items = loadListFromStorage(isUser ? RESIDENTS_KEY : RECORDERS_KEY);
-
-      if (mode === "select" && items.length) {
-        selectEl.style.display = "";
-        inputEl.style.display = "none";
-        selectBtn.classList.add("active");
-        inputBtn.classList.remove("active");
-        helpEl.textContent = "候補から選べます。入れたい名前がない時は手入力へ切り替えてください。";
-      } else {
-        selectEl.style.display = "none";
-        inputEl.style.display = "";
-        selectBtn.classList.toggle("active", false);
-        inputBtn.classList.add("active");
-        helpEl.textContent = items.length
-          ? "手入力中です。候補から選びたい時は左のボタンを押してください。"
-          : "候補がまだないため、手入力できます。";
-        setTimeout(() => { try { inputEl.focus(); } catch(e) {} }, 0);
+    function setUserMode(mode) {
+      const useInput = mode === "input";
+      userNameSelect.style.display = useInput ? "none" : "";
+      userNameInput.style.display = useInput ? "" : "none";
+      if (useInput) {
+        userNameInput.focus();
       }
+    }
 
-      if (isUser) userNameMode = (mode === "select" && items.length) ? "select" : "input";
-      else staffNameMode = (mode === "select" && items.length) ? "select" : "input";
+    function setStaffMode(mode) {
+      const useInput = mode === "input";
+      staffNameSelect.style.display = useInput ? "none" : "";
+      staffNameInput.style.display = useInput ? "" : "none";
+      if (useInput) {
+        staffNameInput.focus();
+      }
     }
 
     function setupNameInputs() {
       const residents = loadListFromStorage(RESIDENTS_KEY);
       const recorders = loadListFromStorage(RECORDERS_KEY);
 
-      fillSelect(userNameSelect, residents, "利用者を選択");
-      fillSelect(staffNameSelect, recorders, "記録者を選択");
+      if (residents.length) {
+        fillSelect(userNameSelect, residents, "利用者を選択");
+        setUserMode("select");
+      } else {
+        setUserMode("input");
+      }
 
-      applyNameMode("user", residents.length ? "select" : "input");
-      applyNameMode("staff", recorders.length ? "select" : "input");
+      if (recorders.length) {
+        fillSelect(staffNameSelect, recorders, "記録者を選択");
+        setStaffMode("select");
+      } else {
+        setStaffMode("input");
+      }
     }
 
     function getSelectedUserName() {
-      return userNameMode === "select" ? userNameSelect.value.trim() : userNameInput.value.trim();
+      const fromSelect = userNameSelect.style.display !== "none" ? userNameSelect.value.trim() : "";
+      const fromInput = userNameInput.value.trim();
+      return fromSelect || fromInput;
     }
 
     function getSelectedStaffName() {
-      return staffNameMode === "select" ? staffNameSelect.value.trim() : staffNameInput.value.trim();
+      const fromSelect = staffNameSelect.style.display !== "none" ? staffNameSelect.value.trim() : "";
+      const fromInput = staffNameInput.value.trim();
+      return fromSelect || fromInput;
     }
 
     function getTodayYmd() {
@@ -489,7 +465,9 @@
       const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
       const existingText = normalizeText(existing && existing.text ? existing.text : "");
       const newText = normalizeText(recordText);
-      const mergedText = existingText ? (existingText + "\n\n" + newText) : newText;
+      const mergedText = existingText ? (existingText + "
+
+" + newText) : newText;
       const id = String((existing && existing.id) || Date.now());
 
       const rawBase = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
@@ -537,50 +515,12 @@
       };
     }
 
-    function isSameDateRecord(record, dateStr) {
-      if (!record || typeof record !== "object") return false;
-      const recDate = String(record.date || (record.raw && record.raw.date) || "").trim();
-      return !!recDate && recDate === String(dateStr || "").trim();
-    }
-
-    function normalizeNameLoose(name) {
-      return String(name || "").replace(/\s+/g, "").replace(/　/g, "").replace(/さん$/g, "").trim();
-    }
-
-    async function fetchTodaySharedRecord(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, {
-        cache: "no-store"
-      });
-      const json = await res.json();
-      if (!json || !json.ok) {
-        return { ok: false, message: (json && json.message) || "unknown", record: null, text: "" };
-      }
-      const targetName = normalizeNameLoose(user);
-      const rows = Array.isArray(json.records) ? json.records : [];
-      const matched = rows.find(v => {
-        const rowDate = String(v && v.date || "").trim();
-        const rowUser = normalizeNameLoose(v && (v.user || v.userName || v.resident || ""));
-        return rowDate === String(date || "").trim() && rowUser === targetName;
-      }) || null;
-      const text = matched ? String(matched.text || matched.body || "").trim() : "";
-      return { ok: true, record: matched, text, raw: json };
-    }
-
-    async function fetchTodayMainRecord(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
-        cache: "no-store"
-      });
-      const json = await res.json();
-      if (!json || !json.ok) {
-        return { ok: false, message: (json && json.message) || "unknown", record: null, text: "" };
-      }
-      const record = (json && json.record && isSameDateRecord(json.record, date)) ? json.record : null;
-      const text = record ? String(json.text || record.text || (record.raw && record.raw.note) || "").trim() : "";
-      return { ok: true, record, text, raw: json };
-    }
-
     async function saveMainRecord(recordText) {
-      const payload = buildEasyMainRecord(recordText, null);
+      const user = getSelectedUserName();
+      const date = getTodayYmd();
+      const existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`).then(r => r.json());
+      const existingRecord = existing && existing.record ? existing.record : null;
+      const payload = buildEasyMainRecord(recordText, existingRecord);
       return await postJson(payload);
     }
 
@@ -597,14 +537,16 @@
       mainCheckBox.textContent = "";
 
       try {
-        const result = await fetchTodaySharedRecord(user, date);
-        if (!result.ok) {
-          mainCheckStatus.textContent = "確認失敗: " + (result.message || "unknown");
+        const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
+        const json = await res.json();
+
+        if (!json.ok) {
+          mainCheckStatus.textContent = "確認失敗: " + (json.message || "unknown");
           return;
         }
 
         mainCheckStatus.textContent = "確認しました。";
-        mainCheckBox.textContent = result.text || "まだ今日の記録はありません。";
+        mainCheckBox.textContent = json.text || "まだ記録はありません。";
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました。";
       }
@@ -634,7 +576,13 @@
           return;
         }
 
-        statusText.textContent = "Google共有へ保存しました。本体には初回1件だけ作成し、以後は同じ今日の記録へ追記されます。";
+        const mainResult = await saveMainRecord(created);
+        if (!mainResult.ok) {
+          statusText.textContent = "本体保存失敗: " + (mainResult.message || "不明なエラー");
+          return;
+        }
+
+        statusText.textContent = "Google共有と本体記録を保存しました。";
         await checkMainRecord();
       } catch (e) {
         statusText.textContent = "通信エラーが発生しました。";
@@ -655,6 +603,10 @@
       }
     });
 
+    userUseSelectBtn.addEventListener("click", () => setUserMode("select"));
+    userUseInputBtn.addEventListener("click", () => setUserMode("input"));
+    staffUseSelectBtn.addEventListener("click", () => setStaffMode("select"));
+    staffUseInputBtn.addEventListener("click", () => setStaffMode("input"));
     checkMainBtn.addEventListener("click", checkMainRecord);
     aiRunBtn.addEventListener("click", runGeminiRewrite);
     aiApplyBtn.addEventListener("click", applyAiResultToMemo);
@@ -665,10 +617,6 @@
       closeApiKeyEditor();
     });
     closeApiKeyBtn.addEventListener("click", closeApiKeyEditor);
-    userSelectModeBtn.addEventListener("click", () => applyNameMode("user", "select"));
-    userInputModeBtn.addEventListener("click", () => applyNameMode("user", "input"));
-    staffSelectModeBtn.addEventListener("click", () => applyNameMode("staff", "select"));
-    staffInputModeBtn.addEventListener("click", () => applyNameMode("staff", "input"));
 
     setupNameInputs();
     loadGeminiKey();
