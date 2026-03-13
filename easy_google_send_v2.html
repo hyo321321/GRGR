@@ -543,6 +543,29 @@
       return !!recDate && recDate === String(dateStr || "").trim();
     }
 
+    function normalizeNameLoose(name) {
+      return String(name || "").replace(/\s+/g, "").replace(/　/g, "").replace(/さん$/g, "").trim();
+    }
+
+    async function fetchTodaySharedRecord(user, date) {
+      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, {
+        cache: "no-store"
+      });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        return { ok: false, message: (json && json.message) || "unknown", record: null, text: "" };
+      }
+      const targetName = normalizeNameLoose(user);
+      const rows = Array.isArray(json.records) ? json.records : [];
+      const matched = rows.find(v => {
+        const rowDate = String(v && v.date || "").trim();
+        const rowUser = normalizeNameLoose(v && (v.user || v.userName || v.resident || ""));
+        return rowDate === String(date || "").trim() && rowUser === targetName;
+      }) || null;
+      const text = matched ? String(matched.text || matched.body || "").trim() : "";
+      return { ok: true, record: matched, text, raw: json };
+    }
+
     async function fetchTodayMainRecord(user, date) {
       const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
         cache: "no-store"
@@ -557,11 +580,7 @@
     }
 
     async function saveMainRecord(recordText) {
-      const user = getSelectedUserName();
-      const date = getTodayYmd();
-      const existing = await fetchTodayMainRecord(user, date);
-      const existingRecord = existing && existing.record ? existing.record : null;
-      const payload = buildEasyMainRecord(recordText, existingRecord);
+      const payload = buildEasyMainRecord(recordText, null);
       return await postJson(payload);
     }
 
@@ -578,15 +597,9 @@
       mainCheckBox.textContent = "";
 
       try {
-        const result = await fetchTodayMainRecord(user, date);
+        const result = await fetchTodaySharedRecord(user, date);
         if (!result.ok) {
           mainCheckStatus.textContent = "確認失敗: " + (result.message || "unknown");
-          return;
-        }
-
-        if (!result.record) {
-          mainCheckStatus.textContent = "確認しました。";
-          mainCheckBox.textContent = "まだ今日の記録はありません。";
           return;
         }
 
@@ -623,11 +636,12 @@
 
         const mainResult = await saveMainRecord(created);
         if (!mainResult.ok) {
-          statusText.textContent = "本体保存失敗: " + (mainResult.message || "不明なエラー");
+          statusText.textContent = "Google共有は保存しました。本体反映は本体側の自動取込で続けます。";
+          await checkMainRecord();
           return;
         }
 
-        statusText.textContent = "Google共有と本体記録を保存しました。";
+        statusText.textContent = "Google共有と本体記録を送信しました。";
         await checkMainRecord();
       } catch (e) {
         statusText.textContent = "通信エラーが発生しました。";
