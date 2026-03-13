@@ -484,6 +484,8 @@
     }
 
     async function fetchTodayMainRecords(user, date) {
+      const one = await fetchJsonSafe(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
+      if (one && one.record) return [one.record];
       const json = await fetchJsonSafe(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
       const rows = Array.isArray(json.records) ? json.records : [];
       const targetUserKey = normalizeNameKey(user);
@@ -532,9 +534,13 @@
       const raw = {
         ...existingRaw,
         id,
+        _serverId: id,
+        serverId: id,
         date,
         resident: user,
         recorder: staff,
+        source: "easy",
+        createdFrom: "easy_google_send_v2_complete_v11",
         medTaken: !!existingRaw.medTaken,
         support: String(existingRaw.support || ""),
         note: cleanText,
