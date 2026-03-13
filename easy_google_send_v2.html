@@ -459,32 +459,25 @@
     }
 
     function normalizeNameKey(value) {
-      return String(value || "").replace(/\s+/g, "").replace(/　/g, "").trim();
+      return String(value || "").replace(/\s+/g, "").replace(/　/g, "").replace(/さん$/g, "").trim();
     }
 
-    function buildEasyRecordId(user, date) {
-      return "easy_" + date + "_" + normalizeNameKey(user);
-    }
-
-    async function fetchTodaySharedForUser(user, date) {
-      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, { cache: "no-store" });
+    async function fetchTodayMainRecords(user, date) {
+      const res = await fetch(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
+        cache: "no-store"
+      });
       const json = await res.json();
       if (!json || !json.ok) {
-        throw new Error((json && (json.message || json.error)) || "共有取得に失敗しました。");
+        throw new Error((json && (json.message || json.error)) || "unknown");
       }
-      const records = Array.isArray(json.records) ? json.records : [];
-      return records.filter(item => {
-        const itemUser = String(item.user || item.userName || "").trim();
-        const itemDate = String(item.date || date).trim();
-        return normalizeNameKey(itemUser) === normalizeNameKey(user) && itemDate === date;
+      const rows = Array.isArray(json.records) ? json.records : [];
+      const targetUserKey = normalizeNameKey(user);
+      return rows.filter((row) => {
+        const raw = (row && row.raw && typeof row.raw === "object") ? row.raw : {};
+        const rowDate = String(raw.date || row.date || "").trim();
+        const rowUser = String(raw.resident || row.user || "").trim();
+        return rowDate === date && normalizeNameKey(rowUser) === targetUserKey;
       });
-    }
-
-    function buildMergedSharedText(records) {
-      const parts = records
-        .map(item => normalizeText(item.text || item.body || ""))
-        .filter(Boolean);
-      return parts.join("\n\n").trim();
     }
 
     function buildEasyMainRecord(recordText, existingRecord) {
@@ -492,38 +485,40 @@
       const staff = getSelectedStaffName();
       const date = getTodayYmd();
       const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
-      const mergedText = normalizeText(recordText);
-      const id = buildEasyRecordId(user, date);
-
-      const rawBase = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
-      const tags = Array.isArray(rawBase.tags) ? rawBase.tags : [];
+      const existingRaw = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
+      const existingId = String(existingRaw.id || existing.id || existing.serverId || "").trim();
+      const existingText = normalizeText(existingRaw.note || existing.text || "");
+      const newText = normalizeText(recordText);
+      const mergedText = existingText ? (existingText + "\n\n" + newText) : newText;
+      const id = existingId || `easy-${date}-${normalizeNameKey(user)}`;
+      const tags = Array.isArray(existingRaw.tags) ? existingRaw.tags : (Array.isArray(existing && existing.tags) ? existing.tags : []);
 
       const raw = {
-        ...rawBase,
+        ...existingRaw,
         id,
         date,
         resident: user,
         recorder: staff,
-        medTaken: !!rawBase.medTaken,
-        support: String(rawBase.support || ""),
+        medTaken: !!existingRaw.medTaken,
+        support: String(existingRaw.support || ""),
         note: mergedText,
-        hasSpecialNote: !!rawBase.hasSpecialNote,
+        hasSpecialNote: !!existingRaw.hasSpecialNote,
         tags,
-        daySupportType: String(rawBase.daySupportType || ""),
-        dayActivityItems: Array.isArray(rawBase.dayActivityItems) ? rawBase.dayActivityItems : [],
-        daySupportMainItems: Array.isArray(rawBase.daySupportMainItems) ? rawBase.daySupportMainItems : [],
-        daySupportReasonItems: Array.isArray(rawBase.daySupportReasonItems) ? rawBase.daySupportReasonItems : [],
-        daySupportBathingSubItems: Array.isArray(rawBase.daySupportBathingSubItems) ? rawBase.daySupportBathingSubItems : [],
-        daySupportHealthSubItems: Array.isArray(rawBase.daySupportHealthSubItems) ? rawBase.daySupportHealthSubItems : [],
-        abnormalVitalsOn: !!rawBase.abnormalVitalsOn,
-        abnormalWeight: String(rawBase.abnormalWeight || ""),
-        abnormalTemp: String(rawBase.abnormalTemp || ""),
-        abnormalBPsys: String(rawBase.abnormalBPsys || ""),
-        abnormalBPdia: String(rawBase.abnormalBPdia || ""),
-        abnormalPulse: String(rawBase.abnormalPulse || ""),
-        timeSlot: String(rawBase.timeSlot || "日中"),
-        condition: String(rawBase.condition || "良好"),
-        mental: String(rawBase.mental || "安定")
+        daySupportType: String(existingRaw.daySupportType || ""),
+        dayActivityItems: Array.isArray(existingRaw.dayActivityItems) ? existingRaw.dayActivityItems : [],
+        daySupportMainItems: Array.isArray(existingRaw.daySupportMainItems) ? existingRaw.daySupportMainItems : [],
+        daySupportReasonItems: Array.isArray(existingRaw.daySupportReasonItems) ? existingRaw.daySupportReasonItems : [],
+        daySupportBathingSubItems: Array.isArray(existingRaw.daySupportBathingSubItems) ? existingRaw.daySupportBathingSubItems : [],
+        daySupportHealthSubItems: Array.isArray(existingRaw.daySupportHealthSubItems) ? existingRaw.daySupportHealthSubItems : [],
+        abnormalVitalsOn: !!existingRaw.abnormalVitalsOn,
+        abnormalWeight: String(existingRaw.abnormalWeight || ""),
+        abnormalTemp: String(existingRaw.abnormalTemp || ""),
+        abnormalBPsys: String(existingRaw.abnormalBPsys || ""),
+        abnormalBPdia: String(existingRaw.abnormalBPdia || ""),
+        abnormalPulse: String(existingRaw.abnormalPulse || ""),
+        timeSlot: String(existingRaw.timeSlot || "日中"),
+        condition: String(existingRaw.condition || "良好"),
+        mental: String(existingRaw.mental || "安定")
       };
 
       return {
@@ -535,16 +530,17 @@
         text: mergedText,
         status: raw.hasSpecialNote ? "special" : "",
         tags,
-        raw
+        raw,
+        appendMode: existingId ? "append" : ""
       };
     }
 
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
-      const todayShared = await fetchTodaySharedForUser(user, date);
-      const mergedText = buildMergedSharedText(todayShared);
-      const payload = buildEasyMainRecord(mergedText || recordText, null);
+      const existingRows = await fetchTodayMainRecords(user, date);
+      const existingRecord = existingRows.length ? existingRows[0] : null;
+      const payload = buildEasyMainRecord(recordText, existingRecord);
       return await postJson(payload);
     }
 
@@ -561,12 +557,22 @@
       mainCheckBox.textContent = "";
 
       try {
-        const records = await fetchTodaySharedForUser(user, date);
-        const mergedText = buildMergedSharedText(records);
+        const rows = await fetchTodayMainRecords(user, date);
+        if (!rows.length) {
+          mainCheckStatus.textContent = "確認しました。";
+          mainCheckBox.textContent = "まだ今日の記録はありません。";
+          return;
+        }
+
+        const merged = rows.map((row) => {
+          const raw = (row && row.raw && typeof row.raw === "object") ? row.raw : {};
+          return normalizeText(raw.note || row.text || "");
+        }).filter(Boolean).join("\n\n");
+
         mainCheckStatus.textContent = "確認しました。";
-        mainCheckBox.textContent = mergedText || "まだ今日の記録はありません。";
+        mainCheckBox.textContent = merged || "まだ今日の記録はありません。";
       } catch (e) {
-        mainCheckStatus.textContent = "確認に失敗しました。";
+        mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
       }
     }
 
