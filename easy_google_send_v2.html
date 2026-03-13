@@ -513,11 +513,26 @@
       };
     }
 
+
+    function sameYmd(a, b) {
+      return String(a || '').slice(0, 10) === String(b || '').slice(0, 10);
+    }
+
+    function getRecordTextIfToday(json, targetDate) {
+      const record = json && json.record && typeof json.record === 'object' ? json.record : null;
+      const recordDate = record && record.date ? record.date : '';
+      if (!sameYmd(recordDate, targetDate)) return '';
+      if (typeof json.text === 'string' && json.text.trim()) return json.text;
+      if (record && typeof record.text === 'string' && record.text.trim()) return record.text;
+      if (record && record.raw && typeof record.raw.note === 'string' && record.raw.note.trim()) return record.raw.note;
+      return '';
+    }
+
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
       const existing = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`).then(r => r.json());
-      const existingRecord = existing && existing.record ? existing.record : null;
+      const existingRecord = existing && existing.record && sameYmd(existing.record.date, date) ? existing.record : null;
       const payload = buildEasyMainRecord(recordText, existingRecord);
       return await postJson(payload);
     }
@@ -543,8 +558,9 @@
           return;
         }
 
-        mainCheckStatus.textContent = "確認しました。";
-        mainCheckBox.textContent = json.text || "まだ記録はありません。";
+        const todayText = getRecordTextIfToday(json, date);
+        mainCheckStatus.textContent = todayText ? "今日の記録を確認しました。" : "今日の記録はまだありません。";
+        mainCheckBox.textContent = todayText || "まだ今日の記録はありません。";
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました。";
       }
