@@ -480,16 +480,47 @@
       });
     }
 
+
+    async function fetchTodaySharedForUser(user, date) {
+      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, {
+        cache: "no-store"
+      });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        throw new Error((json && (json.message || json.error)) || "共有取得に失敗しました。");
+      }
+      const rows = Array.isArray(json.records) ? json.records : [];
+      const targetUserKey = normalizeNameKey(user);
+      return rows.filter((row) => {
+        const rowDate = String(row.date || date || "").trim();
+        const rowUser = String(row.user || row.userName || "").trim();
+        return rowDate === date && normalizeNameKey(rowUser) === targetUserKey;
+      });
+    }
+
+    function buildMergedSharedText(rows) {
+      return rows.map((row) => normalizeText(row.text || row.body || "")).filter(Boolean).join("
+
+").trim();
+    }
+
+    function buildMergedMainText(rows) {
+      return rows.map((row) => {
+        const raw = (row && row.raw && typeof row.raw === "object") ? row.raw : {};
+        return normalizeText(raw.note || row.text || row.note || "");
+      }).filter(Boolean).join("
+
+").trim();
+    }
+
     function buildEasyMainRecord(recordText, existingRecord) {
       const user = getSelectedUserName();
       const staff = getSelectedStaffName();
       const date = getTodayYmd();
       const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
       const existingRaw = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
-      const existingId = String(existingRaw.id || existing.id || existing.serverId || "").trim();
-      const existingText = normalizeText(existingRaw.note || existing.text || "");
-      const newText = normalizeText(recordText);
-      const mergedText = existingText ? (existingText + "\n\n" + newText) : newText;
+      const existingId = String(existingRaw.id || existing._serverId || existing.id || existing.serverId || "").trim();
+      const cleanText = normalizeText(recordText);
       const id = existingId || `easy-${date}-${normalizeNameKey(user)}`;
       const tags = Array.isArray(existingRaw.tags) ? existingRaw.tags : (Array.isArray(existing && existing.tags) ? existing.tags : []);
 
@@ -501,7 +532,7 @@
         recorder: staff,
         medTaken: !!existingRaw.medTaken,
         support: String(existingRaw.support || ""),
-        note: mergedText,
+        note: cleanText,
         hasSpecialNote: !!existingRaw.hasSpecialNote,
         tags,
         daySupportType: String(existingRaw.daySupportType || ""),
@@ -527,20 +558,21 @@
         date,
         user,
         staff,
-        text: mergedText,
+        text: cleanText,
         status: raw.hasSpecialNote ? "special" : "",
         tags,
-        raw,
-        appendMode: existingId ? "append" : ""
+        raw
       };
     }
 
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
+      const sharedRows = await fetchTodaySharedForUser(user, date);
+      const sharedMerged = buildMergedSharedText(sharedRows) || normalizeText(recordText);
       const existingRows = await fetchTodayMainRecords(user, date);
       const existingRecord = existingRows.length ? existingRows[0] : null;
-      const payload = buildEasyMainRecord(recordText, existingRecord);
+      const payload = buildEasyMainRecord(sharedMerged, existingRecord);
       return await postJson(payload);
     }
 
@@ -557,24 +589,30 @@
       mainCheckBox.textContent = "";
 
       try {
-        const rows = await fetchTodayMainRecords(user, date);
-        if (!rows.length) {
+        const [mainRows, sharedRows] = await Promise.all([
+          fetchTodayMainRecords(user, date),
+          fetchTodaySharedForUser(user, date)
+        ]);
+
+        const mainMerged = buildMergedMainText(mainRows);
+        const sharedMerged = buildMergedSharedText(sharedRows);
+        const displayText = sharedMerged || mainMerged;
+
+        if (!displayText) {
           mainCheckStatus.textContent = "確認しました。";
           mainCheckBox.textContent = "まだ今日の記録はありません。";
           return;
         }
 
-        const merged = rows.map((row) => {
-          const raw = (row && row.raw && typeof row.raw === "object") ? row.raw : {};
-          return normalizeText(raw.note || row.text || "");
-        }).filter(Boolean).join("\n\n");
-
-        mainCheckStatus.textContent = "確認しました。";
-        mainCheckBox.textContent = merged || "まだ今日の記録はありません。";
+        mainCheckStatus.textContent = mainMerged && sharedMerged && normalizeText(mainMerged) !== normalizeText(sharedMerged)
+          ? "確認しました。（共有の今日内容を表示中）"
+          : "確認しました。";
+        mainCheckBox.textContent = displayText;
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
       }
     }
+
 
     createBtn.addEventListener("click", async () => {
       const raw = memoInput.value.trim();
