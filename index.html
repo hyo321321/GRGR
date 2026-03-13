@@ -9771,10 +9771,97 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
       </div>`).join('');
   }
-  function renderList(){
+  function renderList(extraStatusHtml){
     const items = getFilteredItems();
     renderGoogleList(items);
-    setGoogleStatus('<span class="ok">読み込みました。</span> <span class="meta">' + items.length + '件</span>');
+    setGoogleStatus((extraStatusHtml ? extraStatusHtml + ' ' : '<span class="ok">読み込みました。</span> ') + '<span class="meta">' + items.length + '件</span>');
+  }
+  function getImportedGoogleIds(){
+    try{ return JSON.parse(localStorage.getItem('googleShareImportedIds') || '[]'); }catch(e){ return []; }
+  }
+  function setImportedGoogleIds(ids){
+    try{ localStorage.setItem('googleShareImportedIds', JSON.stringify(Array.isArray(ids) ? ids : [])); }catch(e){}
+  }
+  function hasImportedGoogleId(id){
+    const ids = getImportedGoogleIds();
+    return ids.includes(String(id || ''));
+  }
+  function markImportedGoogleId(id){
+    const key = String(id || '');
+    if(!key) return;
+    const ids = getImportedGoogleIds();
+    if(!ids.includes(key)){
+      ids.push(key);
+      setImportedGoogleIds(ids.slice(-2000));
+    }
+  }
+  async function importSharedItemsToMain(items){
+    const targetItems = Array.isArray(items) ? items : [];
+    let created = 0;
+    let appended = 0;
+    for(const item of targetItems){
+      const shareId = String(item && item.id || '');
+      if(!shareId || hasImportedGoogleId(shareId)) continue;
+      const targetDate = String(item.date || '').trim();
+      const matchedResident = findResidentValue(item.user || item.userName || '');
+      const resident = (matchedResident || item.user || item.userName || '').trim();
+      const textToAdd = String(item.text || item.body || '').trim();
+      if(!targetDate || !resident || !textToAdd) continue;
+      const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
+      let existingRecord = baseRecords.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(resident)) || null;
+      try{
+        if(existingRecord){
+          const currentNote = String(existingRecord.note || '').trim();
+          if(currentNote.includes(textToAdd)){
+            markImportedGoogleId(shareId);
+            continue;
+          }
+          const updated = JSON.parse(JSON.stringify(existingRecord));
+          updated.id = String(existingRecord._serverId || existingRecord.id || '');
+          updated._serverId = String(existingRecord._serverId || existingRecord.id || '');
+          updated.note = currentNote ? (currentNote + '
+
+' + textToAdd) : textToAdd;
+          if(!updated.recorder && (item.staff || item.staffName)) updated.recorder = String(item.staff || item.staffName || '');
+          await saveMainRecordRemote(updated);
+          appended += 1;
+        }else{
+          const payload = {
+            id: '',
+            date: targetDate,
+            resident,
+            recorder: String(item.staff || item.staffName || ''),
+            medTaken: false,
+            support: '',
+            note: textToAdd,
+            hasSpecialNote: false,
+            tags: [],
+            daySupportType: '',
+            dayActivityItems: [],
+            daySupportMainItems: [],
+            daySupportReasonItems: [],
+            daySupportBathingSubItems: [],
+            daySupportHealthSubItems: [],
+            abnormalVitalsOn: false,
+            abnormalWeight: '',
+            abnormalTemp: '',
+            abnormalBPsys: '',
+            abnormalBPdia: '',
+            abnormalPulse: '',
+            timeSlot: '日中',
+            condition: '良好',
+            mental: '安定'
+          };
+          await saveMainRecordRemote(payload);
+          created += 1;
+        }
+        markImportedGoogleId(shareId);
+        await syncRemoteRecordsAndRender();
+      }catch(err){
+        console.error('Google共有取込失敗', err, item);
+      }
+    }
+    return { created, appended };
   }
   async function fetchGoogleShared(){
     const date = String((qs('googleDateFilter')||{}).value || '').trim() || todayYmd();
@@ -9788,7 +9875,12 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
-      renderList();
+      const result = await importSharedItemsToMain(allItems);
+      let status = '<span class="ok">読み込みました。</span>';
+      if(result.created || result.appended){
+        status += ' <span class="meta">本体反映: 新規 ' + result.created + '件 / 追記 ' + result.appended + '件</span>';
+      }
+      renderList(status);
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
       if(wrap) wrap.innerHTML = '<div class="small">読み込みに失敗しました。</div>';
@@ -9912,7 +10004,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     if(openBtn) openBtn.addEventListener('click', openGoogleShare);
     if(closeBtn) closeBtn.addEventListener('click', closeGoogleShare);
     if(refreshBtn) refreshBtn.addEventListener('click', fetchGoogleShared);
-    if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2_stable.html', '_blank'));
+    if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2_namefix.html', '_blank'));
     if(saveBtn) saveBtn.addEventListener('click', function(ev){ if (typeof window.handleSubmit === 'function') window.handleSubmit(ev); });
     if(dateEl) dateEl.addEventListener('change', fetchGoogleShared);
     if(residentEl) residentEl.addEventListener('change', renderList);
