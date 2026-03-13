@@ -567,9 +567,6 @@
       const existingRows = await fetchTodayMainRecords(user, date);
       const existingRecord = getLatestMainRow(existingRows);
       const payload = buildEasyMainRecord(recordText, existingRecord);
-      payload.forceCreate = !existingRecord;
-      payload.source = "easy";
-      payload.replaceTodayNote = true;
       return await postJson(payload);
     }
 
