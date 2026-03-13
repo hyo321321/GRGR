@@ -9788,7 +9788,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
-      await autoImportSharedItems(allItems);
       renderList();
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
@@ -9885,205 +9884,51 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       setGoogleStatus('<span class="ng">コピーに失敗</span>');
     }
   }
-
-
-  const MAIN_API_URL_FOR_SHARED = 'https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec';
-  let googleSharedAutoImportTimer = null;
-  let googleSharedImportRunning = false;
-  const GOOGLE_SHARED_IMPORTED_KEY = 'googleSharedImportedIds_v2';
-
-  function getMainRecordsArray(){
-    if (Array.isArray(window.records)) return window.records;
-    if (typeof records !== 'undefined' && Array.isArray(records)) return records;
-    return [];
+  function openGoogleShare(){
+    const ov = qs('googleShareOverlay');
+    if(!ov) return;
+    const dateEl = qs('googleDateFilter');
+    if(dateEl && !dateEl.value) dateEl.value = todayYmd();
+    ov.style.display='flex';
+    ov.classList.add('show');
+    ov.setAttribute('aria-hidden','false');
+    fetchGoogleShared();
   }
-
-  function loadImportedSharedIdMap(){
-    try{
-      const raw = localStorage.getItem(GOOGLE_SHARED_IMPORTED_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      return parsed && typeof parsed === 'object' ? parsed : {};
-    }catch(e){
-      return {};
-    }
+  function closeGoogleShare(){
+    const ov = qs('googleShareOverlay');
+    if(!ov) return;
+    ov.classList.remove('show');
+    ov.setAttribute('aria-hidden','true');
+    ov.style.display='none';
   }
-
-  function saveImportedSharedIdMap(map){
-    try{
-      localStorage.setItem(GOOGLE_SHARED_IMPORTED_KEY, JSON.stringify(map || {}));
-    }catch(e){}
+  function bindGoogleShare(){
+    const openBtn = qs('openGoogleShareBtn');
+    const closeBtn = qs('googleShareCloseBtn');
+    const refreshBtn = qs('googleShareRefreshBtn');
+    const easyBtn = qs('googleShareOpenEasyBtn');
+    const saveBtn = qs('googleShareSaveBtn');
+    const dateEl = qs('googleDateFilter');
+    const residentEl = qs('googleResidentFilter');
+    if(openBtn) openBtn.addEventListener('click', openGoogleShare);
+    if(closeBtn) closeBtn.addEventListener('click', closeGoogleShare);
+    if(refreshBtn) refreshBtn.addEventListener('click', fetchGoogleShared);
+    if(easyBtn) easyBtn.addEventListener('click', () => window.open('easy_google_send_v2_stable.html', '_blank'));
+    if(saveBtn) saveBtn.addEventListener('click', function(ev){ if (typeof window.handleSubmit === 'function') window.handleSubmit(ev); });
+    if(dateEl) dateEl.addEventListener('change', fetchGoogleShared);
+    if(residentEl) residentEl.addEventListener('change', renderList);
   }
-
-  function isSharedItemImported(item){
-    const id = String(item && item.id || '').trim();
-    if (!id) return false;
-    const map = loadImportedSharedIdMap();
-    return !!map[id];
-  }
-
-  function markSharedItemImported(item, mainRecordId){
-    const id = String(item && item.id || '').trim();
-    if (!id) return;
-    const map = loadImportedSharedIdMap();
-    map[id] = {
-      at: new Date().toISOString(),
-      date: String(item && item.date || '').trim(),
-      resident: String(item && (item.user || item.userName || item.resident || '') || '').trim(),
-      mainRecordId: String(mainRecordId || '').trim()
-    };
-    saveImportedSharedIdMap(map);
-  }
-
-  function findMainRecordForShared(item){
-    const targetDate = String(item && item.date || '').trim();
-    const targetResident = normalizeName(item && (item.user || item.userName || item.resident || ''));
-    if (!targetDate || !targetResident) return null;
-    return getMainRecordsArray().find(function(r){
-      return String((r && r.date) || '').trim() === targetDate
-        && normalizeName((r && r.resident) || '') === targetResident;
-    }) || null;
-  }
-
-  function mergeSharedTextIntoNote(existingNote, addText){
-    const base = String(existingNote || '').trim();
-    const add = String(addText || '').trim();
-    if (!add) return base;
-    if (!base) return add;
-    if (base === add || base.indexOf(add) >= 0) return base;
-    return base + '
-
-' + add;
-  }
-
-  function sharedItemToMainPayload(item, existingRecord){
-    const resident = String(item.user || item.userName || item.resident || '').trim();
-    const recorder = String(item.staff || item.staffName || item.recorder || '').trim();
-    const addNote = String(item.text || item.body || '').trim();
-    const date = String(item.date || todayYmd()).trim();
-    const existing = existingRecord || null;
-    const recordId = String((existing && (existing._serverId || existing.id)) || (item.mainRecordId || ('shared_' + String(item.id || Date.now())))).trim();
-    const mergedNote = mergeSharedTextIntoNote(existing && existing.note, addNote);
-    const raw = {
-      ...(existing || {}),
-      id: recordId,
-      _serverId: recordId,
-      date: date,
-      resident: resident,
-      recorder: recorder || String(existing && existing.recorder || '').trim(),
-      medTaken: !!(existing && existing.medTaken),
-      support: String(existing && existing.support || ''),
-      note: mergedNote,
-      hasSpecialNote: !!(existing && existing.hasSpecialNote),
-      tags: Array.isArray(existing && existing.tags) ? existing.tags.slice() : [],
-      daySupportType: String(existing && existing.daySupportType || ''),
-      dayActivityItems: Array.isArray(existing && existing.dayActivityItems) ? existing.dayActivityItems.slice() : [],
-      daySupportMainItems: Array.isArray(existing && existing.daySupportMainItems) ? existing.daySupportMainItems.slice() : [],
-      daySupportReasonItems: Array.isArray(existing && existing.daySupportReasonItems) ? existing.daySupportReasonItems.slice() : [],
-      daySupportBathingSubItems: Array.isArray(existing && existing.daySupportBathingSubItems) ? existing.daySupportBathingSubItems.slice() : [],
-      daySupportHealthSubItems: Array.isArray(existing && existing.daySupportHealthSubItems) ? existing.daySupportHealthSubItems.slice() : [],
-      abnormalVitalsOn: !!(existing && existing.abnormalVitalsOn),
-      abnormalWeight: String(existing && existing.abnormalWeight || ''),
-      abnormalTemp: String(existing && existing.abnormalTemp || ''),
-      abnormalBPsys: String(existing && existing.abnormalBPsys || ''),
-      abnormalBPdia: String(existing && existing.abnormalBPdia || ''),
-      abnormalPulse: String(existing && existing.abnormalPulse || ''),
-      timeSlot: String(existing && existing.timeSlot || '日中'),
-      condition: String(existing && existing.condition || '良好'),
-      mental: String(existing && existing.mental || '安定')
-    };
-    return {
-      action: 'saveMainRecord',
-      id: recordId,
-      date: date,
-      user: resident,
-      staff: raw.recorder,
-      text: mergedNote,
-      status: raw.hasSpecialNote ? 'special' : '',
-      tags: raw.tags || [],
-      raw: raw
-    };
-  }
-
-  async function saveSharedItemToMain(item){
-    const existing = findMainRecordForShared(item);
-    const payload = sharedItemToMainPayload(item, existing);
-    if (existing && String(existing.note || '').trim() === String(payload.raw.note || '').trim()) {
-      markSharedItemImported(item, payload.id);
-      return { ok:true, skipped:true, id:payload.id };
-    }
-    const res = await fetch(MAIN_API_URL_FOR_SHARED, {
-      method:'POST',
-      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '本体保存に失敗しました');
-
-    const list = getMainRecordsArray().slice();
-    const idx = list.findIndex(function(r){
-      return String((r && (r._serverId || r.id)) || '') === String(payload.id || '');
-    });
-    const localRec = Object.assign({}, payload.raw, { _serverId: String(payload.id || '') });
-    if (idx >= 0) {
-      list[idx] = Object.assign({}, list[idx], localRec);
-    } else {
-      list.unshift(localRec);
-    }
-    window.records = list;
-    try { records = list; } catch(e) {}
-    if (typeof renderRecords === 'function') renderRecords();
-
-    markSharedItemImported(item, payload.id);
-    return data;
-  }
-
-  async function autoImportSharedItems(items){
-    if (googleSharedImportRunning) return;
-    const list = Array.isArray(items) ? items : [];
-    if (!list.length) return;
-    googleSharedImportRunning = true;
-    try{
-      for (const item of list) {
-        const resident = String(item && (item.user || item.userName || item.resident || '') || '').trim();
-        const date = String(item && item.date || '').trim();
-        const textBody = String(item && (item.text || item.body || '') || '').trim();
-        if (!resident || !date || !textBody) continue;
-        if (isSharedItemImported(item)) continue;
-        await saveSharedItemToMain(item);
-      }
-    }catch(e){
-      console.error('autoImportSharedItems error', e);
-    }finally{
-      googleSharedImportRunning = false;
-    }
-  }
-
-  async function fetchGoogleSharedTodayForAutoImport(){
-    try{
-      const res = await fetch(GOOGLE_SHARE_URL + '?action=listShared&date=' + encodeURIComponent(todayYmd()) + '&user=', { cache: 'no-store' });
-      const data = await res.json();
-      if(!data || !data.ok) return;
-      const items = Array.isArray(data.records) ? data.records : [];
-      await autoImportSharedItems(items);
-    }catch(e){
-      console.error('fetchGoogleSharedTodayForAutoImport error', e);
-    }
-  }
-
-  function startGoogleSharedAutoImport(){
-    if (googleSharedAutoImportTimer) clearInterval(googleSharedAutoImportTimer);
-    fetchGoogleSharedTodayForAutoImport();
-    googleSharedAutoImportTimer = setInterval(fetchGoogleSharedTodayForAutoImport, 15000);
-  }
-  if(document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){
-      bindGoogleShare();
-      startGoogleSharedAutoImport();
-    });
-  } else {
-    bindGoogleShare();
-    startGoogleSharedAutoImport();
-  }
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(!t) return;
+    if(t.id === 'googleShareOverlay'){ closeGoogleShare(); return; }
+    const act = t.getAttribute('data-google-act');
+    const id = t.getAttribute('data-google-id') || '';
+    if(act === 'reflect'){ reflectGoogleItem(id); return; }
+    if(act === 'delete'){ deleteGoogleItem(id); return; }
+    if(act === 'copy'){ copyGoogleText(t.getAttribute('data-google-text') || ''); return; }
+  });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeGoogleShare(); });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindGoogleShare); else bindGoogleShare();
 })();
 </script>
 
