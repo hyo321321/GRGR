@@ -168,7 +168,7 @@
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
       </div>
       <div class="status" id="statusText"></div>
-      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec</div>
+      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec</div>
     </section>
 
     <section class="card">
@@ -647,12 +647,13 @@
         await saveBoth(created);
 
         let verified = false;
-        for (let i = 0; i < 5; i++) {
-          await new Promise(r => setTimeout(r, 700));
+        const expected = normalizeText(created);
+        for (let i = 0; i < 8; i++) {
+          await new Promise(r => setTimeout(r, 800));
           try {
             const rows = await fetchTodayMainRecords(user, getTodayYmd());
             const merged = buildMergedMainText(rows);
-            if (merged) {
+            if (merged && normalizeText(merged).includes(expected)) {
               verified = true;
               break;
             }
@@ -662,7 +663,7 @@
         if (verified) {
           statusText.textContent = "Google共有と本体記録を保存しました。";
         } else {
-          statusText.textContent = "送信しました。反映確認中です。";
+          statusText.textContent = "送信しました。本体反映が少し遅れています。";
         }
         await checkMainRecord();
       } catch (e) {
