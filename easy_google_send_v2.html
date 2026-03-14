@@ -168,7 +168,7 @@
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
       </div>
       <div class="status" id="statusText"></div>
-      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec</div>
+      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec</div>
     </section>
 
     <section class="card">
@@ -206,7 +206,7 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec";
     const memoInput = document.getElementById("memoInput");
     const userNameSelect = document.getElementById("userNameSelect");
     const staffNameSelect = document.getElementById("staffNameSelect");
@@ -664,66 +664,67 @@ ${note}`;
       }
     }
 
-
-    createBtn.addEventListener("click", async () => {
-      const raw = memoInput.value.trim();
+    if (createBtn) createBtn.addEventListener("click", async () => {
+      const raw = memoInput ? memoInput.value.trim() : "";
       const user = getSelectedUserName();
 
       if (!user) {
-        statusText.textContent = "先に利用者を選んでください。";
+        if (statusText) statusText.textContent = "先に利用者を選んでください。";
         return;
       }
       if (!raw) {
-        statusText.textContent = "先に入力してください。";
+        if (statusText) statusText.textContent = "先に入力してください。";
         return;
       }
 
       const created = simpleCreateRecord(raw);
-      outputBox.textContent = created;
-      statusText.textContent = "送信中...";
+      if (outputBox) outputBox.textContent = created;
+      if (statusText) statusText.textContent = "送信中...";
 
       try {
         const mainResult = await saveMainRecord(created);
-        if (!mainResult.ok) {
-          statusText.textContent = "保存失敗: " + (mainResult.message || "不明なエラー");
+        if (!mainResult || !mainResult.ok) {
+          if (statusText) statusText.textContent = "保存失敗: " + ((mainResult && mainResult.message) || "不明なエラー");
           return;
         }
 
-        statusText.textContent = "Google共有と本体記録を保存しました。";
+        if (statusText) statusText.textContent = "Google共有と本体記録を保存しました。
+送信先URL: " + WEB_APP_URL;
         await checkMainRecord();
       } catch (e) {
-        statusText.textContent = "通信エラーが発生しました。" + (e && e.message ? " " + e.message : "");
+        if (statusText) statusText.textContent = "通信エラーが発生しました。" + (e && e.message ? " " + e.message : "") + "
+送信先URL: " + WEB_APP_URL;
       }
     });
 
-    copyBtn.addEventListener("click", async () => {
-      const text = outputBox.textContent.trim();
+    if (copyBtn) copyBtn.addEventListener("click", async () => {
+      const text = outputBox ? outputBox.textContent.trim() : "";
       if (!text || text === "ここに作成結果が表示されます。") {
-        statusText.textContent = "コピーする結果がありません。";
+        if (statusText) statusText.textContent = "コピーする結果がありません。";
         return;
       }
       try {
         await navigator.clipboard.writeText(text);
-        statusText.textContent = "結果をコピーしました。";
+        if (statusText) statusText.textContent = "結果をコピーしました。";
       } catch (e) {
-        statusText.textContent = "コピーに失敗しました。";
+        if (statusText) statusText.textContent = "コピーに失敗しました。";
       }
     });
 
-    userUseSelectBtn.addEventListener("click", () => setUserMode("select"));
-    userUseInputBtn.addEventListener("click", () => setUserMode("input"));
-    staffUseSelectBtn.addEventListener("click", () => setStaffMode("select"));
-    staffUseInputBtn.addEventListener("click", () => setStaffMode("input"));
-    checkMainBtn.addEventListener("click", checkMainRecord);
-    aiRunBtn.addEventListener("click", runGeminiRewrite);
-    aiApplyBtn.addEventListener("click", applyAiResultToMemo);
-    toggleApiKeyBtn.addEventListener("click", openApiKeyEditor);
-    saveApiKeyBtn.addEventListener("click", () => {
+    if (userUseSelectBtn) userUseSelectBtn.addEventListener("click", () => setUserMode("select"));
+    if (userUseInputBtn) userUseInputBtn.addEventListener("click", () => setUserMode("input"));
+    if (staffUseSelectBtn) staffUseSelectBtn.addEventListener("click", () => setStaffMode("select"));
+    if (staffUseInputBtn) staffUseInputBtn.addEventListener("click", () => setStaffMode("input"));
+    if (checkMainBtn) checkMainBtn.addEventListener("click", checkMainRecord);
+    if (aiRunBtn) aiRunBtn.addEventListener("click", runGeminiRewrite);
+    if (aiApplyBtn) aiApplyBtn.addEventListener("click", applyAiResultToMemo);
+    if (toggleApiKeyBtn) toggleApiKeyBtn.addEventListener("click", openApiKeyEditor);
+    if (saveApiKeyBtn) saveApiKeyBtn.addEventListener("click", () => {
       saveGeminiKey();
-      aiStatusText.textContent = "APIキーを保存しました。";
+      if (aiStatusText) aiStatusText.textContent = "APIキーを保存しました。";
       closeApiKeyEditor();
     });
-    closeApiKeyBtn.addEventListener("click", closeApiKeyEditor);
+    if (closeApiKeyBtn) closeApiKeyBtn.addEventListener("click", closeApiKeyEditor);
 
     setupNameInputs();
     loadGeminiKey();
