@@ -5343,20 +5343,7 @@ async function syncRemoteRecordsAndRender() {
   }
 }
 
-  const res = await fetch(MAIN_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await res.json();
-  if (!data || !data.ok) {
-    throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
-  }
-
-  return data;
-}
-   async function handleSubmit(event) {
+async function handleSubmit(event) {
   event.preventDefault();
 
   const date = document.getElementById("date").value;
