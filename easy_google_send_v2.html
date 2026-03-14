@@ -53,7 +53,6 @@
     }
     input:focus,textarea:focus{outline:none;border-color:var(--primary)}
     textarea{min-height:220px;resize:vertical}
-    .row{display:grid;gap:12px}
     .btns{display:grid;gap:12px}
     @media(min-width:720px){.btns.two{grid-template-columns:1fr 1fr}}
     button{
@@ -83,7 +82,6 @@
       font-size:16px;
     }
     .muted{color:var(--sub);font-size:13px}
-    .spacer{height:4px}
   </style>
 </head>
 <body>
@@ -169,14 +167,21 @@
         .trim();
     }
 
-    function getUserName() { return String(userNameEl.value || "").trim(); }
-    function getStaffName() { return String(staffNameEl.value || "").trim(); }
+    function getUserName() {
+      return String(userNameEl.value || "").trim();
+    }
+
+    function getStaffName() {
+      return String(staffNameEl.value || "").trim();
+    }
 
     function loadRecent(key) {
       try {
         const arr = JSON.parse(localStorage.getItem(key) || "[]");
         return Array.isArray(arr) ? arr.filter(Boolean) : [];
-      } catch (_) { return []; }
+      } catch (_) {
+        return [];
+      }
     }
 
     function saveRecent(key, value) {
@@ -188,8 +193,12 @@
     }
 
     function renderRecent() {
-      recentUsers.innerHTML = loadRecent(RECENT_USERS_KEY).map(v => `<option value="${escapeHtml(v)}"></option>`).join("");
-      recentStaff.innerHTML = loadRecent(RECENT_STAFF_KEY).map(v => `<option value="${escapeHtml(v)}"></option>`).join("");
+      recentUsers.innerHTML = loadRecent(RECENT_USERS_KEY)
+        .map(v => `<option value="${escapeHtml(v)}"></option>`)
+        .join("");
+      recentStaff.innerHTML = loadRecent(RECENT_STAFF_KEY)
+        .map(v => `<option value="${escapeHtml(v)}"></option>`)
+        .join("");
     }
 
     function escapeHtml(str) {
@@ -208,10 +217,24 @@
         body: JSON.stringify(payload),
         cache: "no-store"
       });
+
       const text = await res.text();
       let json = {};
-      try { json = text ? JSON.parse(text) : {}; } catch (_) { json = { ok: res.ok, rawText: text }; }
-      if (!res.ok) throw new Error(json.message || json.rawText || `HTTP ${res.status}`);
+
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch (_) {
+        json = { ok: res.ok, rawText: text };
+      }
+
+      if (!res.ok) {
+        throw new Error(json.message || json.rawText || `HTTP ${res.status}`);
+      }
+
+      if (json && json.ok === false) {
+        throw new Error(json.message || json.rawText || "保存に失敗しました。");
+      }
+
       return json;
     }
 
@@ -219,8 +242,21 @@
       const res = await fetch(url, { cache: "no-store" });
       const text = await res.text();
       let json = {};
-      try { json = text ? JSON.parse(text) : {}; } catch (_) { json = { ok: false, rawText: text }; }
-      if (!res.ok) throw new Error(json.message || json.rawText || `HTTP ${res.status}`);
+
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch (_) {
+        json = { ok: false, rawText: text };
+      }
+
+      if (!res.ok) {
+        throw new Error(json.message || json.rawText || `HTTP ${res.status}`);
+      }
+
+      if (json && json.ok === false) {
+        throw new Error(json.message || json.rawText || "取得に失敗しました。");
+      }
+
       return json;
     }
 
@@ -229,6 +265,7 @@
       const staff = getStaffName();
       const date = getTodayYmd();
       const id = `easy-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+
       const raw = {
         id,
         serverId: id,
@@ -240,6 +277,7 @@
         source: DEFAULT_SOURCE,
         createdFrom: "easy_google_send_v2_clean"
       };
+
       return {
         action: "saveBoth",
         id,
@@ -257,12 +295,12 @@
       };
     }
 
-
     function buildMainOnlyPayload(text) {
       const user = getUserName();
       const staff = getStaffName();
       const date = getTodayYmd();
       const id = `main-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+
       const raw = {
         id,
         serverId: id,
@@ -274,6 +312,7 @@
         source: DEFAULT_SOURCE,
         createdFrom: "easy_google_send_v2_main_retry"
       };
+
       return {
         action: "saveMainRecord",
         id,
@@ -318,83 +357,86 @@
       return await fetchMainRecord(user, date);
     }
 
-async function sendRecord() {
-  const user = getUserName();
-  const staff = getStaffName();
-  const text = normalizeText(memoInput.value);
-  const date = getTodayYmd();
+    async function sendRecord() {
+      const user = getUserName();
+      const staff = getStaffName();
+      const text = normalizeText(memoInput.value);
+      const date = getTodayYmd();
 
-  if (!user) {
-    sendStatus.textContent = "利用者名を入力してください。";
-    userNameEl.focus();
-    return;
-  }
-  if (!staff) {
-    sendStatus.textContent = "記録者名を入力してください。";
-    staffNameEl.focus();
-    return;
-  }
-  if (!text) {
-    sendStatus.textContent = "本文を入力してください。";
-    memoInput.focus();
-    return;
-  }
-
-  sendBtn.disabled = true;
-  checkBtn.disabled = true;
-  sendStatus.textContent = "送信中です...";
-
-  try {
-    saveRecent(RECENT_USERS_KEY, user);
-    saveRecent(RECENT_STAFF_KEY, staff);
-    renderRecent();
-
-    const payload = buildPayload(text);
-    const saveResult = await postJson(payload);
-
-    let mainResult = await pollMainRecord(user, date, text);
-    let found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
-
-    if (!found) {
-      sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
-
-      const mainOnlyPayload = buildMainOnlyPayload(text);
-      const retryResult = await postJson(mainOnlyPayload);
-
-      mainResult = await pollMainRecord(user, date, text);
-      found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
-
-      if (!found) {
-        sendStatus.textContent =
-          `本体反映を再送しましたが確認できませんでした。\n` +
-          `saveBoth: ${saveResult && saveResult.message ? saveResult.message : "OK"}\n` +
-          `saveMainRecord: ${retryResult && retryResult.message ? retryResult.message : "OK"}\n` +
-          `利用者: ${user}`;
-        mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+      if (!user) {
+        sendStatus.textContent = "利用者名を入力してください。";
+        userNameEl.focus();
         return;
       }
-    }
+      if (!staff) {
+        sendStatus.textContent = "記録者名を入力してください。";
+        staffNameEl.focus();
+        return;
+      }
+      if (!text) {
+        sendStatus.textContent = "本文を入力してください。";
+        memoInput.focus();
+        return;
+      }
 
-    renderMainRecord(mainResult);
-    sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
-  } catch (err) {
-    sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
-  } finally {
-    sendBtn.disabled = false;
-    checkBtn.disabled = false;
-  }
-}
+      sendBtn.disabled = true;
+      checkBtn.disabled = true;
+      sendStatus.textContent = "送信中です...";
+
+      try {
+        saveRecent(RECENT_USERS_KEY, user);
+        saveRecent(RECENT_STAFF_KEY, staff);
+        renderRecent();
+
+        const payload = buildPayload(text);
+        const saveResult = await postJson(payload);
+
+        let mainResult = await pollMainRecord(user, date, text);
+        let found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+
+        if (!found) {
+          sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
+
+          const mainOnlyPayload = buildMainOnlyPayload(text);
+          const retryResult = await postJson(mainOnlyPayload);
+
+          mainResult = await pollMainRecord(user, date, text);
+          found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+
+          if (!found) {
+            sendStatus.textContent =
+              `本体反映を再送しましたが確認できませんでした。\n` +
+              `saveBoth: ${saveResult && saveResult.message ? saveResult.message : "OK"}\n` +
+              `saveMainRecord: ${retryResult && retryResult.message ? retryResult.message : "OK"}\n` +
+              `利用者: ${user}`;
+            mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+            return;
+          }
+        }
+
+        renderMainRecord(mainResult);
+        sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
+      } catch (err) {
+        sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
+      } finally {
+        sendBtn.disabled = false;
+        checkBtn.disabled = false;
+      }
+    }
 
     async function checkMainRecord() {
       const user = getUserName();
       const date = getTodayYmd();
+
       if (!user) {
         checkStatus.textContent = "利用者名を入力してください。";
         userNameEl.focus();
         return;
       }
+
       checkBtn.disabled = true;
       checkStatus.textContent = "確認中です...";
+
       try {
         const data = await fetchMainRecord(user, date);
         renderMainRecord(data);
