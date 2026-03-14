@@ -5234,7 +5234,39 @@ function handleRestoreFile(file) {
   reader.readAsText(file, "utf-8");
 }
 
+const MAIN_API_URL = "https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec";
 
+async function saveMainRecordRemote(recordData) {
+  const fallbackText =
+    (recordData.note || '').trim() ||
+    (recordData.support || '').trim() ||
+    (Array.isArray(recordData.tags) ? recordData.tags.join(' / ') : '');
+
+  const payload = {
+    action: 'saveMainRecord',
+    id: recordData._serverId || recordData.id,
+    date: recordData.date,
+    user: recordData.resident,
+    staff: recordData.recorder,
+    text: fallbackText,
+    status: recordData.hasSpecialNote ? 'special' : '',
+    tags: recordData.tags || [],
+    raw: recordData
+  };
+
+  const res = await fetch(MAIN_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  if (!data || !data.ok) {
+    throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+  }
+
+  return data;
+}
    async function handleSubmit(event) {
   event.preventDefault();
 
