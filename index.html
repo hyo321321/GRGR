@@ -5267,6 +5267,95 @@ async function saveMainRecordRemote(recordData) {
 
   return data;
 }
+
+async function fetchRemoteMainRecords(date, resident) {
+  const qs = new URLSearchParams({ action: "getRecords" });
+  if (date) qs.set("date", date);
+  if (resident) qs.set("user", resident);
+
+  const res = await fetch(`${MAIN_API_URL}?${qs.toString()}`, {
+    cache: "no-store"
+  });
+
+  const data = await res.json();
+  if (!data || !data.ok) {
+    throw new Error((data && (data.message || data.error)) || "本体記録の取得に失敗しました");
+  }
+  return Array.isArray(data.records) ? data.records : [];
+}
+
+function mergeRemoteRecordsIntoLocal(remoteRecords) {
+  if (!Array.isArray(remoteRecords)) return;
+
+  remoteRecords.forEach((rec) => {
+    const remoteId = String(rec.id || "");
+    const idx = records.findIndex((r) =>
+      String(r._serverId || r.id || "") === remoteId ||
+      (
+        String(r.date || "") === String(rec.date || "") &&
+        String(r.resident || r.user || "") === String(rec.user || "")
+      )
+    );
+
+    const normalized = {
+      id: remoteId || String(Date.now()),
+      _serverId: remoteId || "",
+      date: rec.date || "",
+      resident: rec.user || "",
+      recorder: rec.staff || "",
+      note: (rec.raw && rec.raw.note) || rec.text || "",
+      support: (rec.raw && rec.raw.support) || "",
+      hasSpecialNote: rec.status === "special",
+      tags: Array.isArray(rec.tags) ? rec.tags : [],
+      daySupportType: (rec.raw && rec.raw.daySupportType) || "",
+      dayActivityItems: (rec.raw && rec.raw.dayActivityItems) || [],
+      daySupportMainItems: (rec.raw && rec.raw.daySupportMainItems) || [],
+      daySupportReasonItems: (rec.raw && rec.raw.daySupportReasonItems) || [],
+      daySupportBathingSubItems: (rec.raw && rec.raw.daySupportBathingSubItems) || [],
+      daySupportHealthSubItems: (rec.raw && rec.raw.daySupportHealthSubItems) || [],
+      abnormalVitalsOn: !!(rec.raw && rec.raw.abnormalVitalsOn),
+      abnormalWeight: (rec.raw && rec.raw.abnormalWeight) || "",
+      abnormalTemp: (rec.raw && rec.raw.abnormalTemp) || "",
+      abnormalBPsys: (rec.raw && rec.raw.abnormalBPsys) || "",
+      abnormalBPdia: (rec.raw && rec.raw.abnormalBPdia) || "",
+      abnormalPulse: (rec.raw && rec.raw.abnormalPulse) || "",
+      medTaken: false
+    };
+
+    if (idx >= 0) {
+      records[idx] = { ...records[idx], ...normalized };
+    } else {
+      records.push(normalized);
+    }
+  });
+
+  saveRecords();
+}
+
+async function syncRemoteRecordsAndRender() {
+  const date = document.getElementById("date")?.value || "";
+  const resident = document.getElementById("resident")?.value || "";
+  const remoteRecords = await fetchRemoteMainRecords(date, resident);
+  mergeRemoteRecordsIntoLocal(remoteRecords);
+
+  if (typeof renderRecords === "function") {
+    renderRecords();
+  }
+}
+
+  const res = await fetch(MAIN_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  if (!data || !data.ok) {
+    throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+  }
+
+  return data;
+}
    async function handleSubmit(event) {
   event.preventDefault();
 
@@ -5328,14 +5417,13 @@ async function saveMainRecordRemote(recordData) {
   }
 
   saveRecords();
-
-  try {
+try {
   await saveMainRecordRemote(recordData);
+  await syncRemoteRecordsAndRender();
 } catch (e) {
   alert("本体サーバー保存に失敗しました: " + (e && e.message ? e.message : e));
   return;
 }
-
   showToast(pendingId ? "記録を更新しました" : "記録を保存しました");
 
   if (typeof resetForm === "function") resetForm();
