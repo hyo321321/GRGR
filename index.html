@@ -5235,61 +5235,83 @@ function handleRestoreFile(file) {
 }
 
 
-    function handleSubmit(event) {
-      event.preventDefault();
+    async function handleSubmit(event) {
+  event.preventDefault();
 
-      const date = document.getElementById("date").value;
-      const resident = document.getElementById("resident").value;
-      if (!date || !resident) {
-        alert("日付と利用者は必須です。");
-        return;
-      }
+  const date = document.getElementById("date").value;
+  const resident = document.getElementById("resident").value;
+  if (!date || !resident) {
+    alert("日付と利用者は必須です。");
+    return;
+  }
 
-      const daySupportType = getDaySupportTypeSelected("main");      const dayActivityItems = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((el) => el.value);
+  const daySupportType = getDaySupportTypeSelected("main");
+  const dayActivityItems = Array.from(document.querySelectorAll(".day-activity-item:checked")).map((el) => el.value);
+  const daySupportMainItems = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
+  const daySupportReasonItems = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
 
-      const daySupportMainItems = Array.from(document.querySelectorAll(".day-main-item:checked")).map((el) => el.value);
-      const daySupportReasonItems = Array.from(document.querySelectorAll(".day-reason-item:checked")).map((el) => el.value);
+  const recordData = {
+    id: Date.now().toString(),
+    date,
+    resident,
+    recorder: document.getElementById("recorder")?.value || "",
+    medTaken: false,
+    support: document.getElementById("support").value,
+    note: document.getElementById("note").value,
+    hasSpecialNote: !!document.getElementById("hasSpecialNote")?.checked,
+    tags: [...currentTags],
+    daySupportType,
+    dayActivityItems,
+    daySupportMainItems,
+    daySupportReasonItems,
+    daySupportBathingSubItems: getBathingSubSelected("main"),
+    daySupportHealthSubItems: getHealthSubSelected("main"),
+    abnormalVitalsOn: !!(
+      (document.getElementById("abnormalWeight")?.value || "").trim() ||
+      (document.getElementById("abnormalTemp")?.value || "").trim() ||
+      (document.getElementById("abnormalBPsys")?.value || "").trim() ||
+      (document.getElementById("abnormalBPdia")?.value || "").trim() ||
+      (document.getElementById("abnormalPulse")?.value || "").trim()
+    ),
+    abnormalWeight: (document.getElementById("abnormalWeight")?.value || "").trim(),
+    abnormalTemp: (document.getElementById("abnormalTemp")?.value || "").trim(),
+    abnormalBPsys: (document.getElementById("abnormalBPsys")?.value || "").trim(),
+    abnormalBPdia: (document.getElementById("abnormalBPdia")?.value || "").trim(),
+    abnormalPulse: (document.getElementById("abnormalPulse")?.value || "").trim(),
+  };
 
-      const recordData = {
-        id: Date.now().toString(),
-        date,
-        resident,
-        recorder: document.getElementById("recorder")?.value || "",        medTaken: false,
-        support: document.getElementById("support").value,
-        note: document.getElementById("note").value,
-        hasSpecialNote: !!document.getElementById("hasSpecialNote")?.checked,
-        tags: [...currentTags],
-        daySupportType,        dayActivityItems,
-        daySupportMainItems,
-        daySupportReasonItems,
-        daySupportBathingSubItems: getBathingSubSelected("main"),
-        daySupportHealthSubItems: getHealthSubSelected("main"),
-        abnormalVitalsOn: !!((document.getElementById("abnormalWeight")?.value || "").trim() || (document.getElementById("abnormalTemp")?.value || "").trim() || (document.getElementById("abnormalBPsys")?.value || "").trim() || (document.getElementById("abnormalBPdia")?.value || "").trim() || (document.getElementById("abnormalPulse")?.value || "").trim()),
-        abnormalWeight: (document.getElementById("abnormalWeight")?.value || "").trim(),
-        abnormalTemp: (document.getElementById("abnormalTemp")?.value || "").trim(),
-        abnormalBPsys: (document.getElementById("abnormalBPsys")?.value || "").trim(),
-        abnormalBPdia: (document.getElementById("abnormalBPdia")?.value || "").trim(),
-        abnormalPulse: (document.getElementById("abnormalPulse")?.value || "").trim(),
-      };
-
-      const pendingId = String(window.pendingGoogleShareTargetId || "").trim();
-      if (pendingId) {
-        const idx = records.findIndex((r) => String(r.id) === pendingId);
-        if (idx >= 0) {
-          recordData.id = records[idx].id;
-          records[idx] = { ...records[idx], ...recordData };
-        } else {
-          records.push(recordData);
-        }
-      } else {
-        records.push(recordData);
-      }
-      saveRecords();
-      showToast(pendingId ? "更新しました" : "保存しました");
-      renderRecords();
-      window.pendingGoogleShareTargetId = "";
-      resetForm();
+  const pendingId = String(window.pendingGoogleShareTargetId || "").trim();
+  if (pendingId) {
+    const idx = records.findIndex((r) => String(r.id) === pendingId);
+    if (idx >= 0) {
+      recordData.id = records[idx].id;
+      recordData._serverId = records[idx]._serverId || records[idx].id || pendingId;
+      records[idx] = { ...records[idx], ...recordData };
+    } else {
+      recordData._serverId = pendingId;
+      records.push(recordData);
     }
+  } else {
+    records.push(recordData);
+  }
+
+  saveRecords();
+
+  try {
+    await saveMainRecordRemote(recordData);
+    await syncRemoteRecordsAndRender();
+  } catch (e) {
+    alert("本体サーバー保存に失敗しました: " + (e && e.message ? e.message : e));
+    return;
+  }
+
+  showToast(pendingId ? "記録を更新しました" : "記録を保存しました");
+
+  if (typeof resetForm === "function") resetForm();
+  window.pendingGoogleShareTargetId = "";
+
+  if (typeof renderRecords === "function") renderRecords();
+}
     // ===== A) 全員分の未完成を作成（タグ：未完成） =====
     function ensureTagExists(tagText) {
       const t = String(tagText || "").trim();
