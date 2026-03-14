@@ -4986,63 +4986,12 @@ tr.appendChild(tdSupport);
 
     }
 
-    async function deleteMainRecordRemote(recordDataOrId) {
-  const remoteId =
-    typeof recordDataOrId === 'object'
-      ? String(
-          recordDataOrId._serverId ||
-          recordDataOrId.id ||
-          ''
-        ).trim()
-      : String(recordDataOrId || '').trim();
-
-  if (!remoteId) return { ok: true, skipped: true };
-
-  const res = await fetch(MAIN_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({
-      action: 'deleteMainRecord',
-      id: remoteId
-    })
-  });
-
-  const data = await res.json();
-  if (!data || !data.ok) {
-    throw new Error((data && (data.message || data.error)) || '削除に失敗しました');
-  }
-
-  return data;
-}
-
-async function deleteRecord(id) {
-  if (!confirm("この記録を削除しますか？")) return;
-
-  const target = records.find((r) =>
-    String(r._serverId || r.id || "") === String(id)
-  );
-  if (!target) return;
-
-  try {
-    await deleteMainRecordRemote(target);
-  } catch (e) {
-    alert("本体サーバー削除に失敗しました: " + (e && e.message ? e.message : e));
-    return;
-  }
-
-  records = records.filter((r) =>
-    String(r._serverId || r.id || "") !== String(id)
-  );
-  saveRecords();
-
-  try {
-    await syncRemoteRecordsAndRender();
-  } catch (e) {
-    renderRecords();
-  }
-
-  if (typeof showToast === "function") showToast("削除しました");
-}
+    function deleteRecord(id) {
+      if (!confirm("この記録を削除しますか？")) return;
+      records = records.filter((r) => r.id !== id);
+      saveRecords();
+      renderRecords();
+    }
 
     // ===== 保存しました（トースト） =====
     let __toastTimer = null;
@@ -5303,24 +5252,9 @@ async function saveMainRecordRemote(recordData) {
     staff: recordData.recorder,
     text: fallbackText,
     status: recordData.hasSpecialNote ? 'special' : '',
-    tags: Array.isArray(recordData.tags) ? recordData.tags : [],
+    tags: recordData.tags || [],
     raw: recordData
   };
-
-  const res = await fetch(MAIN_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload),
-    cache: 'no-store'
-  });
-
-  const data = await res.json();
-  if (!data || !data.ok) {
-    throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
-  }
-
-  return data;
-}
 
   const res = await fetch(MAIN_API_URL, {
     method: 'POST',
@@ -9727,19 +9661,20 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   const payload = {
     action: 'saveMainRecord',
-    id: recordData.id,
+    id: recordData._serverId || recordData.id,
     date: recordData.date,
     user: recordData.resident,
     staff: recordData.recorder,
     text: fallbackText,
     status: recordData.hasSpecialNote ? 'special' : '',
-    tags: recordData.tags || [],
+    tags: Array.isArray(recordData.tags) ? recordData.tags : [],
     raw: recordData
   };
   const res = await fetch(MAIN_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    cache: 'no-store'
   });
   const data = await res.json();
   if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
@@ -9794,39 +9729,24 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   };
 
   window.deleteRecord = async function(id){
-  if (!confirm('この記録を削除しますか？')) return;
-
-  try{
-    const baseRecords = Array.isArray(window.records) ? window.records : records;
-    const rec = Array.isArray(baseRecords)
-      ? baseRecords.find((r) => String(r._serverId || r.id || '') === String(id))
-      : null;
-
-    const deleteId = String((rec && (rec._serverId || rec.id)) || id || '').trim();
-    if (!deleteId) throw new Error('対象が見つかりません');
-
-    const res = await fetch(MAIN_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'deleteMainRecord',
-        id: deleteId
-      }),
-      cache: 'no-store'
-    });
-
-    const data = await res.json();
-    if (!data || !data.ok) {
-      throw new Error((data && (data.message || data.error)) || '削除できませんでした');
+    if (!confirm('この記録を削除しますか？')) return;
+    try{
+      const rec = (Array.isArray(window.records) ? window.records : records).find((r) => r.id === id) || (Array.isArray(records) ? records.find((r) => r.id === id) : null);
+      const deleteId = String((rec && (rec._serverId || rec.id)) || id || '');
+      if (!deleteId) throw new Error('対象が見つかりません');
+      const res = await fetch(MAIN_API_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
+      });
+      const data = await res.json();
+      if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
+      await syncRemoteRecordsAndRender();
+      if (typeof showToast === 'function') showToast('削除しました');
+    }catch(e){
+      alert('削除に失敗しました: ' + (e && e.message ? e.message : e));
     }
-
-    await syncRemoteRecordsAndRender();
-
-    if (typeof showToast === 'function') showToast('削除しました');
-  } catch (e) {
-    alert('削除に失敗しました: ' + (e && e.message ? e.message : e));
-  }
-};
+  };
 
   function preventAutoSubmitOnEnter(){
     document.querySelectorAll('input, select').forEach((el) => {
