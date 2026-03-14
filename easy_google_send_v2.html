@@ -636,33 +636,6 @@ ${note}`;
       }
     }
 
-      mainCheckStatus.textContent = "確認中...";
-      mainCheckBox.textContent = "";
-
-      try {
-        const [mainRows, sharedRows] = await Promise.all([
-          fetchTodayMainRecords(user, date),
-          fetchTodaySharedForUser(user, date)
-        ]);
-
-        const mainMerged = buildMergedMainText(mainRows);
-        const sharedMerged = buildMergedSharedText(sharedRows);
-        const displayText = sharedMerged || mainMerged;
-
-        if (!displayText) {
-          mainCheckStatus.textContent = "確認しました。";
-          mainCheckBox.textContent = "まだ今日の記録はありません。";
-          return;
-        }
-
-        mainCheckStatus.textContent = mainMerged && sharedMerged && normalizeText(mainMerged) !== normalizeText(sharedMerged)
-          ? "確認しました。（共有の今日内容を表示中）"
-          : "確認しました。";
-        mainCheckBox.textContent = displayText;
-      } catch (e) {
-        mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
-      }
-    }
 
     if (createBtn) createBtn.addEventListener("click", async () => {
       const raw = memoInput ? memoInput.value.trim() : "";
@@ -688,12 +661,12 @@ ${note}`;
           return;
         }
 
-        if (statusText) statusText.textContent = "Google共有と本体記録を保存しました。
-送信先URL: " + WEB_APP_URL;
+        if (statusText) statusText.textContent = `Google共有と本体記録を保存しました。
+送信先URL: ${WEB_APP_URL}`;
         await checkMainRecord();
       } catch (e) {
-        if (statusText) statusText.textContent = "通信エラーが発生しました。" + (e && e.message ? " " + e.message : "") + "
-送信先URL: " + WEB_APP_URL;
+        if (statusText) statusText.textContent = `通信エラーが発生しました。${e && e.message ? " " + e.message : ""}
+送信先URL: ${WEB_APP_URL}`;
       }
     });
 
