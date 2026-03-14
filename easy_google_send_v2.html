@@ -545,9 +545,13 @@
       const raw = {
         ...existingRaw,
         id,
+        serverId: id,
+        _serverId: id,
         date,
         resident: user,
+        userName: user,
         recorder: staff,
+        staffName: staff,
         medTaken: !!existingRaw.medTaken,
         support: String(existingRaw.support || ""),
         note: cleanText,
@@ -573,11 +577,16 @@
       return {
         action: "saveBoth",
         id,
+        serverId: id,
+        _serverId: id,
+        createIfMissing: true,
         date,
         user,
         userName: user,
+        resident: user,
         staff,
         staffName: staff,
+        recorder: staff,
         body: cleanText,
         text: cleanText,
         source: "easy",
@@ -600,11 +609,12 @@
       const raw = (record.raw && typeof record.raw === "object") ? record.raw : {};
       const staff = String(raw.recorder || record.staff || "").trim();
       const note = normalizeText(raw.note || record.text || "");
-      if (staff && note) return `記録者: ${staff}
+      if (staff && note) return `${note}
 
-${note}`;
+記録者: ${staff}`;
+      if (note) return note;
       if (staff) return `記録者: ${staff}`;
-      return note;
+      return '';
     }
 
     async function checkMainRecord() {
