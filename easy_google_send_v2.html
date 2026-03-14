@@ -257,6 +257,42 @@
       };
     }
 
+
+    function buildMainOnlyPayload(text) {
+      const user = getUserName();
+      const staff = getStaffName();
+      const date = getTodayYmd();
+      const id = `main-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+      const raw = {
+        id,
+        serverId: id,
+        _serverId: id,
+        date,
+        resident: user,
+        recorder: staff,
+        note: text,
+        source: DEFAULT_SOURCE,
+        createdFrom: "easy_google_send_v2_main_retry"
+      };
+      return {
+        action: "saveMainRecord",
+        id,
+        serverId: id,
+        _serverId: id,
+        createIfMissing: true,
+        appendMode: "",
+        date,
+        user,
+        userName: user,
+        staff,
+        staffName: staff,
+        text,
+        body: text,
+        source: DEFAULT_SOURCE,
+        raw
+      };
+    }
+
     async function fetchMainRecord(user, date) {
       const url = `${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`;
       return await fetchJson(url);
