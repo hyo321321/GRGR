@@ -5330,12 +5330,11 @@ async function saveMainRecordRemote(recordData) {
   saveRecords();
 
   try {
-    await saveMainRecordRemote(recordData);
-    await syncRemoteRecordsAndRender();
-  } catch (e) {
-    alert("本体サーバー保存に失敗しました: " + (e && e.message ? e.message : e));
-    return;
-  }
+  await saveMainRecordRemote(recordData);
+} catch (e) {
+  alert("本体サーバー保存に失敗しました: " + (e && e.message ? e.message : e));
+  return;
+}
 
   showToast(pendingId ? "記録を更新しました" : "記録を保存しました");
 
