@@ -338,14 +338,18 @@
     }
 
     function renderMainRecord(data) {
-      const rec = data && data.record ? data.record : null;
-      if (!rec || !rec.text) {
-        mainCheckBox.textContent = "まだ今日の本体記録はありません。";
-        return;
-      }
-      const staff = rec.staff ? `\n\n記録者: ${rec.staff}` : "";
-      mainCheckBox.textContent = `${rec.text}${staff}`;
-    }
+  const rec = data && data.record ? data.record : null;
+  const rawNote = rec && rec.raw && rec.raw.note ? String(rec.raw.note).trim() : '';
+  const text = rec && rec.text ? String(rec.text).trim() : '';
+  const viewText = text || rawNote;
+
+  if (!rec || !viewText) {
+    mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+    return;
+  }
+  const staff = rec.staff ? `\n\n記録者: ${rec.staff}` : "";
+  mainCheckBox.textContent = `${viewText}${staff}`;
+}
 
     async function pollMainRecord(user, date, expectedText) {
       for (let i = 0; i < 8; i++) {
