@@ -4986,12 +4986,63 @@ tr.appendChild(tdSupport);
 
     }
 
-    function deleteRecord(id) {
-      if (!confirm("この記録を削除しますか？")) return;
-      records = records.filter((r) => r.id !== id);
-      saveRecords();
-      renderRecords();
-    }
+    async function deleteMainRecordRemote(recordDataOrId) {
+  const remoteId =
+    typeof recordDataOrId === 'object'
+      ? String(
+          recordDataOrId._serverId ||
+          recordDataOrId.id ||
+          ''
+        ).trim()
+      : String(recordDataOrId || '').trim();
+
+  if (!remoteId) return { ok: true, skipped: true };
+
+  const res = await fetch(MAIN_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action: 'deleteMainRecord',
+      id: remoteId
+    })
+  });
+
+  const data = await res.json();
+  if (!data || !data.ok) {
+    throw new Error((data && (data.message || data.error)) || '削除に失敗しました');
+  }
+
+  return data;
+}
+
+async function deleteRecord(id) {
+  if (!confirm("この記録を削除しますか？")) return;
+
+  const target = records.find((r) =>
+    String(r._serverId || r.id || "") === String(id)
+  );
+  if (!target) return;
+
+  try {
+    await deleteMainRecordRemote(target);
+  } catch (e) {
+    alert("本体サーバー削除に失敗しました: " + (e && e.message ? e.message : e));
+    return;
+  }
+
+  records = records.filter((r) =>
+    String(r._serverId || r.id || "") !== String(id)
+  );
+  saveRecords();
+
+  try {
+    await syncRemoteRecordsAndRender();
+  } catch (e) {
+    renderRecords();
+  }
+
+  if (typeof showToast === "function") showToast("削除しました");
+}
 
     // ===== 保存しました（トースト） =====
     let __toastTimer = null;
@@ -5252,9 +5303,24 @@ async function saveMainRecordRemote(recordData) {
     staff: recordData.recorder,
     text: fallbackText,
     status: recordData.hasSpecialNote ? 'special' : '',
-    tags: recordData.tags || [],
+    tags: Array.isArray(recordData.tags) ? recordData.tags : [],
     raw: recordData
   };
+
+  const res = await fetch(MAIN_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
+
+  const data = await res.json();
+  if (!data || !data.ok) {
+    throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+  }
+
+  return data;
+}
 
   const res = await fetch(MAIN_API_URL, {
     method: 'POST',
