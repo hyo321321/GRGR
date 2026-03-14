@@ -4727,7 +4727,9 @@ weekStart.setDate(weekStart.getDate() - 6);
 
       tbody.innerHTML = "";
 
-      const filteredBase = records.filter((r) => {
+      const visibleRecords = (Array.isArray(records) ? records : []).filter((r) => !r.deleted && !r._deleted);
+
+      const filteredBase = visibleRecords.filter((r) => {
         if (filterResident && r.resident !== filterResident) return false;
 
         if (unfinishedOnly) {
@@ -9564,11 +9566,12 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   async function syncRemoteRecordsAndRender(){
     try{
       const next = await fetchMainRecordsRemote({});
-      window.records = next;
-      records = next;
-      const remoteResidents = [...new Set(next.map(r => (r.resident || '').trim()).filter(Boolean))];
+      const cleaned = (Array.isArray(next) ? next : []).filter((r) => !r.deleted && !r._deleted);
+      window.records = cleaned;
+      records = cleaned;
+      const remoteResidents = [...new Set(cleaned.map(r => (r.resident || '').trim()).filter(Boolean))];
       remoteResidents.forEach((name) => { if (!residents.includes(name)) residents.push(name); });
-      const remoteRecorders = [...new Set(next.map(r => (r.recorder || '').trim()).filter(Boolean))];
+      const remoteRecorders = [...new Set(cleaned.map(r => (r.recorder || '').trim()).filter(Boolean))];
       remoteRecorders.forEach((name) => { if (!recorders.includes(name)) recorders.push(name); });
       saveResidents();
       saveRecorders();
