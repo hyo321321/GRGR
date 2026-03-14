@@ -318,7 +318,7 @@
       return await fetchMainRecord(user, date);
     }
 
-  async function sendRecord() {
+async function sendRecord() {
   const user = getUserName();
   const staff = getStaffName();
   const text = normalizeText(memoInput.value);
@@ -355,23 +355,28 @@
     let mainResult = await pollMainRecord(user, date, text);
     let found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
 
-    // saveBoth後に本体で見つからない場合、main_recordsへ直接1回再送
     if (!found) {
       sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
+
       const mainOnlyPayload = buildMainOnlyPayload(text);
-      await postJson(mainOnlyPayload);
+      const retryResult = await postJson(mainOnlyPayload);
 
       mainResult = await pollMainRecord(user, date, text);
       found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+
+      if (!found) {
+        sendStatus.textContent =
+          `本体反映を再送しましたが確認できませんでした。\n` +
+          `saveBoth: ${saveResult && saveResult.message ? saveResult.message : "OK"}\n` +
+          `saveMainRecord: ${retryResult && retryResult.message ? retryResult.message : "OK"}\n` +
+          `利用者: ${user}`;
+        mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+        return;
+      }
     }
 
-    if (found) {
-      renderMainRecord(mainResult);
-      sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
-    } else {
-      mainCheckBox.textContent = "まだ今日の本体記録はありません。";
-      sendStatus.textContent = `共有保存はできましたが、本体反映は確認できませんでした。\n利用者: ${user}`;
-    }
+    renderMainRecord(mainResult);
+    sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
   } catch (err) {
     sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
   } finally {
