@@ -9523,7 +9523,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
   function serverRecordToLocal(rec){
     const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
-    const serverId = String(raw.id || rec.id || rec.serverId || '');
+    const serverId = String(raw._serverId || raw.serverId || raw.id || rec.id || rec.serverId || '');
     return {
       id: serverId || String(Date.now()),
       _serverId: serverId,
@@ -9533,7 +9533,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       medTaken: !!raw.medTaken,
       support: raw.support || '',
       note: raw.note || rec.text || '',
-      hasSpecialNote: !!raw.hasSpecialNote,
+      hasSpecialNote: !!raw.hasSpecialNote || rec.status === 'special',
       tags: Array.isArray(raw.tags) ? raw.tags : (Array.isArray(rec.tags) ? rec.tags : []),
       daySupportType: raw.daySupportType || '',
       dayActivityItems: Array.isArray(raw.dayActivityItems) ? raw.dayActivityItems : [],
@@ -9563,24 +9563,35 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     return Array.isArray(data.records) ? data.records.map(serverRecordToLocal) : [];
   }
 
+  function applyRemoteRecords(next){
+    const cleaned = (Array.isArray(next) ? next : []).filter((r) => !r.deleted && !r._deleted);
+    const cloned = cleaned.map((r) => ({ ...r, tags: Array.isArray(r.tags) ? [...r.tags] : [] }));
+    window.records = cloned;
+    records = cloned;
+
+    const remoteResidents = [...new Set(cloned.map(r => (r.resident || '').trim()).filter(Boolean))];
+    remoteResidents.forEach((name) => { if (!residents.includes(name)) residents.push(name); });
+
+    const remoteRecorders = [...new Set(cloned.map(r => (r.recorder || '').trim()).filter(Boolean))];
+    remoteRecorders.forEach((name) => { if (!recorders.includes(name)) recorders.push(name); });
+
+    try { saveRecords(); } catch(e) {}
+    try { saveResidents(); } catch(e) {}
+    try { saveRecorders(); } catch(e) {}
+    try { localBackupSave(); } catch(e) {}
+  }
+
   async function syncRemoteRecordsAndRender(){
     try{
       const next = await fetchMainRecordsRemote({});
-      const cleaned = (Array.isArray(next) ? next : []).filter((r) => !r.deleted && !r._deleted);
-      window.records = cleaned;
-      records = cleaned;
-      const remoteResidents = [...new Set(cleaned.map(r => (r.resident || '').trim()).filter(Boolean))];
-      remoteResidents.forEach((name) => { if (!residents.includes(name)) residents.push(name); });
-      const remoteRecorders = [...new Set(cleaned.map(r => (r.recorder || '').trim()).filter(Boolean))];
-      remoteRecorders.forEach((name) => { if (!recorders.includes(name)) recorders.push(name); });
-      saveResidents();
-      saveRecorders();
-      localBackupSave();
+      applyRemoteRecords(next);
       if (typeof renderRecords === 'function') renderRecords();
       if (typeof renderResidentSelects === 'function') renderResidentSelects();
       if (typeof renderRecorderSelects === 'function') renderRecorderSelects();
+      return next;
     }catch(e){
       console.error('syncRemoteRecordsAndRender error', e);
+      throw e;
     }
   }
 
@@ -9654,32 +9665,32 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   }
 
   async function saveMainRecordRemote(recordData){
-  const fallbackText =
-    (recordData.note || '').trim() ||
-    (recordData.support || '').trim() ||
-    (Array.isArray(recordData.tags) ? recordData.tags.join(' / ') : '');
+    const fallbackText =
+      (recordData.note || '').trim() ||
+      (recordData.support || '').trim() ||
+      (Array.isArray(recordData.tags) ? recordData.tags.join(' / ') : '');
 
-  const payload = {
-    action: 'saveMainRecord',
-    id: recordData._serverId || recordData.id,
-    date: recordData.date,
-    user: recordData.resident,
-    staff: recordData.recorder,
-    text: fallbackText,
-    status: recordData.hasSpecialNote ? 'special' : '',
-    tags: Array.isArray(recordData.tags) ? recordData.tags : [],
-    raw: recordData
-  };
-  const res = await fetch(MAIN_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload),
-    cache: 'no-store'
-  });
-  const data = await res.json();
-  if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
-  return data;
-}
+    const payload = {
+      action: 'saveMainRecord',
+      id: recordData._serverId || recordData.id,
+      date: recordData.date,
+      user: recordData.resident,
+      staff: recordData.recorder,
+      text: fallbackText,
+      status: recordData.hasSpecialNote ? 'special' : '',
+      tags: Array.isArray(recordData.tags) ? recordData.tags : [],
+      raw: recordData
+    };
+    const res = await fetch(MAIN_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+    return data;
+  }
 
   window.handleSubmit = async function(event){
     if (event) event.preventDefault();
@@ -9708,7 +9719,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const targetId = window.editingRecordId || editingRecordId;
     if (!targetId) return;
     const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : records;
-    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => r.id === targetId) : -1;
+    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => String(r._serverId || r.id || '') === String(targetId)) : -1;
     if (idx < 0) return;
 
     const resident = document.getElementById('editResident').value;
@@ -9731,13 +9742,15 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
     try{
-      const rec = (Array.isArray(window.records) ? window.records : records).find((r) => r.id === id) || (Array.isArray(records) ? records.find((r) => r.id === id) : null);
-      const deleteId = String((rec && (rec._serverId || rec.id)) || id || '');
+      const list = Array.isArray(window.records) ? window.records : records;
+      const rec = Array.isArray(list) ? list.find((r) => String(r._serverId || r.id || '') === String(id)) : null;
+      const deleteId = String((rec && (rec._serverId || rec.id)) || id || '').trim();
       if (!deleteId) throw new Error('対象が見つかりません');
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
+        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId }),
+        cache: 'no-store'
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
@@ -9788,6 +9801,12 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       rebindSubmitAndEditHandlers();
     }catch(e){ console.error(e); }
     syncRemoteRecordsAndRender();
+    try{
+      if (window.__mainSyncTimer) clearInterval(window.__mainSyncTimer);
+      window.__mainSyncTimer = setInterval(function(){
+        syncRemoteRecordsAndRender().catch(function(){});
+      }, 10000);
+    }catch(e){}
   }
 
   if (document.readyState === 'loading') {
@@ -10010,7 +10029,11 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
+      const result = await importSharedItemsToMain(allItems);
       let status = '<span class="ok">読み込みました。</span>';
+      if(result.created || result.appended){
+        status += ' <span class="meta">本体反映: 新規 ' + result.created + '件 / 追記 ' + result.appended + '件</span>';
+      }
       renderList(status);
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
