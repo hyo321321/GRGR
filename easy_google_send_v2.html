@@ -318,56 +318,67 @@
       return await fetchMainRecord(user, date);
     }
 
-    async function sendRecord() {
-      const user = getUserName();
-      const staff = getStaffName();
-      const text = normalizeText(memoInput.value);
-      const date = getTodayYmd();
+  async function sendRecord() {
+  const user = getUserName();
+  const staff = getStaffName();
+  const text = normalizeText(memoInput.value);
+  const date = getTodayYmd();
 
-      if (!user) {
-        sendStatus.textContent = "利用者名を入力してください。";
-        userNameEl.focus();
-        return;
-      }
-      if (!staff) {
-        sendStatus.textContent = "記録者名を入力してください。";
-        staffNameEl.focus();
-        return;
-      }
-      if (!text) {
-        sendStatus.textContent = "本文を入力してください。";
-        memoInput.focus();
-        return;
-      }
+  if (!user) {
+    sendStatus.textContent = "利用者名を入力してください。";
+    userNameEl.focus();
+    return;
+  }
+  if (!staff) {
+    sendStatus.textContent = "記録者名を入力してください。";
+    staffNameEl.focus();
+    return;
+  }
+  if (!text) {
+    sendStatus.textContent = "本文を入力してください。";
+    memoInput.focus();
+    return;
+  }
 
-      sendBtn.disabled = true;
-      checkBtn.disabled = true;
-      sendStatus.textContent = "送信中です...";
+  sendBtn.disabled = true;
+  checkBtn.disabled = true;
+  sendStatus.textContent = "送信中です...";
 
-      try {
-        saveRecent(RECENT_USERS_KEY, user);
-        saveRecent(RECENT_STAFF_KEY, staff);
-        renderRecent();
+  try {
+    saveRecent(RECENT_USERS_KEY, user);
+    saveRecent(RECENT_STAFF_KEY, staff);
+    renderRecent();
 
-        const payload = buildPayload(text);
-        const saveResult = await postJson(payload);
-        const mainResult = await pollMainRecord(user, date, text);
-        const found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+    const payload = buildPayload(text);
+    const saveResult = await postJson(payload);
 
-        if (found) {
-          renderMainRecord(mainResult);
-          sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
-        } else {
-          mainCheckBox.textContent = "まだ今日の本体記録はありません。";
-          sendStatus.textContent = `送信しましたが、本体確認で見つかりませんでした。\n利用者: ${user}`;
-        }
-      } catch (err) {
-        sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
-      } finally {
-        sendBtn.disabled = false;
-        checkBtn.disabled = false;
-      }
+    let mainResult = await pollMainRecord(user, date, text);
+    let found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+
+    // saveBoth後に本体で見つからない場合、main_recordsへ直接1回再送
+    if (!found) {
+      sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
+      const mainOnlyPayload = buildMainOnlyPayload(text);
+      await postJson(mainOnlyPayload);
+
+      mainResult = await pollMainRecord(user, date, text);
+      found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
     }
+
+    if (found) {
+      renderMainRecord(mainResult);
+      sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
+    } else {
+      mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+      sendStatus.textContent = `共有保存はできましたが、本体反映は確認できませんでした。\n利用者: ${user}`;
+    }
+  } catch (err) {
+    sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
+  } finally {
+    sendBtn.disabled = false;
+    checkBtn.disabled = false;
+  }
+}
 
     async function checkMainRecord() {
       const user = getUserName();
