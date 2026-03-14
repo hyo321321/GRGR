@@ -168,7 +168,7 @@
         <button id="copyBtn" class="btn-copy" type="button">結果をコピー</button>
       </div>
       <div class="status" id="statusText"></div>
-      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec</div>
+      <div class="note">送信先URL: https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec</div>
     </section>
 
     <section class="card">
@@ -206,7 +206,7 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-4apl9V4lMTp4oBdlEvl8ZBb1PekDlMBton1eHJ_HEiPuwXp8JsDJUgyTG6EwaYI3/exec";
     const memoInput = document.getElementById("memoInput");
     const userNameSelect = document.getElementById("userNameSelect");
     const staffNameSelect = document.getElementById("staffNameSelect");
@@ -440,52 +440,33 @@
     }
 
     async function postJson(payload) {
-      try {
-        const res = await fetch(WEB_APP_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload),
-          cache: "no-store"
-        });
-        return { ok: true, opaque: true, type: res && res.type ? res.type : "opaque" };
-      } catch (e) {
-        throw new Error((e && e.message) ? e.message : "POST failed");
-      }
-    }
-
-    async function fetchJsonSafe(url) {
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetch(WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+        cache: "no-store"
+      });
       const text = await res.text();
-      let json = null;
+      let json;
       try {
         json = text ? JSON.parse(text) : {};
       } catch (e) {
-        throw new Error("JSON parse error");
+        json = { ok: res.ok, rawText: text };
       }
-      if (!res.ok || !json || json.ok === false) {
-        throw new Error((json && (json.message || json.error)) || `HTTP ${res.status}`);
+      if (!res.ok) {
+        throw new Error((json && (json.message || json.error || json.rawText)) || "HTTP error");
       }
       return json;
     }
 
-    async function saveBoth(recordText) {
-      const user = getSelectedUserName();
-      const staff = getSelectedStaffName();
-      const date = getTodayYmd();
-      const payload = buildEasyMainRecord(normalizeText(recordText), null);
-      payload.action = "saveBoth";
-      payload.userName = user;
-      payload.staffName = staff;
-      payload.body = normalizeText(recordText);
-      payload.source = "easy";
-      payload.date = date;
-      payload.user = user;
-      payload.staff = staff;
-      payload.text = normalizeText(recordText);
-      payload.createIfMissing = true;
-      payload.appendMode = "";
-      return await postJson(payload);
+    async function saveShared(recordText) {
+      return await postJson({
+        action: "saveShared",
+        userName: getSelectedUserName(),
+        staffName: getSelectedStaffName(),
+        body: recordText,
+        source: "easy"
+      });
     }
 
     function normalizeNameKey(value) {
@@ -493,9 +474,13 @@
     }
 
     async function fetchTodayMainRecords(user, date) {
-      const one = await fetchJsonSafe(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
-      if (one && one.record) return [one.record];
-      const json = await fetchJsonSafe(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
+      const res = await fetch(`${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
+        cache: "no-store"
+      });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        throw new Error((json && (json.message || json.error)) || "unknown");
+      }
       const rows = Array.isArray(json.records) ? json.records : [];
       const targetUserKey = normalizeNameKey(user);
       return rows.filter((row) => {
@@ -507,8 +492,25 @@
     }
 
 
+    async function fetchMainRecord(user, date) {
+      const res = await fetch(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`, {
+        cache: "no-store"
+      });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        throw new Error((json && (json.message || json.error)) || "本体取得に失敗しました。");
+      }
+      return json.record || null;
+    }
+
     async function fetchTodaySharedForUser(user, date) {
-      const json = await fetchJsonSafe(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`);
+      const res = await fetch(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`, {
+        cache: "no-store"
+      });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        throw new Error((json && (json.message || json.error)) || "共有取得に失敗しました。");
+      }
       const rows = Array.isArray(json.records) ? json.records : [];
       const targetUserKey = normalizeNameKey(user);
       return rows.filter((row) => {
@@ -535,7 +537,7 @@
       const date = getTodayYmd();
       const existing = (existingRecord && typeof existingRecord === "object") ? existingRecord : null;
       const existingRaw = (existing && existing.raw && typeof existing.raw === "object") ? existing.raw : {};
-      const existingId = String(existingRaw.id || (existing && existing.id) || (existing && existing.serverId) || "").trim();
+      const existingId = String(existingRaw.id || existing.id || existing.serverId || "").trim();
       const cleanText = normalizeText(recordText);
       const id = existingId || `easy-${date}-${normalizeNameKey(user)}-${Date.now()}`;
       const tags = Array.isArray(existingRaw.tags) ? existingRaw.tags : (Array.isArray(existing && existing.tags) ? existing.tags : []);
@@ -543,13 +545,9 @@
       const raw = {
         ...existingRaw,
         id,
-        _serverId: id,
-        serverId: id,
         date,
         resident: user,
         recorder: staff,
-        source: "easy",
-        createdFrom: "easy_google_send_v2_complete_v12",
         medTaken: !!existingRaw.medTaken,
         support: String(existingRaw.support || ""),
         note: cleanText,
@@ -573,12 +571,16 @@
       };
 
       return {
-        action: "saveMainRecord",
+        action: "saveBoth",
         id,
         date,
         user,
+        userName: user,
         staff,
+        staffName: staff,
+        body: cleanText,
         text: cleanText,
+        source: "easy",
         status: raw.hasSpecialNote ? "special" : "",
         tags,
         raw
@@ -588,12 +590,21 @@
     async function saveMainRecord(recordText) {
       const user = getSelectedUserName();
       const date = getTodayYmd();
-      const existingRows = await fetchTodayMainRecords(user, date);
-      const existingRecord = existingRows.length ? existingRows[0] : null;
-      const payload = buildEasyMainRecord(normalizeText(recordText), existingRecord);
-      payload.createIfMissing = true;
-      payload.appendMode = "";
+      const existingRecord = await fetchMainRecord(user, date);
+      const payload = buildEasyMainRecord(recordText, existingRecord);
       return await postJson(payload);
+    }
+
+    function formatMainRecordDisplay(record) {
+      if (!record) return "";
+      const raw = (record.raw && typeof record.raw === "object") ? record.raw : {};
+      const staff = String(raw.recorder || record.staff || "").trim();
+      const note = normalizeText(raw.note || record.text || "");
+      if (staff && note) return `記録者: ${staff}
+
+${note}`;
+      if (staff) return `記録者: ${staff}`;
+      return note;
     }
 
     async function checkMainRecord() {
@@ -609,17 +620,45 @@
       mainCheckBox.textContent = "";
 
       try {
-        const mainRows = await fetchTodayMainRecords(user, date);
-        const mainMerged = buildMergedMainText(mainRows);
+        const record = await fetchMainRecord(user, date);
+        const displayText = formatMainRecordDisplay(record);
 
-        if (!mainMerged) {
+        if (!displayText) {
+          mainCheckStatus.textContent = "確認しました。";
+          mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+          return;
+        }
+
+        mainCheckStatus.textContent = "確認しました。";
+        mainCheckBox.textContent = displayText;
+      } catch (e) {
+        mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
+      }
+    }
+
+      mainCheckStatus.textContent = "確認中...";
+      mainCheckBox.textContent = "";
+
+      try {
+        const [mainRows, sharedRows] = await Promise.all([
+          fetchTodayMainRecords(user, date),
+          fetchTodaySharedForUser(user, date)
+        ]);
+
+        const mainMerged = buildMergedMainText(mainRows);
+        const sharedMerged = buildMergedSharedText(sharedRows);
+        const displayText = sharedMerged || mainMerged;
+
+        if (!displayText) {
           mainCheckStatus.textContent = "確認しました。";
           mainCheckBox.textContent = "まだ今日の記録はありません。";
           return;
         }
 
-        mainCheckStatus.textContent = "確認しました。";
-        mainCheckBox.textContent = mainMerged;
+        mainCheckStatus.textContent = mainMerged && sharedMerged && normalizeText(mainMerged) !== normalizeText(sharedMerged)
+          ? "確認しました。（共有の今日内容を表示中）"
+          : "確認しました。";
+        mainCheckBox.textContent = displayText;
       } catch (e) {
         mainCheckStatus.textContent = "確認に失敗しました: " + (e && e.message ? e.message : "error");
       }
@@ -644,30 +683,16 @@
       statusText.textContent = "送信中...";
 
       try {
-        await saveBoth(created);
-
-        let verified = false;
-        const expected = normalizeText(created);
-        for (let i = 0; i < 8; i++) {
-          await new Promise(r => setTimeout(r, 800));
-          try {
-            const rows = await fetchTodayMainRecords(user, getTodayYmd());
-            const merged = buildMergedMainText(rows);
-            if (merged && normalizeText(merged).includes(expected)) {
-              verified = true;
-              break;
-            }
-          } catch (verifyErr) {}
+        const mainResult = await saveMainRecord(created);
+        if (!mainResult.ok) {
+          statusText.textContent = "保存失敗: " + (mainResult.message || "不明なエラー");
+          return;
         }
 
-        if (verified) {
-          statusText.textContent = "Google共有と本体記録を保存しました。";
-        } else {
-          statusText.textContent = "送信しました。本体反映が少し遅れています。";
-        }
+        statusText.textContent = "Google共有と本体記録を保存しました。";
         await checkMainRecord();
       } catch (e) {
-        statusText.textContent = "通信エラーが発生しました。" + ((e && e.message) ? " " + e.message : "");
+        statusText.textContent = "通信エラーが発生しました。" + (e && e.message ? " " + e.message : "");
       }
     });
 
