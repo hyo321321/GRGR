@@ -5259,7 +5259,8 @@ async function saveMainRecordRemote(recordData) {
   const res = await fetch(MAIN_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    cache: 'no-store'
   });
 
   const data = await res.json();
