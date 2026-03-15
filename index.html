@@ -9692,7 +9692,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     };
   }
 
-  async function saveMainRecordRemote(recordData){
+  async function saveMainRecordRemote(recordData) {
   const fallbackText =
     (recordData.note || '').trim() ||
     (recordData.support || '').trim() ||
@@ -9706,17 +9706,22 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     staff: recordData.recorder,
     text: fallbackText,
     status: recordData.hasSpecialNote ? 'special' : '',
-    tags: Array.isArray(recordData.tags) ? recordData.tags : [],
+    tags: recordData.tags || [],
     raw: recordData
   };
+
   const res = await fetch(MAIN_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
     cache: 'no-store'
   });
+
   const data = await res.json();
-  if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+  if (!data || !data.ok) {
+    throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+  }
+
   return data;
 }
 
