@@ -395,11 +395,11 @@
         const payload = buildPayload(text);
         const saveResult = await postJson(payload);
 
-        let mainResult = await pollMainRecord(user, date, text);
-        let found = getMainRecordsList(mainResult).some((rec) => {
-          const currentText = normalizeText((rec && rec.text) || (rec && rec.raw && rec.raw.note) || '');
-          return currentText && currentText.includes(text);
-        });
+        let mainResult = await pollMainRecords(user, date, text);
+        let found = !!(mainResult && Array.isArray(mainResult.records) && mainResult.records.some((rec) => {
+          const body = normalizeText(getRecordText(rec));
+          return body && body.includes(text);
+        }));
 
         if (!found) {
           sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
@@ -407,11 +407,11 @@
           const mainOnlyPayload = buildMainOnlyPayload(text);
           const retryResult = await postJson(mainOnlyPayload);
 
-          mainResult = await pollMainRecord(user, date, text);
-          found = getMainRecordsList(mainResult).some((rec) => {
-            const currentText = normalizeText((rec && rec.text) || (rec && rec.raw && rec.raw.note) || '');
-            return currentText && currentText.includes(text);
-          });
+          mainResult = await pollMainRecords(user, date, text);
+          found = !!(mainResult && Array.isArray(mainResult.records) && mainResult.records.some((rec) => {
+            const body = normalizeText(getRecordText(rec));
+            return body && body.includes(text);
+          }));
 
           if (!found) {
             sendStatus.textContent =
@@ -424,7 +424,7 @@
           }
         }
 
-        renderMainRecord(mainResult);
+        renderMainRecords(mainResult);
         sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
       } catch (err) {
         sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
@@ -448,8 +448,8 @@
       checkStatus.textContent = "確認中です...";
 
       try {
-        const data = await fetchMainRecord(user, date);
-        renderMainRecord(data);
+        const data = await fetchMainRecords(user, date);
+        renderMainRecords(data);
         checkStatus.textContent = "確認しました。";
       } catch (err) {
         checkStatus.textContent = `確認に失敗しました。\n${err && err.message ? err.message : err}`;
