@@ -9749,28 +9749,62 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   };
 
   window.saveEditModal = async function(){
-    const targetId = window.editingRecordId || editingRecordId;
-    if (!targetId) return;
-    const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : records;
-    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => r.id === targetId) : -1;
-    if (idx < 0) return;
+  const targetId = window.editingRecordId || editingRecordId;
+  if (!targetId) return;
 
-    const resident = document.getElementById('editResident').value;
-    const date = document.getElementById('editDate').value;
-    if (!resident || !date) { alert('日付と利用者は必須です'); return; }
+  const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : records;
+  const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => String(r.id) === String(targetId)) : -1;
+  if (idx < 0) return;
 
-    const updated = buildRecordDataFromEditForm(baseRecords[idx]);
-    updated.id = String(baseRecords[idx]._serverId || baseRecords[idx].id || targetId);
-    updated._serverId = String(baseRecords[idx]._serverId || baseRecords[idx].id || targetId);
-    try{
-      await saveMainRecordRemote(updated);
-      await syncRemoteRecordsAndRender();
-      if (typeof closeEditModal === 'function') closeEditModal();
-      alert('保存しました');
-    }catch(e){
-      alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
-    }
-  };
+  const resident = document.getElementById('editResident').value;
+  const date = document.getElementById('editDate').value;
+  if (!resident || !date) {
+    alert('日付と利用者は必須です');
+    return;
+  }
+
+  const updated = buildRecordDataFromEditForm(baseRecords[idx]);
+
+  const serverId = String(
+    baseRecords[idx]._serverId ||
+    baseRecords[idx].id ||
+    targetId ||
+    ''
+  ).trim();
+
+  updated.id = serverId || String(baseRecords[idx].id || targetId || Date.now());
+  updated._serverId = serverId || String(baseRecords[idx].id || targetId || '');
+  updated.date = date;
+  updated.resident = resident;
+  updated.recorder = String(document.getElementById('editRecorder')?.value || updated.recorder || '');
+  updated.note = String(updated.note || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  updated.support = String(updated.support || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  updated.text = updated.note;
+
+  try{
+    await saveMainRecordRemote(updated);
+
+    baseRecords[idx] = {
+      ...baseRecords[idx],
+      ...updated,
+      id: updated.id,
+      _serverId: updated._serverId,
+      note: updated.note,
+      support: updated.support,
+      text: updated.note
+    };
+    window.records = baseRecords;
+    records = baseRecords;
+    saveRecords();
+
+    await syncRemoteRecordsAndRender();
+
+    if (typeof closeEditModal === 'function') closeEditModal();
+    alert('保存しました');
+  }catch(e){
+    alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
+  }
+};
 
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
