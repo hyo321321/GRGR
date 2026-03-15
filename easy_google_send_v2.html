@@ -331,54 +331,64 @@
         raw
       };
     }
-
     async function fetchMainRecord(user, date) {
+      const url = `${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`;
+      return await fetchJson(url);
+    }
+
+    async function fetchMainRecords(user, date) {
       const url = `${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`;
-      const data = await fetchJson(url);
-      const list = Array.isArray(data && data.records) ? data.records.slice() : [];
-      list.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
-      return {
-        ok: true,
-        records: list
-      };
+      return await fetchJson(url);
     }
 
     function renderMainRecord(data) {
-      const list = Array.isArray(data && data.records) ? data.records : [];
+      const rec = data && data.record ? data.record : null;
+      const rawNote = rec && rec.raw && rec.raw.note ? String(rec.raw.note).trim() : '';
+      const text = rec && rec.text ? String(rec.text).trim() : '';
+      const viewText = text || rawNote;
 
-      if (!list.length) {
+      if (!rec || !viewText) {
+        mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+        return;
+      }
+      const staff = rec.staff ? `
+
+記録者: ${rec.staff}` : "";
+      mainCheckBox.textContent = `${viewText}${staff}`;
+    }
+
+    function renderMainRecordsList(data) {
+      const rows = Array.isArray(data && data.records) ? data.records : [];
+      if (!rows.length) {
         mainCheckBox.textContent = "まだ今日の本体記録はありません。";
         return;
       }
 
-      const lines = [];
-      list.forEach((rec, index) => {
-        const rawNote = rec && rec.raw && rec.raw.note ? String(rec.raw.note).trim() : '';
-        const text = rec && rec.text ? String(rec.text).trim() : '';
-        const viewText = text || rawNote || '（本文なし）';
-        const updated = rec && rec.updatedAt ? String(rec.updatedAt) : '';
+      const blocks = rows.map((rec, idx) => {
+        const text = normalizeText((rec && rec.text) || (rec && rec.raw && rec.raw.note) || '');
+        const updatedAt = rec && rec.updatedAt ? String(rec.updatedAt) : '';
         const staff = rec && rec.staff ? String(rec.staff) : '';
-
-        lines.push(`${index + 1}件目${updated ? ` / 更新: ${updated}` : ''}${staff ? ` / 記録者: ${staff}` : ''}`);
-        lines.push(viewText);
-        if (index !== list.length - 1) lines.push('', '--------------------', '');
+        const head = [
+          `${idx + 1}件目`,
+          updatedAt ? `更新: ${updatedAt}` : '',
+          staff ? `記録者: ${staff}` : ''
+        ].filter(Boolean).join(' / ');
+        return `${head}
+${text || '(本文なし)'}`;
       });
 
-      mainCheckBox.textContent = lines.join('
+      mainCheckBox.textContent = blocks.join('
+
+--------------------
+
 ');
     }
 
     async function pollMainRecord(user, date, expectedText) {
-      const normalizedExpected = normalizeText(expectedText || '');
-
       for (let i = 0; i < 8; i++) {
         const data = await fetchMainRecord(user, date);
-        const list = Array.isArray(data && data.records) ? data.records : [];
-        const found = list.some((rec) => {
-          const text = normalizeText((rec && rec.text) || (rec && rec.raw && rec.raw.note) || '');
-          return text && (!normalizedExpected || text.includes(normalizedExpected));
-        });
-        if (list.length && (!normalizedExpected || found)) return data;
+        const text = normalizeText(data && data.record && data.record.text);
+        if (text && (!expectedText || text.includes(expectedText))) return data;
         await new Promise(r => setTimeout(r, 700));
       }
       return await fetchMainRecord(user, date);
@@ -451,7 +461,6 @@
         checkBtn.disabled = false;
       }
     }
-
     async function checkMainRecord() {
       const user = getUserName();
       const date = getTodayYmd();
@@ -466,17 +475,20 @@
       checkStatus.textContent = "確認中です...";
 
       try {
-        const data = await fetchMainRecord(user, date);
-        renderMainRecord(data);
-        checkStatus.textContent = "確認しました。";
+        const data = await fetchMainRecords(user, date);
+        renderMainRecordsList(data);
+        const count = Array.isArray(data && data.records) ? data.records.length : 0;
+        checkStatus.textContent = count ? `確認しました。${count}件あります。` : "確認しました。";
       } catch (err) {
-        checkStatus.textContent = `確認に失敗しました。\n${err && err.message ? err.message : err}`;
+        checkStatus.textContent = `確認に失敗しました。
+${err && err.message ? err.message : err}`;
       } finally {
         checkBtn.disabled = false;
       }
     }
 
     async function copyText() {
+
       const text = normalizeText(memoInput.value);
       if (!text) {
         sendStatus.textContent = "本文がありません。";
