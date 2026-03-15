@@ -10049,12 +10049,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
-      const result = await importSharedItemsToMain(allItems);
-      let status = '<span class="ok">読み込みました。</span>';
-      if(result.created || result.appended){
-        status += ' <span class="meta">本体反映: 新規 ' + result.created + '件 / 追記 ' + result.appended + '件</span>';
-      }
-      renderList(status);
+     let status = '<span class="ok">読み込みました。</span>';
+renderList(status);
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
       if(wrap) wrap.innerHTML = '<div class="small">読み込みに失敗しました。</div>';
