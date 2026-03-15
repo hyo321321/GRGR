@@ -396,7 +396,10 @@
         const saveResult = await postJson(payload);
 
         let mainResult = await pollMainRecord(user, date, text);
-        let found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+        let found = getMainRecordsList(mainResult).some((rec) => {
+          const currentText = normalizeText((rec && rec.text) || (rec && rec.raw && rec.raw.note) || '');
+          return currentText && currentText.includes(text);
+        });
 
         if (!found) {
           sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
@@ -405,7 +408,10 @@
           const retryResult = await postJson(mainOnlyPayload);
 
           mainResult = await pollMainRecord(user, date, text);
-          found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+          found = getMainRecordsList(mainResult).some((rec) => {
+            const currentText = normalizeText((rec && rec.text) || (rec && rec.raw && rec.raw.note) || '');
+            return currentText && currentText.includes(text);
+          });
 
           if (!found) {
             sendStatus.textContent =
