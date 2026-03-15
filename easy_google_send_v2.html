@@ -333,35 +333,59 @@
     }
 
     async function fetchMainRecord(user, date) {
-      const url = `${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`;
-      return await fetchJson(url);
+      const url = `${WEB_APP_URL}?action=getRecords&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`;
+      const data = await fetchJson(url);
+      const list = Array.isArray(data && data.records) ? data.records.slice() : [];
+      list.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+      return {
+        ok: true,
+        records: list
+      };
     }
 
     function renderMainRecord(data) {
-  const rec = data && data.record ? data.record : null;
-  const rawNote = rec && rec.raw && rec.raw.note ? String(rec.raw.note).trim() : '';
-  const text = rec && rec.text ? String(rec.text).trim() : '';
-  const viewText = text || rawNote;
+      const list = Array.isArray(data && data.records) ? data.records : [];
 
-  if (!rec || !viewText) {
-    mainCheckBox.textContent = "まだ今日の本体記録はありません。";
-    return;
-  }
-  const staff = rec.staff ? `\n\n記録者: ${rec.staff}` : "";
-  mainCheckBox.textContent = `${viewText}${staff}`;
-}
+      if (!list.length) {
+        mainCheckBox.textContent = "まだ今日の本体記録はありません。";
+        return;
+      }
+
+      const lines = [];
+      list.forEach((rec, index) => {
+        const rawNote = rec && rec.raw && rec.raw.note ? String(rec.raw.note).trim() : '';
+        const text = rec && rec.text ? String(rec.text).trim() : '';
+        const viewText = text || rawNote || '（本文なし）';
+        const updated = rec && rec.updatedAt ? String(rec.updatedAt) : '';
+        const staff = rec && rec.staff ? String(rec.staff) : '';
+
+        lines.push(`${index + 1}件目${updated ? ` / 更新: ${updated}` : ''}${staff ? ` / 記録者: ${staff}` : ''}`);
+        lines.push(viewText);
+        if (index !== list.length - 1) lines.push('', '--------------------', '');
+      });
+
+      mainCheckBox.textContent = lines.join('
+');
+    }
 
     async function pollMainRecord(user, date, expectedText) {
+      const normalizedExpected = normalizeText(expectedText || '');
+
       for (let i = 0; i < 8; i++) {
         const data = await fetchMainRecord(user, date);
-        const text = normalizeText(data && data.record && data.record.text);
-        if (text && (!expectedText || text.includes(expectedText))) return data;
+        const list = Array.isArray(data && data.records) ? data.records : [];
+        const found = list.some((rec) => {
+          const text = normalizeText((rec && rec.text) || (rec && rec.raw && rec.raw.note) || '');
+          return text && (!normalizedExpected || text.includes(normalizedExpected));
+        });
+        if (list.length && (!normalizedExpected || found)) return data;
         await new Promise(r => setTimeout(r, 700));
       }
       return await fetchMainRecord(user, date);
     }
 
     async function sendRecord() {
+
       const user = getUserName();
       const staff = getStaffName();
       const text = normalizeText(memoInput.value);
@@ -395,11 +419,8 @@
         const payload = buildPayload(text);
         const saveResult = await postJson(payload);
 
-        let mainResult = await pollMainRecords(user, date, text);
-        let found = !!(mainResult && Array.isArray(mainResult.records) && mainResult.records.some((rec) => {
-          const body = normalizeText(getRecordText(rec));
-          return body && body.includes(text);
-        }));
+        let mainResult = await pollMainRecord(user, date, text);
+        let found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
 
         if (!found) {
           sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
@@ -407,11 +428,8 @@
           const mainOnlyPayload = buildMainOnlyPayload(text);
           const retryResult = await postJson(mainOnlyPayload);
 
-          mainResult = await pollMainRecords(user, date, text);
-          found = !!(mainResult && Array.isArray(mainResult.records) && mainResult.records.some((rec) => {
-            const body = normalizeText(getRecordText(rec));
-            return body && body.includes(text);
-          }));
+          mainResult = await pollMainRecord(user, date, text);
+          found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
 
           if (!found) {
             sendStatus.textContent =
@@ -424,7 +442,7 @@
           }
         }
 
-        renderMainRecords(mainResult);
+        renderMainRecord(mainResult);
         sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
       } catch (err) {
         sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
@@ -448,8 +466,8 @@
       checkStatus.textContent = "確認中です...";
 
       try {
-        const data = await fetchMainRecords(user, date);
-        renderMainRecords(data);
+        const data = await fetchMainRecord(user, date);
+        renderMainRecord(data);
         checkStatus.textContent = "確認しました。";
       } catch (err) {
         checkStatus.textContent = `確認に失敗しました。\n${err && err.message ? err.message : err}`;
