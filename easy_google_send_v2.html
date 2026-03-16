@@ -347,8 +347,7 @@
           lines.push("");
         });
 
-      const out = normalizeText(lines.join("
-"));
+      const out = normalizeText(lines.join("\n"));
       mainCheckBox.textContent = out || "まだ今日の記録はありません。";
       return !!out;
     }
