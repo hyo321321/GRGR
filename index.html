@@ -5239,21 +5239,36 @@ function handleRestoreFile(file) {
 const MAIN_API_URL = "https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec";
 
 async function saveMainRecordRemote(recordData) {
-  const fallbackText =
-    (recordData.note || '').trim() ||
-    (recordData.support || '').trim() ||
-    (Array.isArray(recordData.tags) ? recordData.tags.join(' / ') : '');
+  const fixedId = String(
+    (recordData && (recordData._serverId || recordData.serverId || recordData.id)) || ''
+  ).trim() || ('main-' + Date.now());
+
+  const noteText = String((recordData && recordData.note) || '').replace(/\r\n/g, '\n').trim();
+  const supportText = String((recordData && recordData.support) || '').replace(/\r\n/g, '\n').trim();
+  const fallbackText = noteText || supportText || String((recordData && recordData.text) || '').trim();
 
   const payload = {
     action: 'saveMainRecord',
-    id: recordData._serverId || recordData.id,
-    date: recordData.date,
-    user: recordData.resident,
-    staff: recordData.recorder,
+    id: fixedId,
+    serverId: fixedId,
+    _serverId: fixedId,
+    date: recordData && recordData.date ? recordData.date : '',
+    user: recordData && recordData.resident ? recordData.resident : '',
+    staff: recordData && recordData.recorder ? recordData.recorder : '',
     text: fallbackText,
-    status: recordData.hasSpecialNote ? 'special' : '',
-    tags: recordData.tags || [],
-    raw: recordData
+    note: noteText,
+    support: supportText,
+    status: recordData && recordData.hasSpecialNote ? 'special' : '',
+    tags: Array.isArray(recordData && recordData.tags) ? recordData.tags : [],
+    raw: {
+      ...(recordData || {}),
+      id: fixedId,
+      serverId: fixedId,
+      _serverId: fixedId,
+      text: fallbackText,
+      note: noteText,
+      support: supportText
+    }
   };
 
   const res = await fetch(MAIN_API_URL, {
@@ -7904,7 +7919,7 @@ function clearFavChecks() {
       syncDaySupportTypeCompositeInWrap(wrapMain, "edit");
     }
 
-    function saveEditModalLegacy() {
+    function saveEditModal() {
       if (!editingRecordId) return;
       const idx = records.findIndex((r) => r.id === editingRecordId);
       if (idx < 0) return;
@@ -9693,57 +9708,21 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   }
 
   async function saveMainRecordRemote(recordData) {
-  const fixedId = String(
-    recordData?._serverId ||
-    recordData?.serverId ||
-    recordData?.id ||
-    ''
-  ).trim();
-
-  const noteText = String(recordData?.note || '').replace(/
-/g, '
-').trim();
-  const supportText = String(recordData?.support || '').replace(/
-/g, '
-').trim();
   const fallbackText =
-    noteText ||
-    supportText ||
-    String(recordData?.text || '').trim() ||
-    (Array.isArray(recordData?.tags) ? recordData.tags.join(' / ') : '');
-
-  const normalized = {
-    ...(recordData || {}),
-    id: fixedId || String(recordData?.id || ''),
-    _serverId: fixedId || String(recordData?.id || ''),
-    serverId: fixedId || String(recordData?.id || ''),
-    note: noteText,
-    support: supportText,
-    text: fallbackText
-  };
+    (recordData.note || '').trim() ||
+    (recordData.support || '').trim() ||
+    (Array.isArray(recordData.tags) ? recordData.tags.join(' / ') : '');
 
   const payload = {
     action: 'saveMainRecord',
-    id: fixedId,
-    serverId: fixedId,
-    _serverId: fixedId,
-    date: normalized.date || '',
-    user: normalized.resident || '',
-    staff: normalized.recorder || '',
+    id: recordData._serverId || recordData.id,
+    date: recordData.date,
+    user: recordData.resident,
+    staff: recordData.recorder,
     text: fallbackText,
-    note: noteText,
-    support: supportText,
-    status: normalized.hasSpecialNote ? 'special' : '',
-    tags: Array.isArray(normalized.tags) ? normalized.tags : [],
-    raw: {
-      ...normalized,
-      id: fixedId || String(normalized.id || ''),
-      _serverId: fixedId || String(normalized._serverId || normalized.id || ''),
-      serverId: fixedId || String(normalized.serverId || normalized._serverId || normalized.id || ''),
-      note: noteText,
-      support: supportText,
-      text: fallbackText
-    }
+    status: recordData.hasSpecialNote ? 'special' : '',
+    tags: recordData.tags || [],
+    raw: recordData
   };
 
   const res = await fetch(MAIN_API_URL, {
@@ -9802,67 +9781,50 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     if (!resident || !date) { alert('日付と利用者は必須です'); return; }
 
     const existing = baseRecords[idx] || {};
-    const fixedId = String(
-      existing._serverId ||
-      existing.serverId ||
-      existing.id ||
-      targetId ||
-      ''
-    ).trim();
+    const fixedId = String(existing._serverId || existing.serverId || existing.id || targetId || '').trim() || ('main-' + Date.now());
 
     const updated = buildRecordDataFromEditForm(existing);
-    const noteText = String(updated.note || '').replace(/
-/g, '
-').trim();
-    const supportText = String(updated.support || '').replace(/
-/g, '
-').trim();
-    const fallbackText = noteText || supportText || String(updated.text || '').trim() || '';
-
-    updated.id = fixedId;
-    updated._serverId = fixedId;
-    updated.serverId = fixedId;
-    updated.date = date;
-    updated.resident = resident;
-    updated.note = noteText;
-    updated.support = supportText;
-    updated.text = fallbackText;
-    updated.raw = {
-      ...(existing.raw || {}),
-      ...(updated.raw || {}),
+    const noteText = String(updated.note || '').replace(/\r\n/g, '\n').trim();
+    const supportText = String(updated.support || '').replace(/\r\n/g, '\n').trim();
+    const merged = {
+      ...existing,
       ...updated,
       id: fixedId,
       _serverId: fixedId,
       serverId: fixedId,
+      date,
+      resident,
       note: noteText,
       support: supportText,
-      text: fallbackText
+      text: noteText || supportText || String(updated.text || '').trim(),
+      raw: {
+        ...((existing && existing.raw) || {}),
+        ...existing,
+        ...updated,
+        id: fixedId,
+        _serverId: fixedId,
+        serverId: fixedId,
+        date,
+        resident,
+        note: noteText,
+        support: supportText,
+        text: noteText || supportText || String(updated.text || '').trim()
+      }
     };
 
     try{
-      if (Array.isArray(window.records)) {
-        window.records[idx] = { ...existing, ...updated };
-      }
-      if (Array.isArray(records)) {
-        records[idx] = { ...existing, ...updated };
-      }
-
-      await saveMainRecordRemote(updated);
+      await saveMainRecordRemote(merged);
 
       if (Array.isArray(window.records)) {
-        window.records[idx] = { ...window.records[idx], ...updated };
+        window.records[idx] = { ...window.records[idx], ...merged };
       }
       if (Array.isArray(records)) {
-        records[idx] = { ...records[idx], ...updated };
+        records[idx] = { ...records[idx], ...merged };
       }
 
       await syncRemoteRecordsAndRender();
       if (typeof closeEditModal === 'function') closeEditModal();
-      if (typeof showToast === 'function') {
-        showToast('保存しました');
-      } else {
-        alert('保存しました');
-      }
+      alert('保存しました');
     }catch(e){
       alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
     }
@@ -9915,14 +9877,9 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       form.onsubmit = window.handleSubmit;
     }
     const saveBtn = document.getElementById('editModalSaveBtn');
-    if (saveBtn && saveBtn.parentNode) {
-      const newBtn = saveBtn.cloneNode(true);
-      saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-      newBtn.type = 'button';
-      newBtn.onclick = function(e){
-        if (e) e.preventDefault();
-        return window.saveEditModal && window.saveEditModal();
-      };
+    if (saveBtn) {
+      saveBtn.type = 'button';
+      saveBtn.onclick = window.saveEditModal;
     }
   }
 
