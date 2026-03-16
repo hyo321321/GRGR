@@ -7904,7 +7904,7 @@ function clearFavChecks() {
       syncDaySupportTypeCompositeInWrap(wrapMain, "edit");
     }
 
-    function saveEditModal() {
+    function saveEditModalLegacy() {
       if (!editingRecordId) return;
       const idx = records.findIndex((r) => r.id === editingRecordId);
       if (idx < 0) return;
@@ -8984,7 +8984,7 @@ if (restoreBtn && restoreFile) {
       // 編集モーダル
       document.getElementById("editModalClose").addEventListener("click", closeEditModal);
       document.getElementById("editModalCancelBtn").addEventListener("click", closeEditModal);
-      document.getElementById("editModalSaveBtn").addEventListener("click", saveEditModal);
+      document.getElementById("editModalSaveBtn").addEventListener("click", function(e){ e.preventDefault(); });
       document.getElementById("editModal").addEventListener("click", (e) => { if (e.target.id === "editModal") closeEditModal(); });
 
       // 編集モーダル：利用者変更時
@@ -9915,9 +9915,14 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       form.onsubmit = window.handleSubmit;
     }
     const saveBtn = document.getElementById('editModalSaveBtn');
-    if (saveBtn) {
-      saveBtn.type = 'button';
-      saveBtn.onclick = window.saveEditModal;
+    if (saveBtn && saveBtn.parentNode) {
+      const newBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+      newBtn.type = 'button';
+      newBtn.onclick = function(e){
+        if (e) e.preventDefault();
+        return window.saveEditModal && window.saveEditModal();
+      };
     }
   }
 
