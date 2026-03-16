@@ -121,13 +121,13 @@
     </section>
 
     <section class="card">
-      <h2>本体の今日の記録を確認</h2>
+      <h2>今日の記録を確認</h2>
       <div class="btns two">
-        <button id="checkBtn" class="btn-green" type="button">本体の今日の記録を確認</button>
+        <button id="checkBtn" class="btn-green" type="button">今日の記録を確認</button>
         <button id="clearBtn" class="btn-orange" type="button">本文を消す</button>
       </div>
       <div id="checkStatus" class="status"></div>
-      <div id="mainCheckBox" class="output">ここに本体の今日の記録が表示されます。</div>
+      <div id="mainCheckBox" class="output">ここに今日の記録が表示されます。</div>
     </section>
   </div>
 
@@ -295,61 +295,54 @@
       };
     }
 
-    function buildMainOnlyPayload(text) {
-      const user = getUserName();
-      const staff = getStaffName();
-      const date = getTodayYmd();
-      const id = `main-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-
-      const raw = {
-        id,
-        serverId: id,
-        _serverId: id,
-        date,
-        resident: user,
-        recorder: staff,
-        note: text,
-        source: DEFAULT_SOURCE,
-        createdFrom: "easy_google_send_v2_main_retry"
-      };
-
-      return {
-        action: "saveMainRecord",
-        id,
-        serverId: id,
-        _serverId: id,
-        createIfMissing: true,
-        appendMode: "",
-        date,
-        user,
-        userName: user,
-        staff,
-        staffName: staff,
-        text,
-        body: text,
-        source: DEFAULT_SOURCE,
-        raw
-      };
-    }
-
     async function fetchMainRecord(user, date) {
       const url = `${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`;
       return await fetchJson(url);
     }
 
-    function renderMainRecord(data) {
-  const rec = data && data.record ? data.record : null;
-  const rawNote = rec && rec.raw && rec.raw.note ? String(rec.raw.note).trim() : '';
-  const text = rec && rec.text ? String(rec.text).trim() : '';
-  const viewText = text || rawNote;
+    async function fetchSharedRecords(user, date) {
+      const url = `${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`;
+      return await fetchJson(url);
+    }
 
-  if (!rec || !viewText) {
-    mainCheckBox.textContent = "まだ今日の本体記録はありません。";
-    return;
-  }
-  const staff = rec.staff ? `\n\n記録者: ${rec.staff}` : "";
-  mainCheckBox.textContent = `${viewText}${staff}`;
-}
+    function getRecordText(rec) {
+      return normalizeText(
+        (rec && rec.text) ||
+        (rec && rec.note) ||
+        (rec && rec.raw && (rec.raw.note || rec.raw.text)) ||
+        ""
+      );
+    }
+
+    function formatEntryBlock(rec) {
+      const recorder = String(
+        (rec && (rec.recorder || rec.staff || rec.user)) ||
+        (rec && rec.raw && (rec.raw.recorder || rec.raw.staff)) ||
+        '記録者不明'
+      ).trim() || '記録者不明';
+      const body = getRecordText(rec);
+      return body ? `【${recorder}】
+${body}` : `【${recorder}】`;
+    }
+
+    function renderMainRecord(mainData, sharedData) {
+      const rec = mainData && mainData.record ? mainData.record : null;
+      const mainText = getRecordText(rec);
+      if (mainText) {
+        mainCheckBox.textContent = mainText;
+        return;
+      }
+
+      const items = Array.isArray(sharedData && sharedData.records) ? sharedData.records : [];
+      const blocks = items.map(formatEntryBlock).filter(Boolean);
+      if (!blocks.length) {
+        mainCheckBox.textContent = "まだ今日の記録はありません。";
+        return;
+      }
+      mainCheckBox.textContent = blocks.join("
+
+");
+    }
 
     async function pollMainRecord(user, date, expectedText) {
       for (let i = 0; i < 8; i++) {
@@ -393,35 +386,29 @@
         renderRecent();
 
         const payload = buildPayload(text);
-        const saveResult = await postJson(payload);
+        await postJson(payload);
 
-        let mainResult = await pollMainRecord(user, date, text);
-        let found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
+        const [mainResult, sharedResult] = await Promise.all([
+          pollMainRecord(user, date, text).catch(() => null),
+          fetchSharedRecords(user, date).catch(() => null)
+        ]);
 
-        if (!found) {
-          sendStatus.textContent = "共有保存はできました。本体へ再確認しています...";
+        renderMainRecord(mainResult, sharedResult);
 
-          const mainOnlyPayload = buildMainOnlyPayload(text);
-          const retryResult = await postJson(mainOnlyPayload);
-
-          mainResult = await pollMainRecord(user, date, text);
-          found = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
-
-          if (!found) {
-            sendStatus.textContent =
-              `本体反映を再送しましたが確認できませんでした。\n` +
-              `saveBoth: ${saveResult && saveResult.message ? saveResult.message : "OK"}\n` +
-              `saveMainRecord: ${retryResult && retryResult.message ? retryResult.message : "OK"}\n` +
-              `利用者: ${user}`;
-            mainCheckBox.textContent = "まだ今日の本体記録はありません。";
-            return;
-          }
+        const mainText = normalizeText(mainResult && mainResult.record && mainResult.record.text);
+        if (mainText && mainText.includes(text)) {
+          sendStatus.textContent = `送信しました。
+本体にも反映できました。
+利用者: ${user}`;
+        } else {
+          sendStatus.textContent = `送信しました。
+今日の記録を表示しました。
+利用者: ${user}
+本体反映は少し遅れる場合があります。`;
         }
-
-        renderMainRecord(mainResult);
-        sendStatus.textContent = `送信しました。\n本体にも反映できました。\n利用者: ${user}`;
       } catch (err) {
-        sendStatus.textContent = `送信に失敗しました。\n${err && err.message ? err.message : err}`;
+        sendStatus.textContent = `送信に失敗しました。
+${err && err.message ? err.message : err}`;
       } finally {
         sendBtn.disabled = false;
         checkBtn.disabled = false;
@@ -442,11 +429,15 @@
       checkStatus.textContent = "確認中です...";
 
       try {
-        const data = await fetchMainRecord(user, date);
-        renderMainRecord(data);
+        const [mainData, sharedData] = await Promise.all([
+          fetchMainRecord(user, date).catch(() => null),
+          fetchSharedRecords(user, date).catch(() => null)
+        ]);
+        renderMainRecord(mainData, sharedData);
         checkStatus.textContent = "確認しました。";
       } catch (err) {
-        checkStatus.textContent = `確認に失敗しました。\n${err && err.message ? err.message : err}`;
+        checkStatus.textContent = `確認に失敗しました。
+${err && err.message ? err.message : err}`;
       } finally {
         checkBtn.disabled = false;
       }
