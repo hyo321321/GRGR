@@ -10034,34 +10034,57 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       setImportedGoogleIds(ids.slice(-2000));
     }
   }
+  function formatSharedEntryText(item){
+    const recorder = String(item && (item.staff || item.staffName || item.recorder) || '').trim();
+    const body = String(item && (item.text || item.body || item.note) || '').replace(/\r\n/g, '\n').trim();
+    if(!body) return '';
+    return recorder ? (`【${recorder}】\n` + body) : body;
+  }
+  function getShareEntryKey(item){
+    return String(item && item.id || '').trim();
+  }
+  function getMainSharedEntryKeys(record){
+    const raw = record && record.raw && typeof record.raw === 'object' ? record.raw : {};
+    const list = Array.isArray(raw.sharedEntryKeys) ? raw.sharedEntryKeys : [];
+    return list.map(v => String(v || '').trim()).filter(Boolean);
+  }
   async function importSharedItemsToMain(items){
     const targetItems = Array.isArray(items) ? items : [];
     let created = 0;
     let appended = 0;
+    let changed = false;
+    const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
     for(const item of targetItems){
-      const shareId = String(item && item.id || '');
+      const shareId = getShareEntryKey(item);
       if(!shareId || hasImportedGoogleId(shareId)) continue;
       const targetDate = String(item.date || '').trim();
       const matchedResident = findResidentValue(item.user || item.userName || '');
       const resident = (matchedResident || item.user || item.userName || '').trim();
-      const textToAdd = String(item.text || item.body || '').trim();
+      const textToAdd = formatSharedEntryText(item);
       if(!targetDate || !resident || !textToAdd) continue;
-      const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
-      let existingRecord = baseRecords.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(resident)) || null;
+      const existingRecord = baseRecords.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(resident)) || null;
       try{
         if(existingRecord){
-          const currentNote = String(existingRecord.note || '').trim();
-          if(currentNote.includes(textToAdd)){
+          const currentNote = String(existingRecord.note || '').replace(/\r\n/g, '\n').trim();
+          const knownKeys = getMainSharedEntryKeys(existingRecord);
+          if(knownKeys.includes(shareId) || currentNote.includes(textToAdd)){
             markImportedGoogleId(shareId);
             continue;
           }
           const updated = JSON.parse(JSON.stringify(existingRecord));
-          updated.id = String(existingRecord._serverId || existingRecord.id || '');
-          updated._serverId = String(existingRecord._serverId || existingRecord.id || '');
+          const fixedId = String(existingRecord._serverId || existingRecord.serverId || existingRecord.id || '');
+          updated.id = fixedId;
+          updated._serverId = fixedId;
+          updated.serverId = fixedId;
           updated.note = currentNote ? (currentNote + '\n\n' + textToAdd) : textToAdd;
           if(!updated.recorder && (item.staff || item.staffName)) updated.recorder = String(item.staff || item.staffName || '');
+          updated.raw = { ...(updated.raw || {}) };
+          const mergedKeys = Array.from(new Set([...(knownKeys || []), shareId]));
+          updated.raw.sharedEntryKeys = mergedKeys;
+          updated.sharedEntryKeys = mergedKeys;
           await saveMainRecordRemote(updated);
           appended += 1;
+          changed = true;
         }else{
           const payload = {
             id: '',
@@ -10087,16 +10110,21 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
             abnormalPulse: '',
             timeSlot: '日中',
             condition: '良好',
-            mental: '安定'
+            mental: '安定',
+            sharedEntryKeys: [shareId],
+            raw: { sharedEntryKeys: [shareId] }
           };
           await saveMainRecordRemote(payload);
           created += 1;
+          changed = true;
         }
         markImportedGoogleId(shareId);
-        await syncRemoteRecordsAndRender();
       }catch(err){
         console.error('Google共有取込失敗', err, item);
       }
+    }
+    if(changed){
+      await syncRemoteRecordsAndRender();
     }
     return { created, appended };
   }
@@ -10112,8 +10140,15 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
-     let status = '<span class="ok">読み込みました。</span>';
-renderList(status);
+      const imported = await importSharedItemsToMain(allItems);
+      let status = '<span class="ok">読み込みました。</span>';
+      if(imported && (imported.created || imported.appended)){
+        const parts = [];
+        if(imported.created) parts.push('新規 ' + imported.created + '件');
+        if(imported.appended) parts.push('追記 ' + imported.appended + '件');
+        status += ' <span class="meta">本体へ反映: ' + escapeHtmlGoogle(parts.join(' / ')) + '</span>';
+      }
+      renderList(status);
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
       if(wrap) wrap.innerHTML = '<div class="small">読み込みに失敗しました。</div>';
