@@ -5239,57 +5239,21 @@ function handleRestoreFile(file) {
 const MAIN_API_URL = "https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec";
 
 async function saveMainRecordRemote(recordData) {
-  const fixedId = String(
-    recordData?._serverId ||
-    recordData?.serverId ||
-    recordData?.id ||
-    ''
-  ).trim();
-
-  const noteText = String(recordData?.note || '').replace(/
-/g, '
-').trim();
-  const supportText = String(recordData?.support || '').replace(/
-/g, '
-').trim();
   const fallbackText =
-    noteText ||
-    supportText ||
-    String(recordData?.text || '').trim() ||
-    (Array.isArray(recordData?.tags) ? recordData.tags.join(' / ') : '');
-
-  const normalized = {
-    ...(recordData || {}),
-    id: fixedId || String(recordData?.id || ''),
-    _serverId: fixedId || String(recordData?.id || ''),
-    serverId: fixedId || String(recordData?.id || ''),
-    note: noteText,
-    support: supportText,
-    text: fallbackText
-  };
+    (recordData.note || '').trim() ||
+    (recordData.support || '').trim() ||
+    (Array.isArray(recordData.tags) ? recordData.tags.join(' / ') : '');
 
   const payload = {
     action: 'saveMainRecord',
-    id: fixedId,
-    serverId: fixedId,
-    _serverId: fixedId,
-    date: normalized.date || '',
-    user: normalized.resident || '',
-    staff: normalized.recorder || '',
+    id: recordData._serverId || recordData.id,
+    date: recordData.date,
+    user: recordData.resident,
+    staff: recordData.recorder,
     text: fallbackText,
-    note: noteText,
-    support: supportText,
-    status: normalized.hasSpecialNote ? 'special' : '',
-    tags: Array.isArray(normalized.tags) ? normalized.tags : [],
-    raw: {
-      ...normalized,
-      id: fixedId || String(normalized.id || ''),
-      _serverId: fixedId || String(normalized._serverId || normalized.id || ''),
-      serverId: fixedId || String(normalized.serverId || normalized._serverId || normalized.id || ''),
-      note: noteText,
-      support: supportText,
-      text: fallbackText
-    }
+    status: recordData.hasSpecialNote ? 'special' : '',
+    tags: recordData.tags || [],
+    raw: recordData
   };
 
   const res = await fetch(MAIN_API_URL, {
@@ -7941,9 +7905,45 @@ function clearFavChecks() {
     }
 
     function saveEditModal() {
-      if (typeof window.saveEditModal === 'function') {
-        return window.saveEditModal();
-      }
+      if (!editingRecordId) return;
+      const idx = records.findIndex((r) => r.id === editingRecordId);
+      if (idx < 0) return;
+
+      const resident = document.getElementById("editResident").value;
+      const date = document.getElementById("editDate").value;
+      if (!resident || !date) { alert("日付と利用者は必須です"); return; }
+
+      const activityItems = Array.from(document.querySelectorAll(".edit-day-activity-item:checked")).map((x) => x.value);
+      const mainItems = Array.from(document.querySelectorAll(".edit-day-main-item:checked")).map((x) => x.value);
+      const reasonItems = Array.from(document.querySelectorAll(".edit-day-reason-item:checked")).map((x) => x.value);
+
+      const updated = {
+        ...records[idx],
+        date,
+        resident,
+        recorder: document.getElementById("editRecorder")?.value || "",        medTaken: false,
+        support: document.getElementById("editSupport").value,
+        note: document.getElementById("editNote").value,
+        hasSpecialNote: !!document.getElementById("editHasSpecialNote")?.checked,
+        tags: [...editTags],
+        daySupportType: getDaySupportTypeSelected("edit"),        dayActivityItems: activityItems,
+        daySupportMainItems: mainItems,
+        daySupportReasonItems: reasonItems,
+        daySupportBathingSubItems: getBathingSubSelected("edit"),
+        daySupportHealthSubItems: getHealthSubSelected("edit"),
+        abnormalVitalsOn: !!((document.getElementById("editAbnormalWeight")?.value || "").trim() || (document.getElementById("editAbnormalTemp")?.value || "").trim() || (document.getElementById("editAbnormalBPsys")?.value || "").trim() || (document.getElementById("editAbnormalBPdia")?.value || "").trim() || (document.getElementById("editAbnormalPulse")?.value || "").trim()),
+        abnormalWeight: (document.getElementById("editAbnormalWeight")?.value || "").trim(),
+        abnormalTemp: (document.getElementById("editAbnormalTemp")?.value || "").trim(),
+        abnormalBPsys: (document.getElementById("editAbnormalBPsys")?.value || "").trim(),
+        abnormalBPdia: (document.getElementById("editAbnormalBPdia")?.value || "").trim(),
+        abnormalPulse: (document.getElementById("editAbnormalPulse")?.value || "").trim(),
+      };
+
+      records[idx] = updated;
+      saveRecords();
+      renderRecords();
+      closeEditModal();
+      alert("保存しました");
     }
 
     // ===== フォーム側：よく使う項目編集モーダル（この利用者） =====
