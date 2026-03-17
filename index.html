@@ -9754,10 +9754,10 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 
     try{
       await saveMainRecordRemote(recordData);
+      await syncRemoteRecordsAndRender();
       if (typeof showToast === 'function') showToast(recordData.id && window.pendingGoogleShareTargetId ? '更新しました' : '保存しました');
       window.pendingGoogleShareTargetId = '';
       if (typeof resetForm === 'function') resetForm();
-      syncRemoteRecordsAndRender().catch(console.error);
     }catch(e){
       alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
     }
@@ -9822,9 +9822,9 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         records[idx] = { ...records[idx], ...merged };
       }
 
+      await syncRemoteRecordsAndRender();
       if (typeof closeEditModal === 'function') closeEditModal();
       alert('保存しました');
-      syncRemoteRecordsAndRender().catch(console.error);
     }catch(e){
       alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
     }
@@ -10004,8 +10004,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
         <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
         <div class="btns">
-          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容を本文へ反映</button>
-          <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(item.id || '')}">削除</button>
+          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(getShareEntryKey(item))}">この内容を本文へ反映</button>
+          <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(getShareEntryKey(item))}">削除</button>
           <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
         </div>
       </div>`).join('');
@@ -10041,12 +10041,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     return recorder ? (`【${recorder}】\n` + body) : body;
   }
   function getShareEntryKey(item){
-    const raw = item && item.raw && typeof item.raw === 'object' ? item.raw : {};
-    return String(
-      (item && (item._serverId || item.serverId)) ||
-      raw._serverId || raw.serverId || raw.id ||
-      (item && item.id) || ''
-    ).trim();
+    return String(item && item.id || '').trim();
   }
   function getMainSharedEntryKeys(record){
     const raw = record && record.raw && typeof record.raw === 'object' ? record.raw : {};
@@ -10145,15 +10140,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
-      const imported = await importSharedItemsToMain(allItems);
-      let status = '<span class="ok">読み込みました。</span>';
-      if(imported && (imported.created || imported.appended)){
-        const parts = [];
-        if(imported.created) parts.push('新規 ' + imported.created + '件');
-        if(imported.appended) parts.push('追記 ' + imported.appended + '件');
-        status += ' <span class="meta">本体へ反映: ' + escapeHtmlGoogle(parts.join(' / ')) + '</span>';
-      }
-      renderList(status);
+      renderList('<span class="ok">読み込みました。</span>');
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
       if(wrap) wrap.innerHTML = '<div class="small">読み込みに失敗しました。</div>';
@@ -10194,22 +10181,34 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const saveBtn = qs('saveButton');
     if (saveBtn) saveBtn.textContent = '💾 既存記録を更新';
   }
-  async function reflectGoogleItem(id){
-    const item = allItems.find(v => String(v.id || v._serverId || v.serverId) === String(id));
+  function reflectGoogleItem(id){
+    const item = allItems.find(v => String(v.id) === String(id));
     if(!item) return;
-    setGoogleStatus('<span class="ok">反映中…</span>');
-    try{
-      const result = await importSharedItemsToMain([item]);
-      const created = Number(result && result.created || 0);
-      const appended = Number(result && result.appended || 0);
-      if(created || appended){
-        setGoogleStatus('<span class="ok">反映しました。</span> <span class="meta">新規 ' + created + '件 / 追記 ' + appended + '件</span>');
-      }else{
-        setGoogleStatus('<span class="ok">反映済みです。</span>');
-      }
-    }catch(e){
-      setGoogleStatus('<span class="ng">反映に失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
+    const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
+    const matchedResident = findResidentValue(item.user || item.userName || '');
+    const targetResident = (matchedResident || item.user || item.userName || '').trim();
+    let existingRecord = null;
+    if(Array.isArray(records)){
+      existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
     }
+    if(existingRecord){
+      loadRecordIntoMainForm(existingRecord);
+      window.pendingGoogleShareTargetId = existingRecord.id;
+    }else{
+      window.pendingGoogleShareTargetId = '';
+      const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
+      const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
+      const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
+    }
+    const note = qs('note');
+    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
+    const currentText = String(note.value || '').trim();
+    const add = String(item.text || item.body || '').trim();
+    if(!add) return;
+    note.value = currentText ? (currentText + '\n\n' + add) : add;
+    note.dispatchEvent(new Event('input', { bubbles:true }));
+    note.focus();
+    setGoogleStatus('<span class="ok">本文へ反映しました。共有履歴は削除していません。</span>');
   }
   async function deleteGoogleItem(id){
     if(!id) return;
