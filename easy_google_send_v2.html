@@ -228,7 +228,7 @@ async function sendRecord() {
     await postJson(buildPayload(text));
     if (memoInput) memoInput.value = '';
     sendStatus.textContent = '送信しました。';
-    await checkMainRecord();
+    setTimeout(() => { checkMainRecord().catch(() => {}); }, 0);
   } catch (err) {
     sendStatus.textContent = '送信に失敗しました。\n' + (err && err.message ? err.message : err);
   } finally {
