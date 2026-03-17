@@ -9831,18 +9831,26 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   };
 
   window.deleteRecord = async function(id){
-    if (!confirm('この記録を削除しますか？')) return;
     try{
-      const rec = (Array.isArray(window.records) ? window.records : records).find((r) => r.id === id) || (Array.isArray(records) ? records.find((r) => r.id === id) : null);
+      const list = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
+      const rec = list.find(r => String((r && (r.id || r._serverId)) || '') === String(id || '')) || null;
       const deleteId = String((rec && (rec._serverId || rec.id)) || id || '');
       if (!deleteId) throw new Error('対象が見つかりません');
+
+      const sharedKeys = Array.isArray(rec && rec.sharedEntryKeys)
+        ? rec.sharedEntryKeys
+        : (Array.isArray(rec && rec.raw && rec.raw.sharedEntryKeys) ? rec.raw.sharedEntryKeys : []);
+
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
         body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
       });
       const data = await res.json();
-      if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
+      if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除に失敗しました');
+
+      sharedKeys.map(v => String(v || '').trim()).filter(Boolean).forEach(markImportedGoogleId);
+
       await syncRemoteRecordsAndRender();
       if (typeof showToast === 'function') showToast('削除しました');
     }catch(e){
@@ -9850,104 +9858,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
   };
 
-  function preventAutoSubmitOnEnter(){
-    document.querySelectorAll('input, select').forEach((el) => {
-      el.addEventListener('keydown', function(ev){
-        if (ev.key === 'Enter') {
-          ev.preventDefault();
-        }
-      });
-    });
-  }
-
-  function forceButtonTypes(){
-    document.querySelectorAll('button').forEach((btn) => {
-      if (!btn.closest('#recordForm')) return;
-      if (btn.id === 'editModalSaveBtn') return;
-      if (btn.type !== 'submit' && btn.id !== 'saveButton') btn.type = 'button';
-    });
-    document.querySelectorAll('.record-action-btn, .support-toggle, #recordsTable button').forEach((btn) => {
-      if (!btn.type) btn.type = 'button';
-    });
-  }
-
-  function rebindSubmitAndEditHandlers(){
-    const form = document.getElementById('recordForm');
-    if (form) {
-      form.onsubmit = window.handleSubmit;
-    }
-    const saveBtn = document.getElementById('editModalSaveBtn');
-    if (saveBtn) {
-      saveBtn.type = 'button';
-      saveBtn.onclick = window.saveEditModal;
-    }
-  }
-
-  function rebindAfterDom(){
-    forceButtonTypes();
-    preventAutoSubmitOnEnter();
-    try{
-      rebindSubmitAndEditHandlers();
-    }catch(e){ console.error(e); }
-    syncRemoteRecordsAndRender();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', rebindAfterDom);
-  } else {
-    rebindAfterDom();
-  }
-})();
-</script>
-
-</body></html>");
-    w.document.close();
-    w.focus();
-    w.print();
-  }
-
-  document.addEventListener("click", function(e){
-    const t = e.target;
-    if(!t) return;
-
-    if(t.id === "openManualBtn"){
-      openManual();
-      return;
-    }
-    if(t.id === "closeManualBtn"){
-      closeManual();
-      return;
-    }
-    if(t.id === "printManualBtn"){
-      printManual();
-      return;
-    }
-    // overlay click closes
-    if(t.id === "manualOverlay"){
-      closeManual();
-      return;
-    }
-  });
-
-  document.addEventListener("keydown", function(e){
-    if(e.key === "Escape") closeManual();
-  });
-})();
-</script>
-
-
-
-
-
-<script>
-(function(){
-  const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
-  function qs(id){ return document.getElementById(id); }
-  function escapeHtmlGoogle(s){
-    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-  function normalizeName(s){ return String(s||'').replace(/\s+/g,'').replace(/　/g,'').replace(/さん$/,'').trim(); }
-  function todayYmd(){ const d = new Date(); const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
   let allItems = [];
   function setGoogleStatus(html){ const node = qs('googleShareStatus'); if(node) node.innerHTML = html || ''; }
   function findResidentValue(name){
@@ -10038,7 +9948,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const recorder = String(item && (item.staff || item.staffName || item.recorder) || '').trim();
     const body = String(item && (item.text || item.body || item.note) || '').replace(/\r\n/g, '\n').trim();
     if(!body) return '';
-    return recorder ? (`【${recorder}】\n` + body) : body;
+    return recorder ? (body + '\n記録者 ' + recorder) : body;
   }
   function getShareEntryKey(item){
     return String(item && item.id || '').trim();
@@ -10049,20 +9959,36 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     return list.map(v => String(v || '').trim()).filter(Boolean);
   }
   async function importSharedItemsToMain(items){
-    const targetItems = Array.isArray(items) ? items : [];
+    const targetItems = Array.isArray(items) ? items.slice() : [];
     let created = 0;
     let appended = 0;
     let changed = false;
-    const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
+    const workingRecords = (Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : [])).slice();
+
+    targetItems.sort((a, b) => {
+      const ak = String((a && (a.createdAt || a.updatedAt || a.timestamp || a.id)) || '');
+      const bk = String((b && (b.createdAt || b.updatedAt || b.timestamp || b.id)) || '');
+      return ak.localeCompare(bk);
+    });
+
     for(const item of targetItems){
       const shareId = getShareEntryKey(item);
       if(!shareId || hasImportedGoogleId(shareId)) continue;
+
       const targetDate = String(item.date || '').trim();
       const matchedResident = findResidentValue(item.user || item.userName || '');
       const resident = (matchedResident || item.user || item.userName || '').trim();
       const textToAdd = formatSharedEntryText(item);
       if(!targetDate || !resident || !textToAdd) continue;
-      const existingRecord = baseRecords.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(resident)) || null;
+
+      const existingIndex = workingRecords.findIndex(r =>
+        r &&
+        !r.deleted && !r._deleted &&
+        String(r.date || '').trim() === targetDate &&
+        normalizeName(r.resident || '') === normalizeName(resident)
+      );
+      const existingRecord = existingIndex >= 0 ? workingRecords[existingIndex] : null;
+
       try{
         if(existingRecord){
           const currentNote = String(existingRecord.note || '').replace(/\r\n/g, '\n').trim();
@@ -10071,18 +9997,28 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
             markImportedGoogleId(shareId);
             continue;
           }
-          const updated = JSON.parse(JSON.stringify(existingRecord));
-          const fixedId = String(existingRecord._serverId || existingRecord.serverId || existingRecord.id || '');
-          updated.id = fixedId;
-          updated._serverId = fixedId;
-          updated.serverId = fixedId;
-          updated.note = currentNote ? (currentNote + '\n\n' + textToAdd) : textToAdd;
-          if(!updated.recorder && (item.staff || item.staffName)) updated.recorder = String(item.staff || item.staffName || '');
+
+          const fixedId = String(existingRecord._serverId || existingRecord.serverId || existingRecord.id || '').trim();
+          const updated = {
+            ...JSON.parse(JSON.stringify(existingRecord)),
+            id: fixedId,
+            _serverId: fixedId,
+            serverId: fixedId,
+            note: currentNote ? (currentNote + '\n\n' + textToAdd) : textToAdd
+          };
+
+          if(!updated.recorder && (item.staff || item.staffName)) {
+            updated.recorder = String(item.staff || item.staffName || '').trim();
+          }
+
+          updated.text = updated.note;
           updated.raw = { ...(updated.raw || {}) };
           const mergedKeys = Array.from(new Set([...(knownKeys || []), shareId]));
           updated.raw.sharedEntryKeys = mergedKeys;
           updated.sharedEntryKeys = mergedKeys;
+
           await saveMainRecordRemote(updated);
+          workingRecords[existingIndex] = updated;
           appended += 1;
           changed = true;
         }else{
@@ -10094,6 +10030,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
             medTaken: false,
             support: '',
             note: textToAdd,
+            text: textToAdd,
             hasSpecialNote: false,
             tags: [],
             daySupportType: '',
@@ -10114,15 +10051,24 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
             sharedEntryKeys: [shareId],
             raw: { sharedEntryKeys: [shareId] }
           };
-          await saveMainRecordRemote(payload);
+          const saved = await saveMainRecordRemote(payload);
+          const newId = String((saved && (saved.id || saved.serverId || saved._serverId)) || payload.id || '').trim();
+          workingRecords.push({
+            ...payload,
+            id: newId || payload.id || ('main-' + Date.now()),
+            _serverId: newId || payload.id || '',
+            serverId: newId || payload.id || ''
+          });
           created += 1;
           changed = true;
         }
+
         markImportedGoogleId(shareId);
       }catch(err){
         console.error('Google共有取込失敗', err, item);
       }
     }
+
     if(changed){
       await syncRemoteRecordsAndRender();
     }
