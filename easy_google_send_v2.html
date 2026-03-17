@@ -1,480 +1,263 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>かんたん記録ページ</title>
-  <style>
-    :root{
-      --bg:#f3f6fb;
-      --card:#ffffff;
-      --line:#d8e0eb;
-      --text:#1f2937;
-      --sub:#6b7280;
-      --primary:#2563eb;
-      --primary2:#1d4ed8;
-      --green:#16a34a;
-      --green2:#15803d;
-      --orange:#ea580c;
-      --orange2:#c2410c;
-      --shadow:0 8px 24px rgba(0,0,0,.08);
-      --radius:18px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
-    }
-    .wrap{max-width:840px;margin:0 auto;padding:16px}
-    .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:18px;
-      margin-bottom:16px;
-    }
-    h1{margin:0 0 6px;font-size:28px;line-height:1.3}
-    h2{margin:0 0 12px;font-size:21px;line-height:1.4}
-    .sub{color:var(--sub);font-size:14px}
-    .grid{display:grid;gap:14px}
-    @media(min-width:720px){.grid.two{grid-template-columns:1fr 1fr}}
-    label{display:block;font-size:15px;font-weight:700;margin-bottom:8px}
-    input,textarea,button{font:inherit}
-    input,textarea{
-      width:100%;
-      border:2px solid var(--line);
-      border-radius:14px;
-      padding:14px;
-      background:#fff;
-      color:var(--text);
-    }
-    input:focus,textarea:focus{outline:none;border-color:var(--primary)}
-    textarea{min-height:220px;resize:vertical}
-    .btns{display:grid;gap:12px}
-    @media(min-width:720px){.btns.two{grid-template-columns:1fr 1fr}}
-    button{
-      min-height:56px;
-      border:none;
-      border-radius:14px;
-      font-weight:700;
-      color:#fff;
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-    }
-    button:active{transform:scale(.99)}
-    .btn-primary{background:var(--primary)}
-    .btn-primary:hover{background:var(--primary2)}
-    .btn-green{background:var(--green)}
-    .btn-green:hover{background:var(--green2)}
-    .btn-orange{background:var(--orange)}
-    .btn-orange:hover{background:var(--orange2)}
-    .status{white-space:pre-wrap;color:var(--sub);font-size:14px;min-height:22px;margin-top:10px}
-    .output{
-      white-space:pre-wrap;
-      border:2px solid var(--line);
-      border-radius:14px;
-      background:#f8fafc;
-      padding:14px;
-      min-height:110px;
-      font-size:16px;
-    }
-    .muted{color:var(--sub);font-size:13px}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>かんたん記録送信 完全版</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--green:#16a34a;--orange:#ea580c;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+  h1{font-size:22px;margin:0 0 10px}
+  h2{font-size:18px;margin:0 0 10px}
+  label{display:block;font-weight:700;margin:10px 0 6px}
+  input,textarea,button{font:inherit}
+  input,textarea{width:100%;padding:12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
+  textarea{min-height:180px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .primary{background:var(--primary)} .green{background:var(--green)} .orange{background:var(--orange)} .ghost{background:#64748b}
+  .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
+  .output{white-space:pre-wrap;line-height:1.6;background:#fbfbfd;border:1px solid var(--line);border-radius:12px;padding:14px;min-height:120px}
+  .meta{font-size:12px;color:var(--muted);margin-top:8px}
+  @media (max-width:640px){.row,.btns{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <section class="card">
-      <h1>かんたん記録ページ</h1>
-      <div class="sub">軽い安定版です。送信は自分の入力だけを保存し、確認は本体優先で表示します。</div>
-    </section>
-
-    <section class="card">
-      <h2>基本情報</h2>
-      <div class="grid two">
-        <div>
-          <label for="userName">利用者名</label>
-          <input id="userName" list="recentUsers" placeholder="利用者名を入力">
-          <datalist id="recentUsers"></datalist>
-        </div>
-        <div>
-          <label for="staffName">記録者名</label>
-          <input id="staffName" list="recentStaff" placeholder="記録者名を入力">
-          <datalist id="recentStaff"></datalist>
-        </div>
+<div class="wrap">
+  <div class="card">
+    <h1>かんたん記録送信 完全版</h1>
+    <div class="meta">送信は自分の入力だけ。今日の記録確認は表示だけです。</div>
+    <div class="row">
+      <div>
+        <label for="userName">利用者名</label>
+        <input id="userName" list="recentUsers" placeholder="例：木村元子">
+        <datalist id="recentUsers"></datalist>
       </div>
-      <div class="muted" style="margin-top:10px">最近使った利用者名・記録者名は候補に残ります。</div>
-    </section>
-
-    <section class="card">
-      <h2>業務日誌記入欄</h2>
-      <label for="memoInput">本文</label>
-      <textarea id="memoInput" placeholder="ここに記録本文を入力してください"></textarea>
-      <div class="btns two" style="margin-top:14px">
-        <button id="sendBtn" class="btn-primary" type="button">一括作成して送信</button>
-        <button id="copyBtn" class="btn-orange" type="button">本文をコピー</button>
+      <div>
+        <label for="staffName">記録者</label>
+        <input id="staffName" list="recentStaff" placeholder="例：兵頭">
+        <datalist id="recentStaff"></datalist>
       </div>
-      <div id="sendStatus" class="status"></div>
-      <div class="muted">送信先URL: <span id="urlText"></span></div>
-    </section>
-
-    <section class="card">
-      <h2>本体の今日の記録を確認</h2>
-      <div class="btns two">
-        <button id="checkBtn" class="btn-green" type="button">本体の今日の記録を確認</button>
-        <button id="clearBtn" class="btn-orange" type="button">本文を消す</button>
-      </div>
-      <div id="checkStatus" class="status"></div>
-      <div id="mainCheckBox" class="output">ここに本体の今日の記録が表示されます。</div>
-    </section>
+    </div>
+    <label for="memoInput">本文</label>
+    <textarea id="memoInput" placeholder="ここに自分の記録だけ入力してください"></textarea>
+    <div class="btns">
+      <button id="sendBtn" class="primary" type="button">一括作成して送信</button>
+      <button id="checkBtn" class="green" type="button">本体の今日の記録を確認</button>
+      <button id="copyBtn" class="orange" type="button">本文をコピー</button>
+      <button id="clearBtn" class="ghost" type="button">本文を消す</button>
+    </div>
+    <div id="sendStatus" class="status"></div>
   </div>
+  <div class="card">
+    <h2>今日の記録</h2>
+    <div id="checkStatus" class="status"></div>
+    <div id="mainCheckBox" class="output">ここに今日の記録が表示されます。</div>
+  </div>
+</div>
+<script>const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
+const RECENT_USERS_KEY = 'easy_recent_users_v2';
+const RECENT_STAFF_KEY = 'easy_recent_staff_v2';
+const DEFAULT_SOURCE = 'easy_v2_complete';
 
-  <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec";
-    const RECENT_USERS_KEY = "easy_recent_users_v2";
-    const RECENT_STAFF_KEY = "easy_recent_staff_v2";
-    const DEFAULT_SOURCE = "easy_v2_clean";
+const userNameEl = document.getElementById('userName');
+const staffNameEl = document.getElementById('staffName');
+const memoInput = document.getElementById('memoInput');
+const sendBtn = document.getElementById('sendBtn');
+const checkBtn = document.getElementById('checkBtn');
+const copyBtn = document.getElementById('copyBtn');
+const clearBtn = document.getElementById('clearBtn');
+const sendStatus = document.getElementById('sendStatus');
+const checkStatus = document.getElementById('checkStatus');
+const mainCheckBox = document.getElementById('mainCheckBox');
+const recentUsers = document.getElementById('recentUsers');
+const recentStaff = document.getElementById('recentStaff');
 
-    const userNameEl = document.getElementById("userName");
-    const staffNameEl = document.getElementById("staffName");
-    const memoInput = document.getElementById("memoInput");
-    const sendBtn = document.getElementById("sendBtn");
-    const copyBtn = document.getElementById("copyBtn");
-    const checkBtn = document.getElementById("checkBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const sendStatus = document.getElementById("sendStatus");
-    const checkStatus = document.getElementById("checkStatus");
-    const mainCheckBox = document.getElementById("mainCheckBox");
-    const recentUsers = document.getElementById("recentUsers");
-    const recentStaff = document.getElementById("recentStaff");
-    document.getElementById("urlText").textContent = WEB_APP_URL;
-
-    function getTodayYmd() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, "0");
-      const d = String(now.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    }
-
-    function normalizeText(text) {
-      return String(text || "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
-    }
-
-    function getUserName() {
-      return String(userNameEl.value || "").trim();
-    }
-
-    function getStaffName() {
-      return String(staffNameEl.value || "").trim();
-    }
-
-    function loadRecent(key) {
-      try {
-        const arr = JSON.parse(localStorage.getItem(key) || "[]");
-        return Array.isArray(arr) ? arr.filter(Boolean) : [];
-      } catch (_) {
-        return [];
+function todayYmd() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function normalizeText(text) {
+  return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function loadRecent(key) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(v) ? v.filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
+}
+function saveRecent(key, value) {
+  const v = String(value || '').trim();
+  if (!v) return;
+  const arr = loadRecent(key).filter(x => x !== v);
+  arr.unshift(v);
+  localStorage.setItem(key, JSON.stringify(arr.slice(0, 20)));
+}
+function renderRecent() {
+  if (recentUsers) recentUsers.innerHTML = loadRecent(RECENT_USERS_KEY).map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+  if (recentStaff) recentStaff.innerHTML = loadRecent(RECENT_STAFF_KEY).map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+}
+async function fetchJson(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { ok: false, rawText: text }; }
+  if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
+  return data;
+}
+async function postJson(payload) {
+  const res = await fetch(WEB_APP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { ok: false, rawText: text }; }
+  if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
+  return data;
+}
+function buildPayload(text) {
+  const user = String(userNameEl?.value || '').trim();
+  const staff = String(staffNameEl?.value || '').trim();
+  const date = todayYmd();
+  const id = 'easy-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const raw = {
+    id, serverId: id, _serverId: id,
+    date, resident: user, recorder: staff,
+    note: text, source: DEFAULT_SOURCE, createdFrom: 'easy_google_send_v2_complete'
+  };
+  return { action: 'saveBoth', id, serverId: id, _serverId: id, date, user, userName: user, staff, staffName: staff, text, body: text, source: DEFAULT_SOURCE, raw };
+}
+async function fetchMainRecord(user, date) {
+  return fetchJson(`${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`);
+}
+async function fetchSharedRecords(user, date) {
+  return fetchJson(`${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`);
+}
+function renderMainRecord(data) {
+  const rec = data && data.record ? data.record : null;
+  const text = normalizeText((rec && (rec.text || (rec.raw && rec.raw.text) || rec.note || (rec.raw && rec.raw.note))) || '');
+  if (!text) return false;
+  mainCheckBox.textContent = text;
+  return true;
+}
+function renderSharedRecords(data) {
+  const records = Array.isArray(data && data.records) ? data.records.slice() : [];
+  if (!records.length) return false;
+  records.sort((a, b) => String(a.updatedAt || a.timestamp || a.createdAt || '').localeCompare(String(b.updatedAt || b.timestamp || b.createdAt || '')));
+  const parts = [];
+  for (const rec of records) {
+    const staff = String(rec.staff || rec.staffName || rec.recorder || '記録者不明').trim() || '記録者不明';
+    const raw = rec && rec.raw && typeof rec.raw === 'object' ? rec.raw : {};
+    const body = normalizeText(rec.text || rec.note || rec.body || raw.note || raw.text || raw.body || '');
+    if (!body) continue;
+    parts.push(body + '\n記録者 ' + staff);
+  }
+  const out = normalizeText(parts.join('\n\n'));
+  if (!out) return false;
+  mainCheckBox.textContent = out;
+  return true;
+}
+async function checkMainRecord() {
+  const user = String(userNameEl?.value || '').trim();
+  const date = todayYmd();
+  if (!user) {
+    checkStatus.textContent = '利用者名を入力してください。';
+    userNameEl?.focus();
+    return;
+  }
+  checkBtn.disabled = true;
+  checkStatus.textContent = '確認中です...';
+  try {
+    const main = await fetchMainRecord(user, date);
+    if (renderMainRecord(main)) {
+      checkStatus.textContent = '本体の今日の記録を表示しました。';
+    } else {
+      const shared = await fetchSharedRecords(user, date);
+      if (renderSharedRecords(shared)) {
+        checkStatus.textContent = '共有の今日の記録を表示しました。';
+      } else {
+        mainCheckBox.textContent = 'まだ今日の記録はありません。';
+        checkStatus.textContent = 'まだ今日の記録はありません。';
       }
     }
-
-    function saveRecent(key, value) {
-      const v = String(value || "").trim();
-      if (!v) return;
-      const current = loadRecent(key).filter(x => x !== v);
-      current.unshift(v);
-      localStorage.setItem(key, JSON.stringify(current.slice(0, 20)));
-    }
-
-    function renderRecent() {
-      recentUsers.innerHTML = loadRecent(RECENT_USERS_KEY)
-        .map(v => `<option value="${escapeHtml(v)}"></option>`)
-        .join("");
-      recentStaff.innerHTML = loadRecent(RECENT_STAFF_KEY)
-        .map(v => `<option value="${escapeHtml(v)}"></option>`)
-        .join("");
-    }
-
-    function escapeHtml(str) {
-      return String(str || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
-
-    async function postJson(payload) {
-      const res = await fetch(WEB_APP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-        cache: "no-store"
-      });
-
-      const text = await res.text();
-      let json = {};
-
-      try {
-        json = text ? JSON.parse(text) : {};
-      } catch (_) {
-        json = { ok: res.ok, rawText: text };
-      }
-
-      if (!res.ok) {
-        throw new Error(json.message || json.rawText || `HTTP ${res.status}`);
-      }
-
-      if (json && json.ok === false) {
-        throw new Error(json.message || json.rawText || "保存に失敗しました。");
-      }
-
-      return json;
-    }
-
-    async function fetchJson(url) {
-      const res = await fetch(url, { cache: "no-store" });
-      const text = await res.text();
-      let json = {};
-
-      try {
-        json = text ? JSON.parse(text) : {};
-      } catch (_) {
-        json = { ok: false, rawText: text };
-      }
-
-      if (!res.ok) {
-        throw new Error(json.message || json.rawText || `HTTP ${res.status}`);
-      }
-
-      if (json && json.ok === false) {
-        throw new Error(json.message || json.rawText || "取得に失敗しました。");
-      }
-
-      return json;
-    }
-
-    function buildPayload(text) {
-      const user = getUserName();
-      const staff = getStaffName();
-      const date = getTodayYmd();
-      const id = `easy-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-
-      const raw = {
-        id,
-        serverId: id,
-        _serverId: id,
-        date,
-        resident: user,
-        recorder: staff,
-        note: text,
-        source: DEFAULT_SOURCE,
-        createdFrom: "easy_google_send_v2_clean"
-      };
-
-      return {
-        action: "saveBoth",
-        id,
-        serverId: id,
-        _serverId: id,
-        date,
-        user,
-        userName: user,
-        staff,
-        staffName: staff,
-        text,
-        body: text,
-        source: DEFAULT_SOURCE,
-        raw
-      };
-    }
-
-    async function fetchSharedRecords(user, date) {
-      const url = `${WEB_APP_URL}?action=listShared&date=${encodeURIComponent(date)}&user=${encodeURIComponent(user)}`;
-      return await fetchJson(url);
-    }
-
-    async function fetchMainRecord(user, date) {
-      const url = `${WEB_APP_URL}?action=getMainRecord&user=${encodeURIComponent(user)}&date=${encodeURIComponent(date)}`;
-      return await fetchJson(url);
-    }
-
-    function renderMainRecord(data) {
-      const rec = data && data.record ? data.record : null;
-      const rawNote = rec && rec.raw && rec.raw.note ? String(rec.raw.note).trim() : "";
-      const text = rec && rec.text ? String(rec.text).trim() : "";
-      const viewText = text || rawNote;
-
-      if (!rec || !viewText) {
-        mainCheckBox.textContent = "まだ今日の本体記録はありません。";
-        return false;
-      }
-      mainCheckBox.textContent = viewText;
-      return true;
-    }
-
-    function renderSharedRecords(data) {
-      const records = Array.isArray(data && data.records) ? data.records : [];
-      if (!records.length) {
-        mainCheckBox.textContent = "まだ今日の記録はありません。";
-        return false;
-      }
-
-      const lines = [];
-      records
-        .slice()
-        .sort((a, b) => {
-          const at = String(a && (a.updatedAt || a.timestamp || a.createdAt || ""));
-          const bt = String(b && (b.updatedAt || b.timestamp || b.createdAt || ""));
-          return at.localeCompare(bt);
-        })
-        .forEach((rec) => {
-          const staff = String(rec && (rec.staff || rec.staffName || rec.recorder || rec.userName || "記録者不明")).trim() || "記録者不明";
-          const raw = rec && rec.raw && typeof rec.raw === 'object' ? rec.raw : {};
-          const body = normalizeText(
-            (rec && (rec.text || rec.note || rec.body)) ||
-            raw.note || raw.text || raw.body || ""
-          );
-          if (!body) return;
-          lines.push(`【${staff}】`);
-          lines.push(body);
-          lines.push("");
-        });
-
-      const out = normalizeText(lines.join("\n"));
-      mainCheckBox.textContent = out || "まだ今日の記録はありません。";
-      return !!out;
-    }
-
-    async function pollMainRecord(user, date, expectedText) {
-      for (let i = 0; i < 8; i++) {
-        const data = await fetchMainRecord(user, date);
-        const text = normalizeText(data && data.record && data.record.text);
-        if (text && (!expectedText || text.includes(expectedText))) return data;
-        await new Promise(r => setTimeout(r, 700));
-      }
-      return await fetchMainRecord(user, date);
-    }
-
-    async function sendRecord() {
-      const user = getUserName();
-      const staff = getStaffName();
-      const text = normalizeText(memoInput.value);
-      const date = getTodayYmd();
-
-      if (!user) {
-        sendStatus.textContent = "利用者名を入力してください。";
-        userNameEl.focus();
-        return;
-      }
-      if (!staff) {
-        sendStatus.textContent = "記録者名を入力してください。";
-        staffNameEl.focus();
-        return;
-      }
-      if (!text) {
-        sendStatus.textContent = "本文を入力してください。";
-        memoInput.focus();
-        return;
-      }
-
-      sendBtn.disabled = true;
-      checkBtn.disabled = true;
-      sendStatus.textContent = "送信中です...";
-
-      try {
-        saveRecent(RECENT_USERS_KEY, user);
-        saveRecent(RECENT_STAFF_KEY, staff);
-        renderRecent();
-
-        const payload = buildPayload(text);
-        await postJson(payload);
-
-        let mainResult = await pollMainRecord(user, date, text);
-        const foundMain = !!(mainResult && mainResult.record && normalizeText(mainResult.record.text));
-
-        if (foundMain) {
-          renderMainRecord(mainResult);
-          sendStatus.textContent = `送信しました。
-本体にも反映できました。
-利用者: ${user}`;
-        } else {
-          const sharedResult = await fetchSharedRecords(user, date);
-          renderSharedRecords(sharedResult);
-          sendStatus.textContent = `送信しました。
-本体反映待ちのため共有記録を表示しています。
-利用者: ${user}`;
-        }
-      } catch (err) {
-        sendStatus.textContent = `送信に失敗しました。
-${err && err.message ? err.message : err}`;
-      } finally {
-        sendBtn.disabled = false;
-        checkBtn.disabled = false;
-      }
-    }
-
-    async function checkMainRecord() {
-      const user = getUserName();
-      const date = getTodayYmd();
-
-      if (!user) {
-        checkStatus.textContent = "利用者名を入力してください。";
-        userNameEl.focus();
-        return;
-      }
-
-      checkBtn.disabled = true;
-      checkStatus.textContent = "確認中です...";
-
-      try {
-        const data = await fetchMainRecord(user, date);
-        const hasMain = renderMainRecord(data);
-        if (hasMain) {
-          checkStatus.textContent = "本体の今日の記録を表示しました。";
-        } else {
-          const sharedData = await fetchSharedRecords(user, date);
-          const hasShared = renderSharedRecords(sharedData);
-          checkStatus.textContent = hasShared ? "共有の今日の記録を表示しました。" : "まだ今日の記録はありません。";
-        }
-      } catch (err) {
-        checkStatus.textContent = `確認に失敗しました。
-${err && err.message ? err.message : err}`;
-      } finally {
-        checkBtn.disabled = false;
-      }
-    }
-
-    async function copyText() {
-      const text = normalizeText(memoInput.value);
-      if (!text) {
-        sendStatus.textContent = "本文がありません。";
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(text);
-        sendStatus.textContent = "本文をコピーしました。";
-      } catch (_) {
-        sendStatus.textContent = "コピーに失敗しました。長押しでコピーしてください。";
-      }
-    }
-
-    function clearMemo() {
-      memoInput.value = "";
-      sendStatus.textContent = "本文を消しました。";
-    }
-
-    sendBtn.addEventListener("click", sendRecord);
-    checkBtn.addEventListener("click", checkMainRecord);
-    copyBtn.addEventListener("click", copyText);
-    clearBtn.addEventListener("click", clearMemo);
+  } catch (err) {
+    checkStatus.textContent = '確認に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    checkBtn.disabled = false;
+  }
+}
+async function sendRecord() {
+  const user = String(userNameEl?.value || '').trim();
+  const staff = String(staffNameEl?.value || '').trim();
+  const text = normalizeText(memoInput?.value);
+  if (!user) {
+    sendStatus.textContent = '利用者名を入力してください。';
+    userNameEl?.focus();
+    return;
+  }
+  if (!staff) {
+    sendStatus.textContent = '記録者名を入力してください。';
+    staffNameEl?.focus();
+    return;
+  }
+  if (!text) {
+    sendStatus.textContent = '本文を入力してください。';
+    memoInput?.focus();
+    return;
+  }
+  sendBtn.disabled = true;
+  checkBtn.disabled = true;
+  sendStatus.textContent = '送信中です...';
+  try {
+    saveRecent(RECENT_USERS_KEY, user);
+    saveRecent(RECENT_STAFF_KEY, staff);
     renderRecent();
-  </script>
+    await postJson(buildPayload(text));
+    sendStatus.textContent = '送信しました。';
+    await checkMainRecord();
+  } catch (err) {
+    sendStatus.textContent = '送信に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    sendBtn.disabled = false;
+    checkBtn.disabled = false;
+  }
+}
+async function copyText() {
+  const text = normalizeText(memoInput?.value);
+  if (!text) {
+    sendStatus.textContent = '本文がありません。';
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    sendStatus.textContent = '本文をコピーしました。';
+  } catch (e) {
+    sendStatus.textContent = 'コピーに失敗しました。長押しでコピーしてください。';
+  }
+}
+function clearMemo() {
+  if (memoInput) memoInput.value = '';
+  sendStatus.textContent = '本文を消しました。';
+  memoInput?.focus();
+}
+
+sendBtn?.addEventListener('click', sendRecord);
+checkBtn?.addEventListener('click', checkMainRecord);
+copyBtn?.addEventListener('click', copyText);
+clearBtn?.addEventListener('click', clearMemo);
+renderRecent();</script>
 </body>
 </html>
