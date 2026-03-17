@@ -148,8 +148,13 @@ async function fetchSharedRecords(user, date) {
 }
 function renderMainRecord(data) {
   const rec = data && data.record ? data.record : null;
-  const text = normalizeText((rec && (rec.text || (rec.raw && rec.raw.text) || rec.note || (rec.raw && rec.raw.note))) || '');
+  const raw = rec && rec.raw && typeof rec.raw === 'object' ? rec.raw : {};
+  let text = normalizeText((rec && (rec.text || raw.text || rec.note || raw.note)) || '');
+  const staff = String((rec && rec.recorder) || raw.recorder || raw.staff || '').trim();
   if (!text) return false;
+  if (staff && !text.includes('記録者 ' + staff) && !text.includes('【' + staff + '】')) {
+    text = normalizeText(text + '\n記録者 ' + staff);
+  }
   mainCheckBox.textContent = text;
   return true;
 }

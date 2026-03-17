@@ -10004,8 +10004,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
         <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
         <div class="btns">
-          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(getShareEntryKey(item))}">この内容を本文へ反映</button>
-          <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(getShareEntryKey(item))}">削除</button>
+          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(getShareEntryKey(item) || item.id || '')}">この内容を本文へ反映</button>
+          <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(getShareEntryKey(item) || item.id || '')}">削除</button>
           <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
         </div>
       </div>`).join('');
@@ -10036,12 +10036,16 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   }
   function formatSharedEntryText(item){
     const recorder = String(item && (item.staff || item.staffName || item.recorder) || '').trim();
-    const body = String(item && (item.text || item.body || item.note) || '').replace(/\r\n/g, '\n').trim();
+    const body = String(item && (item.text || item.body || item.note) || '').replace(/
+/g, '
+').trim();
     if(!body) return '';
-    return recorder ? (`【${recorder}】\n` + body) : body;
+    return recorder ? (body + '
+記録者 ' + recorder) : body;
   }
   function getShareEntryKey(item){
-    return String(item && item.id || '').trim();
+    const raw = item && item.raw && typeof item.raw === 'object' ? item.raw : {};
+    return String(((item && (item._serverId || item.serverId || item.id)) || raw._serverId || raw.serverId || raw.id || '')).trim();
   }
   function getMainSharedEntryKeys(record){
     const raw = record && record.raw && typeof record.raw === 'object' ? record.raw : {};
@@ -10140,7 +10144,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       if(!data || !data.ok) throw new Error((data && (data.error || data.message)) || '取得できませんでした');
       allItems = Array.isArray(data.records) ? data.records : [];
       buildResidentOptions();
-      renderList('<span class="ok">読み込みました。</span>');
+      renderList('<span class="ok">読み込みました。</span> <span class="meta">反映したい行だけ押してください。</span>');
     }catch(e){
       setGoogleStatus('<span class="ng">読み込みに失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
       if(wrap) wrap.innerHTML = '<div class="small">読み込みに失敗しました。</div>';
@@ -10182,33 +10186,90 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     if (saveBtn) saveBtn.textContent = '💾 既存記録を更新';
   }
   function reflectGoogleItem(id){
-    const item = allItems.find(v => String(v.id) === String(id));
+    const item = allItems.find(v => String(getShareEntryKey(v) || v.id || '') === String(id));
     if(!item) return;
+    const shareId = getShareEntryKey(item);
     const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
-    const matchedResident = findResidentValue(item.user || item.userName || '');
-    const targetResident = (matchedResident || item.user || item.userName || '').trim();
-    let existingRecord = null;
-    if(Array.isArray(records)){
-      existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
+    const matchedResident = findResidentValue(item.user || item.userName || item.resident || '');
+    const targetResident = (matchedResident || item.user || item.userName || item.resident || '').trim();
+    const recorder = String(item.staff || item.staffName || item.recorder || '').trim();
+    const textToAdd = formatSharedEntryText(item);
+    if(!shareId || !targetDate || !targetResident || !textToAdd){
+      setGoogleStatus('<span class="ng">反映に必要な情報が不足しています。</span>');
+      return;
     }
-    if(existingRecord){
-      loadRecordIntoMainForm(existingRecord);
-      window.pendingGoogleShareTargetId = existingRecord.id;
-    }else{
-      window.pendingGoogleShareTargetId = '';
-      const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
-      const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
-      const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
-    }
-    const note = qs('note');
-    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
-    const currentText = String(note.value || '').trim();
-    const add = String(item.text || item.body || '').trim();
-    if(!add) return;
-    note.value = currentText ? (currentText + '\n\n' + add) : add;
-    note.dispatchEvent(new Event('input', { bubbles:true }));
-    note.focus();
-    setGoogleStatus('<span class="ok">本文へ反映しました。共有履歴は削除していません。</span>');
+    (async () => {
+      try{
+        const baseList = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
+        const existingRecord = baseList.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
+        if(existingRecord){
+          const knownKeys = getMainSharedEntryKeys(existingRecord);
+          const currentNote = String(existingRecord.note || '').replace(/
+/g, '
+').trim();
+          if(knownKeys.includes(shareId) || currentNote.includes(textToAdd)){
+            markImportedGoogleId(shareId);
+            setGoogleStatus('<span class="ok">反映済みです。</span>');
+            return;
+          }
+          const fixedId = String(existingRecord._serverId || existingRecord.serverId || existingRecord.id || '').trim() || ('main-' + Date.now());
+          const nextNote = currentNote ? (currentNote + '
+
+' + textToAdd) : textToAdd;
+          const updated = {
+            ...existingRecord,
+            id: fixedId,
+            _serverId: fixedId,
+            serverId: fixedId,
+            recorder: existingRecord.recorder || recorder || '',
+            note: nextNote,
+            text: nextNote,
+            raw: { ...((existingRecord && existingRecord.raw) || {}) }
+          };
+          const mergedKeys = Array.from(new Set([...(getMainSharedEntryKeys(existingRecord) || []), shareId]));
+          updated.raw.sharedEntryKeys = mergedKeys;
+          updated.sharedEntryKeys = mergedKeys;
+          await saveMainRecordRemote(updated);
+        }else{
+          const payload = {
+            id: '',
+            date: targetDate,
+            resident: targetResident,
+            recorder: recorder,
+            medTaken: false,
+            support: '',
+            note: textToAdd,
+            text: textToAdd,
+            hasSpecialNote: false,
+            tags: [],
+            daySupportType: '',
+            dayActivityItems: [],
+            daySupportMainItems: [],
+            daySupportReasonItems: [],
+            daySupportBathingSubItems: [],
+            daySupportHealthSubItems: [],
+            abnormalVitalsOn: false,
+            abnormalWeight: '',
+            abnormalTemp: '',
+            abnormalBPsys: '',
+            abnormalBPdia: '',
+            abnormalPulse: '',
+            timeSlot: '日中',
+            condition: '良好',
+            mental: '安定',
+            sharedEntryKeys: [shareId],
+            raw: { sharedEntryKeys: [shareId] }
+          };
+          await saveMainRecordRemote(payload);
+        }
+        markImportedGoogleId(shareId);
+        await syncRemoteRecordsAndRender();
+        renderList('<span class="ok">本体へ反映しました。</span>');
+      }catch(e){
+        console.error('reflectGoogleItem error', e);
+        setGoogleStatus('<span class="ng">反映に失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
+      }
+    })();
   }
   async function deleteGoogleItem(id){
     if(!id) return;
