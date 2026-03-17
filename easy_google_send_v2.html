@@ -226,6 +226,7 @@ async function sendRecord() {
     saveRecent(RECENT_STAFF_KEY, staff);
     renderRecent();
     await postJson(buildPayload(text));
+    if (memoInput) memoInput.value = '';
     sendStatus.textContent = '送信しました。';
     await checkMainRecord();
   } catch (err) {
