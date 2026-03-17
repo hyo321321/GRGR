@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
-<meta charset="utf-8"/>
-<title>グループホーム 個人記録</title>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
-<style>
+  <meta charset="UTF-8" />
+  <title>グループホーム 個人記録</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
     * { box-sizing: border-box; }
 
 /* 「この日を土日祝扱い」誤タップ対策：文字部分をクリック不可にする */
@@ -1324,6 +1324,7 @@
 .google-share-item .btns button.primary{ background:#111827; color:#fff; border-color:#111827; }
 
 </style>
+
 <!-- Excelライブラリ（スタイル対応：xlsx-js-style）ローダー -->
 <script>
 (function(){
@@ -1349,190 +1350,211 @@
   next();
 })();
 </script>
+
 </head>
+
 <body>
-<header>
-<div class="header-inner">
-<div></div>
-<div class="header-title">グループホーム 個人記録 WEBアプリ（初心者ガイド付き）</div>
-<div class="header-actions">
-<button class="header-btn" id="openManualBtn" type="button">📘 説明書</button>
-<button class="header-btn" id="openInboxBtn" type="button">📥 受信BOX</button>
-<button class="header-btn" id="openGoogleShareBtn" type="button">☁ Google共有</button>
-</div>
-</div>
+  <header>
+  <div class="header-inner">
+    <div></div>
+    <div class="header-title">グループホーム 個人記録 WEBアプリ（初心者ガイド付き）</div>
+    <div class="header-actions">
+      <button type="button" class="header-btn" id="openManualBtn">📘 説明書</button>
+      <button type="button" class="header-btn" id="openInboxBtn">📥 受信BOX</button>
+      <button type="button" class="header-btn" id="openGoogleShareBtn">☁ Google共有</button>
+    </div>
+  </div>
 </header>
-<!-- 説明書（モーダル） -->
-<div aria-hidden="true" class="modal-overlay" id="manualOverlay">
-<div aria-labelledby="manualTitle" aria-modal="true" class="manual-modal" role="dialog">
-<div class="manual-header">
-<div class="manual-title" id="manualTitle">このアプリの使い方（説明書）</div>
-<div class="manual-actions">
-<button class="manual-btn" id="printManualBtn" type="button">印刷</button>
-<button class="manual-btn" id="closeManualBtn" type="button">閉じる</button>
-</div>
-</div>
-<div class="manual-body" id="manualBody">
-<div class="manual-section">
-<h3>この説明書の見方</h3>
-<div class="small">
+
+  <!-- 説明書（モーダル） -->
+  <div class="modal-overlay" id="manualOverlay" aria-hidden="true">
+    <div class="manual-modal" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+      <div class="manual-header">
+        <div class="manual-title" id="manualTitle">このアプリの使い方（説明書）</div>
+        <div class="manual-actions">
+          <button type="button" class="manual-btn" id="printManualBtn">印刷</button>
+          <button type="button" class="manual-btn" id="closeManualBtn">閉じる</button>
+        </div>
+      </div>
+      <div class="manual-body" id="manualBody">
+        <div class="manual-section">
+          <h3>この説明書の見方</h3>
+          <div class="small">
             迷ったらまずここを見ます。慣れている人は「記録一覧」「バックアップ」だけ読めばOKです。
           </div>
-<ul class="manual-ul">
-<li>初心者：次の「まずここだけ」をそのまま順番に</li>
-<li>困ったとき：一番下の「よくあるトラブル」</li>
-<li>データ移行：バックアップ（JSON）→ 復元</li>
-</ul>
-</div>
-<div class="manual-section">
-<h3>まずここだけ（初心者は色付き枠だけでOK）</h3>
-<div class="small">日々の入力はこの流れだけで完結します。</div>
-<ul class="manual-ul">
-<li>① 日付・利用者・記録者を選ぶ</li>
-<li>② 自動入力したい支援項目をチェック（よく使う項目）</li>
-<li>④ 日中活動は必要な日だけチェック</li>
-<li>⑤ 💾 記録を保存（確定保存）</li>
-</ul>
-<div class="small" style="margin-top:10px;">
+          <ul class="manual-ul">
+            <li>初心者：次の「まずここだけ」をそのまま順番に</li>
+            <li>困ったとき：一番下の「よくあるトラブル」</li>
+            <li>データ移行：バックアップ（JSON）→ 復元</li>
+          </ul>
+        </div>
+
+        <div class="manual-section">
+          <h3>まずここだけ（初心者は色付き枠だけでOK）</h3>
+          <div class="small">日々の入力はこの流れだけで完結します。</div>
+          <ul class="manual-ul">
+            <li>① 日付・利用者・記録者を選ぶ</li>
+            <li>② 自動入力したい支援項目をチェック（よく使う項目）</li>
+            <li>④ 日中活動は必要な日だけチェック</li>
+            <li>⑤ 💾 記録を保存（確定保存）</li>
+          </ul>
+          <div class="small" style="margin-top:10px;">
             入力が難しい日は、色付き枠の <span class="manual-kbd">今日は未完成で全員作成</span> を押すだけでOKです（後日編集して完成させます）。
           </div>
-</div>
-<div class="manual-section">
-<h3>未完成の使い方（全員分の未完成を作成）</h3>
-<div class="small">
+        </div>
+
+        <div class="manual-section">
+          <h3>未完成の使い方（全員分の未完成を作成）</h3>
+          <div class="small">
             どうしても入力できない日用。ボタン1回で、その日付の「利用者全員分」を未完成タグ付きで作成します。
           </div>
-<ul class="manual-ul">
-<li>作成対象：画面の日付</li>
-<li>スキップ：同日同利用者ですでに記録がある場合（確定/未完成どちらでも）</li>
-<li>目印：タグ「未完成」が自動で付きます</li>
-</ul>
-<div class="small" style="margin-top:10px;">
+          <ul class="manual-ul">
+            <li>作成対象：画面の日付</li>
+            <li>スキップ：同日同利用者ですでに記録がある場合（確定/未完成どちらでも）</li>
+            <li>目印：タグ「未完成」が自動で付きます</li>
+          </ul>
+          <div class="small" style="margin-top:10px;">
             作成後は記録一覧から「未完成のみ表示」をONにすると探しやすいです。
           </div>
-</div>
-<div class="manual-section">
-<h3>よく使う項目（この利用者）</h3>
-<div class="small">
+        </div>
+
+        <div class="manual-section">
+          <h3>よく使う項目（この利用者）</h3>
+          <div class="small">
             利用者ごとに、②のチェックの初期状態を保存できます。曜日ごとに分けられます。
           </div>
-<ul class="manual-ul">
-<li>🛠 よく使う項目編集（この利用者）を開く</li>
-<li>チェックを整える</li>
-<li>保存ボタンで保存（平日/土日祝/この曜日）</li>
-</ul>
-<div class="small" style="margin-top:10px;">
+          <ul class="manual-ul">
+            <li>🛠 よく使う項目編集（この利用者）を開く</li>
+            <li>チェックを整える</li>
+            <li>保存ボタンで保存（平日/土日祝/この曜日）</li>
+          </ul>
+          <div class="small" style="margin-top:10px;">
             便利な保存ボタンの意味：
             <ul class="manual-ul">
-<li><span class="manual-kbd">平日で保存</span>：月〜金をまとめて同じ設定に</li>
-<li><span class="manual-kbd">土日祝で保存</span>：土・日・祝日をまとめて同じ設定に</li>
-<li><span class="manual-kbd">この曜日で保存（火）</span>：その曜日だけ別設定に（火曜だけ別など）</li>
-</ul>
-</div>
-<div class="small" style="margin-top:8px;">
+              <li><span class="manual-kbd">平日で保存</span>：月〜金をまとめて同じ設定に</li>
+              <li><span class="manual-kbd">土日祝で保存</span>：土・日・祝日をまとめて同じ設定に</li>
+              <li><span class="manual-kbd">この曜日で保存（火）</span>：その曜日だけ別設定に（火曜だけ別など）</li>
+            </ul>
+          </div>
+          <div class="small" style="margin-top:8px;">
             注意：平日で保存を押すと月〜金が上書きされます。火曜だけ別にしたい場合は「この曜日で保存（火）」を使います。
           </div>
-</div>
-<div class="manual-section">
-<h3>土日祝の判定（自動）と「この日を土日扱い」</h3>
-<div class="small">
+        </div>
+
+        <div class="manual-section">
+          <h3>土日祝の判定（自動）と「この日を土日扱い」</h3>
+          <div class="small">
             基本はカレンダーで自動判定します（土日＋祝日）。「この日を土日扱い」は保険用の手動切替です。
           </div>
-<ul class="manual-ul">
-<li>基本：日付が土日または祝日 → 土日祝のデフォルトが自動で効く</li>
-<li>手動：「この日を土日扱い」をON → その日だけ土日祝として扱う</li>
-</ul>
-<div class="small" style="margin-top:8px;">
+          <ul class="manual-ul">
+            <li>基本：日付が土日または祝日 → 土日祝のデフォルトが自動で効く</li>
+            <li>手動：「この日を土日扱い」をON → その日だけ土日祝として扱う</li>
+          </ul>
+          <div class="small" style="margin-top:8px;">
             誤タップ対策：チェックボックス本体だけ反応＋ON時に確認が出ます（今の版）。
           </div>
-</div>
-<div class="manual-section">
-<h3>体調管理（血圧・体重は「測定」）</h3>
-<div class="small">
+        </div>
+
+        <div class="manual-section">
+          <h3>体調管理（血圧・体重は「測定」）</h3>
+          <div class="small">
             体調系の文言は不自然になりやすいので、血圧・体重は「実施」ではなく「測定」で統一しています。
           </div>
-<ul class="manual-ul">
-<li>血圧のみ → 体調管理：血圧を測定。</li>
-<li>血圧＋体重 → 体調管理：血圧・体重を測定。</li>
-</ul>
-<div class="small" style="margin-top:8px;">
+          <ul class="manual-ul">
+            <li>血圧のみ → 体調管理：血圧を測定。</li>
+            <li>血圧＋体重 → 体調管理：血圧・体重を測定。</li>
+          </ul>
+          <div class="small" style="margin-top:8px;">
             血圧欄の注意文：<span class="manual-kbd">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</span> は残しています。
           </div>
-</div>
-<div class="manual-section">
-<h3>日中活動（④）</h3>
-<div class="small">必要な日だけチェックします。普段使わない日は無理に触らなくてOKです。</div>
-</div>
-<div class="manual-section">
-<h3>キーワード（タグ）</h3>
-<div class="small">普段は空でOK。必要なときだけ付けます（例：通院、体調不良、相談、夜間対応、未完成など）。</div>
-<div class="small" style="margin-top:8px;">
+        </div>
+
+        <div class="manual-section">
+          <h3>日中活動（④）</h3>
+          <div class="small">必要な日だけチェックします。普段使わない日は無理に触らなくてOKです。</div>
+        </div>
+
+        <div class="manual-section">
+          <h3>キーワード（タグ）</h3>
+          <div class="small">普段は空でOK。必要なときだけ付けます（例：通院、体調不良、相談、夜間対応、未完成など）。</div>
+          <div class="small" style="margin-top:8px;">
             タグは検索や未完成運用の目印に使います（一覧の「未完成のみ表示」もここを見ています）。
           </div>
-</div>
-<div class="manual-section">
-<h3>⑤ 記録を保存（確定保存）</h3>
-<div class="small">
+        </div>
+
+        <div class="manual-section">
+          <h3>⑤ 記録を保存（確定保存）</h3>
+          <div class="small">
             このボタンを押した内容が記録一覧に入ります。保存後に一覧で確認できます。
           </div>
-<ul class="manual-ul">
-<li>保存前に日付・利用者・記録者を必ず確認</li>
-<li>保存したら、一覧で当日分が入ったか確認</li>
-</ul>
-</div>
-<div class="manual-section">
-<h3>記録一覧</h3>
-<ul class="manual-ul">
-<li>編集：記録内容を修正できます（未完成で作った分もここで完成）</li>
-<li>未完成のみ表示：未完成タグの記録だけ探せます</li>
-<li>バックアップ：JSONで丸ごと保存</li>
-<li>復元：JSONを読み込んで別PCでも同じ状態に戻せます</li>
-</ul>
-</div>
-<div class="manual-section">
-<h3>バックアップ（JSON）と復元</h3>
-<div class="small">
+          <ul class="manual-ul">
+            <li>保存前に日付・利用者・記録者を必ず確認</li>
+            <li>保存したら、一覧で当日分が入ったか確認</li>
+          </ul>
+        </div>
+
+        <div class="manual-section">
+          <h3>記録一覧</h3>
+          <ul class="manual-ul">
+            <li>編集：記録内容を修正できます（未完成で作った分もここで完成）</li>
+            <li>未完成のみ表示：未完成タグの記録だけ探せます</li>
+            <li>バックアップ：JSONで丸ごと保存</li>
+            <li>復元：JSONを読み込んで別PCでも同じ状態に戻せます</li>
+          </ul>
+        </div>
+
+        <div class="manual-section">
+          <h3>バックアップ（JSON）と復元</h3>
+          <div class="small">
             Excel/CSVは提出用、JSONはアプリ丸ごと引っ越し用です。よく使う項目（曜日別）や設定も含めて保存します。
           </div>
-<ul class="manual-ul">
-<li>バックアップ：記録一覧のバックアップボタン → JSONを保存</li>
-<li>復元：復元ボタン → JSONを選ぶ → 画面を再読み込み</li>
-</ul>
-<div class="small" style="margin-top:8px;">
+          <ul class="manual-ul">
+            <li>バックアップ：記録一覧のバックアップボタン → JSONを保存</li>
+            <li>復元：復元ボタン → JSONを選ぶ → 画面を再読み込み</li>
+          </ul>
+          <div class="small" style="margin-top:8px;">
             重要：復元は現在のデータを上書きします。必要なら先にバックアップしてから復元してください。
           </div>
+        </div>
+
+        <div class="manual-section">
+          <h3>よくあるトラブル</h3>
+          <ul class="manual-ul">
+            <li>チェックが反映されない：保存先（平日/土日祝/曜日）を押し分けたか確認</li>
+            <li>火曜だけ別にしたのに戻る：平日で保存を押して月〜金を上書きしていないか確認</li>
+            <li>表示が崩れる：<span class="manual-kbd">Ctrl</span> + <span class="manual-kbd">F5</span> で強制更新</li>
+            <li>未完成が作れない：その日付で既に記録がある利用者はスキップされます（確定/未完成）</li>
+          </ul>
+        </div>
 </div>
-<div class="manual-section">
-<h3>よくあるトラブル</h3>
-<ul class="manual-ul">
-<li>チェックが反映されない：保存先（平日/土日祝/曜日）を押し分けたか確認</li>
-<li>火曜だけ別にしたのに戻る：平日で保存を押して月〜金を上書きしていないか確認</li>
-<li>表示が崩れる：<span class="manual-kbd">Ctrl</span> + <span class="manual-kbd">F5</span> で強制更新</li>
-<li>未完成が作れない：その日付で既に記録がある利用者はスキップされます（確定/未完成）</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
+      </div>
+    </div>
+  </div>
+
 
 <!-- XLSXローカル読み込み（ネット不可時の救済） -->
 <div id="xlsxLoadMsg" style="display:none; max-width:1720px; margin:10px auto 0; padding:10px 12px; border-radius:12px; border:1px solid #fca5a5; background:#fef2f2; color:#991b1b; font-size:14px;">
-  Excelライブラリを読み込めませんでした（ネット接続なし/制限ありの可能性）。<br/>
-  ✅ 対応方法：<b>xlsx.bundle.js</b> をPCに保存して、ここから読み込んでください（1回読み込めばこのページを開いている間はExcel出力できます）。<br/>
-<input accept=".js" id="xlsxLocalFile" style="margin-top:8px;" type="file"/>
-<div id="xlsxLocalStatus" style="margin-top:6px; font-size:13px;"></div>
+  Excelライブラリを読み込めませんでした（ネット接続なし/制限ありの可能性）。<br>
+  ✅ 対応方法：<b>xlsx.bundle.js</b> をPCに保存して、ここから読み込んでください（1回読み込めばこのページを開いている間はExcel出力できます）。<br>
+  <input type="file" id="xlsxLocalFile" accept=".js" style="margin-top:8px;">
+  <div id="xlsxLocalStatus" style="margin-top:6px; font-size:13px;"></div>
 </div>
+
+
 <!-- 🆕 アップデート通知（新しい更新があった時だけ表示） -->
-<div aria-live="polite" class="update-banner" id="updateBanner">
-<div class="left">
-<div class="title">
+<div id="updateBanner" class="update-banner" aria-live="polite">
+  <div class="left">
+    <div class="title">
       🆕 アップデートしました
       <span class="meta" id="updateBannerMeta"></span>
+    </div>
+    <ul id="updateBannerList"></ul>
+  </div>
+  <button type="button" class="close" id="updateBannerClose">閉じる</button>
 </div>
-<ul id="updateBannerList"></ul>
-</div>
-<button class="close" id="updateBannerClose" type="button">閉じる</button>
-</div>
+
+
+
 <script>
   // 画面表示後に、CDN読込失敗ならローカル読込UIを表示
   document.addEventListener("DOMContentLoaded", function(){
@@ -1579,719 +1601,845 @@
     }, 800);
   });
 </script>
-<main>
-<div class="layout">
-<!-- 入力フォーム -->
-<section class="card">
-<div class="card-title">
-<span>今日の個人記録</span>
-<span class="pill" id="modeLabel">新規入力モード</span>
-</div>
-<!-- ★初心者ガイド -->
-<div class="beginner-guide">
-<div class="title">✅ 初心者は「色付きの枠だけ」でOK</div>
-<div class="steps">
+
+  <main>
+    <div class="layout">
+      <!-- 入力フォーム -->
+      <section class="card">
+        <div class="card-title">
+          <span>今日の個人記録</span>
+          <span class="pill" id="modeLabel">新規入力モード</span>
+        </div>
+
+        <!-- ★初心者ガイド -->
+        <div class="beginner-guide">
+          <div class="title">✅ 初心者は「色付きの枠だけ」でOK</div>
+          <div class="steps">
             ① 日付・利用者・記録者 → ② よく使う項目チェック → ④ 日中活動（必要な日だけ） → ⑤💾 記録を保存
           </div>
-<div class="beginner-unfinished" style="margin-top:10px;">
-<div style="font-size:13px; opacity:0.9; margin-bottom:6px;">
+        
+          <div class="beginner-unfinished" style="margin-top:10px;">
+            <div style="font-size:13px; opacity:0.9; margin-bottom:6px;">
               入力がどうしても出来ない日は、下のボタンを押すだけで「全員分」を未完成で作成できます（後で編集して完成させます）。
             </div>
-<button class="btn-beginner" id="createUnfinishedAllBtn" type="button">🧩 今日は未完成で全員作成</button>
+            <button type="button" class="btn-beginner" id="createUnfinishedAllBtn">🧩 今日は未完成で全員作成</button>
+          </div>
 </div>
-</div>
-<form id="recordForm">
-<!-- ★日付・利用者（初心者OK） -->
-<div class="beginner-zone">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-<div style="font-weight:800; color:#1e3a8a;">① 日付・利用者・記録者 <span class="beginner-badge">ここだけOK</span></div>
-<div class="beginner-hint">※利用者別に設定した初期値がある場合は自動で反映されます。</div>
-</div>
-<div class="field-row-3" style="margin-top:10px;">
-<div class="field" style="margin-bottom:0;">
-<label for="date">日付</label>
-<input id="date" required="" type="date">
-</input></div>
-<div class="field" style="margin-bottom:0;">
-<label for="resident">利用者</label>
-<select id="resident" required=""></select>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="recorder">記録者</label>
-<select id="recorder"></select>
-</div>
-</div>
-</div>
-<div class="small-text" style="margin-top:6px;">
-<span class="daytype-pill" id="dayTypePill">平日</span>
-<span class="override-wrap" style="margin-left:6px;">
-<input id="holidayOverride" type="checkbox"/>
-<span class="override-text">この日を土日祝扱い（通常は不要）</span>
-</span>
-<span class="small-text" id="holidayName" style="margin-left:8px;"></span>
-</div>
+
+        <form id="recordForm">
+
+
+
+          <!-- ★日付・利用者（初心者OK） -->
+          <div class="beginner-zone">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+              <div style="font-weight:800; color:#1e3a8a;">① 日付・利用者・記録者 <span class="beginner-badge">ここだけOK</span></div>
+              <div class="beginner-hint">※利用者別に設定した初期値がある場合は自動で反映されます。</div>
+            </div>
+
+            <div class="field-row-3" style="margin-top:10px;">
+              <div class="field" style="margin-bottom:0;">
+                <label for="date">日付</label>
+                <input type="date" id="date" required />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="resident">利用者</label>
+                <select id="resident" required></select>
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="recorder">記録者</label>
+                <select id="recorder"></select>
+              </div>
+            </div>
+          </div>
+          <div class="small-text" style="margin-top:6px;">
+            <span class="daytype-pill" id="dayTypePill">平日</span>
+            <span class="override-wrap" style="margin-left:6px;">
+              <input type="checkbox" id="holidayOverride" />
+              <span class="override-text">この日を土日祝扱い（通常は不要）</span>
+            </span>
+            <span class="small-text" id="holidayName" style="margin-left:8px;"></span>
+          </div>
+
 <div class="field vitals-compact" id="abnormalVitalsBox" style="margin-top:8px;">
-<div class="vitals-title" style="font-weight:700; font-size:13px; margin-bottom:4px;">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
-<div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
-<div class="field-row-vitals" id="abnormalVitalsInputs" style="align-items:end;">
-<div class="field" style="margin-bottom:0;">
-<label for="abnormalWeight">体重（kg）</label>
-<input id="abnormalWeight" inputmode="decimal" placeholder="例：56.2" type="text"/>
+  <div class="vitals-title" style="font-weight:700; font-size:13px; margin-bottom:4px;">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
+  <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
+  <div class="field-row-vitals" id="abnormalVitalsInputs" style="align-items:end;">
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalWeight">体重（kg）</label>
+      <input type="text" id="abnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalTemp">体温（℃）</label>
+      <input type="text" id="abnormalTemp" placeholder="例：36.5" inputmode="decimal" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalBPsys">血圧（上 / mmHg）</label>
+      <input type="text" id="abnormalBPsys" placeholder="例：120" inputmode="numeric" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalBPdia">血圧（下 / mmHg）</label>
+      <input type="text" id="abnormalBPdia" placeholder="例：80" inputmode="numeric" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="abnormalPulse">脈拍（回/分）</label>
+      <input type="text" id="abnormalPulse" placeholder="例：72" inputmode="numeric" />
+    </div>
+  </div>
+  <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
 </div>
-<div class="field" style="margin-bottom:0;">
-<label for="abnormalTemp">体温（℃）</label>
-<input id="abnormalTemp" inputmode="decimal" placeholder="例：36.5" type="text"/>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="abnormalBPsys">血圧（上 / mmHg）</label>
-<input id="abnormalBPsys" inputmode="numeric" placeholder="例：120" type="text"/>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="abnormalBPdia">血圧（下 / mmHg）</label>
-<input id="abnormalBPdia" inputmode="numeric" placeholder="例：80" type="text"/>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="abnormalPulse">脈拍（回/分）</label>
-<input id="abnormalPulse" inputmode="numeric" placeholder="例：72" type="text"/>
-</div>
-</div>
-<div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-</div>
-<!-- ★自動入力したい支援項目（初心者OK） -->
-<div class="beginner-zone">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-<div style="font-weight:800; color:#1e3a8a;">② 自動入力したい支援項目 <span class="beginner-badge">ここだけOK</span></div>
-<div class="small-text">※利用者別に設定した初期値がある場合は自動で反映されます</div>
-</div>
+
+
+          <!-- ★自動入力したい支援項目（初心者OK） -->
+          <div class="beginner-zone">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+              <div style="font-weight:800; color:#1e3a8a;">② 自動入力したい支援項目 <span class="beginner-badge">ここだけOK</span></div>
+              <div class="small-text">※利用者別に設定した初期値がある場合は自動で反映されます</div>
+            </div>
+
+            
 <div class="btn-row" style="margin-top:8px; flex-wrap:wrap;">
-<button class="btn-secondary" id="openFavModalBtn" type="button">🛠 よく使う項目編集（この利用者）</button>
+  <button type="button" class="btn-secondary" id="openFavModalBtn">🛠 よく使う項目編集（この利用者）</button>
 </div>
-<div class="checkbox-row" id="autoItemCheckboxes" style="margin-top:8px;"></div>
+
+
+            <div class="checkbox-row" id="autoItemCheckboxes" style="margin-top:8px;"></div>
+          </div>
+
+          <!-- ② 反映確認（スクロール不要） -->
+          <div class="field" id="autoSupportStatusBox" style="margin-top:10px;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <span class="pill" id="autoSupportStatusPill">②の反映：なし</span>
+              <button type="button" class="btn-secondary" id="jumpSupportBtn">本文を見る</button>
+            </div>
+            <div class="small-text" id="autoSupportStatusPreview" style="margin-top:6px;"></div>
+          </div>
+
+
+          
+          <div class="advanced-toggle-row">
+            <button type="button" class="btn-secondary" id="toggleAdvancedBtn" class="btn-secondary btn-advanced-toggle">テンプレ・タグを表示</button>
+            <div class="small-text">日中支援テンプレ / タグ など（必要な人だけ）</div>
+          </div>
+
+
+          <!-- ★日中支援：主な支援（初心者OK） -->
+          <div class="advanced-zone">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+              <div style="font-weight:800; color:#334155;">③【日中に行った主な支援】 <span class="advanced-badge">任意</span></div>
+              <div class="beginner-hint">※慣れた人向け（必要な日だけ）</div>
+            </div>
+
+            <div class="btn-row" style="margin-top:8px;">
+              <button type="button" class="btn-secondary" id="openDaySupportModalBtn">🛠 日中支援チェック編集（利用者別）</button>
+            </div>
+
+            <div class="checkbox-row checkbox-grid" id="daySupportMainCheckboxes" style="margin-top:8px;"></div>
+
+            <div class="daynote-template-box advanced-section" style="margin-top:10px;">
+              <div class="daynote-template-head">
+                <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
+                <button type="button" class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;">🛠 編集</button>
+              </div>
+              <div class="daynote-last-preview empty" id="dayNoteLastPreview" title="直近の追記内容（クリックで表示）">最新：なし</div>
+              <div class="checkbox-row daynote-template-grid" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
+              <div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。<br>※初期テンプレは「日中支援：」で統一しています（本文の書き方はそのまま残します）。<br>※自動文章用に「掃除＋会話＋状況確認」も1クリックで出せます。長さはどれくらいが一番使いやすいですか？</div>
+            </div>
+
+
+          </div>
+
+          <div class="optional-zone" style="margin-top:10px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+    <div style="font-weight:800; color:#065f46;">④ 日中活動 <span class="optional-badge">任意</span></div>
+    <div class="beginner-hint">※必要な日だけチェック。</div>
+  </div>
+
+  <div class="field" style="margin-top:8px;">
+    <label>日中活動（A型 / B型）</label>
+    <div class="checkbox-row" id="dayActivityCheckboxes"></div>
+  </div>
+
+  <div class="field">
+    <label>【日中活動に行けなかった理由】（任意）</label>
+    <div class="small-text" style="margin-bottom:4px;">※該当する場合のみチェックしてください（必要があるときだけ）。</div>
+    <div class="checkbox-row" id="daySupportReasonCheckboxes"></div>
+  </div>
 </div>
-<!-- ② 反映確認（スクロール不要） -->
-<div class="field" id="autoSupportStatusBox" style="margin-top:10px;">
-<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-<span class="pill" id="autoSupportStatusPill">②の反映：なし</span>
-<button class="btn-secondary" id="jumpSupportBtn" type="button">本文を見る</button>
-</div>
-<div class="small-text" id="autoSupportStatusPreview" style="margin-top:6px;"></div>
-</div>
-<div class="advanced-toggle-row">
-<button class="btn-secondary btn-advanced-toggle" id="toggleAdvancedBtn" type="button">テンプレ・タグを表示</button>
-<div class="small-text">日中支援テンプレ / タグ など（必要な人だけ）</div>
-</div>
-<!-- ★日中支援：主な支援（初心者OK） -->
-<div class="advanced-zone">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-<div style="font-weight:800; color:#334155;">③【日中に行った主な支援】 <span class="advanced-badge">任意</span></div>
-<div class="beginner-hint">※慣れた人向け（必要な日だけ）</div>
-</div>
-<div class="btn-row" style="margin-top:8px;">
-<button class="btn-secondary" id="openDaySupportModalBtn" type="button">🛠 日中支援チェック編集（利用者別）</button>
-</div>
-<div class="checkbox-row checkbox-grid" id="daySupportMainCheckboxes" style="margin-top:8px;"></div>
-<div class="daynote-template-box advanced-section" style="margin-top:10px;">
-<div class="daynote-template-head">
-<div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
-<button class="btn-secondary" id="openDayNoteTemplateModalBtn" style="padding:6px 10px; font-size:12px;" type="button">🛠 編集</button>
-</div>
-<div class="daynote-last-preview empty" id="dayNoteLastPreview" title="直近の追記内容（クリックで表示）">最新：なし</div>
-<div class="checkbox-row daynote-template-grid" id="dayNoteTemplateChecks" style="margin-top:8px;"></div>
-<div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。<br/>※初期テンプレは「日中支援：」で統一しています（本文の書き方はそのまま残します）。<br/>※自動文章用に「掃除＋会話＋状況確認」も1クリックで出せます。長さはどれくらいが一番使いやすいですか？</div>
-</div>
-</div>
-<div class="optional-zone" style="margin-top:10px;">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-<div style="font-weight:800; color:#065f46;">④ 日中活動 <span class="optional-badge">任意</span></div>
-<div class="beginner-hint">※必要な日だけチェック。</div>
-</div>
-<div class="field" style="margin-top:8px;">
-<label>日中活動（A型 / B型）</label>
-<div class="checkbox-row" id="dayActivityCheckboxes"></div>
-</div>
-<div class="field">
-<label>【日中活動に行けなかった理由】（任意）</label>
-<div class="small-text" style="margin-bottom:4px;">※該当する場合のみチェックしてください（必要があるときだけ）。</div>
-<div class="checkbox-row" id="daySupportReasonCheckboxes"></div>
-</div>
-</div>
+
 <div class="field" style="margin-top:18px;">
-<label for="support">本日の支援内容 (職員側)</label>
-<div class="small-text">
-              ※職員側の記入欄：普段同じ内容でもOK。日中の様子と行った支援を簡潔に記入してください。<br/>
-              ②のチェック内容はこの欄に自動反映されます。必要に応じて「テンプレ挿入」で文章を追記できます。<br/>
+  <label for="support">本日の支援内容 (職員側)</label>
+            <div class="small-text">
+              ※職員側の記入欄：普段同じ内容でもOK。日中の様子と行った支援を簡潔に記入してください。<br>
+              ②のチェック内容はこの欄に自動反映されます。必要に応じて「テンプレ挿入」で文章を追記できます。<br>
               事故・トラブル・受診・相談など重要事項は下の「業務日誌・利用者の活動状況（特記事項含む）」へ。</div>
-<textarea id="support" placeholder="【標準の書き方例】
+            <textarea id="support" rows="8" placeholder="【標準の書き方例】
 ① 日中の様子：落ち着いて穏やかに過ごされる。表情は安定。
 ② 支援項目（自動）：②のチェック内容がここに自動反映されます。
-③ 対応：必要時のみ声かけ・見守り・介助を行った。" rows="8"></textarea>
-</div>
-<div class="field" id="noteField">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-<label for="note" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
-<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-<button class="btn-secondary" id="voiceNoteBtn" style="padding:6px 10px; font-size:12px;" type="button">🎙 音声入力</button>
-<label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
-<input id="hasSpecialNote" type="checkbox"/>
-<span>特記事項あり</span>
-</label>
-</div>
-</div>
-<div class="small-text special-flag-help">
+③ 対応：必要時のみ声かけ・見守り・介助を行った。"></textarea>
+          </div>
+          <div class="field" id="noteField">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <label for="note" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="btn-secondary" id="voiceNoteBtn" style="padding:6px 10px; font-size:12px;">🎙 音声入力</button>
+                  <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
+                  <input type="checkbox" id="hasSpecialNote">
+                  <span>特記事項あり</span>
+                </label>
+                </div>
+              </div>
+              <div class="small-text special-flag-help">
                 ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
               </div>
-<div class="small-text" id="voiceNoteStatus" style="margin-top:4px;"></div>
-</div>
-<textarea id="note" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など" rows="10"></textarea>
-</form></section></div>
-<div class="field advanced-zone advanced-section" id="tagDetails" style="margin-top:10px;">
-<div class="fold-header">
-<div style="font-weight:800; color:#334155;">キーワード（タグ） <span class="advanced-badge">任意</span></div>
-<div class="small-text">※普段は空でOK。必要なときだけ使ってください。</div>
-</div>
-<div style="margin-top:10px;">
-<div class="tag-buttons" id="tagButtons"></div>
-<div class="small-text" id="selectedTagsInfo">選択中：なし</div>
-</div>
-</div>
-<!-- ★保存（初心者OK） -->
-<div class="beginner-zone">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-<div style="font-weight:800; color:#1e3a8a;">⑤ 記録を保存 <span class="beginner-badge">ここだけOK</span></div>
-<div class="beginner-hint">※終わったら保存。</div>
-</div>
-<div class="small-text" id="autosaveStatus" style="margin-top:8px;"></div>
-<div class="btn-row" style="margin-top:10px;">
-<button class="btn-beginner" id="saveButton" type="submit">💾 記録を保存</button>
-<button class="btn-secondary" id="resetButton" type="button">🧹 入力リセット</button>
-</div>
-</div>
+              <div class="small-text" id="voiceNoteStatus" style="margin-top:4px;"></div>
+              </div>
+              <textarea id="note" rows="10" placeholder="例）通院、家族からの電話、夜間の見守り強化が必要 など"></textarea>
+            </div>
 
+          <div class="field advanced-zone advanced-section" id="tagDetails" style="margin-top:10px;">
+            <div class="fold-header">
+              <div style="font-weight:800; color:#334155;">キーワード（タグ） <span class="advanced-badge">任意</span></div>
+              <div class="small-text">※普段は空でOK。必要なときだけ使ってください。</div>
+            </div>
+            <div style="margin-top:10px;">
+              <div class="tag-buttons" id="tagButtons"></div>
+              <div class="small-text" id="selectedTagsInfo">選択中：なし</div>
+            </div>
+          </div>
 
-<!-- 一覧表示 -->
-<section class="card records-panel">
-<div class="card-title">
-<span>記録一覧</span>
-<span class="record-count" id="recordCount">0件</span>
+          <!-- ★保存（初心者OK） -->
+          <div class="beginner-zone">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+              <div style="font-weight:800; color:#1e3a8a;">⑤ 記録を保存 <span class="beginner-badge">ここだけOK</span></div>
+              <div class="beginner-hint">※終わったら保存。</div>
+            </div>
+
+            <div class="small-text" id="autosaveStatus" style="margin-top:8px;"></div>
+
+            <div class="btn-row" style="margin-top:10px;">
+              <button type="submit" class="btn-beginner" id="saveButton">💾 記録を保存</button>
+              <button type="button" class="btn-secondary" id="resetButton">🧹 入力リセット</button>
 </div>
-<div class="record-tools">
-<div class="record-tools-top">
-<button class="btn-secondary" onclick="window.open('records.html', '_blank')" style="font-size:12px; padding:6px 10px;" type="button">
+          </div>
+
+        </form>
+      </section>
+
+      <!-- 一覧表示 -->
+      <section class="card records-panel">
+        <div class="card-title">
+          <span>記録一覧</span>
+          <span class="record-count" id="recordCount">0件</span>
+        </div>
+
+        <div class="record-tools">
+          <div class="record-tools-top">
+            <button type="button"
+                    onclick="window.open('records.html', '_blank')"
+                    class="btn-secondary"
+                    style="font-size:12px; padding:6px 10px;">
               📄 別ページで開く
             </button>
-<button class="btn-secondary" onclick="window.open('vitals.html', '_blank')" style="font-size:12px; padding:6px 10px;" type="button">
+            <button type="button"
+                    onclick="window.open('vitals.html', '_blank')"
+                    class="btn-secondary"
+                    style="font-size:12px; padding:6px 10px;">
               🩺 バイタル入力
             </button>
-</div>
-<div class="record-tools-bottom">
-<button class="btn-secondary" id="backupBtn" style="font-size:12px; padding:6px 10px;" type="button">
+          </div>
+
+          <div class="record-tools-bottom">
+            <button type="button" class="btn-secondary" id="backupBtn"
+                    style="font-size:12px; padding:6px 10px;">
               🧷 バックアップ
             </button>
-<button class="btn-secondary" id="restoreBtn" style="font-size:12px; padding:6px 10px;" type="button">
+
+            <button type="button" class="btn-secondary" id="restoreBtn"
+                    style="font-size:12px; padding:6px 10px;">
               ♻ 復元
             </button>
-<input accept=".json,application/json" id="restoreFile" style="display:none" type="file">
-<button class="btn-secondary" id="exportExcelBtn" style="font-size:12px; padding:6px 10px;" type="button">
+            <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" />
+
+            <button type="button" class="btn-secondary" id="exportExcelBtn"
+                    style="font-size:12px; padding:6px 10px;">
               ⬇ Excel出力
             </button>
-</input></div>
-</div>
-<div class="resident-select-row">
-<span>表示する利用者：</span>
-<select id="filterResident"></select>
-<span class="small-text">※フィルターを変えると、その利用者の記録だけ表示されます。</span>
-</div>
-<div class="resident-select-row">
-<span>期間：</span>
-<select id="periodFilter">
-<option selected="" value="today">今日</option>
-<option value="week">直近7日間</option>
-<option value="month">今月</option>
-<option value="year">今年</option>
-<option value="all">全期間</option>
-<option value="custom">日付指定</option>
-</select>
-<span class="small-text">※全期間は件数が多くなる場合があります。</span>
-</div>
-<div class="resident-select-row" id="customPeriodRow" style="display:none;">
-<span>期間指定：</span>
-<input id="periodFrom" type="date"/>
-<span>〜</span>
-<input id="periodTo" type="date"/>
-<button class="btn-secondary" id="applyCustomPeriod" type="button">反映</button>
-</div>
-<div class="resident-select-row">
-<label style="display:flex; align-items:center; gap:8px;">
-<input id="filterUnfinishedOnly" type="checkbox"/>
-<span>未完成のみ表示</span>
-</label>
-<span class="small-text">※「未完成」タグが付いた記録だけ表示します。</span>
-</div>
-<div class="resident-select-row">
-<span>キーワード検索：</span>
-<input id="searchKeyword" placeholder="例：通院, 夜間, #体調不良 など" style="flex:1; min-width:180px;" type="text">
-<button class="btn-secondary" id="searchClearButton" type="button">クリア</button>
-</input></div>
-<div class="resident-select-row">
-<label class="special-filter" id="specialFilterLabel" title="「特記事項あり」にチェックが付いた記録だけを表示します">
-<input id="filterSpecialOnly" type="checkbox"/>
-<span>特記事項ありのみ表示</span>
-</label>
-<span class="small-text" id="specialOnlyCount" style="margin-left:8px;"></span>
-</div>
-<div class="table-wrapper" id="tableWrapper">
-<table>
-<thead>
-<tr>
-<th>日付</th>
-<th>利用者</th>
-<th>日中の主な支援</th>
-<th>支援内容・タグ</th>
-<th>操作</th>
-</tr>
-</thead>
-<tbody id="recordTableBody"></tbody>
-</table>
-</div>
-</section>
+          </div>
+        </div>
 
-<!-- ====== ここから下：管理エリア（初心者は基本触らない） ====== -->
-<!-- 利用者管理 -->
-<section class="card admin-card">
-<div class="card-title">
-<span>① 利用者管理</span>
-<span class="admin-pill">管理（慣れた人向け）</span>
-<span class="record-count" id="residentCount">0名</span>
-</div>
-<div class="card-subtitle">
+
+        <div class="resident-select-row">
+          <span>表示する利用者：</span>
+          <select id="filterResident"></select>
+          <span class="small-text">※フィルターを変えると、その利用者の記録だけ表示されます。</span>
+        </div>
+
+        <div class="resident-select-row">
+          <span>期間：</span>
+          <select id="periodFilter">
+            <option value="today" selected>今日</option>
+            <option value="week">直近7日間</option>
+            <option value="month">今月</option>
+            <option value="year">今年</option>
+            <option value="all">全期間</option>
+            <option value="custom">日付指定</option>
+          </select>
+          <span class="small-text">※全期間は件数が多くなる場合があります。</span>
+        </div>
+
+        <div class="resident-select-row" id="customPeriodRow" style="display:none;">
+          <span>期間指定：</span>
+          <input type="date" id="periodFrom">
+          <span>〜</span>
+          <input type="date" id="periodTo">
+          <button type="button" class="btn-secondary" id="applyCustomPeriod">反映</button>
+        </div>
+
+        
+        <div class="resident-select-row">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="filterUnfinishedOnly">
+            <span>未完成のみ表示</span>
+          </label>
+          <span class="small-text">※「未完成」タグが付いた記録だけ表示します。</span>
+        </div>
+
+<div class="resident-select-row">
+          <span>キーワード検索：</span>
+          <input type="text" id="searchKeyword" placeholder="例：通院, 夜間, #体調不良 など" style="flex:1; min-width:180px;" />
+          <button type="button" class="btn-secondary" id="searchClearButton">クリア</button>
+        </div>
+
+        <div class="resident-select-row">
+          <label class="special-filter" id="specialFilterLabel" title="「特記事項あり」にチェックが付いた記録だけを表示します">
+            <input type="checkbox" id="filterSpecialOnly">
+            <span>特記事項ありのみ表示</span>
+          </label>
+          <span class="small-text" id="specialOnlyCount" style="margin-left:8px;"></span>
+        </div>
+
+
+        <div class="table-wrapper" id="tableWrapper">
+          <table>
+            <thead>
+  <tr>
+    <th>日付</th>
+    <th>利用者</th>
+    <th>日中の主な支援</th>
+    <th>支援内容・タグ</th>
+    <th>操作</th>
+  </tr>
+</thead>
+            <tbody id="recordTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ====== ここから下：管理エリア（初心者は基本触らない） ====== -->
+
+    <!-- 利用者管理 -->
+    <section class="card admin-card">
+      <div class="card-title">
+        <span>① 利用者管理</span>
+        <span class="admin-pill">管理（慣れた人向け）</span>
+        <span class="record-count" id="residentCount">0名</span>
+      </div>
+      <div class="card-subtitle">
         利用者名の追加・変更・削除を行います。ここで変更すると、記録一覧の表示にも反映されます。
       </div>
-<div class="field-row">
-<div class="field">
-<label for="residentManageSelect">対象の利用者</label>
-<select id="residentManageSelect"></select>
-</div>
-<div class="field">
-<label for="residentNameInput">名前（追加・変更後）</label>
-<input id="residentNameInput" placeholder="例：Aさん" type="text">
-</input></div>
-</div>
-<div class="btn-row">
-<button class="btn-primary" id="residentAddButton" type="button">＋ 新しく追加</button>
-<button class="btn-secondary" id="residentRenameButton" type="button">✏️ 選択をこの名前に変更</button>
-<button class="btn-danger" id="residentDeleteButton" type="button">🗑️ 利用者と記録を削除</button>
-</div>
-<div class="admin-note">※削除すると、その利用者のすべての記録も削除されます。</div>
-</section>
-<!-- 記録者管理 -->
-<section class="card admin-card">
-<div class="card-title">
-<span>① 記録者管理</span>
-<span class="admin-pill">管理（慣れた人向け）</span>
-<span class="record-count" id="recorderCount">0名</span>
-</div>
-<div class="card-subtitle">
+
+      <div class="field-row">
+        <div class="field">
+          <label for="residentManageSelect">対象の利用者</label>
+          <select id="residentManageSelect"></select>
+        </div>
+        <div class="field">
+          <label for="residentNameInput">名前（追加・変更後）</label>
+          <input type="text" id="residentNameInput" placeholder="例：Aさん" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="residentAddButton">＋ 新しく追加</button>
+        <button type="button" class="btn-secondary" id="residentRenameButton">✏️ 選択をこの名前に変更</button>
+        <button type="button" class="btn-danger" id="residentDeleteButton">🗑️ 利用者と記録を削除</button>
+      </div>
+
+      <div class="admin-note">※削除すると、その利用者のすべての記録も削除されます。</div>
+    </section>
+
+    <!-- 記録者管理 -->
+    <section class="card admin-card">
+      <div class="card-title">
+        <span>① 記録者管理</span>
+        <span class="admin-pill">管理（慣れた人向け）</span>
+        <span class="record-count" id="recorderCount">0名</span>
+      </div>
+      <div class="card-subtitle">
         記録者（職員名）の追加・変更・削除を行います。ここで変更すると、フォームの「記録者」候補にも反映されます。
       </div>
-<div class="field-row">
-<div class="field">
-<label for="recorderManageSelect">対象の記録者</label>
-<select id="recorderManageSelect"></select>
-</div>
-<div class="field">
-<label for="recorderNameInput">名前（追加・変更後）</label>
-<input id="recorderNameInput" placeholder="例：職員A" type="text">
-</input></div>
-</div>
-<div class="btn-row">
-<button class="btn-primary" id="recorderAddButton" type="button">＋ 新しく追加</button>
-<button class="btn-secondary" id="recorderRenameButton" type="button">✏️ 選択をこの名前に変更</button>
-<button class="btn-danger" id="recorderDeleteButton" type="button">🗑️ 記録者を削除</button>
-</div>
-<div class="admin-note">※削除しても過去の記録データは消えません（表示候補から外れるだけです）。</div>
-</section>
-<!-- 自動入力項目 管理 -->
-<section class="card admin-card">
-<div class="card-title">
-<span>② 自動入力の支援項目 管理（サイト上で追加・編集・削除）</span>
-<span class="admin-pill">管理（慣れた人向け）</span>
-<span class="record-count" id="autoItemCount">0件</span>
-</div>
-<div class="card-subtitle">
-        ここで追加した項目は、上の「自動入力したい支援項目」に自動で表示されます。<br/>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="recorderManageSelect">対象の記録者</label>
+          <select id="recorderManageSelect"></select>
+        </div>
+        <div class="field">
+          <label for="recorderNameInput">名前（追加・変更後）</label>
+          <input type="text" id="recorderNameInput" placeholder="例：職員A" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="recorderAddButton">＋ 新しく追加</button>
+        <button type="button" class="btn-secondary" id="recorderRenameButton">✏️ 選択をこの名前に変更</button>
+        <button type="button" class="btn-danger" id="recorderDeleteButton">🗑️ 記録者を削除</button>
+      </div>
+
+      <div class="admin-note">※削除しても過去の記録データは消えません（表示候補から外れるだけです）。</div>
+    </section>
+
+    <!-- 自動入力項目 管理 -->
+    <section class="card admin-card">
+      <div class="card-title">
+        <span>② 自動入力の支援項目 管理（サイト上で追加・編集・削除）</span>
+        <span class="admin-pill">管理（慣れた人向け）</span>
+        <span class="record-count" id="autoItemCount">0件</span>
+      </div>
+      <div class="card-subtitle">
+        ここで追加した項目は、上の「自動入力したい支援項目」に自動で表示されます。<br>
         ※このPC（ブラウザ）内に保存されます。他PCとは共有されません。
       </div>
-<div class="field-row">
-<div class="field">
-<label for="autoItemSelect">既存項目（編集したい場合に選択）</label>
-<select id="autoItemSelect">
-<option value="">（新規追加）</option>
-</select>
-<div class="small-text">選ぶと下の入力欄に内容が入ります。</div>
-</div>
-<div class="field">
-<label for="autoItemKey">内部キー（英数字・重複不可）</label>
-<input id="autoItemKey" placeholder="例：money_support" type="text">
-<div class="small-text">※最初に決めたら、基本変更しないのが安全です。</div>
-</input></div>
-</div>
-<div class="field-row">
-<div class="field">
-<label for="autoItemLabel">表示名</label>
-<input id="autoItemLabel" placeholder="例：金銭管理" type="text"/>
-</div>
-<div class="field">
-<label for="autoItemText">自動で追記する定型文</label>
-<textarea id="autoItemText" placeholder="例：【金銭管理】金銭の確認と声かけを行い、必要に応じて支援した。" rows="3"></textarea>
-<div class="small-text">
-            日中支援の区分を入れたい場合：<br/>
-<b>{{daySupportTypeLabel}}</b> を文中に入れると「日中支援Ⅰ/Ⅱ」に置換されます。
+
+      <div class="field-row">
+        <div class="field">
+          <label for="autoItemSelect">既存項目（編集したい場合に選択）</label>
+          <select id="autoItemSelect">
+            <option value="">（新規追加）</option>
+          </select>
+          <div class="small-text">選ぶと下の入力欄に内容が入ります。</div>
+        </div>
+        <div class="field">
+          <label for="autoItemKey">内部キー（英数字・重複不可）</label>
+          <input type="text" id="autoItemKey" placeholder="例：money_support" />
+          <div class="small-text">※最初に決めたら、基本変更しないのが安全です。</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="autoItemLabel">表示名</label>
+          <input type="text" id="autoItemLabel" placeholder="例：金銭管理" />
+        </div>
+        <div class="field">
+          <label for="autoItemText">自動で追記する定型文</label>
+          <textarea id="autoItemText" rows="3" placeholder="例：【金銭管理】金銭の確認と声かけを行い、必要に応じて支援した。"></textarea>
+          <div class="small-text">
+            日中支援の区分を入れたい場合：<br>
+            <b>{{daySupportTypeLabel}}</b> を文中に入れると「日中支援Ⅰ/Ⅱ」に置換されます。
           </div>
-</div>
-</div>
-<div class="field-row" id="autoCleanSubsRow" style="display:none;">
-<div class="field">
-<label for="autoCleanSubsText">清潔保持 サブチェック（1行=1項目）</label>
-<textarea id="autoCleanSubsText" placeholder="例：声かけ
-確認
-見守り
-介助" rows="4"></textarea>
-<div class="small-text">※ここで作った項目が、上の「清潔保持」の横にサブチェックとして表示されます。</div>
-</div>
-</div>
-<div class="btn-row">
-<button class="btn-primary" id="autoItemSaveBtn" type="button">💾 追加 / 更新</button>
-<button class="btn-danger" id="autoItemDeleteBtn" type="button">🗑️ 選択項目を削除</button>
-<button class="btn-secondary" id="autoItemClearBtn" type="button">🧹 入力クリア</button>
-<button class="btn-secondary" id="autoItemResetDefaultBtn" type="button">↩ 初期項目に戻す</button>
-</div>
-<div class="admin-note">※初心者は基本ここを触らなくてOKです。</div>
-</section>
-<!-- ✅ よく使う項目 管理（利用者別） -->
-<section class="card admin-card">
-<div class="card-title">
-<span>②③ よく使う項目 管理（利用者別）</span>
-<span class="admin-pill">管理（慣れた人向け）</span>
-</div>
-<div class="card-subtitle">
+        </div>
+      </div>
+      <div class="field-row" id="autoCleanSubsRow" style="display:none;">
+        <div class="field">
+          <label for="autoCleanSubsText">清潔保持 サブチェック（1行=1項目）</label>
+          <textarea id="autoCleanSubsText" rows="4" placeholder="例：声かけ&#10;確認&#10;見守り&#10;介助"></textarea>
+          <div class="small-text">※ここで作った項目が、上の「清潔保持」の横にサブチェックとして表示されます。</div>
+        </div>
+      </div>
+
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="autoItemSaveBtn">💾 追加 / 更新</button>
+        <button type="button" class="btn-danger" id="autoItemDeleteBtn">🗑️ 選択項目を削除</button>
+        <button type="button" class="btn-secondary" id="autoItemClearBtn">🧹 入力クリア</button>
+        <button type="button" class="btn-secondary" id="autoItemResetDefaultBtn">↩ 初期項目に戻す</button>
+      </div>
+
+      <div class="admin-note">※初心者は基本ここを触らなくてOKです。</div>
+    </section>
+
+    <!-- ✅ よく使う項目 管理（利用者別） -->
+    <section class="card admin-card">
+      <div class="card-title">
+        <span>②③ よく使う項目 管理（利用者別）</span>
+        <span class="admin-pill">管理（慣れた人向け）</span>
+      </div>
+      <div class="card-subtitle">
         利用者ごとに「② 自動入力」と「③ 日中に行った主な支援」の初期チェックを保存できます（保存した内容がある場合のみ自動反映されます）。入浴対応・体調管理はサブチェックも保存できます。
       </div>
-<div class="field">
-<label for="favResidentSelect">対象の利用者</label>
-<select id="favResidentSelect"></select>
-</div>
-<div class="field">
-<label>よく使う項目（自動入力）</label>
-<div class="checkbox-row" id="favAutoItemCheckboxes"></div>
-</div>
-<div class="field" style="margin-top:10px;">
-<label>日中に行った主な支援（よく使う）</label>
-<div class="checkbox-row checkbox-grid" id="favDaySupportMainCheckboxes"></div>
-<div class="small-text">※この利用者に保存した初期値がある場合、フォームのチェックに自動反映されます。</div>
-</div>
-<div class="btn-row">
-<button class="btn-primary" id="favSaveWeekdayBtn" type="button">💾 平日一括で保存（月〜金）</button>
-<button class="btn-primary" id="favSaveHolidayBtn" type="button">💾 土日祝一括で保存（土日＋祝日）</button>
-<button class="btn-primary" id="favSaveThisDayBtn" type="button">💾 この曜日で保存</button>
-<button class="btn-secondary" id="favApplyNowBtn" type="button">↪ 今すぐフォームへ反映</button>
-<button class="btn-secondary" id="favClearBtn" type="button">🧹 全解除</button>
-</div>
-<div class="small-text" id="favDayKeyInfo"></div>
-<div class="small-text" id="favManagerModeHint" style="margin-top:6px;">現在：-</div>
-</section>
-<!-- ✅ 🛠 日中支援チェック編集（利用者別） -->
-<section class="card admin-card">
-<div class="card-title">
-<span>③【日中に行った主な支援】 🛠 日中支援チェック編集（利用者別）</span>
-<span class="admin-pill">管理（慣れた人向け）</span>
-</div>
-<div class="card-subtitle">
+
+      <div class="field">
+        <label for="favResidentSelect">対象の利用者</label>
+        <select id="favResidentSelect"></select>
+      </div>
+
+      <div class="field">
+        <label>よく使う項目（自動入力）</label>
+        <div class="checkbox-row" id="favAutoItemCheckboxes"></div>
+      </div>
+
+      <div class="field" style="margin-top:10px;">
+        <label>日中に行った主な支援（よく使う）</label>
+        <div class="checkbox-row checkbox-grid" id="favDaySupportMainCheckboxes"></div>
+        <div class="small-text">※この利用者に保存した初期値がある場合、フォームのチェックに自動反映されます。</div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="favSaveWeekdayBtn">💾 平日一括で保存（月〜金）</button>
+        <button type="button" class="btn-primary" id="favSaveHolidayBtn">💾 土日祝一括で保存（土日＋祝日）</button>
+        <button type="button" class="btn-primary" id="favSaveThisDayBtn">💾 この曜日で保存</button>
+        <button type="button" class="btn-secondary" id="favApplyNowBtn">↪ 今すぐフォームへ反映</button>
+        <button type="button" class="btn-secondary" id="favClearBtn">🧹 全解除</button>
+      </div>
+      <div class="small-text" id="favDayKeyInfo"></div>
+      <div class="small-text" id="favManagerModeHint" style="margin-top:6px;">現在：-</div>
+    </section>
+
+    <!-- ✅ 🛠 日中支援チェック編集（利用者別） -->
+    <section class="card admin-card">
+      <div class="card-title">
+        <span>③【日中に行った主な支援】 🛠 日中支援チェック編集（利用者別）</span>
+        <span class="admin-pill">管理（慣れた人向け）</span>
+      </div>
+      <div class="card-subtitle">
         利用者ごとに「主な支援」「欠席理由」のチェック項目リストを編集できます（1行=1項目）。
       </div>
-<div class="field">
-<label for="dsResidentSelect">対象の利用者</label>
-<select id="dsResidentSelect"></select>
-</div>
-<div class="field-row">
-<div class="field">
-<label for="dsMainList">主な支援（1行=1項目）</label>
-<textarea id="dsMainList" rows="8"></textarea>
-</div>
-<div class="field">
-<label for="dsReasonList">欠席理由（1行=1項目）</label>
-<textarea id="dsReasonList" rows="8"></textarea>
-</div>
-</div>
-<div class="btn-row">
-<button class="btn-primary" id="dsSaveBtn" type="button">💾 保存</button>
-<button class="btn-secondary" id="dsResetBtn" type="button">↩ 初期に戻す</button>
-</div>
-<div class="admin-note">※初心者は基本ここを触らなくてOKです。</div>
-</section>
-<!-- ★タグ管理（追加・編集・削除） -->
-<section class="card admin-card">
-<div class="card-title">
-<span>タグ 管理（追加・編集・削除）</span>
-<span class="admin-pill">管理（慣れた人向け）</span>
-<span class="record-count" id="tagCount">0件</span>
-</div>
-<div class="card-subtitle">
-        ここで作ったタグは、上の「キーワード（タグ）」のボタンに反映されます。<br/>
+
+      <div class="field">
+        <label for="dsResidentSelect">対象の利用者</label>
+        <select id="dsResidentSelect"></select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="dsMainList">主な支援（1行=1項目）</label>
+          <textarea id="dsMainList" rows="8"></textarea>
+        </div>
+        <div class="field">
+          <label for="dsReasonList">欠席理由（1行=1項目）</label>
+          <textarea id="dsReasonList" rows="8"></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="dsSaveBtn">💾 保存</button>
+        <button type="button" class="btn-secondary" id="dsResetBtn">↩ 初期に戻す</button>
+      </div>
+
+      <div class="admin-note">※初心者は基本ここを触らなくてOKです。</div>
+    </section>
+
+    <!-- ★タグ管理（追加・編集・削除） -->
+    <section class="card admin-card">
+      <div class="card-title">
+        <span>タグ 管理（追加・編集・削除）</span>
+        <span class="admin-pill">管理（慣れた人向け）</span>
+        <span class="record-count" id="tagCount">0件</span>
+      </div>
+      <div class="card-subtitle">
+        ここで作ったタグは、上の「キーワード（タグ）」のボタンに反映されます。<br>
         ※このPC（ブラウザ）内に保存されます。他PCとは共有されません。
       </div>
-<div class="field-row">
-<div class="field">
-<label for="tagSelect">既存タグ（編集したい場合に選択）</label>
-<select id="tagSelect">
-<option value="">（新規追加）</option>
-</select>
-<div class="small-text">選ぶと右の入力欄に入ります。</div>
-</div>
-<div class="field">
-<label for="tagNameInput">タグ名（#は不要）</label>
-<input id="tagNameInput" placeholder="例：通院 / 夜間対応 / 体調不良 など" type="text"/>
-<div class="small-text">※「#」は自動で付くので入力不要です。</div>
-</div>
-</div>
-<div class="btn-row">
-<button class="btn-primary" id="tagSaveBtn" type="button">💾 追加 / 更新</button>
-<button class="btn-danger" id="tagDeleteBtn" type="button">🗑️ 選択タグを削除</button>
-<button class="btn-secondary" id="tagClearBtn" type="button">🧹 入力クリア</button>
-<button class="btn-secondary" id="tagResetDefaultBtn" type="button">↩ 初期タグに戻す</button>
-</div>
-<div class="admin-note">※初心者は基本ここを触らなくてOKです。</div>
-</section>
-</main>
-<!-- 記録の詳細モーダル -->
-<div class="detail-modal-backdrop" id="detailModal">
-<div class="detail-modal">
-<div class="detail-modal-header">
-<div class="detail-modal-title" id="detailModalTitle">記録の詳細</div>
-<button class="detail-modal-close" id="detailModalClose" type="button">×</button>
-</div>
-<div class="detail-modal-body" id="detailModalContent"></div>
-</div>
-</div>
-<!-- 記録の編集モーダル（小窓） -->
-<div class="detail-modal-backdrop" id="editModal">
-<div class="detail-modal">
-<div class="detail-modal-header">
-<div class="detail-modal-title" id="editModalTitle">記録の編集</div>
-<button class="detail-modal-close" id="editModalClose" type="button">×</button>
-</div>
-<div class="detail-modal-body">
-<div class="field-row">
-<div class="field">
-<label for="editDate">日付</label>
-<input id="editDate" type="date"/>
-</div>
-<div class="field">
-<label for="editResident">利用者</label>
-<select id="editResident"></select>
-</div>
-</div>
-<div class="field" style="margin-top:10px;">
-<label for="editRecorder">記録者</label>
-<select id="editRecorder"></select>
-</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="tagSelect">既存タグ（編集したい場合に選択）</label>
+          <select id="tagSelect">
+            <option value="">（新規追加）</option>
+          </select>
+          <div class="small-text">選ぶと右の入力欄に入ります。</div>
+        </div>
+        <div class="field">
+          <label for="tagNameInput">タグ名（#は不要）</label>
+          <input type="text" id="tagNameInput" placeholder="例：通院 / 夜間対応 / 体調不良 など" />
+          <div class="small-text">※「#」は自動で付くので入力不要です。</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="tagSaveBtn">💾 追加 / 更新</button>
+        <button type="button" class="btn-danger" id="tagDeleteBtn">🗑️ 選択タグを削除</button>
+        <button type="button" class="btn-secondary" id="tagClearBtn">🧹 入力クリア</button>
+        <button type="button" class="btn-secondary" id="tagResetDefaultBtn">↩ 初期タグに戻す</button>
+      </div>
+
+      <div class="admin-note">※初心者は基本ここを触らなくてOKです。</div>
+    </section>
+
+  </main>
+
+  <!-- 記録の詳細モーダル -->
+  <div id="detailModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="detailModalTitle">記録の詳細</div>
+        <button type="button" class="detail-modal-close" id="detailModalClose">×</button>
+      </div>
+      <div class="detail-modal-body" id="detailModalContent"></div>
+    </div>
+  </div>
+
+  <!-- 記録の編集モーダル（小窓） -->
+  <div id="editModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="editModalTitle">記録の編集</div>
+        <button type="button" class="detail-modal-close" id="editModalClose">×</button>
+      </div>
+
+      <div class="detail-modal-body">
+        <div class="field-row">
+          <div class="field">
+            <label for="editDate">日付</label>
+            <input type="date" id="editDate" />
+          </div>
+          <div class="field">
+            <label for="editResident">利用者</label>
+            <select id="editResident"></select>
+          </div>
+        </div>
+
+
+        <div class="field" style="margin-top:10px;">
+          <label for="editRecorder">記録者</label>
+          <select id="editRecorder"></select>
+        </div>
 <div class="field vitals-compact vitals-box" id="editAbnormalVitalsBox" style="margin-top:8px;">
-<div class="vitals-header">
-<div class="vitals-summary-left">
-<div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
-<div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
-</div>
-</div>
-<div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
-<div class="field-row-vitals" id="editAbnormalVitalsInputs" style="align-items:end;">
-<div class="field" style="margin-bottom:0;">
-<label for="editAbnormalWeight">体重（kg）</label>
-<input id="editAbnormalWeight" inputmode="decimal" placeholder="例：56.2" type="text"/>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="editAbnormalTemp">体温（℃）</label>
-<input id="editAbnormalTemp" inputmode="decimal" placeholder="例：36.5" type="text"/>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="editAbnormalBPsys">血圧（上 / mmHg）</label>
-<input id="editAbnormalBPsys" inputmode="numeric" placeholder="例：120" type="text"/>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="editAbnormalBPdia">血圧（下 / mmHg）</label>
-<input id="editAbnormalBPdia" inputmode="numeric" placeholder="例：80" type="text"/>
-</div>
-<div class="field" style="margin-bottom:0;">
-<label for="editAbnormalPulse">脈拍（回/分）</label>
-<input id="editAbnormalPulse" inputmode="numeric" placeholder="例：72" type="text"/>
-</div>
-</div>
-<div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
-</div>
+            <div class="vitals-header">
+              <div class="vitals-summary-left">
+                <div class="vitals-title">体重・体温・血圧・脈拍（異常があった場合のみ）</div>
+                <div class="vitals-summary-hint">※普段は閉じてOK。異常や気になる変化があった場合のみ入力。</div>
+              </div>
+              
+            </div>
+            <div class="small-text" style="margin:6px 0 8px;">※異常や気になる変化があった場合のみ記入。普段は空欄でOK。</div>
+            <div class="field-row-vitals" id="editAbnormalVitalsInputs" style="align-items:end;">
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalWeight">体重（kg）</label>
+                <input type="text" id="editAbnormalWeight" placeholder="例：56.2" inputmode="decimal" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalTemp">体温（℃）</label>
+                <input type="text" id="editAbnormalTemp" placeholder="例：36.5" inputmode="decimal" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalBPsys">血圧（上 / mmHg）</label>
+                <input type="text" id="editAbnormalBPsys" placeholder="例：120" inputmode="numeric" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalBPdia">血圧（下 / mmHg）</label>
+                <input type="text" id="editAbnormalBPdia" placeholder="例：80" inputmode="numeric" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="editAbnormalPulse">脈拍（回/分）</label>
+                <input type="text" id="editAbnormalPulse" placeholder="例：72" inputmode="numeric" />
+              </div>
+            </div>
+            <div class="small-text" style="margin-top:8px;">※任意。入力すると業務日誌の自動欄にも反映されます。</div>
+          </div>
+
 <div class="field">
-<label>キーワード（タグ）</label>
-<div class="field advanced-zone advanced-section" id="editTagDetails">
-<div class="fold-header">
-<div style="font-weight:800; color:#334155;">キーワード（タグ） <span class="advanced-badge">任意</span></div>
-<div class="small-text">※普段は空でOK。必要なときだけ使ってください。</div>
-</div>
-<div style="margin-top:10px;">
-<div class="tag-buttons" id="editTagButtons"></div>
-<div class="small-text" id="editSelectedTagsInfo">選択中：なし</div>
-</div>
-</div>
+          <label>キーワード（タグ）</label>
+        <div class="field advanced-zone advanced-section" id="editTagDetails">
+          <div class="fold-header">
+            <div style="font-weight:800; color:#334155;">キーワード（タグ） <span class="advanced-badge">任意</span></div>
+            <div class="small-text">※普段は空でOK。必要なときだけ使ってください。</div>
+          </div>
+          <div style="margin-top:10px;">
+            <div class="tag-buttons" id="editTagButtons"></div>
+            <div class="small-text" id="editSelectedTagsInfo">選択中：なし</div>
+          </div>
+        </div>
+
 <div class="beginner-zone" style="margin-top:10px;">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-<div style="font-weight:800; color:#1e3a8a;">④ 日中活動</div>
-<div class="beginner-hint">※通所/欠席をチェック。</div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+    <div style="font-weight:800; color:#1e3a8a;">④ 日中活動</div>
+    <div class="beginner-hint">※通所/欠席をチェック。</div>
+  </div>
+
+  <div class="field" style="margin-top:8px;">
+    <label>日中活動（A型 / B型）</label>
+    <div class="checkbox-row" id="editDayActivityCheckboxes"></div>
+  </div>
+
+  <div class="field">
+    <label>【日中活動に行けなかった理由】（任意）</label>
+    <div class="checkbox-row" id="editDaySupportReasonCheckboxes"></div>
+  </div>
+
+  <div class="field">
+    <label>【日中に行った主な支援】</label>
+    <div class="checkbox-row checkbox-grid" id="editDaySupportMainCheckboxes"></div>
+  </div>
 </div>
-<div class="field" style="margin-top:8px;">
-<label>日中活動（A型 / B型）</label>
-<div class="checkbox-row" id="editDayActivityCheckboxes"></div>
-</div>
-<div class="field">
-<label>【日中活動に行けなかった理由】（任意）</label>
-<div class="checkbox-row" id="editDaySupportReasonCheckboxes"></div>
-</div>
-<div class="field">
-<label>【日中に行った主な支援】</label>
-<div class="checkbox-row checkbox-grid" id="editDaySupportMainCheckboxes"></div>
-</div>
-</div>
+
 <div class="field" style="margin-top:18px;">
-<label for="editSupport">本日の支援内容 (職員側)</label>
-<textarea id="editSupport" rows="8"></textarea>
-</div>
-<div class="field" id="editNoteField">
-<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-<label for="editNote" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
-<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-<button class="btn-secondary" id="voiceEditNoteBtn" style="padding:6px 10px; font-size:12px;" type="button">🎙 音声入力</button>
-<label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
-<input id="editHasSpecialNote" type="checkbox"/>
-<span>特記事項あり</span>
-</label>
-</div>
-</div>
-<div class="small-text special-flag-help">
+  <label for="editSupport">本日の支援内容 (職員側)</label>
+          <textarea id="editSupport" rows="8"></textarea>
+        </div>
+
+        <div class="field" id="editNoteField">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <label for="editNote" style="margin:0;">業務日誌・利用者の活動状況（特記事項含む）</label>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn-secondary" id="voiceEditNoteBtn" style="padding:6px 10px; font-size:12px;">🎙 音声入力</button>
+              <label class="special-flag" title="事故・トラブル・受診・相談など、共有・報告・引継ぎが必要な内容がある場合にON">
+              <input type="checkbox" id="editHasSpecialNote">
+              <span>特記事項あり</span>
+            </label>
+            </div>
+          </div>
+          <div class="small-text special-flag-help">
             ※事故・トラブル・受診・相談・急な体調変化など、共有・報告・引継ぎが必要な内容がある場合にON。ONの記録は一覧で「特記事項」バッジ表示されます。
           </div>
-<div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
-</div>
-<textarea id="editNote" rows="10"></textarea>
-</div>
-<div class="btn-row" style="margin-top:10px;">
-<button class="btn-primary" id="editModalSaveBtn" type="button">💾 上書き保存</button>
-<button class="btn-secondary" id="editModalCancelBtn" type="button">キャンセル</button>
-</div>
-<div class="small-text" style="margin-top:6px;">
+          <div class="small-text" id="voiceEditNoteStatus" style="margin-top:4px;"></div>
+          </div>
+          <textarea id="editNote" rows="10"></textarea>
+
+          
+
+
+
+        </div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button type="button" class="btn-primary" id="editModalSaveBtn">💾 上書き保存</button>
+          <button type="button" class="btn-secondary" id="editModalCancelBtn">キャンセル</button>
+        </div>
+
+        <div class="small-text" style="margin-top:6px;">
           ※ここで保存すると一覧が更新されます（左のフォームは触らなくてOK）
         </div>
-<div class="daynote-template-box" style="margin-top:6px;">
-<div class="daynote-template-head">
-<div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
-</div>
-<div class="checkbox-row daynote-template-grid" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
-<div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
-</div>
-</div>
-</div>
-</div>
-<!-- ✅ よく使う項目（この利用者）編集モーダル：※重複を廃止して1つに統一 -->
-<div class="detail-modal-backdrop" id="favModal">
-<div class="detail-modal">
-<div class="detail-modal-header">
-<div class="detail-modal-title" id="favModalTitle">よく使う項目（この利用者）</div>
-<button class="detail-modal-close" id="favModalClose" type="button">×</button>
-</div>
-<div class="detail-modal-body">
-<div class="small-text" style="margin-bottom:8px;">
+
+          <div class="daynote-template-box" style="margin-top:6px;">
+            <div class="daynote-template-head">
+              <div class="daynote-template-title">日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）</div>
+            </div>
+            <div class="checkbox-row daynote-template-grid" id="editDayNoteTemplateChecks" style="margin-top:8px;"></div>
+            <div class="small-text">※日中支援Ⅰ / Ⅱの記録用テンプレです。①②③（色付き）のどれかを選ぶと「業務日誌」に自動追記されます。OFFにすると、そのテンプレで追加した文章だけ削除されます（手入力は消えません）。</div>
+          </div>
+
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ よく使う項目（この利用者）編集モーダル：※重複を廃止して1つに統一 -->
+  <div id="favModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="favModalTitle">よく使う項目（この利用者）</div>
+        <button type="button" class="detail-modal-close" id="favModalClose">×</button>
+      </div>
+      <div class="detail-modal-body">
+        <div class="small-text" style="margin-bottom:8px;">
           ※この利用者の「初期値（デフォルトでONにしたいチェック）」をここで保存できます。
         </div>
-<div class="field">
-<label>よく使う項目（自動入力）</label>
-<div class="checkbox-row" id="favModalCheckboxes"></div>
-</div>
-<div class="field" style="margin-top:10px;">
-<label>日中に行った主な支援（よく使う）</label>
-<div class="checkbox-row checkbox-grid" id="favModalDaySupportMainCheckboxes"></div>
-</div>
-<div class="small-text" id="favModalModeHint" style="margin-top:6px;">現在：-</div>
+
+        <div class="field">
+          <label>よく使う項目（自動入力）</label>
+          <div class="checkbox-row" id="favModalCheckboxes"></div>
+        </div>
+
+        <div class="field" style="margin-top:10px;">
+          <label>日中に行った主な支援（よく使う）</label>
+          <div class="checkbox-row checkbox-grid" id="favModalDaySupportMainCheckboxes"></div>
+        </div>
+
+                <div class="small-text" id="favModalModeHint" style="margin-top:6px;">現在：-</div>
 <div class="small-text" id="favModalDayKeyInfo" style="margin-top:4px;">※日付の曜日に応じたデフォルトが適用されます</div>
+
+
 <div class="btn-row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
-<button class="btn-primary" id="favModalSaveWeekday" type="button">💾 平日で保存</button>
-<button class="btn-primary" id="favModalSaveHoliday" type="button">💾 土日祝で保存</button>
-<button class="btn-primary" id="favModalSaveThisDay" type="button">💾 この曜日で保存</button>
-<button class="btn-secondary" id="favModalCancel" type="button">閉じる</button>
-</div>
-</div>
-</div>
-</div>
-<!-- ✅ 自動テンプレ（利用者別） 小窓モーダル：無いとJSが止まるので追加 -->
-<!-- 日中支援チェック（この利用者）編集モーダル -->
-<div class="detail-modal-backdrop" id="dsModal">
-<div class="detail-modal">
-<div class="detail-modal-header">
-<div class="detail-modal-title" id="dsModalTitle">日中支援チェック編集（利用者別）</div>
-<button class="detail-modal-close" id="dsModalClose" type="button">×</button>
-</div>
-<div class="detail-modal-body">
-<div class="small-text" id="dsModalResidentInfo" style="margin-bottom:8px;"></div>
-<div class="field-row">
-<div class="field">
-<label for="dsModalMain">主な支援（1行=1項目）</label>
-<textarea id="dsModalMain" rows="10"></textarea>
-</div>
-<div class="field">
-<label for="dsModalReason">欠席理由（1行=1項目）</label>
-<textarea id="dsModalReason" rows="10"></textarea>
-</div>
-</div>
-<div class="btn-row" style="margin-top:10px;">
-<button class="btn-primary" id="dsModalSaveBtn" type="button">💾 保存</button>
-<button class="btn-secondary" id="dsModalResetBtn" type="button">↩ 初期に戻す</button>
-<button class="btn-secondary" id="dsModalCloseBtn" type="button">閉じる</button>
-</div>
-</div>
-</div>
-</div>
-<!-- 日中支援テンプレ（共通）編集モーダル -->
-<div class="detail-modal-backdrop" id="dayNoteTplModal">
-<div class="detail-modal">
-<div class="detail-modal-header">
-<div class="detail-modal-title" id="dayNoteTplModalTitle">日中支援テンプレ編集（共通）</div>
-<button class="detail-modal-close" id="dayNoteTplModalClose" type="button">×</button>
-</div>
-<div class="detail-modal-body">
-<div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
-<div class="field-row">
-<div class="field">
-<label for="dnTplSelect">既存テンプレ</label>
-<select id="dnTplSelect">
-<option value="">（新規作成）</option>
-</select>
-<div class="small-text">選ぶと下の入力欄に入ります。</div>
-</div>
-<div class="field">
-<label for="dnTplName">テンプレ名</label>
-<input id="dnTplName" placeholder="例：散歩同行（余暇）" type="text">
-</input></div>
-</div>
-<div class="field">
-<label for="dnTplText">テンプレ本文（業務日誌へ追記）</label>
-<textarea id="dnTplText" placeholder="例）【日中支援（余暇）】職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。結果：＿＿。" rows="7"></textarea>
-</div>
-<div class="btn-row" style="margin-top:10px;">
-<button class="btn-primary" id="dnTplSaveBtn" type="button">💾 追加 / 更新</button>
-<button class="btn-danger" id="dnTplDeleteBtn" type="button">🗑️ 削除</button>
-<button class="btn-secondary" id="dnTplClearBtn" type="button">🧹 新規入力に戻す</button>
-<button class="btn-secondary" id="dnTplResetDefaultBtn" type="button">↩ 初期テンプレに戻す</button>
-<button class="btn-secondary" id="dayNoteTplModalCloseBtn" type="button">閉じる</button>
-</div>
-<div class="small-text" style="margin-top:8px;">※テンプレはこのPC（ブラウザ）内に保存されます。他PCとは共有されません。</div>
-</div>
-</div>
-</div>
+          <button type="button" class="btn-primary" id="favModalSaveWeekday">💾 平日で保存</button>
+          <button type="button" class="btn-primary" id="favModalSaveHoliday">💾 土日祝で保存</button>
+                    <button type="button" class="btn-primary" id="favModalSaveThisDay">💾 この曜日で保存</button>
+<button type="button" class="btn-secondary" id="favModalCancel">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ 自動テンプレ（利用者別） 小窓モーダル：無いとJSが止まるので追加 -->
+  <!-- 日中支援チェック（この利用者）編集モーダル -->
+  <div id="dsModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="dsModalTitle">日中支援チェック編集（利用者別）</div>
+        <button type="button" class="detail-modal-close" id="dsModalClose">×</button>
+      </div>
+      <div class="detail-modal-body">
+        <div class="small-text" id="dsModalResidentInfo" style="margin-bottom:8px;"></div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="dsModalMain">主な支援（1行=1項目）</label>
+            <textarea id="dsModalMain" rows="10"></textarea>
+          </div>
+          <div class="field">
+            <label for="dsModalReason">欠席理由（1行=1項目）</label>
+            <textarea id="dsModalReason" rows="10"></textarea>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button type="button" class="btn-primary" id="dsModalSaveBtn">💾 保存</button>
+          <button type="button" class="btn-secondary" id="dsModalResetBtn">↩ 初期に戻す</button>
+          <button type="button" class="btn-secondary" id="dsModalCloseBtn">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <!-- 日中支援テンプレ（共通）編集モーダル -->
+  <div id="dayNoteTplModal" class="detail-modal-backdrop">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="dayNoteTplModalTitle">日中支援テンプレ編集（共通）</div>
+        <button type="button" class="detail-modal-close" id="dayNoteTplModalClose">×</button>
+      </div>
+      <div class="detail-modal-body">
+        <div class="small-text" style="margin-bottom:8px;">③の「日中支援テンプレ（日中支援Ⅰ / Ⅱ業務日誌へ追記）」で使うテンプレです。チェックすると業務日誌へ追記されます。</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="dnTplSelect">既存テンプレ</label>
+            <select id="dnTplSelect">
+              <option value="">（新規作成）</option>
+            </select>
+            <div class="small-text">選ぶと下の入力欄に入ります。</div>
+          </div>
+          <div class="field">
+            <label for="dnTplName">テンプレ名</label>
+            <input type="text" id="dnTplName" placeholder="例：散歩同行（余暇）" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dnTplText">テンプレ本文（業務日誌へ追記）</label>
+          <textarea id="dnTplText" rows="7" placeholder="例）【日中支援（余暇）】職員同行で散歩へ外出。本人の様子：＿＿。支援：声かけ・見守り（必要時介助）。安全配慮：転倒・交通に留意。結果：＿＿。"></textarea>
+        </div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button type="button" class="btn-primary" id="dnTplSaveBtn">💾 追加 / 更新</button>
+          <button type="button" class="btn-danger" id="dnTplDeleteBtn">🗑️ 削除</button>
+          <button type="button" class="btn-secondary" id="dnTplClearBtn">🧹 新規入力に戻す</button>
+          <button type="button" class="btn-secondary" id="dnTplResetDefaultBtn">↩ 初期テンプレに戻す</button>
+          <button type="button" class="btn-secondary" id="dayNoteTplModalCloseBtn">閉じる</button>
+        </div>
+
+        <div class="small-text" style="margin-top:8px;">※テンプレはこのPC（ブラウザ）内に保存されます。他PCとは共有されません。</div>
+      </div>
+    </div>
+  </div>
 <!-- メインスクリプト -->
-<script>
+  <script>
     const STORAGE_KEY   = "group_home_records_v1";
     const RESIDENTS_KEY = "group_home_residents_v1";
     const RECORDERS_KEY = "group_home_recorders_v1";
@@ -8851,7 +8999,11 @@ if (restoreBtn && restoreFile) {
       // 編集モーダル
       document.getElementById("editModalClose").addEventListener("click", closeEditModal);
       document.getElementById("editModalCancelBtn").addEventListener("click", closeEditModal);
-      document.getElementById("editModalSaveBtn").addEventListener("click", function(e){ e.preventDefault(); });
+      document.getElementById("editModalSaveBtn").addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof window.saveEditModal === 'function') window.saveEditModal();
+      });
       document.getElementById("editModal").addEventListener("click", (e) => { if (e.target.id === "editModal") closeEditModal(); });
 
       // 編集モーダル：利用者変更時
@@ -8952,8 +9104,9 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       document.getElementById("dsModal").addEventListener("click", (e) => { if (e.target.id === "dsModal") document.getElementById("dsModal").classList.remove("show"); });
     });
   </script>
-<!-- 音声入力スクリプト（業務日誌：メイン＋編集モーダル） -->
-<script>
+
+  <!-- 音声入力スクリプト（業務日誌：メイン＋編集モーダル） -->
+  <script>
     document.addEventListener("DOMContentLoaded", () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -9021,8 +9174,10 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       attachVoice("voiceEditNoteBtn", "voiceEditNoteStatus", "editNote");
     });
   </script>
-<!-- 🆕 アップデート通知スクリプト -->
-<script>
+
+  
+  <!-- 🆕 アップデート通知スクリプト -->
+  <script>
     (function(){
       const UPDATE_VERSION = "2026-01-15_v9";
       const UPDATE_DATE = "2026-01-15";
@@ -9078,87 +9233,96 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       });
     })();
   </script>
+
+
 <!-- 保存しました：トースト表示 -->
-<div aria-live="polite" id="saveToast" role="status"></div>
-<!-- 日中支援テンプレ：チェック直後の確認トースト -->
-<div aria-hidden="true" class="dn-toast" id="dnToast">
-<div class="dn-toast-title" id="dnToastTitle">業務日誌に反映しました</div>
-<div class="dn-toast-body" id="dnToastBody"></div>
-<div class="dn-toast-actions">
-<button class="btn-secondary" id="dnToastJumpBtn" type="button">業務日誌へ移動</button>
-<button class="btn-secondary" id="dnToastCloseBtn" type="button">閉じる</button>
-</div>
-</div>
-<!-- Google共有（モーダル） -->
-<div aria-hidden="true" class="modal-overlay" id="googleShareOverlay" style="display:none;">
-<div aria-labelledby="googleShareTitle" aria-modal="true" class="manual-modal google-share-modal" role="dialog">
-<div class="manual-header">
-<div class="manual-title" id="googleShareTitle">☁ Google共有</div>
-<div class="manual-actions">
-<button class="manual-btn" id="googleShareOpenEasyBtn" type="button">かんたん記録ページ</button>
-<button class="manual-btn" id="googleShareSaveBtn" type="button">保存</button>
-<button class="manual-btn" id="googleShareRefreshBtn" type="button">更新</button>
-<button class="manual-btn" id="googleShareCloseBtn" type="button">閉じる</button>
-</div>
-</div>
-<div class="manual-body">
-<div class="small">日付と利用者で絞り込みできます。本文へ反映すると、既存の同日同利用者記録があればその本文へ追記します。</div>
-<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-top:10px; margin-bottom:8px;">
-<div style="min-width:180px; flex:0 1 180px;">
-<label for="googleDateFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">日付</label>
-<input id="googleDateFilter" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff;" type="date"/>
-</div>
-<div style="min-width:220px; flex:1 1 220px;">
-<label for="googleResidentFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">利用者で絞り込み</label>
-<select id="googleResidentFilter" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff;">
-<option value="">全員表示</option>
-</select>
-</div>
-</div>
-<div class="google-share-status" id="googleShareStatus">読み込み待ちです。</div>
-<div class="google-share-list" id="googleShareList">
-<div class="small">まだ読み込まれていません。</div>
-</div>
-</div>
-</div>
-</div>
-<!-- LINE受信BOX（モーダル） -->
-<div aria-hidden="true" class="modal-overlay" id="inboxOverlay" style="display:none;">
-<div aria-labelledby="inboxTitle" aria-modal="true" class="manual-modal inbox-modal" role="dialog">
-<div class="manual-header">
-<div class="manual-title" id="inboxTitle">LINE受信BOX</div>
-<div class="manual-actions">
-<button class="manual-btn" id="inboxCloseBtn" type="button">閉じる</button>
-</div>
-</div>
-<div class="manual-body">
-<div class="manual-section">
-<h3>設定</h3>
-<div class="small">Cloudflare Workers のURLと合言葉を入れて保存します。保存後は「更新」で受信を確認できます。</div>
-<div class="inbox-grid" style="margin-top:10px;">
-<div class="inbox-field">
-<label for="inboxEndpoint">エンドポイントURL</label>
-<input id="inboxEndpoint" placeholder="https://xxxx.workers.dev" type="text">
-</input></div>
-<div class="inbox-field">
-<label for="inboxToken">取込トークン</label>
-<input id="inboxToken" placeholder="GHLINE-..." type="password"/>
-</div>
-</div>
-<div class="inbox-actions">
-<button class="primary" id="inboxSaveBtn" type="button">設定を保存</button>
-<button id="inboxRefreshBtn" type="button">更新</button>
-</div>
-<div class="inbox-status" id="inboxStatus"></div>
-</div>
-<div class="manual-section">
-<h3>受信一覧</h3>
-<div class="small">受信が無い時は「未処理の受信はありません」と表示されます。</div>
-<div class="inbox-list" id="inboxList"></div>
-</div>
-</div>
-</div>
-</div>
+  <div id="saveToast" role="status" aria-live="polite"></div>
+
+
+  <!-- 日中支援テンプレ：チェック直後の確認トースト -->
+  <div class="dn-toast" id="dnToast" aria-hidden="true">
+    <div class="dn-toast-title" id="dnToastTitle">業務日誌に反映しました</div>
+    <div class="dn-toast-body" id="dnToastBody"></div>
+    <div class="dn-toast-actions">
+      <button type="button" class="btn-secondary" id="dnToastJumpBtn">業務日誌へ移動</button>
+      <button type="button" class="btn-secondary" id="dnToastCloseBtn">閉じる</button>
+    </div>
+  </div>
+
+
+
+  <!-- Google共有（モーダル） -->
+  <div class="modal-overlay" id="googleShareOverlay" aria-hidden="true" style="display:none;">
+    <div class="manual-modal google-share-modal" role="dialog" aria-modal="true" aria-labelledby="googleShareTitle">
+      <div class="manual-header">
+        <div class="manual-title" id="googleShareTitle">☁ Google共有</div>
+        <div class="manual-actions">
+          <button type="button" class="manual-btn" id="googleShareOpenEasyBtn">かんたん記録ページ</button>
+          <button type="button" class="manual-btn" id="googleShareSaveBtn">保存</button>
+          <button type="button" class="manual-btn" id="googleShareRefreshBtn">更新</button>
+          <button type="button" class="manual-btn" id="googleShareCloseBtn">閉じる</button>
+        </div>
+      </div>
+      <div class="manual-body">
+        <div class="small">日付と利用者で絞り込みできます。本文へ反映すると、既存の同日同利用者記録があればその本文へ追記します。</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-top:10px; margin-bottom:8px;">
+          <div style="min-width:180px; flex:0 1 180px;">
+            <label for="googleDateFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">日付</label>
+            <input type="date" id="googleDateFilter" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff;">
+          </div>
+          <div style="min-width:220px; flex:1 1 220px;">
+            <label for="googleResidentFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">利用者で絞り込み</label>
+            <select id="googleResidentFilter" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff;">
+              <option value="">全員表示</option>
+            </select>
+          </div>
+        </div>
+        <div class="google-share-status" id="googleShareStatus">読み込み待ちです。</div>
+        <div class="google-share-list" id="googleShareList">
+          <div class="small">まだ読み込まれていません。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINE受信BOX（モーダル） -->
+  <div class="modal-overlay" id="inboxOverlay" aria-hidden="true" style="display:none;">
+    <div class="manual-modal inbox-modal" role="dialog" aria-modal="true" aria-labelledby="inboxTitle">
+      <div class="manual-header">
+        <div class="manual-title" id="inboxTitle">LINE受信BOX</div>
+        <div class="manual-actions">
+          <button type="button" class="manual-btn" id="inboxCloseBtn">閉じる</button>
+        </div>
+      </div>
+      <div class="manual-body">
+        <div class="manual-section">
+          <h3>設定</h3>
+          <div class="small">Cloudflare Workers のURLと合言葉を入れて保存します。保存後は「更新」で受信を確認できます。</div>
+          <div class="inbox-grid" style="margin-top:10px;">
+            <div class="inbox-field">
+              <label for="inboxEndpoint">エンドポイントURL</label>
+              <input type="text" id="inboxEndpoint" placeholder="https://xxxx.workers.dev" />
+            </div>
+            <div class="inbox-field">
+              <label for="inboxToken">取込トークン</label>
+              <input type="password" id="inboxToken" placeholder="GHLINE-..." />
+            </div>
+          </div>
+          <div class="inbox-actions">
+            <button type="button" class="primary" id="inboxSaveBtn">設定を保存</button>
+            <button type="button" id="inboxRefreshBtn">更新</button>
+          </div>
+          <div class="inbox-status" id="inboxStatus"></div>
+        </div>
+        <div class="manual-section">
+          <h3>受信一覧</h3>
+          <div class="small">受信が無い時は「未処理の受信はありません」と表示されます。</div>
+          <div class="inbox-list" id="inboxList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function(){
   const LS_ENDPOINT = "ghLineInboxEndpoint";
@@ -9329,6 +9493,8 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   });
 })();
 </script>
+
+
 <script>
 (function(){
   function el(id){ return document.getElementById(id); }
@@ -9339,7 +9505,6 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     ov.classList.add("show");
     ov.setAttribute("aria-hidden","false");
   }
-
   function closeManual(){
     const ov = el("manualOverlay");
     if(!ov) return;
@@ -9360,33 +9525,385 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       ul{ margin:6px 0 0 18px; }
       .small{ font-size:13px; color:#111827; }
     `;
-    w.document.open();
     w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>説明書</title><style>"+css+"</style></head><body>");
     w.document.write("<h1>このアプリの使い方（説明書）</h1>");
+    // sections only
     const secs = body.querySelectorAll(".manual-section");
-    secs.forEach(sec => {
-      w.document.write("<div class='sec'>" + sec.innerHTML + "</div>");
+    secs.forEach(sec=>{
+      w.document.write("<div class='sec'>"+sec.innerHTML+"</div>");
     });
-    w.document.write("</body></html>");
-    w.document.close();
-    w.focus();
-    w.print();
+    w.document.write("
+<script>
+(function(){
+  const MAIN_API_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
+
+  function localBackupSave(){
+    try{ localStorage.setItem('group_home_records_v1', JSON.stringify(Array.isArray(window.records) ? window.records : [])); }catch(e){}
   }
 
-  document.addEventListener("click", function(e){
-    const t = e.target;
-    if(!t) return;
-    if(t.id === "openManualBtn"){ openManual(); return; }
-    if(t.id === "closeManualBtn"){ closeManual(); return; }
-    if(t.id === "printManualBtn"){ printManual(); return; }
-    if(t.id === "manualOverlay"){ closeManual(); return; }
+  window.__remoteSyncStartedAt = window.__remoteSyncStartedAt || new Date();
+
+  function parseRemoteUpdatedAt(value){
+    const s = String(value || '').trim();
+    if (!s) return null;
+    const isoLike = s.replace(' ', 'T');
+    const d = new Date(isoLike);
+    if (!isNaN(d.getTime())) return d;
+    return null;
+  }
+
+  function upsertRemoteRecordsIntoLocal(nextRecords){
+    const startedAt = window.__remoteSyncStartedAt instanceof Date ? window.__remoteSyncStartedAt : new Date(window.__remoteSyncStartedAt || Date.now());
+    const base = Array.isArray(window.records) ? window.records.slice() : (Array.isArray(records) ? records.slice() : []);
+    const byId = new Map();
+
+    base.forEach((r) => {
+      const k = String(r && (r._serverId || r.id) || '').trim();
+      if (k) byId.set(k, r);
+    });
+
+    (Array.isArray(nextRecords) ? nextRecords : []).forEach((r) => {
+      const k = String(r && (r._serverId || r.id) || '').trim();
+      if (!k) return;
+      if (byId.has(k)) {
+        byId.set(k, { ...byId.get(k), ...r, id: k, _serverId: k });
+        return;
+      }
+      const updatedAt = parseRemoteUpdatedAt(r && r.updatedAt);
+      if (updatedAt && updatedAt >= startedAt) {
+        byId.set(k, { ...r, id: k, _serverId: k });
+      }
+    });
+
+    return Array.from(byId.values());
+  }
+
+  function serverRecordToLocal(rec){
+    const raw = (rec && rec.raw && typeof rec.raw === 'object') ? rec.raw : {};
+    const serverId = String(raw.id || rec.id || rec.serverId || '');
+    return {
+      id: serverId || String(Date.now()),
+      _serverId: serverId,
+      date: raw.date || rec.date || '',
+      resident: raw.resident || rec.user || '',
+      recorder: raw.recorder || rec.staff || '',
+      medTaken: !!raw.medTaken,
+      support: raw.support || '',
+      note: raw.note || rec.text || '',
+      hasSpecialNote: !!raw.hasSpecialNote,
+      tags: Array.isArray(raw.tags) ? raw.tags : (Array.isArray(rec.tags) ? rec.tags : []),
+      daySupportType: raw.daySupportType || '',
+      dayActivityItems: Array.isArray(raw.dayActivityItems) ? raw.dayActivityItems : [],
+      daySupportMainItems: Array.isArray(raw.daySupportMainItems) ? raw.daySupportMainItems : [],
+      daySupportReasonItems: Array.isArray(raw.daySupportReasonItems) ? raw.daySupportReasonItems : [],
+      daySupportBathingSubItems: Array.isArray(raw.daySupportBathingSubItems) ? raw.daySupportBathingSubItems : [],
+      daySupportHealthSubItems: Array.isArray(raw.daySupportHealthSubItems) ? raw.daySupportHealthSubItems : [],
+      abnormalVitalsOn: !!raw.abnormalVitalsOn,
+      abnormalWeight: raw.abnormalWeight || '',
+      abnormalTemp: raw.abnormalTemp || '',
+      abnormalBPsys: raw.abnormalBPsys || '',
+      abnormalBPdia: raw.abnormalBPdia || '',
+      abnormalPulse: raw.abnormalPulse || '',
+      timeSlot: raw.timeSlot || '日中',
+      condition: raw.condition || '良好',
+      mental: raw.mental || '安定'
+    };
+  }
+
+  async function fetchMainRecordsRemote(params){
+    const q = new URLSearchParams({ action: 'getRecords' });
+    if (params && params.date) q.set('date', params.date);
+    if (params && params.user) q.set('user', params.user);
+    const res = await fetch(MAIN_API_URL + '?' + q.toString(), { cache: 'no-store' });
+    const data = await res.json();
+    if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || '記録取得に失敗しました');
+    return Array.isArray(data.records) ? data.records.map(serverRecordToLocal) : [];
+  }
+
+  async function syncRemoteRecordsAndRender(){
+    try{
+      const next = await fetchMainRecordsRemote({});
+      const cleaned = (Array.isArray(next) ? next : []).filter((r) => !r.deleted && !r._deleted);
+      const merged = upsertRemoteRecordsIntoLocal(cleaned);
+      window.records = merged;
+      records = merged;
+      const remoteResidents = [...new Set(cleaned.map(r => (r.resident || '').trim()).filter(Boolean))];
+      remoteResidents.forEach((name) => { if (!residents.includes(name)) residents.push(name); });
+      const remoteRecorders = [...new Set(cleaned.map(r => (r.recorder || '').trim()).filter(Boolean))];
+      remoteRecorders.forEach((name) => { if (!recorders.includes(name)) recorders.push(name); });
+      saveResidents();
+      saveRecorders();
+      localBackupSave();
+      if (typeof renderRecords === 'function') renderRecords();
+      if (typeof renderResidentSelects === 'function') renderResidentSelects();
+      if (typeof renderRecorderSelects === 'function') renderRecorderSelects();
+    }catch(e){
+      console.error('syncRemoteRecordsAndRender error', e);
+    }
+  }
+
+  function buildRecordDataFromMainForm(){
+    const date = document.getElementById('date').value;
+    const resident = document.getElementById('resident').value;
+    const daySupportType = typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('main') : '';
+    const dayActivityItems = Array.from(document.querySelectorAll('.day-activity-item:checked')).map((el) => el.value);
+    const daySupportMainItems = Array.from(document.querySelectorAll('.day-main-item:checked')).map((el) => el.value);
+    const daySupportReasonItems = Array.from(document.querySelectorAll('.day-reason-item:checked')).map((el) => el.value);
+    return {
+      id: String(window.pendingGoogleShareTargetId || '').trim() || Date.now().toString(),
+      date,
+      resident,
+      recorder: document.getElementById('recorder')?.value || '',
+      medTaken: false,
+      support: document.getElementById('support').value,
+      note: document.getElementById('note').value,
+      hasSpecialNote: !!document.getElementById('hasSpecialNote')?.checked,
+      tags: Array.isArray(window.currentTags) ? [...window.currentTags] : [],
+      daySupportType,
+      dayActivityItems,
+      daySupportMainItems,
+      daySupportReasonItems,
+      daySupportBathingSubItems: typeof getBathingSubSelected === 'function' ? getBathingSubSelected('main') : [],
+      daySupportHealthSubItems: typeof getHealthSubSelected === 'function' ? getHealthSubSelected('main') : [],
+      abnormalVitalsOn: !!((document.getElementById('abnormalWeight')?.value || '').trim() || (document.getElementById('abnormalTemp')?.value || '').trim() || (document.getElementById('abnormalBPsys')?.value || '').trim() || (document.getElementById('abnormalBPdia')?.value || '').trim() || (document.getElementById('abnormalPulse')?.value || '').trim()),
+      abnormalWeight: (document.getElementById('abnormalWeight')?.value || '').trim(),
+      abnormalTemp: (document.getElementById('abnormalTemp')?.value || '').trim(),
+      abnormalBPsys: (document.getElementById('abnormalBPsys')?.value || '').trim(),
+      abnormalBPdia: (document.getElementById('abnormalBPdia')?.value || '').trim(),
+      abnormalPulse: (document.getElementById('abnormalPulse')?.value || '').trim(),
+      timeSlot: document.getElementById('timeSlot')?.value || '日中',
+      condition: document.getElementById('condition')?.value || '良好',
+      mental: document.getElementById('mental')?.value || '安定'
+    };
+  }
+
+  function buildRecordDataFromEditForm(existing){
+    const resident = document.getElementById('editResident').value;
+    const date = document.getElementById('editDate').value;
+    const activityItems = Array.from(document.querySelectorAll('.edit-day-activity-item:checked')).map((x) => x.value);
+    const mainItems = Array.from(document.querySelectorAll('.edit-day-main-item:checked')).map((x) => x.value);
+    const reasonItems = Array.from(document.querySelectorAll('.edit-day-reason-item:checked')).map((x) => x.value);
+    return {
+      ...(existing || {}),
+      date,
+      resident,
+      recorder: document.getElementById('editRecorder')?.value || '',
+      medTaken: false,
+      support: document.getElementById('editSupport').value,
+      note: document.getElementById('editNote').value,
+      hasSpecialNote: !!document.getElementById('editHasSpecialNote')?.checked,
+      tags: Array.isArray(window.editTags) ? [...window.editTags] : [],
+      daySupportType: typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('edit') : '',
+      dayActivityItems: activityItems,
+      daySupportMainItems: mainItems,
+      daySupportReasonItems: reasonItems,
+      daySupportBathingSubItems: typeof getBathingSubSelected === 'function' ? getBathingSubSelected('edit') : [],
+      daySupportHealthSubItems: typeof getHealthSubSelected === 'function' ? getHealthSubSelected('edit') : [],
+      abnormalVitalsOn: !!((document.getElementById('editAbnormalWeight')?.value || '').trim() || (document.getElementById('editAbnormalTemp')?.value || '').trim() || (document.getElementById('editAbnormalBPsys')?.value || '').trim() || (document.getElementById('editAbnormalBPdia')?.value || '').trim() || (document.getElementById('editAbnormalPulse')?.value || '').trim()),
+      abnormalWeight: (document.getElementById('editAbnormalWeight')?.value || '').trim(),
+      abnormalTemp: (document.getElementById('editAbnormalTemp')?.value || '').trim(),
+      abnormalBPsys: (document.getElementById('editAbnormalBPsys')?.value || '').trim(),
+      abnormalBPdia: (document.getElementById('editAbnormalBPdia')?.value || '').trim(),
+      abnormalPulse: (document.getElementById('editAbnormalPulse')?.value || '').trim(),
+      timeSlot: document.getElementById('editTimeSlot')?.value || existing?.timeSlot || '日中',
+      condition: document.getElementById('editCondition')?.value || existing?.condition || '良好',
+      mental: document.getElementById('editMental')?.value || existing?.mental || '安定'
+    };
+  }
+
+  async function saveMainRecordRemote(recordData) {
+  const fallbackText =
+    (recordData.note || '').trim() ||
+    (recordData.support || '').trim() ||
+    (Array.isArray(recordData.tags) ? recordData.tags.join(' / ') : '');
+
+  const payload = {
+    action: 'saveMainRecord',
+    id: recordData._serverId || recordData.id,
+    date: recordData.date,
+    user: recordData.resident,
+    staff: recordData.recorder,
+    text: fallbackText,
+    status: recordData.hasSpecialNote ? 'special' : '',
+    tags: recordData.tags || [],
+    raw: recordData
+  };
+
+  const res = await fetch(MAIN_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
   });
 
-  document.addEventListener("keydown", function(e){
-    if(e.key === "Escape") closeManual();
-  });
+  const data = await res.json();
+  if (!data || !data.ok) {
+    throw new Error((data && (data.message || data.error)) || '保存に失敗しました');
+  }
+
+  return data;
+}
+
+  window.handleSubmit = async function(event){
+    if (event) event.preventDefault();
+
+    const date = document.getElementById('date').value;
+    const resident = document.getElementById('resident').value;
+    if (!date || !resident) {
+      alert('日付と利用者は必須です。');
+      return;
+    }
+
+    const recordData = buildRecordDataFromMainForm();
+
+    try{
+      await saveMainRecordRemote(recordData);
+      await syncRemoteRecordsAndRender();
+      if (typeof showToast === 'function') showToast(recordData.id && window.pendingGoogleShareTargetId ? '更新しました' : '保存しました');
+      window.pendingGoogleShareTargetId = '';
+      if (typeof resetForm === 'function') resetForm();
+    }catch(e){
+      alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
+    }
+  };
+
+  window.saveEditModal = async function(){
+    const targetId = window.editingRecordId || editingRecordId;
+    if (!targetId) return;
+
+    const baseRecords = Array.isArray(window.records) && window.records.length
+      ? window.records
+      : (Array.isArray(records) ? records : []);
+
+    const idx = Array.isArray(baseRecords)
+      ? baseRecords.findIndex((r) => String(r && (r.id || '')) === String(targetId) || String(r && (r._serverId || '')) === String(targetId))
+      : -1;
+    if (idx < 0 || !baseRecords[idx]) return;
+
+    const resident = document.getElementById('editResident').value;
+    const date = document.getElementById('editDate').value;
+    if (!resident || !date) { alert('日付と利用者は必須です'); return; }
+
+    const existing = baseRecords[idx] || {};
+    const fixedId = String(existing._serverId || existing.serverId || existing.id || targetId || '').trim() || ('main-' + Date.now());
+
+    const updated = buildRecordDataFromEditForm(existing);
+    const noteText = String(updated.note || '').replace(/\r\n/g, '\n').trim();
+    const supportText = String(updated.support || '').replace(/\r\n/g, '\n').trim();
+    const merged = {
+      ...existing,
+      ...updated,
+      id: fixedId,
+      _serverId: fixedId,
+      serverId: fixedId,
+      date,
+      resident,
+      note: noteText,
+      support: supportText,
+      text: noteText || supportText || String(updated.text || '').trim(),
+      raw: {
+        ...((existing && existing.raw) || {}),
+        ...existing,
+        ...updated,
+        id: fixedId,
+        _serverId: fixedId,
+        serverId: fixedId,
+        date,
+        resident,
+        note: noteText,
+        support: supportText,
+        text: noteText || supportText || String(updated.text || '').trim()
+      }
+    };
+
+    try{
+      await saveMainRecordRemote(merged);
+
+      if (Array.isArray(window.records)) {
+        window.records[idx] = { ...window.records[idx], ...merged };
+      }
+      if (Array.isArray(records)) {
+        records[idx] = { ...records[idx], ...merged };
+      }
+
+      await syncRemoteRecordsAndRender();
+      if (typeof closeEditModal === 'function') closeEditModal();
+      alert('保存しました');
+    }catch(e){
+      alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
+    }
+  };
+
+  window.deleteRecord = async function(id){
+    if (!confirm('この記録を削除しますか？')) return;
+    try{
+      const rec = (Array.isArray(window.records) ? window.records : records).find((r) => r.id === id) || (Array.isArray(records) ? records.find((r) => r.id === id) : null);
+      const deleteId = String((rec && (rec._serverId || rec.id)) || id || '');
+      if (!deleteId) throw new Error('対象が見つかりません');
+      const res = await fetch(MAIN_API_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
+      });
+      const data = await res.json();
+      if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
+      await syncRemoteRecordsAndRender();
+      if (typeof showToast === 'function') showToast('削除しました');
+    }catch(e){
+      alert('削除に失敗しました: ' + (e && e.message ? e.message : e));
+    }
+  };
+
+  function preventAutoSubmitOnEnter(){
+    document.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+        }
+      });
+    });
+  }
+
+  function forceButtonTypes(){
+    document.querySelectorAll('button').forEach((btn) => {
+      if (!btn.closest('#recordForm')) return;
+      if (btn.id === 'editModalSaveBtn') return;
+      if (btn.type !== 'submit' && btn.id !== 'saveButton') btn.type = 'button';
+    });
+    document.querySelectorAll('.record-action-btn, .support-toggle, #recordsTable button').forEach((btn) => {
+      if (!btn.type) btn.type = 'button';
+    });
+  }
+
+  function rebindSubmitAndEditHandlers(){
+    const form = document.getElementById('recordForm');
+    if (form) {
+      form.onsubmit = window.handleSubmit;
+    }
+    const saveBtn = document.getElementById('editModalSaveBtn');
+    if (saveBtn) {
+      saveBtn.type = 'button';
+      saveBtn.onclick = window.saveEditModal;
+    }
+  }
+
+  function rebindAfterDom(){
+    forceButtonTypes();
+    preventAutoSubmitOnEnter();
+    try{
+      rebindSubmitAndEditHandlers();
+    }catch(e){ console.error(e); }
+    syncRemoteRecordsAndRender();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', rebindAfterDom);
+  } else {
+    rebindAfterDom();
+  }
 })();
 </script>
+
 </body></html>");
     w.document.close();
     w.focus();
@@ -9420,6 +9937,11 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     if(e.key === "Escape") closeManual();
   });
 })();
+</script>
+
+
+
+
 
 <script>
 (function(){
@@ -9523,7 +10045,12 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     return recorder ? (`【${recorder}】\n` + body) : body;
   }
   function getShareEntryKey(item){
-    return String(item && item.id || '').trim();
+    const raw = item && item.raw && typeof item.raw === 'object' ? item.raw : {};
+    return String(
+      (item && (item._serverId || item.serverId)) ||
+      raw._serverId || raw.serverId || raw.id ||
+      (item && item.id) || ''
+    ).trim();
   }
   function getMainSharedEntryKeys(record){
     const raw = record && record.raw && typeof record.raw === 'object' ? record.raw : {};
@@ -9774,4 +10301,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
 })();
 </script>
 
+
+</body>
+</html>
 
