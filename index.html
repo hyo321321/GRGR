@@ -4901,7 +4901,7 @@ tr.appendChild(tdSupport);
         delBtn.textContent = "削除";
         delBtn.className = "btn-danger";
         delBtn.style.fontSize = "12px";
-        delBtn.onclick = () => (typeof window.deleteRecord === 'function' ? window.deleteRecord(record.id) : deleteRecord(record.id));
+        delBtn.onclick = () => (window.deleteRecord ? window.deleteRecord(record.id) : deleteRecord(record.id));
 
         tdActions.appendChild(viewBtn);
         tdActions.appendChild(editBtn);
@@ -4986,18 +4986,11 @@ tr.appendChild(tdSupport);
 
     }
 
-    async function deleteRecord(id) {
+    function deleteRecord(id) {
       if (!confirm("この記録を削除しますか？")) return;
-      try {
-        if (typeof window.deleteRecord === 'function' && window.deleteRecord !== deleteRecord) {
-          return await window.deleteRecord(id);
-        }
-        records = records.filter((r) => r.id !== id);
-        saveRecords();
-        renderRecords();
-      } catch (e) {
-        alert('削除に失敗しました: ' + (e && e.message ? e.message : e));
-      }
+      records = records.filter((r) => r.id !== id);
+      saveRecords();
+      renderRecords();
     }
 
     // ===== 保存しました（トースト） =====
@@ -9217,7 +9210,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
       </div>
       <div class="manual-body">
-        <div class="small">日付と利用者で絞り込みできます。本文へ反映すると、既存の同日同利用者記録があればその本文へ追記します。</div>
+        <div class="small">日付と利用者で絞り込みできます。本文へ手で反映するより、本体の同日同利用者記録を自動表示して確認する運用がおすすめです。</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-top:10px; margin-bottom:8px;">
           <div style="min-width:180px; flex:0 1 180px;">
             <label for="googleDateFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">日付</label>
@@ -9573,18 +9566,9 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     return Array.isArray(data.records) ? data.records.map(serverRecordToLocal) : [];
   }
 
-  async function syncRemoteRecordsAndRender(options){
+  async function syncRemoteRecordsAndRender(){
     try{
-      const dateValue = document.getElementById('date')?.value || '';
-      const residentValue = document.getElementById('resident')?.value || '';
-      const next = await fetchMainRecordsRemote(
-        options && options.all
-          ? {}
-          : {
-              date: (options && Object.prototype.hasOwnProperty.call(options, 'date')) ? options.date : dateValue,
-              user: (options && Object.prototype.hasOwnProperty.call(options, 'user')) ? options.user : residentValue
-            }
-      );
+      const next = await fetchMainRecordsRemote({});
       const cleaned = (Array.isArray(next) ? next : []).filter((r) => !r.deleted && !r._deleted);
       const merged = upsertRemoteRecordsIntoLocal(cleaned);
       window.records = merged;
@@ -9812,7 +9796,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     try{
       rebindSubmitAndEditHandlers();
     }catch(e){ console.error(e); }
-    syncRemoteRecordsAndRender({ date: document.getElementById('date')?.value || '', user: document.getElementById('resident')?.value || '' });
+    syncRemoteRecordsAndRender();
   }
 
   if (document.readyState === 'loading') {
@@ -9927,7 +9911,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
         <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
         <div class="btns">
-          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">本体の該当記録を表示</button>
+          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容の利用者・日付を本体へ表示</button>
           <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(item.id || '')}">削除</button>
           <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
         </div>
@@ -10080,6 +10064,7 @@ renderList(status);
   async function reflectGoogleItem(id){
     const item = allItems.find(v => String(v.id) === String(id));
     if(!item) return;
+
     const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
     const matchedResident = findResidentValue(item.user || item.userName || '');
     const targetResident = (matchedResident || item.user || item.userName || '').trim();
@@ -10089,33 +10074,25 @@ renderList(status);
 
     const residentEl = qs('resident');
     if(residentEl){
-      residentEl.value = targetResident || residentEl.value || '';
+      residentEl.value = matchedResident || targetResident || '';
       residentEl.dispatchEvent(new Event('change', { bubbles:true }));
     }
 
+    const recorderEl = qs('recorder');
+    if(recorderEl && item.staff) recorderEl.value = item.staff;
+
+    window.pendingGoogleShareTargetId = '';
+
     try{
       if (typeof window.safeSyncRemoteMain === 'function') {
-        await window.safeSyncRemoteMain({ date: targetDate, user: targetResident });
+        await window.safeSyncRemoteMain();
       } else if (typeof syncRemoteRecordsAndRender === 'function') {
-        await syncRemoteRecordsAndRender({ date: targetDate, user: targetResident });
+        await syncRemoteRecordsAndRender();
       }
+      setGoogleStatus('<span class="ok">本体の該当日・利用者を表示しました。通常は本文へ手動反映せず、このまま確認してください。</span>');
+      closeGoogleShare();
     }catch(e){
-      console.warn('reflectGoogleItem sync failed', e);
-    }
-
-    let existingRecord = null;
-    if(Array.isArray(records)){
-      existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
-    }
-
-    if(existingRecord){
-      loadRecordIntoMainForm(existingRecord);
-      window.pendingGoogleShareTargetId = existingRecord.id;
-      setGoogleStatus('<span class="ok">本体の該当記録を表示しました。</span>');
-    }else{
-      window.pendingGoogleShareTargetId = '';
-      const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
-      setGoogleStatus('<span class="ok">本体の該当日・利用者へ切り替えました。自動作成分があれば一覧へ表示されます。</span>');
+      setGoogleStatus('<span class="ng">本体表示に失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
     }
   }
   async function deleteGoogleItem(id){
@@ -10191,15 +10168,10 @@ renderList(status);
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindGoogleShare); else bindGoogleShare();
 
   (function bindRemoteMainAutoSync(){
-    async function safeSyncRemoteMain(options){
+    async function safeSyncRemoteMain(){
       try{
-        const dateEl = document.getElementById('date');
-        const residentEl = document.getElementById('resident');
-        const params = (options && typeof options === 'object') ? { ...options } : {};
-        if (!Object.prototype.hasOwnProperty.call(params, 'date')) params.date = dateEl ? dateEl.value : '';
-        if (!Object.prototype.hasOwnProperty.call(params, 'user')) params.user = residentEl ? residentEl.value : '';
         if (typeof syncRemoteRecordsAndRender === 'function') {
-          await syncRemoteRecordsAndRender(params);
+          await syncRemoteRecordsAndRender();
         }
       }catch(e){
         console.warn('remote main sync failed', e);
@@ -10207,7 +10179,7 @@ renderList(status);
     }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function(){ safeSyncRemoteMain(); }, { once:true });
+      document.addEventListener('DOMContentLoaded', safeSyncRemoteMain, { once:true });
     } else {
       safeSyncRemoteMain();
     }
@@ -10216,10 +10188,10 @@ renderList(status);
     const residentEl = document.getElementById('resident');
 
     if (dateEl) {
-      dateEl.addEventListener('change', function(){ safeSyncRemoteMain(); });
+      dateEl.addEventListener('change', safeSyncRemoteMain);
     }
     if (residentEl) {
-      residentEl.addEventListener('change', function(){ safeSyncRemoteMain(); });
+      residentEl.addEventListener('change', safeSyncRemoteMain);
     }
 
     window.safeSyncRemoteMain = safeSyncRemoteMain;
