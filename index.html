@@ -4901,7 +4901,7 @@ tr.appendChild(tdSupport);
         delBtn.textContent = "削除";
         delBtn.className = "btn-danger";
         delBtn.style.fontSize = "12px";
-        delBtn.onclick = () => (window.deleteRecord ? window.deleteRecord(record.id) : deleteRecord(record.id));
+        delBtn.onclick = () => (typeof window.deleteRecord === "function" ? window.deleteRecord(record.id) : deleteRecord(record.id));
 
         tdActions.appendChild(viewBtn);
         tdActions.appendChild(editBtn);
@@ -4987,6 +4987,9 @@ tr.appendChild(tdSupport);
     }
 
     function deleteRecord(id) {
+      if (typeof window.deleteRecord === "function") {
+        return window.deleteRecord(id);
+      }
       if (!confirm("この記録を削除しますか？")) return;
       records = records.filter((r) => r.id !== id);
       saveRecords();
@@ -5287,19 +5290,23 @@ async function fetchRemoteMainRecords(date, resident) {
   return Array.isArray(data.records) ? data.records : [];
 }
 
-function mergeRemoteRecordsIntoLocal(remoteRecords) {
-  if (!Array.isArray(remoteRecords)) return;
+function mergeRemoteRecordsIntoLocal(remoteRecords, date, resident) {
+  const targetDate = String(date || "").trim();
+  const targetResident = String(resident || "").trim();
+  const sameResident = (a, b) => String(a || "").trim() === String(b || "").trim();
 
-  remoteRecords.forEach((rec) => {
-    const remoteId = String(rec.id || "");
-    const idx = records.findIndex((r) =>
-      String(r._serverId || r.id || "") === remoteId ||
-      (
-        String(r.date || "") === String(rec.date || "") &&
-        String(r.resident || r.user || "") === String(rec.user || "")
-      )
-    );
+  if (!Array.isArray(records)) records = [];
 
+  if (targetDate || targetResident) {
+    records = records.filter((r) => {
+      const hitDate = targetDate ? String(r.date || "") === targetDate : true;
+      const hitResident = targetResident ? sameResident((r.resident || r.user || ""), targetResident) : true;
+      return !(hitDate && hitResident);
+    });
+  }
+
+  (Array.isArray(remoteRecords) ? remoteRecords : []).forEach((rec) => {
+    const remoteId = String(rec.id || "").trim();
     const normalized = {
       id: remoteId || String(Date.now()),
       _serverId: remoteId || "",
@@ -5324,22 +5331,18 @@ function mergeRemoteRecordsIntoLocal(remoteRecords) {
       abnormalPulse: (rec.raw && rec.raw.abnormalPulse) || "",
       medTaken: false
     };
-
-    if (idx >= 0) {
-      records[idx] = { ...records[idx], ...normalized };
-    } else {
-      records.push(normalized);
-    }
+    records.push(normalized);
   });
 
   saveRecords();
+  window.records = records;
 }
 
 async function syncRemoteRecordsAndRender() {
   const date = document.getElementById("date")?.value || "";
   const resident = document.getElementById("resident")?.value || "";
   const remoteRecords = await fetchRemoteMainRecords(date, resident);
-  mergeRemoteRecordsIntoLocal(remoteRecords);
+  mergeRemoteRecordsIntoLocal(remoteRecords, date, resident);
 
   if (typeof renderRecords === "function") {
     renderRecords();
@@ -9210,7 +9213,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
       </div>
       <div class="manual-body">
-        <div class="small">日付と利用者で絞り込みできます。本文へ手で反映するより、本体の同日同利用者記録を自動表示して確認する運用がおすすめです。</div>
+        <div class="small">日付と利用者で絞り込みできます。本文へ反映すると、既存の同日同利用者記録があればその本文へ追記します。</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-top:10px; margin-bottom:8px;">
           <div style="min-width:180px; flex:0 1 180px;">
             <label for="googleDateFilter" style="display:block; font-size:13px; color:#374151; margin-bottom:6px;">日付</label>
@@ -9717,7 +9720,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     const targetId = window.editingRecordId || editingRecordId;
     if (!targetId) return;
     const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : records;
-    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => r.id === targetId) : -1;
+    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => String(r.id || '') === String(targetId || '') || String(r._serverId || '') === String(targetId || '')) : -1;
     if (idx < 0) return;
 
     const resident = document.getElementById('editResident').value;
@@ -9729,6 +9732,9 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     updated._serverId = String(baseRecords[idx]._serverId || baseRecords[idx].id || targetId);
     try{
       await saveMainRecordRemote(updated);
+      const localIdx = Array.isArray(records) ? records.findIndex((r) => String(r.id || '') === String(targetId || '') || String(r._serverId || '') === String(updated._serverId || updated.id || '')) : -1;
+      if (localIdx >= 0) records[localIdx] = { ...records[localIdx], ...updated, id: String(updated._serverId || updated.id || targetId), _serverId: String(updated._serverId || updated.id || targetId) };
+      saveRecords();
       await syncRemoteRecordsAndRender();
       if (typeof closeEditModal === 'function') closeEditModal();
       alert('保存しました');
@@ -9740,16 +9746,22 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
     try{
-      const rec = (Array.isArray(window.records) ? window.records : records).find((r) => r.id === id) || (Array.isArray(records) ? records.find((r) => r.id === id) : null);
-      const deleteId = String((rec && (rec._serverId || rec.id)) || id || '');
+      const pool = Array.isArray(window.records) && window.records.length ? window.records : records;
+      const rec = (Array.isArray(pool) ? pool.find((r) => String(r.id || '') === String(id || '') || String(r._serverId || '') === String(id || '')) : null)
+        || (Array.isArray(records) ? records.find((r) => String(r.id || '') === String(id || '') || String(r._serverId || '') === String(id || '')) : null);
+      const deleteId = String((rec && (rec._serverId || rec.id)) || id || '').trim();
       if (!deleteId) throw new Error('対象が見つかりません');
       const res = await fetch(MAIN_API_URL, {
         method:'POST',
         headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId })
+        body: JSON.stringify({ action:'deleteMainRecord', id: deleteId }),
+        cache: 'no-store'
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
+      records = (Array.isArray(records) ? records : []).filter((r) => String(r.id || '') !== String(id || '') && String(r._serverId || '') !== String(deleteId || ''));
+      window.records = records;
+      saveRecords();
       await syncRemoteRecordsAndRender();
       if (typeof showToast === 'function') showToast('削除しました');
     }catch(e){
@@ -9911,7 +9923,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
         </div>
         <div class="text">${escapeHtmlGoogle(item.text || item.body || '').replace(/\n/g,'<br>')}</div>
         <div class="btns">
-          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容の利用者・日付を本体へ表示</button>
+          <button type="button" class="primary" data-google-act="reflect" data-google-id="${escapeHtmlGoogle(item.id || '')}">この内容を本文へ反映</button>
           <button type="button" data-google-act="delete" data-google-id="${escapeHtmlGoogle(item.id || '')}">削除</button>
           <button type="button" data-google-act="copy" data-google-text="${escapeHtmlGoogle(item.text || item.body || '')}">コピー</button>
         </div>
@@ -10061,39 +10073,34 @@ renderList(status);
     const saveBtn = qs('saveButton');
     if (saveBtn) saveBtn.textContent = '💾 既存記録を更新';
   }
-  async function reflectGoogleItem(id){
+  function reflectGoogleItem(id){
     const item = allItems.find(v => String(v.id) === String(id));
     if(!item) return;
-
     const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
     const matchedResident = findResidentValue(item.user || item.userName || '');
     const targetResident = (matchedResident || item.user || item.userName || '').trim();
-
-    const dateEl = qs('date');
-    if(dateEl) dateEl.value = targetDate;
-
-    const residentEl = qs('resident');
-    if(residentEl){
-      residentEl.value = matchedResident || targetResident || '';
-      residentEl.dispatchEvent(new Event('change', { bubbles:true }));
+    let existingRecord = null;
+    if(Array.isArray(records)){
+      existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
     }
-
-    const recorderEl = qs('recorder');
-    if(recorderEl && item.staff) recorderEl.value = item.staff;
-
-    window.pendingGoogleShareTargetId = '';
-
-    try{
-      if (typeof window.safeSyncRemoteMain === 'function') {
-        await window.safeSyncRemoteMain();
-      } else if (typeof syncRemoteRecordsAndRender === 'function') {
-        await syncRemoteRecordsAndRender();
-      }
-      setGoogleStatus('<span class="ok">本体の該当日・利用者を表示しました。通常は本文へ手動反映せず、このまま確認してください。</span>');
-      closeGoogleShare();
-    }catch(e){
-      setGoogleStatus('<span class="ng">本体表示に失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
+    if(existingRecord){
+      loadRecordIntoMainForm(existingRecord);
+      window.pendingGoogleShareTargetId = existingRecord.id;
+    }else{
+      window.pendingGoogleShareTargetId = '';
+      const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
+      const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
+      const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
     }
+    const note = qs('note');
+    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
+    const currentText = String(note.value || '').trim();
+    const add = String(item.text || item.body || '').trim();
+    if(!add) return;
+    note.value = currentText ? (currentText + '\n\n' + add) : add;
+    note.dispatchEvent(new Event('input', { bubbles:true }));
+    note.focus();
+    setGoogleStatus('<span class="ok">本文へ反映しました。共有履歴は削除していません。</span>');
   }
   async function deleteGoogleItem(id){
     if(!id) return;
@@ -10187,12 +10194,8 @@ renderList(status);
     const dateEl = document.getElementById('date');
     const residentEl = document.getElementById('resident');
 
-    if (dateEl) {
-      dateEl.addEventListener('change', safeSyncRemoteMain);
-    }
-    if (residentEl) {
-      residentEl.addEventListener('change', safeSyncRemoteMain);
-    }
+    if (dateEl) dateEl.addEventListener('change', safeSyncRemoteMain);
+    if (residentEl) residentEl.addEventListener('change', safeSyncRemoteMain);
 
     window.safeSyncRemoteMain = safeSyncRemoteMain;
   })();
