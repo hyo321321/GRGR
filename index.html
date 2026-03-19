@@ -5274,6 +5274,148 @@ async function saveMainRecordRemote(recordData) {
   return data;
 }
 
+
+function findRecordIndexByAnyId(id) {
+  const target = String(id || '').trim();
+  if (!target) return -1;
+  const base = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
+  return base.findIndex((r) => String(r && (r._serverId || r.id || '')).trim() === target || String(r && r.id || '').trim() === target);
+}
+
+function removeLocalRecordByAnyId(id) {
+  const target = String(id || '').trim();
+  if (!target) return false;
+  let changed = false;
+  if (Array.isArray(records)) {
+    const next = records.filter((r) => String((r && (r._serverId || r.id || ''))).trim() !== target && String((r && r.id) || '').trim() !== target);
+    changed = next.length !== records.length;
+    records = next;
+  }
+  if (Array.isArray(window.records)) {
+    window.records = window.records.filter((r) => String((r && (r._serverId || r.id || ''))).trim() !== target && String((r && r.id) || '').trim() !== target);
+  } else {
+    window.records = records;
+  }
+  if (changed) {
+    saveRecords();
+    if (typeof renderRecords === 'function') renderRecords();
+  }
+  return changed;
+}
+
+function buildRecordDataFromEditForm(existing) {
+  const targetId = String((existing && (existing._serverId || existing.id)) || window.editingRecordId || editingRecordId || Date.now()).trim();
+  return {
+    id: targetId,
+    _serverId: targetId,
+    date: document.getElementById('editDate')?.value || existing?.date || '',
+    resident: document.getElementById('editResident')?.value || existing?.resident || '',
+    recorder: document.getElementById('editRecorder')?.value || existing?.recorder || '',
+    medTaken: false,
+    support: document.getElementById('editSupport')?.value || existing?.support || '',
+    note: document.getElementById('editNote')?.value || existing?.note || '',
+    hasSpecialNote: !!document.getElementById('editHasSpecialNote')?.checked,
+    tags: Array.isArray(editTags) ? editTags.slice() : (Array.isArray(existing?.tags) ? existing.tags.slice() : []),
+    daySupportType: typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('edit') : (existing?.daySupportType || ''),
+    dayActivityItems: Array.from(document.querySelectorAll('#editDayActivityCheckboxes .edit-day-activity-item:checked')).map((el) => el.value),
+    daySupportMainItems: Array.from(document.querySelectorAll('#editDaySupportMainCheckboxes .edit-day-main-item:checked')).map((el) => el.value),
+    daySupportReasonItems: Array.from(document.querySelectorAll('#editDaySupportReasonCheckboxes .edit-day-reason-item:checked')).map((el) => el.value),
+    daySupportBathingSubItems: typeof getBathingSubSelected === 'function' ? getBathingSubSelected('edit') : (existing?.daySupportBathingSubItems || []),
+    daySupportHealthSubItems: typeof getHealthSubSelected === 'function' ? getHealthSubSelected('edit') : (existing?.daySupportHealthSubItems || []),
+    abnormalVitalsOn: !!(
+      (document.getElementById('editAbnormalWeight')?.value || '').trim() ||
+      (document.getElementById('editAbnormalTemp')?.value || '').trim() ||
+      (document.getElementById('editAbnormalBPsys')?.value || '').trim() ||
+      (document.getElementById('editAbnormalBPdia')?.value || '').trim() ||
+      (document.getElementById('editAbnormalPulse')?.value || '').trim()
+    ),
+    abnormalWeight: (document.getElementById('editAbnormalWeight')?.value || '').trim(),
+    abnormalTemp: (document.getElementById('editAbnormalTemp')?.value || '').trim(),
+    abnormalBPsys: (document.getElementById('editAbnormalBPsys')?.value || '').trim(),
+    abnormalBPdia: (document.getElementById('editAbnormalBPdia')?.value || '').trim(),
+    abnormalPulse: (document.getElementById('editAbnormalPulse')?.value || '').trim(),
+    timeSlot: document.getElementById('editTimeSlot')?.value || existing?.timeSlot || '日中',
+    condition: document.getElementById('editCondition')?.value || existing?.condition || '良好',
+    mental: document.getElementById('editMental')?.value || existing?.mental || '安定'
+  };
+}
+
+window.saveEditModal = async function(){
+  const targetId = String(window.editingRecordId || editingRecordId || '').trim();
+  if (!targetId) {
+    alert('編集対象が見つかりません。');
+    return;
+  }
+
+  const base = Array.isArray(window.records) && window.records.length ? window.records : (Array.isArray(records) ? records : []);
+  const idx = findRecordIndexByAnyId(targetId);
+  const existing = idx >= 0 ? base[idx] : null;
+  if (!existing) {
+    alert('対象の記録が見つかりません。いったん再読み込みしてください。');
+    return;
+  }
+
+  const updated = buildRecordDataFromEditForm(existing);
+  if (!updated.date || !updated.resident) {
+    alert('日付と利用者は必須です。');
+    return;
+  }
+
+  try{
+    await saveMainRecordRemote(updated);
+
+    if (idx >= 0 && Array.isArray(records)) records[idx] = { ...records[idx], ...updated };
+    if (idx >= 0 && Array.isArray(window.records)) window.records[idx] = { ...window.records[idx], ...updated };
+    saveRecords();
+    if (typeof renderRecords === 'function') renderRecords();
+
+    if (typeof closeEditModal === 'function') closeEditModal();
+    if (typeof showToast === 'function') showToast('上書き保存しました');
+
+    setTimeout(() => {
+      if (typeof syncRemoteRecordsAndRender === 'function') syncRemoteRecordsAndRender();
+    }, 0);
+  }catch(e){
+    alert('保存に失敗しました: ' + (e && e.message ? e.message : e));
+  }
+};
+
+window.deleteRecord = async function(id){
+  const targetId = String(id || '').trim();
+  if (!targetId) {
+    alert('削除対象が見つかりません。');
+    return;
+  }
+  if (!confirm('この記録を削除しますか？')) return;
+
+  const deletedLocally = removeLocalRecordByAnyId(targetId);
+  if (typeof showToast === 'function') showToast('削除しています…');
+
+  try{
+    const res = await fetch(MAIN_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action:'deleteMainRecord', id: targetId }),
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    if (!data || !data.ok) {
+      throw new Error((data && (data.message || data.error)) || '削除できませんでした');
+    }
+
+    if (typeof showToast === 'function') showToast('削除しました');
+    setTimeout(() => {
+      if (typeof syncRemoteRecordsAndRender === 'function') syncRemoteRecordsAndRender();
+    }, 0);
+  }catch(e){
+    if (typeof syncRemoteRecordsAndRender === 'function') {
+      try { await syncRemoteRecordsAndRender(); } catch(_e) {}
+    }
+    alert('削除に失敗しました: ' + (e && e.message ? e.message : e));
+  }
+};
+
+
 async function fetchRemoteMainRecords(date, resident) {
   const qs = new URLSearchParams({ action: "getRecords" });
   if (date) qs.set("date", date);
@@ -5553,14 +5695,17 @@ function buildAutoHealthSentenceFromSubs(subs) {
       return recordData;
     }
 
-    function createUnfinishedForAllResidents() {
+    async function createUnfinishedForAllResidents() {
       const dateStr = document.getElementById("date")?.value || "";
       if (!dateStr) { alert("先に日付を選択してください"); return; }
 
       const residentsList = Array.isArray(residents) ? residents.slice() : [];
       if (!residentsList.length) { alert("利用者が登録されていません"); return; }
 
-      if (!confirm(`【${dateStr}】の未完成記録を、利用者全員分まとめて作成します。\n（既に同日同利用者の記録がある場合はスキップします）\n\n作成しますか？`)) return;
+      if (!confirm(`【${dateStr}】の未完成記録を、利用者全員分まとめて作成します。
+（既に同日同利用者の記録がある場合はスキップします）
+
+作成しますか？`)) return;
 
       ensureTagExists("未完成");
 
@@ -5569,28 +5714,54 @@ function buildAutoHealthSentenceFromSubs(subs) {
       let created = 0;
       let skippedConfirmed = 0;
       let skippedUnfinished = 0;
+      let failed = 0;
 
-      residentsList.forEach((r) => {
+      for (const r of residentsList) {
         const name = String(r || "").trim();
-        if (!name) return;
+        if (!name) continue;
 
         const existing = records.find((rec) => rec && rec.date === dateStr && rec.resident === name);
         if (existing) {
           const tags = Array.isArray(existing.tags) ? existing.tags : [];
           if (tags.includes("未完成")) skippedUnfinished++;
           else skippedConfirmed++;
-          return;
+          continue;
         }
 
         const rec = makeUnfinishedRecord(dateStr, name, dayType);
-        records.push(rec);
-        created++;
-      });
+
+        try {
+          const result = await saveMainRecordRemote(rec);
+          if (result && result.id) {
+            rec.id = String(result.id);
+            rec._serverId = String(result.id);
+          }
+          records.push(rec);
+          created++;
+        } catch (e) {
+          console.error("未完成の本体保存に失敗", name, e);
+          failed++;
+        }
+      }
 
       saveRecords();
       renderRecords();
 
-      alert(`未完成を作成しました。\n作成：${created}件\nスキップ（確定あり）：${skippedConfirmed}件\nスキップ（未完成あり）：${skippedUnfinished}件`);
+      setTimeout(() => {
+        if (typeof syncRemoteRecordsAndRender === 'function') syncRemoteRecordsAndRender();
+      }, 0);
+
+      alert(
+        `未完成を作成しました。
+` +
+        `作成：${created}件
+` +
+        `スキップ（確定あり）：${skippedConfirmed}件
+` +
+        `スキップ（未完成あり）：${skippedUnfinished}件
+` +
+        `失敗：${failed}件`
+      );
     }
 
 
@@ -9741,28 +9912,45 @@ renderList(status);
     const targetDate = String(item.date || (qs('date') && qs('date').value) || todayYmd()).trim();
     const matchedResident = findResidentValue(item.user || item.userName || '');
     const targetResident = (matchedResident || item.user || item.userName || '').trim();
-    let existingRecord = null;
-    if(Array.isArray(records)){
-      existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
+
+    const dateEl = qs('date');
+    if(dateEl) dateEl.value = targetDate;
+
+    const residentEl = qs('resident');
+    if(residentEl){
+      residentEl.value = matchedResident || targetResident || '';
+      residentEl.dispatchEvent(new Event('change', { bubbles:true }));
     }
-    if(existingRecord){
-      loadRecordIntoMainForm(existingRecord);
-      window.pendingGoogleShareTargetId = existingRecord.id;
-    }else{
-      window.pendingGoogleShareTargetId = '';
-      const dateEl = qs('date'); if(dateEl) dateEl.value = targetDate;
-      const residentEl = qs('resident'); if(residentEl && matchedResident){ residentEl.value = matchedResident; residentEl.dispatchEvent(new Event('change', { bubbles:true })); }
-      const recorderEl = qs('recorder'); if(recorderEl && item.staff) recorderEl.value = item.staff;
-    }
-    const note = qs('note');
-    if(!note){ alert('業務日誌欄が見つかりませんでした。'); return; }
-    const currentText = String(note.value || '').trim();
-    const add = String(item.text || item.body || '').trim();
-    if(!add) return;
-    note.value = currentText ? (currentText + '\n\n' + add) : add;
-    note.dispatchEvent(new Event('input', { bubbles:true }));
-    note.focus();
-    setGoogleStatus('<span class="ok">本文へ反映しました。共有履歴は削除していません。</span>');
+
+    const recorderEl = qs('recorder');
+    if(recorderEl && item.staff) recorderEl.value = item.staff;
+
+    setGoogleStatus('<span class="ok">本体の該当記録を表示します…</span>');
+
+    setTimeout(async () => {
+      try{
+        if (typeof syncRemoteRecordsAndRender === 'function') {
+          await syncRemoteRecordsAndRender();
+        }
+        let existingRecord = null;
+        if(Array.isArray(records)){
+          existingRecord = records.find(r => r && String(r.date || '').trim() === targetDate && normalizeName(r.resident || '') === normalizeName(targetResident)) || null;
+        }
+        if(existingRecord){
+          loadRecordIntoMainForm(existingRecord);
+          window.pendingGoogleShareTargetId = existingRecord._serverId || existingRecord.id || '';
+          setGoogleStatus('<span class="ok">本体の既存記録を表示しました。</span>');
+        }else{
+          window.pendingGoogleShareTargetId = '';
+          const note = qs('note');
+          if(note) note.value = String(item.text || item.body || '').trim();
+          note && note.dispatchEvent(new Event('input', { bubbles:true }));
+          setGoogleStatus('<span class="ok">本体記録がまだ無いので、新規入力状態で表示しました。</span>');
+        }
+      }catch(e){
+        setGoogleStatus('<span class="ng">本体表示に失敗</span> <span class="meta">' + escapeHtmlGoogle(e && e.message ? e.message : 'error') + '</span>');
+      }
+    }, 0);
   }
   async function deleteGoogleItem(id){
     if(!id) return;
