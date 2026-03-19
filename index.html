@@ -4895,13 +4895,13 @@ tr.appendChild(tdSupport);
         editBtn.textContent = "編集";
         editBtn.className = "btn-secondary";
         editBtn.style.fontSize = "12px";
-        editBtn.onclick = () => openEditModal(record.id);
+        editBtn.onclick = function(e){ if(e) e.preventDefault(); e && e.stopPropagation && e.stopPropagation(); return (typeof window.openEditRecordById === 'function') ? window.openEditRecordById(record._serverId || record.id) : openEditModal(record._serverId || record.id); };
 
         const delBtn = document.createElement("button");
         delBtn.textContent = "削除";
         delBtn.className = "btn-danger";
         delBtn.style.fontSize = "12px";
-        delBtn.onclick = () => (typeof window.deleteRecord === "function" ? window.deleteRecord(record.id) : deleteRecord(record.id));
+        delBtn.onclick = function(e){ if(e) e.preventDefault(); e && e.stopPropagation && e.stopPropagation(); return (typeof window.deleteRecord === "function" ? window.deleteRecord(record._serverId || record.id) : deleteRecord(record._serverId || record.id)); };
 
         tdActions.appendChild(viewBtn);
         tdActions.appendChild(editBtn);
@@ -7738,8 +7738,9 @@ function clearFavChecks() {
 
     // ===== 編集モーダル（記録編集） =====
     function openEditModal(id) {
-      const record = records.find((r) => r.id === id) || ((window.records || []).find((r) => r.id === id));
-      if (!record) return;
+      const record = (Array.isArray(records) ? records.find((r) => String(r.id || '') === String(id || '') || String(r._serverId || '') === String(id || '')) : null)
+        || ((Array.isArray(window.records) ? window.records : []).find((r) => String(r.id || '') === String(id || '') || String(r._serverId || '') === String(id || '')));
+      if (!record) { alert('対象の記録が見つかりません。いったん再読み込みしてください。'); return; }
 
       editingRecordId = id;
       window.editingRecordId = id;
@@ -9716,12 +9717,29 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
     }
   };
 
+  window.findRecordByAnyId = function(id){
+    const target = String(id || '').trim();
+    if (!target) return null;
+    const pools = [Array.isArray(window.records) ? window.records : [], Array.isArray(records) ? records : []];
+    for (const pool of pools) {
+      const found = pool.find((r) => String(r && (r._serverId || r.id) || '').trim() === target || String(r && r.id || '').trim() === target);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  window.openEditRecordById = function(id){
+    const rec = window.findRecordByAnyId(id);
+    if (!rec) { alert('対象の記録が見つかりません。いったん再読み込みしてください。'); return; }
+    return openEditModal(String(rec._serverId || rec.id || id));
+  };
+
   window.saveEditModal = async function(){
-    const targetId = window.editingRecordId || editingRecordId;
-    if (!targetId) return;
+    const targetId = String(window.editingRecordId || editingRecordId || '').trim();
+    if (!targetId) { alert('編集対象が見つかりません。'); return; }
     const baseRecords = Array.isArray(window.records) && window.records.length ? window.records : records;
-    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => String(r.id || '') === String(targetId || '') || String(r._serverId || '') === String(targetId || '')) : -1;
-    if (idx < 0) return;
+    const idx = Array.isArray(baseRecords) ? baseRecords.findIndex((r) => String(r.id || '') === targetId || String(r._serverId || '') === targetId) : -1;
+    if (idx < 0) { alert('編集対象が見つかりません。いったん再読み込みしてください。'); return; }
 
     const resident = document.getElementById('editResident').value;
     const date = document.getElementById('editDate').value;
@@ -9746,9 +9764,7 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
   window.deleteRecord = async function(id){
     if (!confirm('この記録を削除しますか？')) return;
     try{
-      const pool = Array.isArray(window.records) && window.records.length ? window.records : records;
-      const rec = (Array.isArray(pool) ? pool.find((r) => String(r.id || '') === String(id || '') || String(r._serverId || '') === String(id || '')) : null)
-        || (Array.isArray(records) ? records.find((r) => String(r.id || '') === String(id || '') || String(r._serverId || '') === String(id || '')) : null);
+      const rec = window.findRecordByAnyId ? window.findRecordByAnyId(id) : null;
       const deleteId = String((rec && (rec._serverId || rec.id)) || id || '').trim();
       if (!deleteId) throw new Error('対象が見つかりません');
       const res = await fetch(MAIN_API_URL, {
@@ -9759,9 +9775,14 @@ document.getElementById("favApplyNowBtn").addEventListener("click", applyFavNowF
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && (data.message || data.error)) || '削除できませんでした');
-      records = (Array.isArray(records) ? records : []).filter((r) => String(r.id || '') !== String(id || '') && String(r._serverId || '') !== String(deleteId || ''));
+      records = (Array.isArray(records) ? records : []).filter((r) => {
+        const rid = String(r && r.id || '').trim();
+        const sid = String(r && r._serverId || '').trim();
+        return rid !== deleteId && sid !== deleteId;
+      });
       window.records = records;
       saveRecords();
+      if (typeof renderRecords === 'function') renderRecords();
       await syncRemoteRecordsAndRender();
       if (typeof showToast === 'function') showToast('削除しました');
     }catch(e){
