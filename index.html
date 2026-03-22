@@ -2256,6 +2256,14 @@
 
 <div class="beginner-zone" style="margin-top:10px;">
   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+    <div style="font-weight:800; color:#1e3a8a;">② 自動入力したい支援項目</div>
+    <div class="beginner-hint">※記録に保存された内容、または利用者のよく使う項目を表示します。</div>
+  </div>
+  <div class="checkbox-row" id="editAutoItemCheckboxes" style="margin-top:8px;"></div>
+</div>
+
+<div class="beginner-zone" style="margin-top:10px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
     <div style="font-weight:800; color:#1e3a8a;">④ 日中活動</div>
     <div class="beginner-hint">※通所/欠席をチェック。</div>
   </div>
@@ -5316,6 +5324,10 @@ function buildRecordDataFromEditForm(existing) {
     note: document.getElementById('editNote')?.value || existing?.note || '',
     hasSpecialNote: !!document.getElementById('editHasSpecialNote')?.checked,
     tags: Array.isArray(editTags) ? editTags.slice() : (Array.isArray(existing?.tags) ? existing.tags.slice() : []),
+    autoKeys: Array.from(document.querySelectorAll('#editAutoItemCheckboxes .edit-auto-item:checked')).map((el) => el.value),
+    autoBathSubs: Array.from(document.querySelectorAll('#editAutoItemCheckboxes .edit-auto-bath-sub:checked')).map((el) => el.dataset.sub),
+    autoHealthSubs: Array.from(document.querySelectorAll('#editAutoItemCheckboxes .edit-auto-health-sub:checked')).map((el) => el.dataset.sub),
+    autoCleanSubs: Array.from(document.querySelectorAll('#editAutoItemCheckboxes .edit-auto-clean-sub:checked')).map((el) => el.value),
     daySupportType: typeof getDaySupportTypeSelected === 'function' ? getDaySupportTypeSelected('edit') : (existing?.daySupportType || ''),
     dayActivityItems: Array.from(document.querySelectorAll('#editDayActivityCheckboxes .edit-day-activity-item:checked')).map((el) => el.value),
     daySupportMainItems: Array.from(document.querySelectorAll('#editDaySupportMainCheckboxes .edit-day-main-item:checked')).map((el) => el.value),
@@ -6404,6 +6416,154 @@ function closeRecordDetail() {
       }
 
       syncAutoItemsToSupport();
+    }
+
+    function renderEditAutoItemCheckboxes() {
+      const wrap = document.getElementById("editAutoItemCheckboxes");
+      if (!wrap) return;
+
+      wrap.innerHTML = "";
+      AUTO_ITEM_DEFS.forEach((def) => {
+        if (def.key === "bathing") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="edit-auto-item" value="bathing"> ${escapeHtml(def.label || "入浴対応")}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="edit-auto-bath-sub" data-sub="prompt" data-label="声かけ">声かけ</label>
+              <label><input type="checkbox" class="edit-auto-bath-sub" data-sub="watch" data-label="見守り">見守り</label>
+              <label><input type="checkbox" class="edit-auto-bath-sub" data-sub="assist" data-label="介助">介助</label>
+            </span>
+          `;
+          wrap.appendChild(box);
+          return;
+        }
+
+        if (def.key === "health") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          box.innerHTML = `
+            <label><input type="checkbox" class="edit-auto-item" value="health"> ${escapeHtml(def.label || "体調管理")}</label>
+            <span class="auto-compound-sub">
+              <label><input type="checkbox" class="edit-auto-health-sub" data-sub="bp" data-label="血圧">血圧</label>
+              <label><input type="checkbox" class="edit-auto-health-sub" data-sub="wt" data-label="体重">体重</label>
+              <label><input type="checkbox" class="edit-auto-health-sub" data-sub="temp" data-label="検温">検温</label>
+              <label><input type="checkbox" class="edit-auto-health-sub" data-sub="symp" data-label="症状確認">症状確認</label>
+              <label><input type="checkbox" class="edit-auto-health-sub" data-sub="rest" data-label="安静見守り">安静見守り</label>
+            </span>
+          `;
+          wrap.appendChild(box);
+          return;
+        }
+
+        if (def.key === "clean_keep") {
+          const box = document.createElement("div");
+          box.className = "auto-compound";
+          const subs = getAutoSubs("clean_keep");
+          const subHtml = subs.map((lbl) => {
+            const safe = escapeHtml(lbl);
+            const safeAttr = escapeHtmlAttr(lbl);
+            return `<label><input type="checkbox" class="edit-auto-clean-sub" data-label="${safeAttr}" value="${safeAttr}">${safe}</label>`;
+          }).join("");
+          box.innerHTML = `
+            <label><input type="checkbox" class="edit-auto-item" value="clean_keep"> ${escapeHtml(def.label || "清潔保持")}</label>
+            <span class="auto-compound-sub">${subHtml}</span>
+          `;
+          wrap.appendChild(box);
+          return;
+        }
+
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="edit-auto-item" value="${def.key}"> ${escapeHtml(def.label)}`;
+        wrap.appendChild(label);
+      });
+
+      setupEditAutoBathCompound();
+      setupEditAutoHealthCompound();
+      setupEditAutoCleanCompound();
+    }
+
+    function setupEditAutoBathCompound(){
+      const wrap = document.getElementById("editAutoItemCheckboxes");
+      if (!wrap) return;
+      const parent = wrap.querySelector('.edit-auto-item[value="bathing"]');
+      const subs = Array.from(wrap.querySelectorAll('.edit-auto-bath-sub'));
+      if (!parent || !subs.length) return;
+      const sync = () => {
+        const on = !!parent.checked;
+        subs.forEach((cb) => { cb.disabled = !on; if (!on) cb.checked = false; });
+      };
+      parent.onchange = sync;
+      subs.forEach((cb) => {
+        cb.onchange = () => { if (cb.checked) parent.checked = true; sync(); };
+      });
+      sync();
+    }
+
+    function setupEditAutoHealthCompound(){
+      const wrap = document.getElementById("editAutoItemCheckboxes");
+      if (!wrap) return;
+      const parent = wrap.querySelector('.edit-auto-item[value="health"]');
+      const subs = Array.from(wrap.querySelectorAll('.edit-auto-health-sub'));
+      if (!parent || !subs.length) return;
+      const sync = () => {
+        const on = !!parent.checked;
+        subs.forEach((cb) => { cb.disabled = !on; if (!on) cb.checked = false; });
+      };
+      parent.onchange = sync;
+      subs.forEach((cb) => {
+        cb.onchange = () => { if (cb.checked) parent.checked = true; sync(); };
+      });
+      sync();
+    }
+
+    function setupEditAutoCleanCompound(){
+      const wrap = document.getElementById("editAutoItemCheckboxes");
+      if (!wrap) return;
+      const parent = wrap.querySelector('.edit-auto-item[value="clean_keep"]');
+      const subs = Array.from(wrap.querySelectorAll('.edit-auto-clean-sub'));
+      if (!parent || !subs.length) return;
+      const sync = () => {
+        const on = !!parent.checked;
+        subs.forEach((cb) => { cb.disabled = !on; if (!on) cb.checked = false; });
+      };
+      parent.onchange = sync;
+      subs.forEach((cb) => {
+        cb.onchange = () => { if (cb.checked) parent.checked = true; sync(); };
+      });
+      sync();
+    }
+
+    function applyEditAutoSelections(record){
+      renderEditAutoItemCheckboxes();
+      const wrap = document.getElementById('editAutoItemCheckboxes');
+      if (!wrap) return;
+
+      const dayType = getDayTypeFromDateStr((record && record.date) || '') || getCurrentDayType();
+      const fav = getFavForResident((record && record.resident) || '', dayType);
+
+      const autoKeys = Array.isArray(record && record.autoKeys) && record.autoKeys.length
+        ? record.autoKeys.slice()
+        : (Array.isArray(fav.autoKeys) ? fav.autoKeys.slice() : []);
+      const autoBathSubs = Array.isArray(record && record.autoBathSubs) && record.autoBathSubs.length
+        ? record.autoBathSubs.slice()
+        : (Array.isArray(fav.autoBathSubs) ? fav.autoBathSubs.slice() : []);
+      const autoHealthSubs = Array.isArray(record && record.autoHealthSubs) && record.autoHealthSubs.length
+        ? record.autoHealthSubs.slice()
+        : (Array.isArray(fav.autoHealthSubs) ? fav.autoHealthSubs.slice() : []);
+      const autoCleanSubs = Array.isArray(record && record.autoCleanSubs) && record.autoCleanSubs.length
+        ? record.autoCleanSubs.slice()
+        : (Array.isArray(fav.autoCleanSubs) ? fav.autoCleanSubs.slice() : []);
+
+      const keySet = new Set(autoKeys);
+      wrap.querySelectorAll('.edit-auto-item').forEach((cb) => { cb.checked = keySet.has(cb.value); });
+      wrap.querySelectorAll('.edit-auto-bath-sub').forEach((cb) => { cb.checked = autoBathSubs.includes(cb.dataset.sub); });
+      wrap.querySelectorAll('.edit-auto-health-sub').forEach((cb) => { cb.checked = autoHealthSubs.includes(cb.dataset.sub); });
+      wrap.querySelectorAll('.edit-auto-clean-sub').forEach((cb) => { cb.checked = autoCleanSubs.includes(cb.value); });
+
+      setupEditAutoBathCompound();
+      setupEditAutoHealthCompound();
+      setupEditAutoCleanCompound();
     }
 
     // 入浴（② 自動入力）複合チェック：親OFFならサブ無効＆OFF／サブONなら親ON
@@ -7977,6 +8137,9 @@ function clearFavChecks() {
       // タグ
       editTags = Array.isArray(record.tags) ? [...record.tags] : [];
       renderEditTagButtons();
+
+      // ② 自動入力したい支援項目
+      applyEditAutoSelections(record);
 
       // 日中活動チェック
       renderEditDayActivityCheckboxes(record.dayActivityItems || []);
