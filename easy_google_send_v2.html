@@ -31,30 +31,51 @@
 <div class="wrap">
   <div class="card">
     <h1>かんたん記録送信 完全版</h1>
-    <div class="meta">送信は自分の入力だけ。記録確認は表示だけです。日付を選ぶと過去日の確認や記入もできます。</div>
+    <div class="meta">送信は自分の入力だけ。今日の記録確認は表示だけです。</div>
     <div class="row">
       <div>
         <label for="userName">利用者名</label>
         <input id="userName" list="recentUsers" placeholder="例：木村元子">
+        <details style="margin:12px 0; border:1px solid #d9e2f0; border-radius:8px; background:#f5f7fb; padding:8px 10px;">
+          <summary style="cursor:pointer; font-weight:bold; outline:none;">記録の見方を見る</summary>
+          <div style="margin-top:10px; line-height:1.7;">
+            利用者名をフルネームで入力し、見たい記録の日付を選んでください。<br>
+            他の項目は未記入のままで大丈夫です。<br>
+            「本体の記録を確認」を押すと、入力した利用者のその日の記録が表示されます。
+          </div>
+        </details>
+
+        <details style="margin:12px 0; border:1px solid #ead39c; border-radius:8px; background:#fff8e8; padding:8px 10px;">
+          <summary style="cursor:pointer; font-weight:bold; outline:none;">削除・訂正方法を見る</summary>
+          <div style="margin-top:10px; line-height:1.7;">
+            <div style="font-weight:bold; margin-top:6px;">削除したい時</div>
+            <div>
+              間違えて送った文章をコピーして貼り付けてください。<br>
+              最後に「削除依頼」と入力して送ってください。
+            </div>
+            <div style="margin-top:6px; padding-left:8px; color:#444;">
+              例<br>
+              血圧測定、服薬確認を行いました。<br>
+              削除依頼
+            </div>
+            <div style="font-weight:bold; margin-top:10px;">訂正したい時</div>
+            <div>
+              訂正したい内容を正しい文章で入力してください。<br>
+              最後に「訂正依頼」と入力して送ってください。
+            </div>
+            <div style="margin-top:6px; padding-left:8px; color:#444;">
+              例<br>
+              朝は服薬確認を実施。血圧測定は未実施。<br>
+              訂正依頼
+            </div>
+          </div>
+        </details>
         <datalist id="recentUsers"></datalist>
       </div>
       <div>
         <label for="staffName">記録者</label>
         <input id="staffName" list="recentStaff" placeholder="例：兵頭">
         <datalist id="recentStaff"></datalist>
-      </div>
-      <div>
-        <label for="recordDate">日付</label>
-        <input id="recordDate" type="date">
-      </div>
-    </div>
-    <div style="margin:12px 0; padding:10px 12px; background:#f5f7fb; border:1px solid #d9e2f0; border-radius:8px; line-height:1.7;">
-      <div style="font-weight:bold; margin-bottom:6px;">記録の見方・入れ方</div>
-      <div>
-        利用者名をフルネームで入力し、必要なら日付を選んでください。<br>
-        日付を選ばなければ今日の日付で記録されます。<br>
-        「本体の記録を確認」を押すと、入力した利用者のその日の記録が表示されます。<br>
-        本文を入力して送信すると、選んだ日付の記録として保存できます。
       </div>
     </div>
     <label for="memoInput">本文</label>
@@ -68,9 +89,9 @@
     <div id="sendStatus" class="status"></div>
   </div>
   <div class="card">
-    <h2>記録確認</h2>
+    <h2>今日の記録</h2>
     <div id="checkStatus" class="status"></div>
-    <div id="mainCheckBox" class="output">ここに選択した日付の記録が表示されます。</div>
+    <div id="mainCheckBox" class="output">ここに今日の記録が表示されます。</div>
   </div>
 </div>
 <script>const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
@@ -80,7 +101,6 @@ const DEFAULT_SOURCE = 'easy_v2_complete';
 
 const userNameEl = document.getElementById('userName');
 const staffNameEl = document.getElementById('staffName');
-const recordDateEl = document.getElementById('recordDate');
 const memoInput = document.getElementById('memoInput');
 const sendBtn = document.getElementById('sendBtn');
 const checkBtn = document.getElementById('checkBtn');
@@ -95,10 +115,6 @@ const recentStaff = document.getElementById('recentStaff');
 function todayYmd() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-function selectedYmd() {
-  const v = String(recordDateEl?.value || '').trim();
-  return v || todayYmd();
 }
 function normalizeText(text) {
   return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -149,7 +165,7 @@ async function postJson(payload) {
 function buildPayload(text) {
   const user = String(userNameEl?.value || '').trim();
   const staff = String(staffNameEl?.value || '').trim();
-  const date = selectedYmd();
+  const date = todayYmd();
   const id = 'easy-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
   const raw = {
     id, serverId: id, _serverId: id,
@@ -195,7 +211,7 @@ function renderSharedRecords(data) {
 }
 async function checkMainRecord() {
   const user = String(userNameEl?.value || '').trim();
-  const date = selectedYmd();
+  const date = todayYmd();
   if (!user) {
     checkStatus.textContent = '利用者名を入力してください。';
     userNameEl?.focus();
@@ -206,14 +222,14 @@ async function checkMainRecord() {
   try {
     const main = await fetchMainRecord(user, date);
     if (renderMainRecord(main)) {
-      checkStatus.textContent = date + ' の本体記録を表示しました。';
+      checkStatus.textContent = '本体の今日の記録を表示しました。';
     } else {
       const shared = await fetchSharedRecords(user, date);
       if (renderSharedRecords(shared)) {
-        checkStatus.textContent = date + ' の共有記録を表示しました。';
+        checkStatus.textContent = '共有の今日の記録を表示しました。';
       } else {
-        mainCheckBox.textContent = date + ' の記録はまだありません。';
-        checkStatus.textContent = date + ' の記録はまだありません。';
+        mainCheckBox.textContent = 'まだ今日の記録はありません。';
+        checkStatus.textContent = 'まだ今日の記録はありません。';
       }
     }
   } catch (err) {
@@ -250,7 +266,7 @@ async function sendRecord() {
     renderRecent();
     await postJson(buildPayload(text));
     if (memoInput) memoInput.value = '';
-    sendStatus.textContent = selectedYmd() + ' の記録を送信しました。';
+    sendStatus.textContent = '送信しました。';
     checkMainRecord();
   } catch (err) {
     sendStatus.textContent = '送信に失敗しました。\n' + (err && err.message ? err.message : err);
@@ -282,7 +298,6 @@ sendBtn?.addEventListener('click', sendRecord);
 checkBtn?.addEventListener('click', checkMainRecord);
 copyBtn?.addEventListener('click', copyText);
 clearBtn?.addEventListener('click', clearMemo);
-if (recordDateEl && !recordDateEl.value) recordDateEl.value = todayYmd();
 renderRecent();</script>
 </body>
 </html>
