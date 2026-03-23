@@ -73,6 +73,8 @@
         <datalist id="recentUsers"></datalist>
       </div>
       <div>
+        <label for="recordDate">日付</label>
+        <input id="recordDate" type="date">
         <label for="staffName">記録者</label>
         <input id="staffName" list="recentStaff" placeholder="例：兵頭">
         <datalist id="recentStaff"></datalist>
@@ -89,9 +91,9 @@
     <div id="sendStatus" class="status"></div>
   </div>
   <div class="card">
-    <h2>今日の記録</h2>
+    <h2>記録確認</h2>
     <div id="checkStatus" class="status"></div>
-    <div id="mainCheckBox" class="output">ここに今日の記録が表示されます。</div>
+    <div id="mainCheckBox" class="output">ここに選択した日の記録が表示されます。</div>
   </div>
 </div>
 <script>const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
@@ -101,6 +103,7 @@ const DEFAULT_SOURCE = 'easy_v2_complete';
 
 const userNameEl = document.getElementById('userName');
 const staffNameEl = document.getElementById('staffName');
+const recordDateEl = document.getElementById('recordDate');
 const memoInput = document.getElementById('memoInput');
 const sendBtn = document.getElementById('sendBtn');
 const checkBtn = document.getElementById('checkBtn');
@@ -165,7 +168,7 @@ async function postJson(payload) {
 function buildPayload(text) {
   const user = String(userNameEl?.value || '').trim();
   const staff = String(staffNameEl?.value || '').trim();
-  const date = todayYmd();
+  const date = String(recordDateEl?.value || '').trim() || todayYmd();
   const id = 'easy-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
   const raw = {
     id, serverId: id, _serverId: id,
@@ -211,7 +214,7 @@ function renderSharedRecords(data) {
 }
 async function checkMainRecord() {
   const user = String(userNameEl?.value || '').trim();
-  const date = todayYmd();
+  const date = String(recordDateEl?.value || '').trim() || todayYmd();
   if (!user) {
     checkStatus.textContent = '利用者名を入力してください。';
     userNameEl?.focus();
@@ -222,14 +225,14 @@ async function checkMainRecord() {
   try {
     const main = await fetchMainRecord(user, date);
     if (renderMainRecord(main)) {
-      checkStatus.textContent = '本体の今日の記録を表示しました。';
+      checkStatus.textContent = '本体の記録を表示しました。';
     } else {
       const shared = await fetchSharedRecords(user, date);
       if (renderSharedRecords(shared)) {
-        checkStatus.textContent = '共有の今日の記録を表示しました。';
+        checkStatus.textContent = '共有の記録を表示しました。';
       } else {
-        mainCheckBox.textContent = 'まだ今日の記録はありません。';
-        checkStatus.textContent = 'まだ今日の記録はありません。';
+        mainCheckBox.textContent = 'その日の記録はありません。';
+        checkStatus.textContent = 'その日の記録はありません。';
       }
     }
   } catch (err) {
@@ -298,6 +301,7 @@ sendBtn?.addEventListener('click', sendRecord);
 checkBtn?.addEventListener('click', checkMainRecord);
 copyBtn?.addEventListener('click', copyText);
 clearBtn?.addEventListener('click', clearMemo);
-renderRecent();</script>
+renderRecent();
+if (recordDateEl && !recordDateEl.value) recordDateEl.value = todayYmd();</script>
 </body>
 </html>
