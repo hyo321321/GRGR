@@ -13,8 +13,8 @@
   h1{font-size:22px;margin:0 0 6px}
   h2{font-size:18px;margin:0 0 8px}
   label{display:block;font-weight:700;margin:8px 0 4px}
-  input,textarea,button{font:inherit}
-  input,textarea{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
+  input,select,textarea,button{font:inherit}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
   textarea{min-height:150px;resize:vertical}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
   .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
@@ -24,10 +24,28 @@
   .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
   .output{white-space:pre-wrap;line-height:1.6;background:#fbfbfd;border:1px solid var(--line);border-radius:12px;padding:14px;min-height:120px}
   .meta{font-size:12px;color:var(--muted);margin-top:8px}
+
+  .auth-screen{position:fixed;inset:0;background:rgba(246,247,251,.98);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999}
+  .auth-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+  .auth-title{font-size:20px;font-weight:800;margin:0 0 8px}
+  .auth-text{color:var(--muted);line-height:1.6;margin:0 0 12px}
+  .auth-error{color:#dc2626;font-size:13px;margin-top:8px;min-height:1.3em}
+  .app-hidden{display:none}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-title">パスワード入力</div>
+    <div class="auth-text">正しいパスワードを入力すると、かんたんページを開けます。</div>
+    <label for="sitePassword">パスワード</label>
+    <input id="sitePassword" type="password" placeholder="パスワードを入力">
+    <button id="unlockBtn" class="primary" type="button" style="width:100%; margin-top:12px;">開く</button>
+    <div id="authError" class="auth-error"></div>
+  </div>
+</div>
+<div id="appRoot" class="app-hidden">
 <div class="wrap">
   <div class="card">
     <h1>かんたん記録送信 完全版</h1>
@@ -35,8 +53,16 @@
     <div class="row">
       <div>
         <label for="userName">利用者名</label>
-        <input id="userName" list="recentUsers" placeholder="例：山田花子">
-        <datalist id="recentUsers"></datalist>
+        <select id="userName">
+          <option value="">選択してください</option>
+          <option value="木村元子">木村元子</option>
+          <option value="河合真吾">河合真吾</option>
+          <option value="荒川健二">荒川健二</option>
+          <option value="山本浩二">山本浩二</option>
+          <option value="原光恵">原光恵</option>
+          <option value="岩崎愛">岩崎愛</option>
+          <option value="河合志保">河合志保</option>
+        </select>
       </div>
       <div>
         <label for="staffName">記録者</label>
@@ -98,11 +124,19 @@
     <div id="mainCheckBox" class="output">ここに選択した日の記録が表示されます。</div>
   </div>
 </div>
+</div>
 <script>const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
+const SITE_PASSWORD = '1122';
+const AUTH_KEY = 'easy_page_auth_ok';
 const RECENT_USERS_KEY = 'easy_recent_users_v2';
 const RECENT_STAFF_KEY = 'easy_recent_staff_v2';
 const DEFAULT_SOURCE = 'easy_v2_complete';
 
+const authScreen = document.getElementById('authScreen');
+const appRoot = document.getElementById('appRoot');
+const sitePasswordEl = document.getElementById('sitePassword');
+const unlockBtn = document.getElementById('unlockBtn');
+const authError = document.getElementById('authError');
 const userNameEl = document.getElementById('userName');
 const staffNameEl = document.getElementById('staffName');
 const recordDateEl = document.getElementById('recordDate');
@@ -114,9 +148,39 @@ const clearBtn = document.getElementById('clearBtn');
 const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
 const mainCheckBox = document.getElementById('mainCheckBox');
-const recentUsers = document.getElementById('recentUsers');
 const recentStaff = document.getElementById('recentStaff');
 
+function unlockApp() {
+  if (authScreen) authScreen.style.display = 'none';
+  if (appRoot) appRoot.classList.remove('app-hidden');
+}
+function showAuthError(message) {
+  if (authError) authError.textContent = message || '';
+}
+function tryUnlock() {
+  const pw = String(sitePasswordEl?.value || '').trim();
+  if (pw !== SITE_PASSWORD) {
+    showAuthError('パスワードが違います。');
+    if (sitePasswordEl) sitePasswordEl.value = '';
+    sitePasswordEl?.focus();
+    return;
+  }
+  sessionStorage.setItem(AUTH_KEY, '1');
+  showAuthError('');
+  unlockApp();
+}
+function initAuth() {
+  if (sessionStorage.getItem(AUTH_KEY) === '1') {
+    unlockApp();
+    return;
+  }
+  if (authScreen) authScreen.style.display = 'flex';
+  if (appRoot) appRoot.classList.add('app-hidden');
+  unlockBtn?.addEventListener('click', tryUnlock);
+  sitePasswordEl?.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') tryUnlock();
+  });
+}
 function todayYmd() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -143,7 +207,6 @@ function saveRecent(key, value) {
   localStorage.setItem(key, JSON.stringify(arr.slice(0, 20)));
 }
 function renderRecent() {
-  if (recentUsers) recentUsers.innerHTML = loadRecent(RECENT_USERS_KEY).map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
   if (recentStaff) recentStaff.innerHTML = loadRecent(RECENT_STAFF_KEY).map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
 }
 async function fetchJson(url) {
@@ -304,6 +367,7 @@ checkBtn?.addEventListener('click', checkMainRecord);
 copyBtn?.addEventListener('click', copyText);
 clearBtn?.addEventListener('click', clearMemo);
 renderRecent();
-if (recordDateEl && !recordDateEl.value) recordDateEl.value = todayYmd();</script>
+if (recordDateEl && !recordDateEl.value) recordDateEl.value = todayYmd();
+initAuth();</script>
 </body>
 </html>
