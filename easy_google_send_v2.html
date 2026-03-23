@@ -117,6 +117,9 @@
       <button id="copyBtn" class="orange" type="button">本文をコピー</button>
       <button id="clearBtn" class="ghost" type="button">本文を消す</button>
     </div>
+    <div class="btns" style="margin-top:8px;">
+      <a href="easy_google_records_search.html" style="display:block;text-decoration:none;"><button class="ghost" type="button" style="width:100%;">記録検索ページを開く</button></a>
+    </div>
     <div id="sendStatus" class="status"></div>
   </div>
   <div class="card">
@@ -327,19 +330,20 @@ async function sendRecord() {
     memoInput?.focus();
     return;
   }
-
   const ok = confirm(
-    '送信しますか？\n\n' +
-    '利用者名: ' + user + '\n' +
-    '記録者: ' + staff + '\n' +
-    '日付: ' + date + '\n\n' +
+    '送信しますか？
+
+' +
+    '利用者名: ' + user + '
+' +
+    '記録者: ' + staff + '
+' +
+    '日付: ' + date + '
+
+' +
     text
   );
-  if (!ok) {
-    sendStatus.textContent = '送信をキャンセルしました。';
-    return;
-  }
-
+  if (!ok) return;
   sendBtn.disabled = true;
   checkBtn.disabled = true;
   sendStatus.textContent = '送信中です...';
