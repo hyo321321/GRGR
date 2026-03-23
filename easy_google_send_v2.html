@@ -36,50 +36,52 @@
       <div>
         <label for="userName">利用者名</label>
         <input id="userName" list="recentUsers" placeholder="例：山田花子">
-        <details style="margin:12px 0; border:1px solid #d9e2f0; border-radius:8px; background:#f5f7fb; padding:8px 10px;">
-          <summary style="cursor:pointer; font-weight:bold; outline:none;">記録の見方を見る</summary>
-          <div style="margin-top:10px; line-height:1.7;">
-            利用者名をフルネームで入力し、見たい記録の日付を選んでください。<br>
-            他の項目は未記入のままで大丈夫です。<br>
-            「本体の記録を確認」を押すと、入力した利用者のその日の記録が表示されます。
-          </div>
-        </details>
-
-        <details style="margin:12px 0; border:1px solid #ead39c; border-radius:8px; background:#fff8e8; padding:8px 10px;">
-          <summary style="cursor:pointer; font-weight:bold; outline:none;">削除・訂正方法を見る</summary>
-          <div style="margin-top:10px; line-height:1.7;">
-            <div style="font-weight:bold; margin-top:6px;">削除したい時</div>
-            <div>
-              間違えて送った文章をコピーして貼り付けてください。<br>
-              最後に「削除依頼」と入力して送ってください。
-            </div>
-            <div style="margin-top:6px; padding-left:8px; color:#444;">
-              例<br>
-              血圧測定、服薬確認を行いました。<br>
-              削除依頼
-            </div>
-            <div style="font-weight:bold; margin-top:10px;">訂正したい時</div>
-            <div>
-              訂正したい内容を正しい文章で入力してください。<br>
-              最後に「訂正依頼」と入力して送ってください。
-            </div>
-            <div style="margin-top:6px; padding-left:8px; color:#444;">
-              例<br>
-              朝は服薬確認を実施。血圧測定は未実施。<br>
-              訂正依頼
-            </div>
-          </div>
-        </details>
         <datalist id="recentUsers"></datalist>
       </div>
       <div>
-        <label for="recordDate">日付</label>
-        <input id="recordDate" type="date">
         <label for="staffName">記録者</label>
         <input id="staffName" list="recentStaff" placeholder="例：職員A">
         <datalist id="recentStaff"></datalist>
       </div>
     </div>
+
+    <details style="margin:12px 0; border:1px solid #d9e2f0; border-radius:8px; background:#f5f7fb; padding:8px 10px;">
+      <summary style="cursor:pointer; font-weight:bold; outline:none;">記録の見方を見る</summary>
+      <div style="margin-top:10px; line-height:1.7;">
+        利用者名をフルネームで入力し、見たい記録の日付を選んでください。<br>
+        他の項目は未記入のままで大丈夫です。<br>
+        「本体の記録を確認」を押すと、入力した利用者のその日の記録が表示されます。
+      </div>
+    </details>
+
+    <details style="margin:12px 0; border:1px solid #ead39c; border-radius:8px; background:#fff8e8; padding:8px 10px;">
+      <summary style="cursor:pointer; font-weight:bold; outline:none;">削除・訂正方法を見る</summary>
+      <div style="margin-top:10px; line-height:1.7;">
+        <div style="font-weight:bold; margin-top:6px;">削除したい時</div>
+        <div>
+          間違えて送った文章をコピーして貼り付けてください。<br>
+          最後に「削除依頼」と入力して送ってください。
+        </div>
+        <div style="margin-top:6px; padding-left:8px; color:#444;">
+          例<br>
+          血圧測定、服薬確認を行いました。<br>
+          削除依頼
+        </div>
+        <div style="font-weight:bold; margin-top:10px;">訂正したい時</div>
+        <div>
+          訂正したい内容を正しい文章で入力してください。<br>
+          最後に「訂正依頼」と入力して送ってください。
+        </div>
+        <div style="margin-top:6px; padding-left:8px; color:#444;">
+          例<br>
+          朝は服薬確認を実施。血圧測定は未実施。<br>
+          訂正依頼
+        </div>
+      </div>
+    </details>
+
+    <label for="recordDate">日付</label>
+    <input id="recordDate" type="date">
     <label for="memoInput">本文</label>
     <textarea id="memoInput" placeholder="ここに自分の記録だけ入力してください"></textarea>
     <div class="btns">
