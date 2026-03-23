@@ -310,6 +310,7 @@ async function checkMainRecord() {
 async function sendRecord() {
   const user = String(userNameEl?.value || '').trim();
   const staff = String(staffNameEl?.value || '').trim();
+  const date = String(recordDateEl?.value || '').trim() || todayYmd();
   const text = normalizeText(memoInput?.value);
   if (!user) {
     sendStatus.textContent = '利用者名を入力してください。';
@@ -326,6 +327,19 @@ async function sendRecord() {
     memoInput?.focus();
     return;
   }
+
+  const ok = confirm(
+    '送信しますか？\n\n' +
+    '利用者名: ' + user + '\n' +
+    '記録者: ' + staff + '\n' +
+    '日付: ' + date + '\n\n' +
+    text
+  );
+  if (!ok) {
+    sendStatus.textContent = '送信をキャンセルしました。';
+    return;
+  }
+
   sendBtn.disabled = true;
   checkBtn.disabled = true;
   sendStatus.textContent = '送信中です...';
