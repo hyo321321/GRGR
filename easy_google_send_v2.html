@@ -103,8 +103,6 @@
       <div class="btns">
         <button id="sendBtn" class="primary" type="button">一括作成して送信</button>
         <button id="checkBtn" class="green" type="button">本体の記録を確認</button>
-        <button id="copyBtn" class="orange" type="button">本文をコピー</button>
-        <button id="clearBtn" class="ghost" type="button">本文を消す</button>
       </div>
       <div class="btns" style="margin-top:8px;">
         <button id="openSearchBtn" class="ghost" type="button">記録検索ページを開く</button>
@@ -136,8 +134,6 @@ const recordDateEl = document.getElementById('recordDate');
 const memoInput = document.getElementById('memoInput');
 const sendBtn = document.getElementById('sendBtn');
 const checkBtn = document.getElementById('checkBtn');
-const copyBtn = document.getElementById('copyBtn');
-const clearBtn = document.getElementById('clearBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
 const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
@@ -312,8 +308,6 @@ unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 sendBtn.addEventListener('click', sendRecord);
 checkBtn.addEventListener('click', checkMainRecord);
-copyBtn.addEventListener('click', copyText);
-clearBtn.addEventListener('click', clearText);
 openSearchBtn.addEventListener('click', openSearchPage);
 </script>
 </body>
