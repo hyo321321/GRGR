@@ -50,7 +50,7 @@
   <div class="wrap">
     <div class="card">
       <h1>かんたん記録送信</h1>
-      <div class="meta">過去の日付の記録も送信できます。利用者名と日付を確認してから入力してください。記録検索ページを開くを追加。過去の記録が検索できます。</div>
+      <div class="meta">過去の日付の記録も送信できます。利用者名と日付を確認してから入力してください。</div>
 
       <div class="row">
         <div>
@@ -103,6 +103,9 @@
       <div class="btns">
         <button id="sendBtn" class="primary" type="button">一括作成して送信</button>
         <button id="checkBtn" class="green" type="button">本体の記録を確認</button>
+        <button id="allCheckBtn" class="green" type="button">この日の全員分を確認</button>
+        <button id="copyBtn" class="orange" type="button">本文をコピー</button>
+        <button id="clearBtn" class="ghost" type="button">本文を消す</button>
       </div>
       <div class="btns" style="margin-top:8px;">
         <button id="openSearchBtn" class="ghost" type="button">記録検索ページを開く</button>
@@ -134,6 +137,9 @@ const recordDateEl = document.getElementById('recordDate');
 const memoInput = document.getElementById('memoInput');
 const sendBtn = document.getElementById('sendBtn');
 const checkBtn = document.getElementById('checkBtn');
+const allCheckBtn = document.getElementById('allCheckBtn');
+const copyBtn = document.getElementById('copyBtn');
+const clearBtn = document.getElementById('clearBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
 const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
@@ -259,8 +265,64 @@ async function checkMainRecord(){
     checkStatus.textContent = '確認に失敗しました。\n' + (err && err.message ? err.message : err);
   } finally {
     checkBtn.disabled = false;
+    allCheckBtn.disabled = false;
   }
 }
+
+function getResidentNames(){
+  return Array.from(userNameEl.options)
+    .map(opt => String(opt.value || '').trim())
+    .filter(Boolean);
+}
+async function checkAllMainRecords(){
+  const date = String(recordDateEl.value || '').trim() || todayYmd();
+  const users = getResidentNames();
+  if (!users.length) {
+    checkStatus.textContent = '利用者が登録されていません。';
+    mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
+    return;
+  }
+  checkBtn.disabled = true;
+  allCheckBtn.disabled = true;
+  checkStatus.textContent = '全員分を確認中です...';
+  try {
+    const results = await Promise.all(users.map(async (user) => {
+      try {
+        const data = await fetchJson(WEB_APP_URL + '?action=getMainRecord&user=' + encodeURIComponent(user) + '&date=' + encodeURIComponent(date));
+        const text = normalizeText(data.text || (data.record && data.record.text) || '');
+        return { user, text, ok: true };
+      } catch (err) {
+        return { user, text: '', ok: false, error: err && err.message ? err.message : String(err) };
+      }
+    }));
+
+    const lines = [];
+    let hitCount = 0;
+
+    results.forEach((item) => {
+      if (lines.length) lines.push('');
+      lines.push('【' + item.user + '】');
+      if (item.ok && item.text) {
+        lines.push(item.text);
+        hitCount++;
+      } else if (item.ok) {
+        lines.push('記録なし');
+      } else {
+        lines.push('取得失敗: ' + item.error);
+      }
+    });
+
+    mainCheckBox.textContent = lines.join('\n');
+    checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件';
+  } catch(err){
+    mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
+    checkStatus.textContent = '全員分の確認に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    checkBtn.disabled = false;
+    allCheckBtn.disabled = false;
+  }
+}
+
 async function sendRecord(){
   const user = String(userNameEl.value || '').trim();
   const staff = String(staffNameEl.value || '').trim();
@@ -273,6 +335,7 @@ async function sendRecord(){
   if (!ok) return;
   sendBtn.disabled = true;
   checkBtn.disabled = true;
+  allCheckBtn.disabled = true;
   sendStatus.textContent = '送信中です...';
   try {
     saveRecentStaff(staff);
@@ -286,6 +349,7 @@ async function sendRecord(){
   } finally {
     sendBtn.disabled = false;
     checkBtn.disabled = false;
+    allCheckBtn.disabled = false;
   }
 }
 async function copyText(){
@@ -308,6 +372,9 @@ unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 sendBtn.addEventListener('click', sendRecord);
 checkBtn.addEventListener('click', checkMainRecord);
+allCheckBtn.addEventListener('click', checkAllMainRecords);
+copyBtn.addEventListener('click', copyText);
+clearBtn.addEventListener('click', clearText);
 openSearchBtn.addEventListener('click', openSearchPage);
 </script>
 </body>
