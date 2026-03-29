@@ -104,9 +104,7 @@
         <button id="sendBtn" class="primary" type="button">一括作成して送信</button>
         <button id="checkBtn" class="green" type="button">本体の記録を確認</button>
         <button id="allCheckBtn" class="green" type="button">この日の全員分を確認</button>
-        <button id="copyBtn" class="orange" type="button">本文をコピー</button>
-        <button id="clearBtn" class="ghost" type="button">本文を消す</button>
-      </div>
+</div>
       <div class="btns" style="margin-top:8px;">
         <button id="openSearchBtn" class="ghost" type="button">記録検索ページを開く</button>
       </div>
@@ -138,8 +136,6 @@ const memoInput = document.getElementById('memoInput');
 const sendBtn = document.getElementById('sendBtn');
 const checkBtn = document.getElementById('checkBtn');
 const allCheckBtn = document.getElementById('allCheckBtn');
-const copyBtn = document.getElementById('copyBtn');
-const clearBtn = document.getElementById('clearBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
 const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
@@ -352,16 +348,6 @@ async function sendRecord(){
     allCheckBtn.disabled = false;
   }
 }
-async function copyText(){
-  const text = normalizeText(memoInput.value);
-  if (!text) { sendStatus.textContent = '本文が空です。'; return; }
-  try {
-    await navigator.clipboard.writeText(text);
-    sendStatus.textContent = '本文をコピーしました。';
-  } catch(e) {
-    sendStatus.textContent = 'コピーに失敗しました。長押しでコピーしてください。';
-  }
-}
 function clearText(){ memoInput.value = ''; sendStatus.textContent = ''; }
 function openSearchPage(){ window.location.href = 'easy_google_records_search.html'; }
 
@@ -373,8 +359,6 @@ sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUn
 sendBtn.addEventListener('click', sendRecord);
 checkBtn.addEventListener('click', checkMainRecord);
 allCheckBtn.addEventListener('click', checkAllMainRecords);
-copyBtn.addEventListener('click', copyText);
-clearBtn.addEventListener('click', clearText);
 openSearchBtn.addEventListener('click', openSearchPage);
 </script>
 </body>
