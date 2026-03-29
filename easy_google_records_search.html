@@ -5,22 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>記録検索ページ</title>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--green:#16a34a;--orange:#ea580c;}
+  :root{--bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--ghost:#64748b}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
   .wrap{max-width:860px;margin:0 auto;padding:10px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
-  h1{font-size:22px;margin:0 0 6px}
-  h2{font-size:18px;margin:0 0 8px}
+  h1{font-size:22px;margin:0 0 6px} h2{font-size:18px;margin:0 0 8px}
   label{display:block;font-weight:700;margin:8px 0 4px}
-  input,select,textarea,button{font:inherit}
-  input,select,textarea{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+  input,select,button{font:inherit}
+  input,select{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
   .row3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:end}
   .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
   button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}
-  button:disabled{opacity:.6;cursor:not-allowed}
-  .primary{background:var(--primary)} .green{background:var(--green)} .orange{background:var(--orange)} .ghost{background:#64748b}
+  .primary{background:var(--primary)} .ghost{background:var(--ghost)}
   .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
   .meta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
   .result{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:#fbfbfd}
@@ -34,7 +31,7 @@
   .auth-error{color:#dc2626;font-size:13px;margin-top:8px;min-height:1.3em}
   .app-hidden{display:none}
   a.back{display:inline-block;color:#2563eb;text-decoration:none;font-weight:700;margin-top:4px}
-  @media (max-width:640px){.row,.row3,.btns{grid-template-columns:1fr}}
+  @media (max-width:640px){.row3,.btns{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -44,52 +41,52 @@
     <div class="auth-text">正しいパスワードを入力すると、記録検索ページを開けます。</div>
     <label for="sitePassword">パスワード</label>
     <input id="sitePassword" type="password" placeholder="パスワードを入力">
-    <button id="unlockBtn" class="primary" type="button" style="width:100%; margin-top:12px;">開く</button>
+    <button id="unlockBtn" class="primary" type="button" style="width:100%;margin-top:12px;">開く</button>
     <div id="authError" class="auth-error"></div>
   </div>
 </div>
 <div id="appRoot" class="app-hidden">
-<div class="wrap">
-  <div class="card">
-    <h1>記録検索ページ</h1>
-    <div class="meta">利用者名、期間、キーワードで本体記録を絞り込めます。<br>キーワードを空欄にすると、期間内の記録一覧を表示できます。</div>
-    <a class="back" href="easy_google_send_v2_with_search_link.html">← かんたんページに戻る</a>
-    <div class="row3">
-      <div>
-        <label for="searchUser">利用者名</label>
-        <select id="searchUser">
-          <option value="">全員</option>
-          <option value="木村元子">木村元子</option>
-          <option value="河合真吾">河合真吾</option>
-          <option value="荒川健二">荒川健二</option>
-          <option value="山本浩二">山本浩二</option>
-          <option value="原光恵">原光恵</option>
-          <option value="岩崎愛">岩崎愛</option>
-          <option value="河合志保">河合志保</option>
-        </select>
+  <div class="wrap">
+    <div class="card">
+      <h1>記録検索ページ</h1>
+      <div class="meta">利用者名、期間、キーワードで本体記録を絞り込めます。キーワードを空欄にすると、期間内の記録一覧を表示できます。</div>
+      <a class="back" href="easy_google_send_v2.html" onclick="if(history.length>1){history.back();return false;}">← かんたんページに戻る</a>
+      <div class="row3">
+        <div>
+          <label for="searchUser">利用者名</label>
+          <select id="searchUser">
+            <option value="">全員</option>
+            <option value="木村元子">木村元子</option>
+            <option value="河合真吾">河合真吾</option>
+            <option value="荒川健二">荒川健二</option>
+            <option value="山本浩二">山本浩二</option>
+            <option value="原光恵">原光恵</option>
+            <option value="岩崎愛">岩崎愛</option>
+            <option value="河合志保">河合志保</option>
+          </select>
+        </div>
+        <div>
+          <label for="dateFrom">開始日</label>
+          <input id="dateFrom" type="date">
+        </div>
+        <div>
+          <label for="dateTo">終了日</label>
+          <input id="dateTo" type="date">
+        </div>
       </div>
-      <div>
-        <label for="dateFrom">開始日</label>
-        <input id="dateFrom" type="date">
+      <label for="keyword">キーワード</label>
+      <input id="keyword" type="text" placeholder="例：服薬 / 血圧 / 削除依頼 / 訂正依頼">
+      <div class="btns">
+        <button id="searchBtn" class="primary" type="button">検索する</button>
+        <button id="clearBtn" class="ghost" type="button">条件を消す</button>
       </div>
-      <div>
-        <label for="dateTo">終了日</label>
-        <input id="dateTo" type="date">
-      </div>
+      <div id="searchStatus" class="status"></div>
     </div>
-    <label for="keyword">キーワード</label>
-    <input id="keyword" type="text" placeholder="例：服薬 / 血圧 / 削除依頼 / 訂正依頼">
-    <div class="btns">
-      <button id="searchBtn" class="primary" type="button">検索する</button>
-      <button id="clearBtn" class="ghost" type="button">条件を消す</button>
+    <div class="card">
+      <h2>検索結果</h2>
+      <div id="results"></div>
     </div>
-    <div id="searchStatus" class="status"></div>
   </div>
-  <div class="card">
-    <h2>検索結果</h2>
-    <div id="results"></div>
-  </div>
-</div>
 </div>
 <script>
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
@@ -108,38 +105,104 @@ const searchBtn = document.getElementById('searchBtn');
 const clearBtn = document.getElementById('clearBtn');
 const searchStatus = document.getElementById('searchStatus');
 const results = document.getElementById('results');
-function unlockApp(){ if(authScreen) authScreen.style.display='none'; if(appRoot) appRoot.classList.remove('app-hidden'); }
-function showAuthError(message){ if(authError) authError.textContent = message || ''; }
-function tryUnlock(){ const pw = String(sitePasswordEl?.value || '').trim(); if(pw !== SITE_PASSWORD){ showAuthError('パスワードが違います。'); if(sitePasswordEl) sitePasswordEl.value=''; sitePasswordEl?.focus(); return; } sessionStorage.setItem(AUTH_KEY,'1'); showAuthError(''); unlockApp(); }
-function initAuth(){ if(sessionStorage.getItem(AUTH_KEY)==='1'){ unlockApp(); return; } if(authScreen) authScreen.style.display='flex'; if(appRoot) appRoot.classList.add('app-hidden'); unlockBtn?.addEventListener('click', tryUnlock); sitePasswordEl?.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock();}); }
-function todayYmd(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
-function daysAgoYmd(days){ const d = new Date(); d.setDate(d.getDate()-days); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
-function normalizeText(text){ return String(text || '').replace(/
-/g,'
-').replace(//g,'
-').replace(/
-{3,}/g,'
 
-').trim(); }
+function unlockApp(){ authScreen.style.display = 'none'; appRoot.classList.remove('app-hidden'); }
+function showAuthError(msg){ authError.textContent = msg || ''; }
+function tryUnlock(){
+  const pw = String(sitePasswordEl.value || '').trim();
+  if (pw !== SITE_PASSWORD) {
+    showAuthError('パスワードが違います。');
+    sitePasswordEl.value = '';
+    sitePasswordEl.focus();
+    return;
+  }
+  sessionStorage.setItem(AUTH_KEY, '1');
+  showAuthError('');
+  unlockApp();
+}
+function initAuth(){
+  if (sessionStorage.getItem(AUTH_KEY) === '1') {
+    unlockApp();
+    return;
+  }
+  authScreen.style.display = 'flex';
+  appRoot.classList.add('app-hidden');
+}
+function todayYmd(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function daysAgoYmd(days){ const d = new Date(); d.setDate(d.getDate() - days); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function normalizeText(text){ return String(text || '').replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n{3,}/g,'\n\n').trim(); }
 function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-async function fetchJson(url){ const res = await fetch(url,{cache:'no-store'}); const text = await res.text(); let data={}; try{data=text?JSON.parse(text):{}}catch(e){data={ok:false,rawText:text}} if(!res.ok || data.ok===false) throw new Error(data.message || data.error || data.rawText || ('HTTP '+res.status)); return data; }
-function inDateRange(date, from, to){ if(from && date < from) return false; if(to && date > to) return false; return true; }
-function matchesKeyword(rec, kw){ if(!kw) return true; const hay = [rec.date, rec.user, rec.staff, normalizeText(rec.text), JSON.stringify(rec.raw || {})].join('
-').toLowerCase(); return hay.includes(kw.toLowerCase()); }
-function renderResults(records){ if(!records.length){ results.innerHTML = '<div class="meta">該当する記録はありません。</div>'; return; } results.innerHTML = records.map(rec => `
-      <div class="result">
-        <div class="resultHead">
-          <span class="pill">${escapeHtml(rec.date || '')}</span>
-          <span>${escapeHtml(rec.user || '')}</span>
-          <span>記録者 ${escapeHtml(rec.staff || '')}</span>
-        </div>
-        <div class="resultBody">${escapeHtml(normalizeText(rec.text || ''))}</div>
+async function fetchJson(url){
+  const res = await fetch(url, { cache:'no-store' });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { ok:false, rawText:text }; }
+  if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
+  return data;
+}
+function inDateRange(date, from, to){ if (from && date < from) return false; if (to && date > to) return false; return true; }
+function matchesKeyword(rec, kw){
+  if (!kw) return true;
+  const hay = [rec.date, rec.user, rec.staff, normalizeText(rec.text), JSON.stringify(rec.raw || {})].join('\n').toLowerCase();
+  return hay.includes(kw.toLowerCase());
+}
+function renderResults(records){
+  if (!records.length) {
+    results.innerHTML = '<div class="meta">該当する記録はありません。</div>';
+    return;
+  }
+  results.innerHTML = records.map(rec => `
+    <div class="result">
+      <div class="resultHead">
+        <span class="pill">${escapeHtml(rec.date || '')}</span>
+        <span>${escapeHtml(rec.user || '')}</span>
+        <span>記録者 ${escapeHtml(rec.staff || '')}</span>
       </div>
-    `).join(''); }
-async function searchRecords(){ const user = String(searchUser?.value || '').trim(); const from = String(dateFrom?.value || '').trim(); const to = String(dateTo?.value || '').trim(); const kw = String(keyword?.value || '').trim(); if(from && to && from > to){ searchStatus.textContent = '開始日と終了日を確認してください。'; return; } searchBtn.disabled = true; searchStatus.textContent = '検索中です...'; try{ const data = await fetchJson(WEB_APP_URL + '?action=getRecords'); let records = Array.isArray(data.records) ? data.records.slice() : []; records = records.filter(rec => (!user || String(rec.user||'').trim() === user) && inDateRange(String(rec.date||''), from, to) && matchesKeyword(rec, kw)); records.sort((a,b) => (String(b.date||'') + ' ' + String(b.updatedAt||'')).localeCompare(String(a.date||'') + ' ' + String(a.updatedAt||''))); renderResults(records); searchStatus.textContent = records.length + '件見つかりました。'; } catch(err){ results.innerHTML=''; searchStatus.textContent = '検索に失敗しました。
-' + (err && err.message ? err.message : err); } finally { searchBtn.disabled = false; } }
-function clearConditions(){ if(searchUser) searchUser.value=''; if(dateFrom) dateFrom.value = daysAgoYmd(7); if(dateTo) dateTo.value = todayYmd(); if(keyword) keyword.value=''; results.innerHTML=''; searchStatus.textContent=''; }
-searchBtn?.addEventListener('click', searchRecords); clearBtn?.addEventListener('click', clearConditions); if(dateFrom && !dateFrom.value) dateFrom.value = daysAgoYmd(7); if(dateTo && !dateTo.value) dateTo.value = todayYmd(); initAuth();
+      <div class="resultBody">${escapeHtml(normalizeText(rec.text || ''))}</div>
+    </div>
+  `).join('');
+}
+async function searchRecords(){
+  const user = String(searchUser.value || '').trim();
+  const from = String(dateFrom.value || '').trim();
+  const to = String(dateTo.value || '').trim();
+  const kw = String(keyword.value || '').trim();
+  if (from && to && from > to) {
+    searchStatus.textContent = '開始日と終了日を確認してください。';
+    return;
+  }
+  searchBtn.disabled = true;
+  searchStatus.textContent = '検索中です...';
+  try {
+    const data = await fetchJson(WEB_APP_URL + '?action=getRecords');
+    let records = Array.isArray(data.records) ? data.records.slice() : [];
+    records = records.filter(rec => (!user || String(rec.user || '').trim() === user) && inDateRange(String(rec.date || ''), from, to) && matchesKeyword(rec, kw));
+    records.sort((a,b) => (String(b.date || '') + ' ' + String(b.updatedAt || '')).localeCompare(String(a.date || '') + ' ' + String(a.updatedAt || '')));
+    renderResults(records);
+    searchStatus.textContent = records.length + '件見つかりました。';
+  } catch(err){
+    results.innerHTML = '';
+    searchStatus.textContent = '検索に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    searchBtn.disabled = false;
+  }
+}
+function clearConditions(){
+  searchUser.value = '';
+  dateFrom.value = daysAgoYmd(7);
+  dateTo.value = todayYmd();
+  keyword.value = '';
+  results.innerHTML = '';
+  searchStatus.textContent = '';
+}
+
+dateFrom.value = daysAgoYmd(7);
+dateTo.value = todayYmd();
+initAuth();
+unlockBtn.addEventListener('click', tryUnlock);
+sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+searchBtn.addEventListener('click', searchRecords);
+clearBtn.addEventListener('click', clearConditions);
 </script>
 </body>
 </html>
