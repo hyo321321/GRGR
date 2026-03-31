@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>車交通費計算アプリ</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --line:#d9e1ea; --text:#1f2a37; --sub:#6b7280;
+      --blue:#2563eb; --green:#16a34a; --red:#dc2626; --shadow:0 8px 24px rgba(15,23,42,.08); --radius:16px;
+    }
+    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",sans-serif;}
+    .wrap{max-width:900px;margin:0 auto;padding:16px 14px 28px;}
+    .title{font-size:24px;font-weight:800;margin:6px 0 14px;}
+    .sub{color:var(--sub);font-size:13px;margin:0 0 14px;}
+    .grid{display:grid;gap:14px;}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;}
+    .card h2{font-size:17px;margin:0 0 12px;}
+    .note{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;}
+    .warn{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none;}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+    .row.one{grid-template-columns:1fr;}
+    .field label{display:block;font-size:13px;margin:0 0 6px;color:#374151;font-weight:700;}
+    .field input,.field select,.field textarea{width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff;color:var(--text);}
+    .field select{appearance:none;-webkit-appearance:none;}
+    .field textarea{min-height:78px;resize:vertical;}
+    .tripBox{border:1px dashed #bfdbfe;background:#f8fbff;border-radius:14px;padding:12px;margin-bottom:10px;}
+    .tripHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;}
+    .tripTitle{font-weight:800;color:#1d4ed8;font-size:14px;}
+    .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+    button,.linkBtn{appearance:none;-webkit-appearance:none;border:none;border-radius:12px;padding:14px 14px;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none;min-height:48px;}
+    .primary{background:var(--blue);color:#fff;}
+    .secondary{background:#eef2ff;color:#3730a3;}
+    .danger{background:#fee2e2;color:#991b1b;}
+    .ghost{background:#f3f4f6;color:#374151;}
+    .success{background:#dcfce7;color:#166534;}
+    .sumGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+    .sumItem{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;}
+    .sumLabel{font-size:12px;color:var(--sub);margin-bottom:4px;font-weight:700;}
+    .sumValue{font-size:24px;font-weight:900;}
+    .statusMini{font-size:12px;color:#64748b;margin-top:8px;min-height:1.2em;}
+    table{width:100%;border-collapse:collapse;font-size:14px;}
+    th,td{border-bottom:1px solid #e5e7eb;padding:10px 8px;text-align:left;vertical-align:top;}
+    th{font-size:12px;color:#475569;background:#f8fafc;position:sticky;top:0;}
+    .tableWrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff;}
+    .yen{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:800;}
+    .muted{color:var(--sub);} .small{font-size:12px;}
+    .pill{display:inline-block;background:#eef2ff;color:#3730a3;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;}
+    .toolbar{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;margin-bottom:12px;align-items:end;}
+    .empty{padding:20px;text-align:center;color:var(--sub);font-size:14px;}
+    .footerLink{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;}
+    .readonlyView{width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#f8fafc;color:var(--text);font-weight:700;}
+    .groupRow td{background:#eff6ff !important;color:#1d4ed8;font-weight:900;font-size:13px;border-bottom:1px solid #bfdbfe;}
+    .auth-screen{position:fixed;inset:0;background:linear-gradient(180deg,#eff6ff 0%, #f8fafc 100%);display:none;align-items:center;justify-content:center;padding:20px;z-index:9999;}
+    .auth-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 18px 40px rgba(15,23,42,.16);padding:22px;}
+    .auth-title{font-size:22px;font-weight:900;margin:0 0 8px;}
+    .auth-text{color:var(--sub);font-size:14px;line-height:1.7;margin:0 0 12px;}
+    .auth-error{color:#dc2626;font-size:13px;min-height:1.3em;margin-top:8px;font-weight:700;}
+    .app-hidden{display:none;}
+    @media (max-width:700px){.row,.sumGrid,.toolbar{grid-template-columns:1fr}.sumValue{font-size:22px}th:nth-child(2),td:nth-child(2){min-width:190px}}
+  </style>
+</head>
+<body>
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-title">パスワード入力</div>
+      <p class="auth-text">交通費ページを開くにはパスワードを入れてください。かんたんページと同じ 1122 で入れます。</p>
+      <div class="field">
+        <label for="sitePassword">パスワード</label>
+        <input id="sitePassword" type="password" inputmode="numeric" placeholder="1122">
+      </div>
+      <div class="btns" style="margin-top:12px;">
+        <button class="primary" id="unlockBtn" type="button" style="width:100%;">開く</button>
+      </div>
+      <div id="authError" class="auth-error"></div>
+    </div>
+  </div>
+
+  <div id="appRoot" class="app-hidden">
+  <div class="wrap">
+    <div class="title">車交通費計算アプリ</div>
+    <p class="sub">車専用です。乗車時メーターと降車時メーターを入れると、走行距離と金額を自動計算します。</p>
+
+    <div class="grid">
+      <section class="card">
+        <h2>交通費を入力</h2>
+        <div class="note">1kmあたり20円で計算します。往復は「行き」と「帰り」を別々に追加してください。利用者名は、かんたんページと同じ名前から選べます。</div>
+        <div class="warn" id="calcWarn"></div>
+
+        <div class="row">
+          <div class="field"><label for="date">日付</label><input id="date" type="date"></div>
+          <div class="field"><label for="staff">氏名</label><input id="staff" type="text" placeholder="例：兵頭"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="resident">利用者名・対象</label>
+            <select id="resident">
+              <option value="">選択してください</option>
+              <option value="木村元子">木村元子</option>
+              <option value="河合真吾">河合真吾</option>
+              <option value="荒川健二">荒川健二</option>
+              <option value="山本浩二">山本浩二</option>
+              <option value="原光恵">原光恵</option>
+              <option value="岩崎愛">岩崎愛</option>
+              <option value="河合志保">河合志保</option>
+            </select></div>
+          <div class="field"><label for="purpose">用件</label><input id="purpose" type="text" placeholder="例：受診同行"></div>
+        </div>
+
+        <div id="trips"></div>
+
+        <div class="btns">
+          <button class="secondary" id="addTripBtn" type="button">＋ 移動を追加</button>
+          <button class="ghost" id="resetBtn" type="button">入力をクリア</button>
+        </div>
+        <div class="statusMini" id="tapStatus"></div>
+
+        <div class="row one" style="margin-top:10px;">
+          <div class="field"><label for="memo">メモ</label><textarea id="memo" placeholder="例：駐車場代は別途、など"></textarea></div>
+        </div>
+
+        <div class="sumGrid" style="margin-top:12px;">
+          <div class="sumItem"><div class="sumLabel">今回の合計</div><div class="sumValue" id="currentTotal">0円</div></div>
+          <div class="sumItem"><div class="sumLabel">総距離</div><div class="sumValue" id="currentDistance">0km</div></div>
+          <div class="sumItem"><div class="sumLabel">移動数</div><div class="sumValue" id="tripCount">1</div></div>
+          <div class="sumItem"><div class="sumLabel">状態</div><div class="sumValue" style="font-size:18px;" id="currentStatus">入力中</div></div>
+        </div>
+
+        <div class="btns" style="margin-top:14px;">
+          <button class="primary" id="saveBtn" type="button">保存する</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>集計</h2>
+        <div class="toolbar">
+          <div class="field"><label for="monthFilter">月を選ぶ</label><input id="monthFilter" type="month"></div>
+          <button class="ghost" id="printBtn" type="button">印刷</button>
+          <button class="secondary" id="csvBtn" type="button">CSV書き出し</button>
+          <button class="danger" id="clearMonthBtn" type="button">この月を全削除</button>
+        </div>
+        <div class="sumGrid">
+          <div class="sumItem"><div class="sumLabel">この月の合計</div><div class="sumValue" id="monthTotal">0円</div></div>
+          <div class="sumItem"><div class="sumLabel">この月の距離</div><div class="sumValue" id="monthDistance">0km</div></div>
+          <div class="sumItem"><div class="sumLabel">件数</div><div class="sumValue" id="monthCount">0</div></div>
+          <div class="sumItem"><div class="sumLabel">今日の合計</div><div class="sumValue" id="todayTotal">0円</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>利用者別集計</h2>
+        <div class="tableWrap">
+          <table>
+            <thead><tr><th>利用者名</th><th>件数</th><th>距離</th><th>合計</th></tr></thead>
+            <tbody id="residentSummaryBody"></tbody>
+          </table>
+          <div class="empty" id="residentSummaryEmpty">この月のデータはありません。</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>保存一覧</h2>
+        <div class="tableWrap">
+          <table>
+            <thead><tr><th>日付</th><th>内容</th><th>距離</th><th>合計</th><th>操作</th></tr></thead>
+            <tbody id="listBody"></tbody>
+          </table>
+          <div class="empty" id="emptyState">まだ保存はありません。</div>
+        </div>
+        <div class="footerLink"><a class="linkBtn success" href="javascript:void(0)" id="backToEasyBtn">かんたんページへ戻る</a></div>
+      </section>
+    </div>
+  </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'transport_expense_records_car_meter_v2';
+    const EASY_PAGE_URL_KEY = 'transport_easy_page_url_v1';
+    const RATE_PER_KM = 20;
+    const SITE_PASSWORD = '1122';
+    const AUTH_KEY = 'easy_page_auth_ok';
+    const RESIDENT_OPTIONS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
+    const els = {};
+
+    function $(id){ return document.getElementById(id); }
+    function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function monthStr(dateStr){ return (dateStr || todayStr()).slice(0,7); }
+    function yen(v){ return Number(v || 0).toLocaleString('ja-JP') + '円'; }
+    function distanceText(v){ return (Math.round(Number(v || 0) * 10) / 10).toLocaleString('ja-JP', {maximumFractionDigits:1}) + 'km'; }
+    function escapeHtml(s){ return String(s ?? '').replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+    function uid(){ return 'r' + Date.now() + Math.random().toString(16).slice(2); }
+    function round1(v){ return Math.round(Number(v || 0) * 10) / 10; }
+    function loadRecords(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }catch(e){ return []; } }
+    function saveRecords(rows){ localStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); }
+
+    function setTapStatus(text){
+      const el = els.tapStatus;
+      if(!el) return;
+      el.textContent = text || '';
+      clearTimeout(setTapStatus._t);
+      setTapStatus._t = setTimeout(() => {
+        if (el.textContent === text) el.textContent = '';
+      }, 1600);
+    }
+
+    function createTrip(initial){
+      initial = initial || {};
+      const index = els.trips.children.length + 1;
+      const box = document.createElement('div');
+      box.className = 'tripBox';
+      box.innerHTML = `
+        <div class="tripHead">
+          <div class="tripTitle">移動 ${index}</div>
+          <button type="button" class="danger small removeTripBtn">削除</button>
+        </div>
+        <div class="row">
+          <div class="field"><label>出発</label><input type="text" class="from" placeholder="例：グループホーム" value="${escapeHtml(initial.from || '')}"></div>
+          <div class="field"><label>到着</label><input type="text" class="to" placeholder="例：西脇医院" value="${escapeHtml(initial.to || '')}"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>乗車時メーター（km）</label><input type="number" class="meterStart" min="0" step="0.1" inputmode="decimal" placeholder="例：12540.2" value="${escapeHtml(initial.meterStart || '')}"></div>
+          <div class="field"><label>降車時メーター（km）</label><input type="number" class="meterEnd" min="0" step="0.1" inputmode="decimal" placeholder="例：12552.8" value="${escapeHtml(initial.meterEnd || '')}"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>走行距離</label><div class="readonlyView tripDistance">0km</div></div>
+          <div class="field"><label>この移動の金額</label><div class="readonlyView tripAmount">0円</div></div>
+        </div>
+        <div class="row one">
+          <div class="field"><label>移動メモ</label><input type="text" class="tripMemo" placeholder="例：病院送迎" value="${escapeHtml(initial.tripMemo || '')}"></div>
+        </div>`;
+      els.trips.appendChild(box);
+      refreshTripTitles();
+      calcCurrent();
+    }
+
+    function refreshTripTitles(){
+      Array.from(els.trips.children).forEach((box, i) => {
+        const t = box.querySelector('.tripTitle');
+        if (t) t.textContent = '移動 ' + (i + 1);
+      });
+      els.tripCount.textContent = String(els.trips.children.length || 1);
+    }
+
+    function readTrips(){
+      return Array.from(els.trips.children).map(box => {
+        const startRaw = box.querySelector('.meterStart').value;
+        const endRaw = box.querySelector('.meterEnd').value;
+        const meterStart = startRaw === '' ? '' : Number(startRaw);
+        const meterEnd = endRaw === '' ? '' : Number(endRaw);
+        let distance = 0;
+        let valid = false;
+        if (startRaw !== '' && endRaw !== '' && Number(endRaw) >= Number(startRaw)) {
+          distance = round1(Number(endRaw) - Number(startRaw));
+          valid = true;
+        }
+        const amount = Math.round(distance * RATE_PER_KM);
+        return {
+          from: box.querySelector('.from').value.trim(),
+          to: box.querySelector('.to').value.trim(),
+          meterStart,
+          meterEnd,
+          distance,
+          unitRate: RATE_PER_KM,
+          amount,
+          tripMemo: box.querySelector('.tripMemo').value.trim(),
+          valid,
+          startRaw,
+          endRaw
+        };
+      });
+    }
+
+    function calcCurrent(){
+      const trips = readTrips();
+      let total = 0;
+      let totalDistance = 0;
+      let hasInvalidOrder = false;
+
+      Array.from(els.trips.children).forEach((box, i) => {
+        const trip = trips[i];
+        total += trip.amount || 0;
+        totalDistance += trip.distance || 0;
+        box.querySelector('.tripDistance').textContent = distanceText(trip.distance || 0);
+        box.querySelector('.tripAmount').textContent = yen(trip.amount || 0);
+        if (trip.startRaw !== '' && trip.endRaw !== '' && Number(trip.endRaw) < Number(trip.startRaw)) {
+          hasInvalidOrder = true;
+        }
+      });
+
+      els.currentTotal.textContent = yen(total);
+      els.currentDistance.textContent = distanceText(totalDistance);
+      els.currentStatus.textContent = total > 0 ? '計算OK' : '入力中';
+
+      if (hasInvalidOrder) {
+        els.calcWarn.style.display = 'block';
+        els.calcWarn.textContent = '降車時メーターは乗車時メーター以上で入力してください。';
+      } else {
+        els.calcWarn.style.display = 'none';
+        els.calcWarn.textContent = '';
+      }
+    }
+
+    function resetForm(){
+      els.date.value = todayStr();
+      els.staff.value = '';
+      if (els.resident) els.resident.value = '';
+      els.purpose.value = '';
+      els.memo.value = '';
+      els.trips.innerHTML = '';
+      createTrip();
+      calcCurrent();
+    }
+
+    function validateForm(){
+      const trips = readTrips();
+      if (!els.date.value) return '日付を入れてください。';
+      if (!String(els.resident?.value || '').trim()) return '利用者名を選んでください。';
+      const hasFilled = trips.some(t => t.startRaw !== '' || t.endRaw !== '');
+      if (!hasFilled) return '乗車時メーターと降車時メーターを入れてください。';
+      if (trips.some(t => t.startRaw !== '' && t.endRaw !== '' && Number(t.endRaw) < Number(t.startRaw))) {
+        return '降車時メーターが乗車時メーターより小さい移動があります。';
+      }
+      const hasPositive = trips.some(t => t.distance > 0);
+      if (!hasPositive) return '走行距離が0kmより大きい移動を1つ以上入れてください。';
+      return '';
+    }
+
+    function saveEntry(){
+      const msg = validateForm();
+      if (msg) { alert(msg); return; }
+      const trips = readTrips();
+      const total = trips.reduce((a, b) => a + (b.amount || 0), 0);
+      const totalDistance = round1(trips.reduce((a, b) => a + Number(b.distance || 0), 0));
+      const row = {
+        id: uid(),
+        date: els.date.value,
+        staff: els.staff.value.trim(),
+        resident: els.resident.value.trim(),
+        purpose: els.purpose.value.trim(),
+        memo: els.memo.value.trim(),
+        trips,
+        total,
+        totalDistance,
+        createdAt: new Date().toISOString()
+      };
+      const rows = loadRecords();
+      rows.unshift(row);
+      saveRecords(rows);
+      renderAll();
+      alert('保存しました');
+      resetForm();
+    }
+
+    function getMonthRecords(){
+      const target = els.monthFilter.value || monthStr(todayStr());
+      return loadRecords().filter(r => String(r.date || '').slice(0, 7) === target);
+    }
+
+    function residentName(row){
+      return String((row && row.resident) || '利用者未入力').trim() || '利用者未入力';
+    }
+
+    function getResidentSummaryRows(rows){
+      const map = new Map();
+      (rows || []).forEach(r => {
+        const key = residentName(r);
+        if (!map.has(key)) {
+          map.set(key, { resident:key, count:0, distance:0, total:0 });
+        }
+        const item = map.get(key);
+        item.count += 1;
+        item.distance = round1(item.distance + Number(r.totalDistance || 0));
+        item.total += Number(r.total || 0);
+      });
+      return Array.from(map.values()).sort((a, b) => a.resident.localeCompare(b.resident, 'ja'));
+    }
+
+    function renderResidentSummary(){
+      const rows = getResidentSummaryRows(getMonthRecords());
+      els.residentSummaryBody.innerHTML = rows.map(r => `
+        <tr>
+          <td style="font-weight:800;">${escapeHtml(r.resident)}</td>
+          <td class="yen">${r.count}件</td>
+          <td class="yen">${distanceText(r.distance || 0)}</td>
+          <td class="yen">${yen(r.total || 0)}</td>
+        </tr>`).join('');
+      els.residentSummaryEmpty.style.display = rows.length ? 'none' : 'block';
+    }
+
+    function renderSummary(){
+      const monthRows = getMonthRecords();
+      const monthTotal = monthRows.reduce((a, b) => a + Number(b.total || 0), 0);
+      const monthDistance = round1(monthRows.reduce((a, b) => a + Number(b.totalDistance || 0), 0));
+      const todayTotal = loadRecords().filter(r => r.date === todayStr()).reduce((a, b) => a + Number(b.total || 0), 0);
+      els.monthTotal.textContent = yen(monthTotal);
+      els.monthDistance.textContent = distanceText(monthDistance);
+      els.monthCount.textContent = String(monthRows.length);
+      els.todayTotal.textContent = yen(todayTotal);
+    }
+
+    function routeHtml(trips){
+      return (trips || []).map(t => {
+        const route = [t.from, t.to].filter(Boolean).join(' → ') || '移動名なし';
+        const detail = 'メーター ' + (t.meterStart ?? '') + ' → ' + (t.meterEnd ?? '') + ' / ' + distanceText(t.distance || 0);
+        return '<div>' + escapeHtml(route) + ' <span class="pill">車</span> <span class="small muted">' + escapeHtml(detail) + '</span>' + (t.tripMemo ? ' <span class="small muted">' + escapeHtml(t.tripMemo) + '</span>' : '') + '</div>';
+      }).join('');
+    }
+
+    function renderList(){
+      const rows = getMonthRecords().sort((a, b) =>
+        residentName(a).localeCompare(residentName(b), 'ja') ||
+        (b.date || '').localeCompare(a.date || '') ||
+        (b.createdAt || '').localeCompare(a.createdAt || '')
+      );
+      let lastResident = '';
+      const html = [];
+      rows.forEach(r => {
+        const currentResident = residentName(r);
+        if (currentResident !== lastResident) {
+          html.push(`<tr class="groupRow"><td colspan="5">${escapeHtml(currentResident)}</td></tr>`);
+          lastResident = currentResident;
+        }
+        html.push(`
+        <tr>
+          <td><div>${escapeHtml(r.date || '')}</div><div class="small muted">${escapeHtml(r.staff || '')}</div></td>
+          <td><div style="font-weight:800;">${escapeHtml(r.resident || '対象未入力')}${r.purpose ? '／ ' + escapeHtml(r.purpose) : ''}</div><div class="small" style="margin-top:4px;">${routeHtml(r.trips)}</div>${r.memo ? `<div class="small muted" style="margin-top:6px;">メモ：${escapeHtml(r.memo)}</div>` : ''}</td>
+          <td class="yen">${distanceText(r.totalDistance || 0)}</td>
+          <td class="yen">${yen(r.total || 0)}</td>
+          <td><button type="button" class="danger delBtn" data-id="${escapeHtml(r.id)}">削除</button></td>
+        </tr>`);
+      });
+      els.listBody.innerHTML = html.join('');
+      els.emptyState.style.display = rows.length ? 'none' : 'block';
+    }
+
+    function deleteRow(id){
+      if (!confirm('この交通費を削除しますか？')) return;
+      saveRecords(loadRecords().filter(r => r.id !== id));
+      renderAll();
+    }
+
+    function clearMonth(){
+      const target = els.monthFilter.value || monthStr(todayStr());
+      if (!confirm(target + ' の交通費を全部削除しますか？')) return;
+      saveRecords(loadRecords().filter(r => String(r.date || '').slice(0, 7) !== target));
+      renderAll();
+    }
+
+    function exportCsv(){
+      const rows = getMonthRecords().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      if (!rows.length) { alert('書き出すデータがありません。'); return; }
+      const lines = [[
+        '日付','氏名','利用者名・対象','用件','出発','到着','乗車時メーターkm','降車時メーターkm','走行距離km','単価','移動金額','移動メモ','メモ','合計'
+      ]];
+      rows.forEach(r => {
+        (r.trips || []).forEach((t, idx) => {
+          lines.push([
+            idx === 0 ? r.date || '' : '',
+            idx === 0 ? r.staff || '' : '',
+            idx === 0 ? r.resident || '' : '',
+            idx === 0 ? r.purpose || '' : '',
+            t.from || '',
+            t.to || '',
+            t.meterStart ?? '',
+            t.meterEnd ?? '',
+            t.distance ?? '',
+            t.unitRate ?? RATE_PER_KM,
+            t.amount ?? '',
+            t.tripMemo || '',
+            idx === 0 ? r.memo || '' : '',
+            idx === 0 ? r.total || 0 : ''
+          ]);
+        });
+      });
+      const csv = lines.map(row => row.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '車交通費_' + (els.monthFilter.value || monthStr(todayStr())) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function printMonth(){
+      const target = els.monthFilter.value || monthStr(todayStr());
+      const rows = getMonthRecords().sort((a, b) =>
+        residentName(a).localeCompare(residentName(b), 'ja') ||
+        (a.date || '').localeCompare(b.date || '') ||
+        (a.createdAt || '').localeCompare(b.createdAt || '')
+      );
+      if (!rows.length) { alert('印刷するデータがありません。'); return; }
+      const total = rows.reduce((a, b) => a + Number(b.total || 0), 0);
+      const totalDistance = round1(rows.reduce((a, b) => a + Number(b.totalDistance || 0), 0));
+      const residentSummary = getResidentSummaryRows(rows);
+      const html = `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>車交通費_${target}</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",sans-serif;margin:24px;color:#111827;}
+  h1{font-size:22px;margin:0 0 6px;}
+  h2{font-size:18px;margin:18px 0 8px;}
+  .sub{font-size:13px;color:#4b5563;margin:0 0 16px;}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 16px;}
+  .box{border:1px solid #d1d5db;border-radius:12px;padding:10px 12px;}
+  .label{font-size:12px;color:#6b7280;margin-bottom:4px;font-weight:700;}
+  .value{font-size:20px;font-weight:800;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{border:1px solid #d1d5db;padding:8px;vertical-align:top;text-align:left;}
+  th{background:#f3f4f6;}
+  .small{font-size:12px;color:#4b5563;}
+  .route{margin:0 0 4px;}
+  .yen{white-space:nowrap;font-weight:800;}
+  .residentHead{background:#eff6ff;font-weight:900;color:#1d4ed8;}
+  .residentBox{margin-bottom:18px;}
+  @media print{body{margin:12mm;} .noPrint{display:none;}}
+</style>
+</head>
+<body>
+  <div class="noPrint" style="margin-bottom:12px;"><button onclick="window.print()" style="padding:10px 14px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;">この内容を印刷</button></div>
+  <h1>車交通費一覧</h1>
+  <div class="sub">対象月：${target}</div>
+  <div class="summary">
+    <div class="box"><div class="label">この月の合計</div><div class="value">${yen(total)}</div></div>
+    <div class="box"><div class="label">この月の距離</div><div class="value">${distanceText(totalDistance)}</div></div>
+    <div class="box"><div class="label">件数</div><div class="value">${rows.length}件</div></div>
+  </div>
+
+  <h2>利用者別集計</h2>
+  <table style="margin-bottom:16px;">
+    <thead><tr><th>利用者名</th><th>件数</th><th>距離</th><th>合計</th></tr></thead>
+    <tbody>
+      ${residentSummary.map(r => `
+      <tr>
+        <td style="font-weight:800;">${escapeHtml(r.resident)}</td>
+        <td class="yen">${r.count}件</td>
+        <td class="yen">${distanceText(r.distance || 0)}</td>
+        <td class="yen">${yen(r.total || 0)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+
+  <h2>利用者ごとの一覧</h2>
+  ${residentSummary.map(group => {
+    const groupRows = rows.filter(r => residentName(r) === group.resident);
+    return `
+    <div class="residentBox">
+      <table>
+        <thead>
+          <tr><th colspan="7" class="residentHead">${escapeHtml(group.resident)} ／ ${group.count}件 ／ ${distanceText(group.distance || 0)} ／ ${yen(group.total || 0)}</th></tr>
+          <tr><th>日付</th><th>氏名</th><th>用件</th><th>移動内容</th><th>距離</th><th>合計</th><th>メモ</th></tr>
+        </thead>
+        <tbody>
+          ${groupRows.map(r => `
+            <tr>
+              <td>${escapeHtml(r.date || '')}</td>
+              <td>${escapeHtml(r.staff || '')}</td>
+              <td>${escapeHtml(r.purpose || '')}</td>
+              <td>${(r.trips || []).map(t => {
+                const route = [t.from, t.to].filter(Boolean).join(' → ') || '移動名なし';
+                const meter = 'メーター ' + (t.meterStart ?? '') + ' → ' + (t.meterEnd ?? '') + ' / ' + distanceText(t.distance || 0);
+                return '<div class="route">' + escapeHtml(route) + '</div><div class="small">' + escapeHtml(meter) + (t.tripMemo ? ' / ' + escapeHtml(t.tripMemo) : '') + '</div>';
+              }).join('<hr style="border:none;border-top:1px solid #e5e7eb;margin:6px 0;">')}</td>
+              <td class="yen">${distanceText(r.totalDistance || 0)}</td>
+              <td class="yen">${yen(r.total || 0)}</td>
+              <td>${escapeHtml(r.memo || '')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('')}
+</body>
+</html>`;
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        return;
+      }
+      const temp = document.createElement('iframe');
+      temp.style.position = 'fixed';
+      temp.style.right = '0';
+      temp.style.bottom = '0';
+      temp.style.width = '0';
+      temp.style.height = '0';
+      temp.style.border = '0';
+      document.body.appendChild(temp);
+      const doc = temp.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+      setTimeout(() => {
+        temp.contentWindow.focus();
+        temp.contentWindow.print();
+        setTimeout(() => temp.remove(), 1000);
+      }, 300);
+    }
+
+    function unlockApp(){
+      if (els.authScreen) els.authScreen.style.display = 'none';
+      if (els.appRoot) els.appRoot.classList.remove('app-hidden');
+    }
+
+    function showAuthError(message){
+      if (els.authError) els.authError.textContent = message || '';
+    }
+
+    function tryUnlock(){
+      const pw = String(els.sitePassword?.value || '').trim();
+      if (pw !== SITE_PASSWORD) {
+        showAuthError('パスワードが違います。');
+        if (els.sitePassword) {
+          els.sitePassword.value = '';
+          els.sitePassword.focus();
+        }
+        return;
+      }
+      sessionStorage.setItem(AUTH_KEY, '1');
+      showAuthError('');
+      unlockApp();
+    }
+
+    function bindAuth(){
+      els.unlockBtn?.addEventListener('click', tryUnlock);
+      els.sitePassword?.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') tryUnlock();
+      });
+    }
+
+    function initAuth(){
+      if (sessionStorage.getItem(AUTH_KEY) === '1') {
+        unlockApp();
+        return;
+      }
+      if (els.authScreen) els.authScreen.style.display = 'flex';
+      if (els.appRoot) els.appRoot.classList.add('app-hidden');
+      if (els.sitePassword) {
+        els.sitePassword.value = '';
+        setTimeout(() => els.sitePassword && els.sitePassword.focus(), 30);
+      }
+    }
+
+    function updateBackLink(){
+      const url = localStorage.getItem(EASY_PAGE_URL_KEY) || '';
+      if (url) {
+        els.backToEasyBtn.href = url;
+        els.backToEasyBtn.textContent = 'かんたんページへ戻る';
+      } else {
+        els.backToEasyBtn.href = 'javascript:void(0)';
+        els.backToEasyBtn.textContent = 'かんたんページURL未設定';
+      }
+    }
+
+    function renderAll(){
+      renderSummary();
+      renderResidentSummary();
+      renderList();
+      updateBackLink();
+    }
+
+    function onAction(target){
+      if (!target) return;
+      if (target.id === 'addTripBtn') {
+        createTrip();
+        setTapStatus('移動を追加しました');
+        return;
+      }
+      if (target.id === 'resetBtn') {
+        resetForm();
+        setTapStatus('入力をクリアしました');
+        return;
+      }
+      if (target.id === 'saveBtn') {
+        saveEntry();
+        return;
+      }
+      if (target.id === 'printBtn') {
+        printMonth();
+        return;
+      }
+      if (target.id === 'csvBtn') {
+        exportCsv();
+        return;
+      }
+      if (target.id === 'clearMonthBtn') {
+        clearMonth();
+        return;
+      }
+      if (target.classList.contains('removeTripBtn')) {
+        if (els.trips.children.length <= 1) {
+          alert('移動は1つ以上残してください。');
+          return;
+        }
+        target.closest('.tripBox').remove();
+        refreshTripTitles();
+        calcCurrent();
+        setTapStatus('移動を削除しました');
+        return;
+      }
+      if (target.classList.contains('delBtn')) {
+        deleteRow(target.getAttribute('data-id'));
+        return;
+      }
+      if (target.id === 'backToEasyBtn') {
+        const url = localStorage.getItem(EASY_PAGE_URL_KEY) || '';
+        if (!url) {
+          const input = prompt('かんたんページのURLを入れてください。\n例：https://example.github.io/easy.html');
+          if (input && /^https?:\/\//.test(input.trim())) {
+            localStorage.setItem(EASY_PAGE_URL_KEY, input.trim());
+            updateBackLink();
+            alert('URLを保存しました。もう一度押すと移動できます。');
+          } else if (input) {
+            alert('URLは http:// または https:// から始まる形で入れてください。');
+          }
+        } else {
+          location.href = url;
+        }
+      }
+    }
+
+    function bindActions(){
+      let lock = false;
+      const handler = function(e){
+        const target = e.target.closest('button, a.linkBtn');
+        if (!target) return;
+        e.preventDefault();
+        if (lock) return;
+        lock = true;
+        onAction(target);
+        setTimeout(() => { lock = false; }, 250);
+      };
+      document.addEventListener('click', handler, true);
+      document.addEventListener('pointerup', handler, true);
+    }
+
+    function bindInputs(){
+      els.trips.addEventListener('input', function(e){
+        if (e.target.closest('.tripBox')) calcCurrent();
+      });
+      els.trips.addEventListener('change', function(e){
+        if (e.target.closest('.tripBox')) calcCurrent();
+      });
+      els.monthFilter.addEventListener('change', renderAll);
+    }
+
+    function init(){
+      els.authScreen = $('authScreen');
+      els.appRoot = $('appRoot');
+      els.sitePassword = $('sitePassword');
+      els.unlockBtn = $('unlockBtn');
+      els.authError = $('authError');
+      els.date = $('date');
+      els.staff = $('staff');
+      els.resident = $('resident');
+      els.purpose = $('purpose');
+      els.memo = $('memo');
+      els.trips = $('trips');
+      els.currentTotal = $('currentTotal');
+      els.currentDistance = $('currentDistance');
+      els.tripCount = $('tripCount');
+      els.currentStatus = $('currentStatus');
+      els.monthFilter = $('monthFilter');
+      els.monthTotal = $('monthTotal');
+      els.monthDistance = $('monthDistance');
+      els.monthCount = $('monthCount');
+      els.todayTotal = $('todayTotal');
+      els.listBody = $('listBody');
+      els.emptyState = $('emptyState');
+      els.residentSummaryBody = $('residentSummaryBody');
+      els.residentSummaryEmpty = $('residentSummaryEmpty');
+      els.backToEasyBtn = $('backToEasyBtn');
+      els.tapStatus = $('tapStatus');
+      els.calcWarn = $('calcWarn');
+
+      if (els.resident) {
+        const current = els.resident.value;
+        els.resident.innerHTML = ['<option value="">選択してください</option>']
+          .concat(RESIDENT_OPTIONS.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`))
+          .join('');
+        els.resident.value = current || '';
+      }
+      els.date.value = todayStr();
+      els.monthFilter.value = monthStr(todayStr());
+      createTrip();
+      calcCurrent();
+      renderAll();
+      bindInputs();
+      bindActions();
+      bindAuth();
+      initAuth();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init, { once:true });
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
