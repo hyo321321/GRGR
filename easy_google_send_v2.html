@@ -81,7 +81,7 @@
         <div class="meta" style="font-size:14px;color:#374151;margin-top:8px;">
           利用者名をフルネームで入力し、見たい記録の日付を選んでください。<br>
           他の項目は未記入のままで大丈夫です。<br>
-          「本体の記録を確認」を押すと、入力した利用者のその日の記録が表示されます。
+          「この日の全員分を確認」を押すと、選択した日の全員分の記録が表示されます。
         </div>
       </details>
 
@@ -101,13 +101,15 @@
       <textarea id="memoInput" placeholder="ここに自分の記録だけ入力してください"></textarea>
 
       <div class="btns">
-        <button id="sendBtn" class="primary" type="button">一括作成して送信</button>
-        <button id="checkBtn" class="green" type="button">本体の記録を確認</button>
+        <button id="sendBtn" class="primary" type="button">送信</button>
         <button id="allCheckBtn" class="green" type="button">この日の全員分を確認</button>
-</div>
+      </div>
       <div class="btns" style="margin-top:8px;">
         <button id="openSearchBtn" class="ghost" type="button">記録検索ページを開く</button>
-        <button id="openTransportBtn" class="orange" type="button">交通費ページを開く</button>
+        <button id="openVitalsBtn" class="ghost" type="button">バイタルページを開く</button>
+      </div>
+      <div class="btns" style="margin-top:8px;">
+        <button id="openTransportBtn" class="ghost" type="button">交通費ページを開く</button>
       </div>
       <div id="sendStatus" class="status"></div>
     </div>
@@ -135,9 +137,9 @@ const staffNameEl = document.getElementById('staffName');
 const recordDateEl = document.getElementById('recordDate');
 const memoInput = document.getElementById('memoInput');
 const sendBtn = document.getElementById('sendBtn');
-const checkBtn = document.getElementById('checkBtn');
 const allCheckBtn = document.getElementById('allCheckBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
+const openVitalsBtn = document.getElementById('openVitalsBtn');
 const openTransportBtn = document.getElementById('openTransportBtn');
 const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
@@ -243,30 +245,6 @@ function buildPayload(text){
     }
   };
 }
-async function checkMainRecord(){
-  const user = String(userNameEl.value || '').trim();
-  const date = String(recordDateEl.value || '').trim() || todayYmd();
-  if (!user) {
-    checkStatus.textContent = '利用者名を選んでください。';
-    userNameEl.focus();
-    return;
-  }
-  checkBtn.disabled = true;
-  checkStatus.textContent = '確認中です...';
-  try {
-    const data = await fetchJson(WEB_APP_URL + '?action=getMainRecord&user=' + encodeURIComponent(user) + '&date=' + encodeURIComponent(date));
-    const text = normalizeText(data.text || (data.record && data.record.text) || '');
-    mainCheckBox.textContent = text || '記録はありません。';
-    checkStatus.textContent = text ? '記録を表示しました。' : '記録はありません。';
-  } catch(err){
-    mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
-    checkStatus.textContent = '確認に失敗しました。\n' + (err && err.message ? err.message : err);
-  } finally {
-    checkBtn.disabled = false;
-    allCheckBtn.disabled = false;
-  }
-}
-
 function getResidentNames(){
   return Array.from(userNameEl.options)
     .map(opt => String(opt.value || '').trim())
@@ -280,7 +258,6 @@ async function checkAllMainRecords(){
     mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
     return;
   }
-  checkBtn.disabled = true;
   allCheckBtn.disabled = true;
   checkStatus.textContent = '全員分を確認中です...';
   try {
@@ -316,7 +293,6 @@ async function checkAllMainRecords(){
     mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
     checkStatus.textContent = '全員分の確認に失敗しました。\n' + (err && err.message ? err.message : err);
   } finally {
-    checkBtn.disabled = false;
     allCheckBtn.disabled = false;
   }
 }
@@ -332,7 +308,6 @@ async function sendRecord(){
   const ok = confirm('送信しますか？\n\n利用者名: ' + user + '\n記録者: ' + staff + '\n日付: ' + date + '\n\n' + text);
   if (!ok) return;
   sendBtn.disabled = true;
-  checkBtn.disabled = true;
   allCheckBtn.disabled = true;
   sendStatus.textContent = '送信中です...';
   try {
@@ -341,21 +316,18 @@ async function sendRecord(){
     await postJson(buildPayload(text));
     memoInput.value = '';
     sendStatus.textContent = '送信しました。';
-    await checkMainRecord();
+    await checkAllMainRecords();
   } catch(err){
     sendStatus.textContent = '送信に失敗しました。\n' + (err && err.message ? err.message : err);
   } finally {
     sendBtn.disabled = false;
-    checkBtn.disabled = false;
     allCheckBtn.disabled = false;
   }
 }
 function clearText(){ memoInput.value = ''; sendStatus.textContent = ''; }
 function openSearchPage(){ window.location.href = 'easy_google_records_search.html'; }
-function openTransportPage(){
-  try { localStorage.setItem('transport_easy_page_url_v1', location.href); } catch(e) {}
-  window.location.href = 'transport_expense_app_car_meter_v5_auth_residents.html';
-}
+function openVitalsPage(){ window.location.href = 'vitals.html'; }
+function openTransportPage(){ window.location.href = 'transport_expense_app_car_meter_v5_auth_residents.html'; }
 
 if (!recordDateEl.value) recordDateEl.value = todayYmd();
 renderRecent();
@@ -363,10 +335,10 @@ initAuth();
 unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 sendBtn.addEventListener('click', sendRecord);
-checkBtn.addEventListener('click', checkMainRecord);
 allCheckBtn.addEventListener('click', checkAllMainRecords);
 openSearchBtn.addEventListener('click', openSearchPage);
-if (openTransportBtn) openTransportBtn.addEventListener('click', openTransportPage);
+openVitalsBtn.addEventListener('click', openVitalsPage);
+openTransportBtn.addEventListener('click', openTransportPage);
 </script>
 </body>
 </html>
