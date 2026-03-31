@@ -14,6 +14,8 @@
     .wrap{max-width:900px;margin:0 auto;padding:16px 14px 28px;}
     .title{font-size:24px;font-weight:800;margin:6px 0 14px;}
     .sub{color:var(--sub);font-size:13px;margin:0 0 14px;}
+    .topLinks{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px;}
+    .topLinks .linkBtn{padding:12px 14px;}
     .grid{display:grid;gap:14px;}
     .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;}
     .card h2{font-size:17px;margin:0 0 12px;}
@@ -81,6 +83,7 @@
   <div class="wrap">
     <div class="title">車交通費計算アプリ</div>
     <p class="sub">車専用です。乗車時メーターと降車時メーターを入れると、走行距離と金額を自動計算します。</p>
+    <div class="topLinks"><a class="linkBtn success" href="javascript:void(0)" id="backToEasyBtnTop">かんたんページへ戻る</a></div>
 
     <div class="grid">
       <section class="card">
@@ -648,12 +651,15 @@
 
     function updateBackLink(){
       const url = localStorage.getItem(EASY_PAGE_URL_KEY) || '';
-      if (url) {
-        els.backToEasyBtn.href = url;
-        els.backToEasyBtn.textContent = 'かんたんページへ戻る';
-      } else {
-        els.backToEasyBtn.href = 'javascript:void(0)';
-        els.backToEasyBtn.textContent = 'かんたんページURL未設定';
+      const targets = [els.backToEasyBtn, els.backToEasyBtnTop].filter(Boolean);
+      for (const btn of targets) {
+        if (url) {
+          btn.href = url;
+          btn.textContent = 'かんたんページへ戻る';
+        } else {
+          btn.href = 'javascript:void(0)';
+          btn.textContent = 'かんたんページURL未設定';
+        }
       }
     }
 
@@ -707,7 +713,7 @@
         deleteRow(target.getAttribute('data-id'));
         return;
       }
-      if (target.id === 'backToEasyBtn') {
+      if (target.id === 'backToEasyBtn' || target.id === 'backToEasyBtnTop') {
         const url = localStorage.getItem(EASY_PAGE_URL_KEY) || '';
         if (!url) {
           const input = prompt('かんたんページのURLを入れてください。\n例：https://example.github.io/easy.html');
@@ -775,6 +781,7 @@
       els.residentSummaryBody = $('residentSummaryBody');
       els.residentSummaryEmpty = $('residentSummaryEmpty');
       els.backToEasyBtn = $('backToEasyBtn');
+      els.backToEasyBtnTop = $('backToEasyBtnTop');
       els.tapStatus = $('tapStatus');
       els.calcWarn = $('calcWarn');
 
