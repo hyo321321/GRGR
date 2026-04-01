@@ -21,7 +21,12 @@
   button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}
   .primary{background:var(--primary)} .green{background:var(--green)} .orange{background:var(--orange)} .ghost{background:var(--ghost)}
   .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
-  .output{white-space:pre-wrap;line-height:1.6;background:#fbfbfd;border:1px solid var(--line);border-radius:12px;padding:14px;min-height:120px}
+  .output{background:#fbfbfd;border:1px solid var(--line);border-radius:12px;padding:14px;min-height:120px}
+  .recordBlock{padding:10px 0;border-top:1px dashed var(--line)}
+  .recordBlock:first-child{border-top:none;padding-top:0}
+  .residentTag{color:#dc2626;font-weight:900;margin:0 0 6px;letter-spacing:.02em}
+  .recordText{white-space:pre-wrap;line-height:1.6}
+
   .meta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
   details{margin:10px 0;border-radius:8px;padding:8px 10px}
   .help{border:1px solid #d9e2f0;background:#f5f7fb}
@@ -250,6 +255,34 @@ function getResidentNames(){
     .map(opt => String(opt.value || '').trim())
     .filter(Boolean);
 }
+
+function renderMainRecords(results){
+  // 表示上の見やすさだけ改善（データは変更しません）
+  mainCheckBox.innerHTML = '';
+  results.forEach((item) => {
+    const block = document.createElement('div');
+    block.className = 'recordBlock';
+
+    const header = document.createElement('div');
+    header.className = 'residentTag';
+    header.textContent = '【' + item.user + '】';
+
+    const body = document.createElement('div');
+    body.className = 'recordText';
+    if (item.ok && item.text) {
+      body.textContent = item.text;
+    } else if (item.ok) {
+      body.textContent = '記録なし';
+    } else {
+      body.textContent = '取得失敗: ' + item.error;
+    }
+
+    block.appendChild(header);
+    block.appendChild(body);
+    mainCheckBox.appendChild(block);
+  });
+}
+
 async function checkAllMainRecords(){
   const date = String(recordDateEl.value || '').trim() || todayYmd();
   const users = getResidentNames();
@@ -271,23 +304,14 @@ async function checkAllMainRecords(){
       }
     }));
 
-    const lines = [];
     let hitCount = 0;
 
     results.forEach((item) => {
-      if (lines.length) lines.push('');
-      lines.push('【' + item.user + '】');
-      if (item.ok && item.text) {
-        lines.push(item.text);
-        hitCount++;
-      } else if (item.ok) {
-        lines.push('記録なし');
-      } else {
-        lines.push('取得失敗: ' + item.error);
-      }
+      if (item.ok && item.text) hitCount++;
     });
 
-    mainCheckBox.textContent = lines.join('\n');
+    renderMainRecords(results);
+    checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件';
     checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件';
   } catch(err){
     mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
