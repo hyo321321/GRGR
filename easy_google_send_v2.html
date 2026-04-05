@@ -21,12 +21,7 @@
   button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}
   .primary{background:var(--primary)} .green{background:var(--green)} .orange{background:var(--orange)} .ghost{background:var(--ghost)}
   .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
-  .output{background:#fbfbfd;border:1px solid var(--line);border-radius:12px;padding:14px;min-height:120px}
-  .recordBlock{padding:10px 0;border-top:1px dashed var(--line)}
-  .recordBlock:first-child{border-top:none;padding-top:0}
-  .residentTag{color:#dc2626;font-weight:900;margin:0 0 6px;letter-spacing:.02em}
-  .recordText{white-space:pre-wrap;line-height:1.6}
-
+  .output{white-space:pre-wrap;line-height:1.6;background:#fbfbfd;border:1px solid var(--line);border-radius:12px;padding:14px;min-height:120px}
   .meta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
   details{margin:10px 0;border-radius:8px;padding:8px 10px}
   .help{border:1px solid #d9e2f0;background:#f5f7fb}
@@ -37,6 +32,23 @@
   .auth-text{color:var(--muted);line-height:1.6;margin:0 0 12px}
   .auth-error{color:#dc2626;font-size:13px;margin-top:8px;min-height:1.3em}
   .app-hidden{display:none}
+
+  .resident-block{padding:10px 0;border-bottom:1px solid var(--line)}
+  .resident-block:last-child{border-bottom:0}
+  .resident-title{color:#dc2626;font-weight:800;margin:0 0 8px;font-size:17px}
+  .resident-text{white-space:pre-wrap;line-height:1.7}
+  .template-wrap{border:1px solid #dbe4f0;background:#f8fbff;border-radius:12px;padding:10px 12px;margin:10px 0}
+  .template-head{font-size:14px;color:#475569;margin-top:6px;line-height:1.6}
+  .template-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .template-tab{background:#e5e7eb;color:#111827;border:1px solid #d1d5db;border-radius:999px;padding:8px 12px;font-weight:700}
+  .template-tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
+  .template-list{display:grid;gap:10px}
+  .template-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+  .template-text{white-space:pre-wrap;line-height:1.7;font-size:14px}
+  .mini-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .mini-btn{border:1px solid #cfd5df;background:#fff;color:#1f2937;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}
+  .mini-btn.primary-lite{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+  .copy-note{font-size:12px;color:var(--muted);margin-top:8px}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}}
 </style>
 </head>
@@ -81,15 +93,6 @@
       <label for="recordDate">日付</label>
       <input id="recordDate" type="date">
 
-      <details class="help">
-        <summary style="cursor:pointer;font-weight:700;">記録の見方を見る</summary>
-        <div class="meta" style="font-size:14px;color:#374151;margin-top:8px;">
-          利用者名をフルネームで入力し、見たい記録の日付を選んでください。<br>
-          他の項目は未記入のままで大丈夫です。<br>
-          「この日の全員分を確認」を押すと、選択した日の全員分の記録が表示されます。
-        </div>
-      </details>
-
       <details class="warn">
         <summary style="cursor:pointer;font-weight:700;">削除・訂正方法を見る</summary>
         <div style="margin-top:8px;line-height:1.6;font-size:14px;">
@@ -99,6 +102,17 @@
           <div style="font-weight:700;margin-top:8px;">訂正したい時</div>
           <div>訂正したい内容を正しい文章で入力してください。<br>最後に「訂正依頼」と入力して送ってください。</div>
           <div style="margin-top:4px;padding-left:8px;color:#444;">例<br>朝は服薬確認を実施。血圧測定は未実施。<br>訂正依頼</div>
+        </div>
+      </details>
+
+
+      <details class="help" id="templateDetails">
+        <summary style="cursor:pointer;font-weight:700;">定型文を開く</summary>
+        <div class="template-wrap">
+          <div class="template-head">よく使う文章を選んで、本文へ入れるかコピーできます。いまは日中支援Ⅰ・日中支援Ⅱ・バイタル・服薬を調整中です。</div>
+          <div id="templateTabs" class="template-tabs"></div>
+          <div id="templateList" class="template-list"></div>
+          <div class="copy-note">本文へ入れる は下の本文欄に追加されます。コピー はそのまま貼り付け用です。</div>
         </div>
       </details>
 
@@ -150,6 +164,9 @@ const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
 const mainCheckBox = document.getElementById('mainCheckBox');
 const recentStaff = document.getElementById('recentStaff');
+const templateDetails = document.getElementById('templateDetails');
+const templateTabs = document.getElementById('templateTabs');
+const templateList = document.getElementById('templateList');
 
 function unlockApp(){ authScreen.style.display = 'none'; appRoot.classList.remove('app-hidden'); }
 function showAuthError(msg){ authError.textContent = msg || ''; }
@@ -199,6 +216,79 @@ function saveRecentStaff(name){
 function renderRecent(){
   recentStaff.innerHTML = loadRecent().map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
 }
+
+const TEMPLATE_DATA = {
+  '日中支援Ⅰ': ['調整中'],
+  '日中支援Ⅱ': ['調整中'],
+  'バイタル': ['調整中'],
+  '服薬': ['調整中']
+};
+
+let activeTemplateCategory = Object.keys(TEMPLATE_DATA)[0] || '';
+
+function appendToMemo(text){
+  const current = normalizeText(memoInput.value);
+  const next = current ? current + '\n' + text : text;
+  memoInput.value = next;
+  memoInput.focus();
+}
+
+async function copyTemplateText(text){
+  try {
+    await navigator.clipboard.writeText(text);
+    sendStatus.textContent = '定型文をコピーしました。';
+  } catch(e){
+    memoInput.value = text;
+    memoInput.focus();
+    memoInput.select();
+    sendStatus.textContent = 'コピーできないため本文欄へ入れました。';
+  }
+}
+
+function renderTemplateTabs(){
+  const cats = Object.keys(TEMPLATE_DATA);
+  templateTabs.innerHTML = cats.map(cat => '<button class="template-tab' + (cat === activeTemplateCategory ? ' active' : '') + '" type="button" data-cat="' + escapeHtml(cat) + '">' + escapeHtml(cat) + '</button>').join('');
+  Array.from(templateTabs.querySelectorAll('button')).forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeTemplateCategory = btn.dataset.cat || cats[0] || '';
+      renderTemplateTabs();
+      renderTemplateList();
+    });
+  });
+}
+
+function renderTemplateList(){
+  const items = TEMPLATE_DATA[activeTemplateCategory] || [];
+  templateList.innerHTML = items.map((text, idx) => {
+    const safe = escapeHtml(text);
+    return '<div class="template-card">' +
+      '<div class="template-text">' + safe + '</div>' +
+      '<div class="mini-btns">' +
+      '<button class="mini-btn primary-lite" type="button" data-action="insert" data-idx="' + idx + '">本文へ入れる</button>' +
+      '<button class="mini-btn" type="button" data-action="copy" data-idx="' + idx + '">コピー</button>' +
+      '</div></div>';
+  }).join('');
+  Array.from(templateList.querySelectorAll('button')).forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx = Number(btn.dataset.idx || -1);
+      const text = items[idx];
+      if (!text) return;
+      if (btn.dataset.action === 'insert') {
+        appendToMemo(text);
+        sendStatus.textContent = '定型文を本文へ入れました。';
+      } else {
+        await copyTemplateText(text);
+      }
+    });
+  });
+}
+
+function initTemplates(){
+  if (!templateTabs || !templateList) return;
+  renderTemplateTabs();
+  renderTemplateList();
+}
+
 async function fetchJson(url){
   const res = await fetch(url, { cache:'no-store' });
   const text = await res.text();
@@ -255,40 +345,12 @@ function getResidentNames(){
     .map(opt => String(opt.value || '').trim())
     .filter(Boolean);
 }
-
-function renderMainRecords(results){
-  // 表示上の見やすさだけ改善（データは変更しません）
-  mainCheckBox.innerHTML = '';
-  results.forEach((item) => {
-    const block = document.createElement('div');
-    block.className = 'recordBlock';
-
-    const header = document.createElement('div');
-    header.className = 'residentTag';
-    header.textContent = '【' + item.user + '】';
-
-    const body = document.createElement('div');
-    body.className = 'recordText';
-    if (item.ok && item.text) {
-      body.textContent = item.text;
-    } else if (item.ok) {
-      body.textContent = '記録なし';
-    } else {
-      body.textContent = '取得失敗: ' + item.error;
-    }
-
-    block.appendChild(header);
-    block.appendChild(body);
-    mainCheckBox.appendChild(block);
-  });
-}
-
 async function checkAllMainRecords(){
   const date = String(recordDateEl.value || '').trim() || todayYmd();
   const users = getResidentNames();
   if (!users.length) {
     checkStatus.textContent = '利用者が登録されていません。';
-    mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
+    mainCheckBox.innerHTML = 'ここに選択した日の記録が表示されます。';
     return;
   }
   allCheckBtn.disabled = true;
@@ -304,17 +366,31 @@ async function checkAllMainRecords(){
       }
     }));
 
+    const blocks = [];
     let hitCount = 0;
 
     results.forEach((item) => {
-      if (item.ok && item.text) hitCount++;
+      let body = '';
+      if (item.ok && item.text) {
+        body = escapeHtml(item.text);
+        hitCount++;
+      } else if (item.ok) {
+        body = '記録なし';
+      } else {
+        body = '取得失敗: ' + escapeHtml(item.error);
+      }
+      blocks.push(
+        '<div class="resident-block">' +
+        '<div class="resident-title">【' + escapeHtml(item.user) + '】</div>' +
+        '<div class="resident-text">' + body + '</div>' +
+        '</div>'
+      );
     });
 
-    renderMainRecords(results);
-    checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件';
+    mainCheckBox.innerHTML = blocks.join('');
     checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件';
   } catch(err){
-    mainCheckBox.textContent = 'ここに選択した日の記録が表示されます。';
+    mainCheckBox.innerHTML = 'ここに選択した日の記録が表示されます。';
     checkStatus.textContent = '全員分の確認に失敗しました。\n' + (err && err.message ? err.message : err);
   } finally {
     allCheckBtn.disabled = false;
@@ -355,6 +431,7 @@ function openTransportPage(){ window.location.href = 'transport_expense_app_car_
 
 if (!recordDateEl.value) recordDateEl.value = todayYmd();
 renderRecent();
+initTemplates();
 initAuth();
 unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
