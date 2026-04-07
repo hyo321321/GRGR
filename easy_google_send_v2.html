@@ -161,7 +161,7 @@
   </div>
 </div>
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
 const SITE_PASSWORD = '1122';
 const AUTH_KEY = 'easy_page_auth_ok';
 const RECENT_STAFF_KEY = 'easy_recent_staff_v2';
@@ -547,7 +547,8 @@ async function sendRecord(){
 function clearText(){ memoInput.value = ''; sendStatus.textContent = ''; }
 function openSearchPage(){ window.location.href = 'easy_google_records_search.html'; }
 function openVitalsPage(){ window.location.href = 'vitals.html'; }
-function openTransportPage(){ window.location.href = 'transport_expense_app_car_meter_v5_auth_residents.html'; }
+function openTransportPage(){ try{localStorage.setItem('transport_easy_page_url_v1', location.href);}catch(e){}
+  window.location.href = 'transport_expense_app_car_meter_shared.html'; }
 
 if (!recordDateEl.value) recordDateEl.value = todayYmd();
 renderRecent();
