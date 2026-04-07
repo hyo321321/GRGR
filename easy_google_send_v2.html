@@ -49,7 +49,15 @@
   .mini-btn{border:1px solid #cfd5df;background:#fff;color:#1f2937;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}
   .mini-btn.primary-lite{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
   .copy-note{font-size:12px;color:var(--muted);margin-top:8px}
-  @media (max-width:640px){.row,.btns{grid-template-columns:1fr}}
+  .bulk-box{margin-top:10px;border:1px solid #d9e2f0;background:#f8fbff;border-radius:12px;padding:10px 12px}
+  .bulk-title{font-size:14px;font-weight:800;margin-bottom:4px}
+  .bulk-meta{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+  .bulk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .bulk-item{display:flex;align-items:center;gap:8px;border:1px solid #dbe4f0;background:#fff;border-radius:10px;padding:8px 10px}
+  .bulk-item input{width:auto;margin:0}
+  .bulk-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .bulk-small{border:1px solid #cfd5df;background:#fff;color:#1f2937;border-radius:10px;padding:8px 10px;font-weight:700;cursor:pointer}
+  @media (max-width:640px){.row,.btns{grid-template-columns:1fr}.bulk-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -109,10 +117,22 @@
       <details class="help" id="templateDetails">
         <summary style="cursor:pointer;font-weight:700;">定型文を開く（日中支援Ⅰ 日中支援Ⅱ バイタル 服薬）</summary>
         <div class="template-wrap">
-          <div class="template-head">よく使う文章を選んで、本文へ入れるかコピーできます。日中支援Ⅰ・日中支援Ⅱの例文を入れています。</div>
+          <div class="template-head">よく使う文章を選んで、本文へ入れるかコピーできます。必要な場合は、この中から複数人への一括送信も使えます。</div>
           <div id="templateTabs" class="template-tabs"></div>
           <div id="templateList" class="template-list"></div>
           <div class="copy-note">本文へ入れる は下の本文欄に追加されます。コピー はそのまま貼り付け用です。</div>
+      <div class="bulk-box">
+        <div class="bulk-title">複数人に同じ記録を送る</div>
+        <div class="bulk-meta">同じ内容でよい利用者だけチェックしてください。本文欄の文章を、そのまま同じ日付・同じ記録者名で一括送信します。</div>
+        <div id="bulkResidentGrid" class="bulk-grid"></div>
+        <div class="bulk-actions">
+          <button id="bulkSelectAllBtn" class="bulk-small" type="button">全員チェック</button>
+          <button id="bulkClearBtn" class="bulk-small" type="button">チェック解除</button>
+          <button id="bulkSendBtn" class="orange" type="button">チェックした人に一括送信</button>
+        </div>
+        <div id="bulkStatus" class="status"></div>
+      </div>
+
         </div>
       </details>
 
@@ -167,6 +187,11 @@ const recentStaff = document.getElementById('recentStaff');
 const templateDetails = document.getElementById('templateDetails');
 const templateTabs = document.getElementById('templateTabs');
 const templateList = document.getElementById('templateList');
+const bulkResidentGrid = document.getElementById('bulkResidentGrid');
+const bulkSelectAllBtn = document.getElementById('bulkSelectAllBtn');
+const bulkClearBtn = document.getElementById('bulkClearBtn');
+const bulkSendBtn = document.getElementById('bulkSendBtn');
+const bulkStatus = document.getElementById('bulkStatus');
 
 function unlockApp(){ authScreen.style.display = 'none'; appRoot.classList.remove('app-hidden'); }
 function showAuthError(msg){ authError.textContent = msg || ''; }
@@ -227,10 +252,11 @@ const TEMPLATE_DATA = {
   ],
   '日中支援Ⅱ': [
     '数日間体調不良が続いており、本日も不調が見られた。欠席連絡は本人にて行われている。ホーム内で休養したい意向があったため、日中はこまめに訪室し、状態確認と声かけを行いながら見守った。',
-    '本日、体調不良が見られた。欠席連絡は本人にて行われている。ホーム内で休みたい意向が聞かれたため、日中はこまめに訪室し、状態確認と声かけを行いながら見守り対応を実施した。'
+    '本日、体調不良が見られた。欠席連絡は本人にて行われている。ホーム内で休みたい意向が聞かれたため、日中はこまめに訪室し、状態確認と声かけを行いながら見守り対応を実施した。',
+    '元気な様子は見られたが、朝の気分不良により活動意欲が低下し、通所に至らず欠席された。'
   ],
-  'バイタル': ['調整中'],
-  '服薬': ['調整中']
+  'バイタル': ['血圧・体重測定を実施し、異常はみられなかった。'],
+  '服薬': ['服薬管理を行い、内服を確認した。']
 };
 
 let activeTemplateCategory = Object.keys(TEMPLATE_DATA)[0] || '';
@@ -319,8 +345,8 @@ async function postJson(payload){
   if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
   return data;
 }
-function buildPayload(text){
-  const user = String(userNameEl.value || '').trim();
+function buildPayload(text, userOverride){
+  const user = String(userOverride || userNameEl.value || '').trim();
   const staff = String(staffNameEl.value || '').trim();
   const date = String(recordDateEl.value || '').trim() || todayYmd();
   const body = normalizeText(text);
@@ -353,6 +379,91 @@ function getResidentNames(){
   return Array.from(userNameEl.options)
     .map(opt => String(opt.value || '').trim())
     .filter(Boolean);
+}
+
+function renderBulkResidents(){
+  if (!bulkResidentGrid) return;
+  const users = getResidentNames();
+  bulkResidentGrid.innerHTML = users.map((user, idx) => (
+    '<label class="bulk-item">' +
+    '<input type="checkbox" class="bulk-resident" value="' + escapeHtml(user) + '" id="bulkResident' + idx + '">' +
+    '<span>' + escapeHtml(user) + '</span>' +
+    '</label>'
+  )).join('');
+}
+
+function getCheckedBulkResidents(){
+  return Array.from(document.querySelectorAll('.bulk-resident:checked'))
+    .map(el => String(el.value || '').trim())
+    .filter(Boolean);
+}
+
+function setAllBulkResidents(checked){
+  Array.from(document.querySelectorAll('.bulk-resident')).forEach(el => { el.checked = !!checked; });
+}
+
+async function sendBulkRecords(){
+  const users = getCheckedBulkResidents();
+  const staff = String(staffNameEl.value || '').trim();
+  const date = String(recordDateEl.value || '').trim() || todayYmd();
+  const text = normalizeText(memoInput.value);
+
+  if (!users.length) {
+    bulkStatus.textContent = '一括送信する利用者をチェックしてください。';
+    return;
+  }
+  if (!staff) {
+    bulkStatus.textContent = '記録者名を入力してください。';
+    staffNameEl.focus();
+    return;
+  }
+  if (!text) {
+    bulkStatus.textContent = '本文を入力してください。';
+    memoInput.focus();
+    return;
+  }
+
+  const ok = confirm('一括送信しますか？\n\n対象: ' + users.join('、') + '\n記録者: ' + staff + '\n日付: ' + date + '\n\n' + text);
+  if (!ok) return;
+
+  sendBtn.disabled = true;
+  allCheckBtn.disabled = true;
+  bulkSendBtn.disabled = true;
+  bulkStatus.textContent = '一括送信中です...';
+  sendStatus.textContent = '';
+
+  const successUsers = [];
+  const failedUsers = [];
+
+  try {
+    saveRecentStaff(staff);
+    renderRecent();
+
+    for (const user of users) {
+      try {
+        await postJson(buildPayload(text, user));
+        successUsers.push(user);
+      } catch (err) {
+        failedUsers.push(user + '（' + (err && err.message ? err.message : String(err)) + '）');
+      }
+    }
+
+    if (successUsers.length && !failedUsers.length) {
+      memoInput.value = '';
+      setAllBulkResidents(false);
+      bulkStatus.textContent = '一括送信しました。' + successUsers.join('、');
+    } else if (successUsers.length && failedUsers.length) {
+      bulkStatus.textContent = '一部送信しました。\n成功: ' + successUsers.join('、') + '\n失敗: ' + failedUsers.join('、');
+    } else {
+      bulkStatus.textContent = '一括送信に失敗しました。\n' + failedUsers.join('、');
+    }
+
+    await checkAllMainRecords();
+  } finally {
+    sendBtn.disabled = false;
+    allCheckBtn.disabled = false;
+    bulkSendBtn.disabled = false;
+  }
 }
 async function checkAllMainRecords(){
   const date = String(recordDateEl.value || '').trim() || todayYmd();
@@ -440,12 +551,16 @@ function openTransportPage(){ window.location.href = 'transport_expense_app_car_
 
 if (!recordDateEl.value) recordDateEl.value = todayYmd();
 renderRecent();
+renderBulkResidents();
 initTemplates();
 initAuth();
 unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 sendBtn.addEventListener('click', sendRecord);
 allCheckBtn.addEventListener('click', checkAllMainRecords);
+if (bulkSelectAllBtn) bulkSelectAllBtn.addEventListener('click', () => setAllBulkResidents(true));
+if (bulkClearBtn) bulkClearBtn.addEventListener('click', () => setAllBulkResidents(false));
+if (bulkSendBtn) bulkSendBtn.addEventListener('click', sendBulkRecords);
 openSearchBtn.addEventListener('click', openSearchPage);
 openVitalsBtn.addEventListener('click', openVitalsPage);
 openTransportBtn.addEventListener('click', openTransportPage);
