@@ -186,6 +186,18 @@
     function $(id){ return document.getElementById(id); }
     function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
     function monthStr(dateStr){ return (dateStr || todayStr()).slice(0,7); }
+    function normalizeYmd(value){
+      const s = String(value || '').trim();
+      if (!s) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const d = new Date(s);
+      if (isNaN(d)) return s;
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+    function monthKey(value){ return normalizeYmd(value).slice(0,7); }
     function yen(v){ return Number(v || 0).toLocaleString('ja-JP') + '円'; }
     function distanceText(v){ return (Math.round(Number(v || 0) * 10) / 10).toLocaleString('ja-JP', {maximumFractionDigits:1}) + 'km'; }
     function escapeHtml(s){ return String(s ?? '').replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
@@ -341,12 +353,12 @@
 
     function getMonthRecords(){
       const target = els.monthFilter.value || monthStr(todayStr());
-      return remoteRecords.filter(r => String(r.date || '').slice(0,7) === target);
+      return remoteRecords.filter(r => monthKey(r.date) === target);
     }
 
     function getTodayRecords(){
       const today = todayStr();
-      return remoteRecords.filter(r => String(r.date || '') === today);
+      return remoteRecords.filter(r => normalizeYmd(r.date) === today);
     }
 
     function residentName(r){ return String((r && r.resident) || '未設定'); }
@@ -404,7 +416,7 @@
       );
       els.listBody.innerHTML = rows.map(r => `
         <tr>
-          <td><div>${escapeHtml(r.date || '')}</div><div class="small muted">${escapeHtml(r.staff || '')}</div></td>
+          <td><div>${escapeHtml(normalizeYmd(r.date) || String(r.date || ''))}</div><div class="small muted">${escapeHtml(r.staff || '')}</div></td>
           <td>
             <div><strong>${escapeHtml(residentName(r))}</strong>${r.purpose ? ' ／ ' + escapeHtml(r.purpose) : ''}</div>
             <div class="small" style="margin-top:4px;">${routeHtml(r.trips)}</div>
@@ -441,7 +453,7 @@
       const data = await fetchJson(WEB_APP_URL + '?action=listTransportRecords');
       remoteRecords = Array.isArray(data.records) ? data.records : [];
       renderAll();
-      const msg = (showMsg ? '最新を読み込みました。\n' : '') + '共有データ ' + remoteRecords.length + '件';
+      const msg = (showMsg ? '最新を読み込みました。\n' : '') + '共有データ ' + remoteRecords.length + '件\nこの月 ' + getMonthRecords().length + '件';
       setSyncStatus(msg);
     }
 
