@@ -86,12 +86,12 @@
   <div id="appRoot" class="app-hidden">
     <div class="wrap">
       <div class="title">車交通費計算アプリ（共有版）</div>
-      <p class="sub">各自の携帯で保存した内容が、同じ一覧に反映される共有版です。車専用です。乗車時メーターと降車時メーターを入れると、走行距離と金額を自動計算します。</p>
+      <p class="sub">各自の携帯で保存した内容が、同じ一覧に反映される共有版です。車専用です。乗車時メーターと降車時メーターを入れると、走行距離と金額を自動計算します。出発・到着は基本は空欄でOKです。</p>
 
       <div class="grid">
         <section class="card">
           <h2>交通費を入力</h2>
-          <div class="note">1kmあたり20円で計算します。往復は「行き」と「帰り」を別々に追加してください。利用者名は、かんたんページと同じ名前から選べます。</div>
+          <div class="note">1kmあたり20円で計算します。往復は「行き」と「帰り」を別々に追加してください。利用者名は、かんたんページと同じ名前から選べます。出発・到着は基本は空欄でOKです。必要な時は出発時刻・帰着時刻も入れられます。</div>
           <div id="syncStatus" class="statusBox">共有データを読み込む前です。</div>
           <div class="warn" id="calcWarn"></div>
 
@@ -250,8 +250,12 @@
           <button type="button" class="danger small removeTripBtn">削除</button>
         </div>
         <div class="row">
-          <div class="field"><label>出発</label><input type="text" class="from" placeholder="例：グループホーム" value="${escapeHtml(initial.from || '')}"></div>
-          <div class="field"><label>到着</label><input type="text" class="to" placeholder="例：西脇医院" value="${escapeHtml(initial.to || '')}"></div>
+          <div class="field"><label>出発</label><input type="text" class="from" placeholder="基本は空欄でOK" value="${escapeHtml(initial.from || '')}"></div>
+          <div class="field"><label>到着</label><input type="text" class="to" placeholder="基本は空欄でOK" value="${escapeHtml(initial.to || '')}"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>出発時刻</label><input type="time" class="departTime" value="${escapeHtml(initial.departTime || '')}"></div>
+          <div class="field"><label>帰着時刻</label><input type="time" class="arriveTime" value="${escapeHtml(initial.arriveTime || '')}"></div>
         </div>
         <div class="row">
           <div class="field"><label>乗車時メーター（km）</label><input type="number" class="meterStart" min="0" step="0.1" inputmode="decimal" placeholder="例：12540.2" value="${escapeHtml(initial.meterStart || '')}"></div>
@@ -260,9 +264,6 @@
         <div class="row">
           <div class="field"><label>走行距離</label><div class="readonlyView tripDistance">0km</div></div>
           <div class="field"><label>この移動の金額</label><div class="readonlyView tripAmount">0円</div></div>
-        </div>
-        <div class="row one">
-          <div class="field"><label>移動メモ</label><input type="text" class="tripMemo" placeholder="例：病院送迎" value="${escapeHtml(initial.tripMemo || '')}"></div>
         </div>`;
       els.trips.appendChild(box);
       refreshTripTitles();
@@ -285,12 +286,13 @@
       return {
         from: (box.querySelector('.from').value || '').trim(),
         to: (box.querySelector('.to').value || '').trim(),
+        departTime: (box.querySelector('.departTime').value || '').trim(),
+        arriveTime: (box.querySelector('.arriveTime').value || '').trim(),
         meterStart: start || 0,
         meterEnd: end || 0,
         distance,
         unitRate: RATE_PER_KM,
-        amount,
-        tripMemo: (box.querySelector('.tripMemo').value || '').trim()
+        amount
       };
     }
 
@@ -402,9 +404,9 @@
 
     function routeHtml(trips){
       return (trips || []).map(t => {
-        const route = [t.from, t.to].filter(Boolean).join(' → ');
-        const memo = t.tripMemo ? ' / ' + escapeHtml(t.tripMemo) : '';
-        return `<div>${escapeHtml(route)} <span class="pill">${distanceText(t.distance)} / ${yen(t.amount)}</span>${memo}</div>`;
+        const route = [t.from, t.to].filter(Boolean).join(' → ') || '移動';
+        const timeText = [t.departTime, t.arriveTime].filter(Boolean).join(' → ');
+        return `<div>${escapeHtml(route)}${timeText ? ' <span class="small muted">' + escapeHtml(timeText) + '</span>' : ''} <span class="pill">${distanceText(t.distance)} / ${yen(t.amount)}</span></div>`;
       }).join('');
     }
 
@@ -463,8 +465,8 @@
       if (!entry.resident) { alert('利用者名・対象を選んでください。'); els.resident.focus(); return; }
       if (!entry.purpose) { alert('用件を入力してください。'); els.purpose.focus(); return; }
       if (!entry.trips.length) { alert('移動を1件以上入力してください。'); return; }
-      const hasInvalid = entry.trips.some(t => !t.from || !t.to || !Number.isFinite(Number(t.meterStart)) || !Number.isFinite(Number(t.meterEnd)) || t.distance < 0);
-      if (hasInvalid) { alert('出発・到着・メーターを確認してください。'); return; }
+      const hasInvalid = entry.trips.some(t => !Number.isFinite(Number(t.meterStart)) || !Number.isFinite(Number(t.meterEnd)) || Number(t.meterEnd) < Number(t.meterStart));
+      if (hasInvalid) { alert('乗車時メーター・降車時メーターを確認してください。出発・到着は空欄でOKです。'); return; }
       if (!confirm(entry.resident + ' の交通費を保存しますか？\n\n合計: ' + yen(entry.total))) return;
       setSyncStatus('保存中です...');
       try {
@@ -511,7 +513,7 @@
       const rows = getMonthRecords().slice().sort((a,b) => (a.date || '').localeCompare(b.date || ''));
       if (!rows.length) { alert('書き出すデータがありません。'); return; }
       const lines = [[
-        '日付','氏名','利用者名・対象','用件','出発','到着','乗車時メーターkm','降車時メーターkm','走行距離km','単価','移動金額','移動メモ','メモ','合計'
+        '日付','氏名','利用者名・対象','用件','出発','到着','出発時刻','帰着時刻','乗車時メーターkm','降車時メーターkm','走行距離km','単価','移動金額','メモ','合計'
       ]];
       rows.forEach(r => {
         (r.trips || []).forEach((t, idx) => {
@@ -522,12 +524,13 @@
             idx === 0 ? r.purpose || '' : '',
             t.from || '',
             t.to || '',
+            t.departTime || '',
+            t.arriveTime || '',
             t.meterStart ?? '',
             t.meterEnd ?? '',
             t.distance ?? '',
             t.unitRate ?? RATE_PER_KM,
             t.amount ?? '',
-            t.tripMemo || '',
             idx === 0 ? r.memo || '' : '',
             idx === 0 ? r.total || 0 : ''
           ]);
@@ -562,7 +565,7 @@
           <td>${escapeHtml(r.staff || '')}</td>
           <td>${escapeHtml(residentName(r))}</td>
           <td>${escapeHtml(r.purpose || '')}</td>
-          <td>${(r.trips || []).map(t => `${escapeHtml(t.from || '')} → ${escapeHtml(t.to || '')}（${distanceText(t.distance)} / ${yen(t.amount)}）`).join('<br>')}</td>
+          <td>${(r.trips || []).map(t => { const route = [t.from || '', t.to || ''].filter(Boolean).join(' → ') || '移動'; const time = [t.departTime || '', t.arriveTime || ''].filter(Boolean).join(' → '); return `${escapeHtml(route)}${time ? ' [' + escapeHtml(time) + ']' : ''}（${distanceText(t.distance)} / ${yen(t.amount)}）`; }).join('<br>')}</td>
           <td style="text-align:right;">${distanceText(r.totalDistance)}</td>
           <td style="text-align:right;">${yen(r.total)}</td>
         </tr>`).join('');
