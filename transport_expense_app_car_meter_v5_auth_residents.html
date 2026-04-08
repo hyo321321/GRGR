@@ -48,7 +48,7 @@
     .yen{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:800;}
     .muted{color:var(--sub);} .small{font-size:12px;}
     .pill{display:inline-block;background:#eef2ff;color:#3730a3;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;}
-    .toolbar{display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;margin-bottom:12px;align-items:end;}
+    .toolbar{display:grid;grid-template-columns:1fr 1fr auto auto auto auto;gap:10px;margin-bottom:12px;align-items:end;}
     .empty{padding:20px;text-align:center;color:var(--sub);font-size:14px;}
     .footerLink{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;}
     .readonlyView{width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#f8fafc;color:var(--text);font-weight:700;}
@@ -86,12 +86,12 @@
   <div id="appRoot" class="app-hidden">
     <div class="wrap">
       <div class="title">車交通費計算アプリ（共有版）</div>
-      <p class="sub">各自の携帯で保存した内容が、同じ一覧に反映される共有版です。車専用です。乗車時メーターと降車時メーターを入れると、走行距離と金額を自動計算します。出発・到着は基本は空欄でOKです。</p>
+      <p class="sub">各自の携帯で保存した内容が、同じ一覧に反映される共有版です。車専用です。乗車時メーターと降車時メーターを入れると、走行距離と金額を自動計算します。出発・到着は基本は空欄でOKです。出発時刻・帰着時刻も未入力のままで使え、必要な時だけ30分単位で選べます。</p>
 
       <div class="grid">
         <section class="card">
           <h2>交通費を入力</h2>
-          <div class="note">1kmあたり20円で計算します。往復は「行き」と「帰り」を別々に追加してください。利用者名は、かんたんページと同じ名前から選べます。出発・到着は基本は空欄でOKです。必要な時は出発時刻・帰着時刻も入れられます。</div>
+          <div class="note">1kmあたり20円で計算します。往復は「行き」と「帰り」を別々に追加してください。利用者名は、かんたんページと同じ名前から選べます。出発・到着は基本は空欄でOKです。出発時刻・帰着時刻も未入力のままで使え、必要な時だけ30分単位で選べます。</div>
           <div id="syncStatus" class="statusBox">共有データを読み込む前です。</div>
           <div class="warn" id="calcWarn"></div>
 
@@ -134,7 +134,8 @@
           <h2>集計</h2>
           <div class="toolbar">
             <div class="field"><label for="monthFilter">月を選ぶ</label><input id="monthFilter" type="month"></div>
-            <button class="ghost" id="printBtn" type="button">印刷</button>
+            <div class="field"><label for="printResident">印刷する利用者</label><select id="printResident"></select></div>
+            <button class="ghost" id="printBtn" type="button">請求書・領収書を印刷</button>
             <button class="secondary" id="csvBtn" type="button">CSV書き出し</button>
             <button class="ghost" id="reloadBtnTop" type="button">再読込</button>
             <button class="danger" id="clearMonthBtn" type="button">この月を全削除</button>
@@ -206,6 +207,20 @@
     function safeNumber(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
     function setSyncStatus(text){ if (els.syncStatus) els.syncStatus.textContent = text || ''; }
 
+
+    function buildTimeOptions(selected){
+      const current = String(selected || '').trim();
+      const options = ['<option value="">未入力</option>'];
+      for (let h = 0; h < 24; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          const value = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+          const selectedAttr = value === current ? ' selected' : '';
+          options.push('<option value="' + value + '"' + selectedAttr + '>' + value + '</option>');
+        }
+      }
+      return options.join('');
+    }
+
     async function fetchJson(url){
       const res = await fetch(url, { cache:'no-store' });
       const text = await res.text();
@@ -254,8 +269,8 @@
           <div class="field"><label>到着</label><input type="text" class="to" placeholder="基本は空欄でOK" value="${escapeHtml(initial.to || '')}"></div>
         </div>
         <div class="row">
-          <div class="field"><label>出発時刻</label><input type="time" class="departTime" value="${escapeHtml(initial.departTime || '')}"></div>
-          <div class="field"><label>帰着時刻</label><input type="time" class="arriveTime" value="${escapeHtml(initial.arriveTime || '')}"></div>
+          <div class="field"><label>出発時刻</label><select class="departTime">${buildTimeOptions(initial.departTime || '')}</select></div>
+          <div class="field"><label>帰着時刻</label><select class="arriveTime">${buildTimeOptions(initial.arriveTime || '')}</select></div>
         </div>
         <div class="row">
           <div class="field"><label>乗車時メーター（km）</label><input type="number" class="meterStart" min="0" step="0.1" inputmode="decimal" placeholder="例：12540.2" value="${escapeHtml(initial.meterStart || '')}"></div>
@@ -378,6 +393,23 @@
       return Array.from(map.values()).sort((a,b) => a.resident.localeCompare(b.resident, 'ja'));
     }
 
+    function renderPrintResidentOptions(){
+      const rows = getMonthRecords();
+      const names = Array.from(new Set(rows.map(r => residentName(r)).filter(Boolean))).sort((a,b) => a.localeCompare(b, 'ja'));
+      const current = (els.printResident && els.printResident.value) || '';
+      const options = ['<option value="">利用者を選ぶ</option>']
+        .concat(names.map(name => '<option value="' + escapeHtml(name) + '"' + (name === current ? ' selected' : '') + '>' + escapeHtml(name) + '</option>'));
+      els.printResident.innerHTML = options.join('');
+      if (!names.length) return;
+      if (current && names.includes(current)) {
+        els.printResident.value = current;
+      } else if (els.resident.value && names.includes(els.resident.value)) {
+        els.printResident.value = els.resident.value;
+      } else {
+        els.printResident.value = names[0];
+      }
+    }
+
     function renderSummary(){
       const monthRows = getMonthRecords();
       const todayRows = getTodayRecords();
@@ -447,6 +479,7 @@
       renderSummary();
       renderResidentSummary();
       renderList();
+      renderPrintResidentOptions();
       updateBackLink();
     }
 
@@ -550,50 +583,72 @@
 
     function printMonth(){
       const target = els.monthFilter.value || monthStr(todayStr());
-      const rows = getMonthRecords().slice().sort((a,b) =>
-        residentName(a).localeCompare(residentName(b), 'ja') ||
-        (a.date || '').localeCompare(b.date || '') ||
-        (a.createdAt || '').localeCompare(b.createdAt || '')
+      const selectedResident = (els.printResident.value || '').trim();
+      if (!selectedResident) { alert('印刷する利用者を選んでください。'); return; }
+      const rows = getMonthRecords().filter(r => residentName(r) === selectedResident).slice().sort((a,b) =>
+        String(a.date || '').localeCompare(String(b.date || '')) ||
+        String(a.createdAt || '').localeCompare(String(b.createdAt || ''))
       );
-      if (!rows.length) { alert('印刷するデータがありません。'); return; }
+      if (!rows.length) { alert('選択した利用者の印刷データがありません。'); return; }
       const total = rows.reduce((a,b) => a + safeNumber(b.total), 0);
       const totalDistance = round1(rows.reduce((a,b) => a + safeNumber(b.totalDistance), 0));
-      const residentRows = getResidentSummaryRows(rows);
-      const detailRows = rows.map(r => `
+      const issueDate = todayStr();
+      const detailRows = rows.map((r, idx) => `
         <tr>
-          <td>${escapeHtml(r.date || '')}</td>
-          <td>${escapeHtml(r.staff || '')}</td>
-          <td>${escapeHtml(residentName(r))}</td>
+          <td style="text-align:center;">${idx + 1}</td>
+          <td>${escapeHtml(normalizeYmd(r.date) || String(r.date || ''))}</td>
           <td>${escapeHtml(r.purpose || '')}</td>
-          <td>${(r.trips || []).map(t => { const route = [t.from || '', t.to || ''].filter(Boolean).join(' → ') || '移動'; const time = [t.departTime || '', t.arriveTime || ''].filter(Boolean).join(' → '); return `${escapeHtml(route)}${time ? ' [' + escapeHtml(time) + ']' : ''}（${distanceText(t.distance)} / ${yen(t.amount)}）`; }).join('<br>')}</td>
+          <td>${(r.trips || []).map(t => {
+            const route = [t.from || '', t.to || ''].filter(Boolean).join(' → ') || '移動';
+            const time = [t.departTime || '', t.arriveTime || ''].filter(Boolean).join(' → ');
+            return `${escapeHtml(route)}${time ? ' [' + escapeHtml(time) + ']' : ''}`;
+          }).join('<br>')}</td>
           <td style="text-align:right;">${distanceText(r.totalDistance)}</td>
           <td style="text-align:right;">${yen(r.total)}</td>
         </tr>`).join('');
-      const residentTable = residentRows.map(r => `
-        <tr>
-          <td>${escapeHtml(r.resident)}</td>
-          <td style="text-align:right;">${r.count}</td>
-          <td style="text-align:right;">${distanceText(r.distance)}</td>
-          <td style="text-align:right;">${yen(r.total)}</td>
-        </tr>`).join('');
-      const html = `<!doctype html><html lang="ja"><head><meta charset="UTF-8"><title>車交通費 ${target}</title>
+      const html = `<!doctype html><html lang="ja"><head><meta charset="UTF-8"><title>請求書・領収書 ${target} ${escapeHtml(selectedResident)}</title>
       <style>
-      body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;color:#111827;padding:20px;}
-      h1,h2{margin:0 0 12px;} .meta{margin-bottom:16px;color:#475569;}
-      table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px;} th,td{border:1px solid #cbd5e1;padding:6px 8px;vertical-align:top;} th{background:#f8fafc;text-align:left;}
-      .sum{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 16px;} .box{border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;min-width:160px;} .label{font-size:11px;color:#64748b;} .value{font-size:18px;font-weight:800;margin-top:4px;}
+      @page{size:A4 portrait;margin:12mm;}
+      body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;color:#111827;margin:0;font-size:12px;}
+      .sheet{display:flex;flex-direction:column;gap:10mm;}
+      .block{border:1px solid #111827;border-radius:8px;padding:10px 12px;}
+      .title{font-size:24px;font-weight:800;text-align:center;letter-spacing:.08em;margin:0 0 8px;}
+      .meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:12px;}
+      .line{border-bottom:1px solid #111827;display:inline-block;min-width:160px;padding:2px 4px;}
+      .amountBox{border:2px solid #111827;padding:8px 12px;font-size:20px;font-weight:900;text-align:center;margin:8px 0;}
+      .desc{margin:6px 0 10px;line-height:1.6;}
+      table{width:100%;border-collapse:collapse;font-size:11px;}
+      th,td{border:1px solid #94a3b8;padding:5px 6px;vertical-align:top;} th{background:#f8fafc;}
+      .signRow{display:flex;justify-content:space-between;gap:12px;margin-top:12px;}
+      .signBox{flex:1;min-height:52px;border-top:1px solid #111827;padding-top:4px;}
+      .split{border-top:2px dashed #64748b;padding-top:10mm;}
+      .small{font-size:11px;color:#334155;line-height:1.5;}
       </style></head><body>
-      <h1>車交通費 ${target}</h1>
-      <div class="meta">共有版の月別一覧です。</div>
-      <div class="sum">
-        <div class="box"><div class="label">この月の合計</div><div class="value">${yen(total)}</div></div>
-        <div class="box"><div class="label">この月の距離</div><div class="value">${distanceText(totalDistance)}</div></div>
-        <div class="box"><div class="label">件数</div><div class="value">${rows.length}</div></div>
+      <div class="sheet">
+        <section class="block">
+          <h1 class="title">請求書</h1>
+          <div class="meta"><div>対象月：<span class="line">${escapeHtml(target)}</span></div><div>発行日：<span class="line">${escapeHtml(issueDate)}</span></div></div>
+          <div class="meta"><div>利用者名：<span class="line">${escapeHtml(selectedResident)}</span></div><div>宛名：<span class="line">　　　　　　　　　様</span></div></div>
+          <div class="amountBox">請求金額　${yen(total)}</div>
+          <div class="desc">上記のとおり、${escapeHtml(target)}分の車交通費を請求いたします。</div>
+          <table>
+            <thead><tr><th style="width:36px;">No</th><th style="width:78px;">日付</th><th style="width:90px;">用件</th><th>内容</th><th style="width:70px;">距離</th><th style="width:74px;">金額</th></tr></thead>
+            <tbody>${detailRows}</tbody>
+            <tfoot><tr><th colspan="4" style="text-align:right;">合計</th><th style="text-align:right;">${distanceText(totalDistance)}</th><th style="text-align:right;">${yen(total)}</th></tr></tfoot>
+          </table>
+          <div class="signRow"><div class="signBox">備考</div><div class="signBox">作成者</div></div>
+        </section>
+
+        <section class="block split">
+          <h1 class="title">領収書</h1>
+          <div class="meta"><div>対象月：<span class="line">${escapeHtml(target)}</span></div><div>領収日：<span class="line">${escapeHtml(issueDate)}</span></div></div>
+          <div class="meta"><div>利用者名：<span class="line">${escapeHtml(selectedResident)}</span></div><div>宛名：<span class="line">　　　　　　　　　様</span></div></div>
+          <div class="amountBox">領収金額　${yen(total)}</div>
+          <div class="desc">上記金額を、${escapeHtml(target)}分の車交通費として領収しました。</div>
+          <div class="small">但し、${escapeHtml(target)}分車交通費として</div>
+          <div class="signRow"><div class="signBox">受領者署名</div><div class="signBox">備考</div></div>
+        </section>
       </div>
-      <h2>利用者別集計</h2>
-      <table><thead><tr><th>利用者名</th><th>件数</th><th>距離</th><th>合計</th></tr></thead><tbody>${residentTable}</tbody></table>
-      <h2 style="margin-top:18px;">詳細</h2>
-      <table><thead><tr><th>日付</th><th>氏名</th><th>利用者名</th><th>用件</th><th>移動</th><th>距離</th><th>合計</th></tr></thead><tbody>${detailRows}</tbody></table>
       </body></html>`;
       const w = window.open('', '_blank');
       if (!w) { alert('印刷画面を開けませんでした。'); return; }
@@ -740,6 +795,7 @@
       els.tripCount = $('tripCount');
       els.currentStatus = $('currentStatus');
       els.monthFilter = $('monthFilter');
+      els.printResident = $('printResident');
       els.monthTotal = $('monthTotal');
       els.monthDistance = $('monthDistance');
       els.monthCount = $('monthCount');
