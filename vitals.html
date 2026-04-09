@@ -278,10 +278,11 @@
 <div class="topbar-inner">
 <div>
 <div class="title">🩺 バイタル記録（体重・血圧・脈拍）</div>
-<div class="subtitle">※保存先はブラウザの保存領域（localStorage）です。利用者・記録者リストは本体アプリと共有します。</div>
+<div class="subtitle">※保存先は localStorage＋共有保存です。共有URLが設定されていれば、携帯からの保存も他端末と共有できます。</div>
 </div>
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
+<button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
@@ -419,6 +420,8 @@
     const RESIDENTS_KEY = "group_home_residents_v1";
     const RECORDERS_KEY = "group_home_recorders_v1";
     const VITALS_KEY    = "group_home_vitals_v1";
+    const GOOGLE_SHARE_URL_KEY = "group_home_google_share_url";
+    const GOOGLE_SHARE_URL = (localStorage.getItem(GOOGLE_SHARE_URL_KEY) || window.GOOGLE_SHARE_URL || '').trim();
 
     const $ = (id) => document.getElementById(id);
 
@@ -443,6 +446,107 @@
     const saveJSON = (key, value) => {
       localStorage.setItem(key, JSON.stringify(value));
     };
+
+
+    function setRemoteStatus(msg) {
+      const el = $('remoteStatus');
+      if (el) el.textContent = msg || '';
+    }
+
+    function hasRemoteEnabled() {
+      return !!GOOGLE_SHARE_URL;
+    }
+
+    function normalizeRemoteRecord(row) {
+      if (!row || typeof row !== 'object') return null;
+      const date = String(row.date || row.vDate || '').trim();
+      const time = String(row.time || row.vTime || '').trim();
+      const measuredAt = row.measuredAt || ((date && time) ? buildMeasuredAt(date, time) : '');
+      const id = String(row.id || row._id || '').trim() || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2));
+      return {
+        id,
+        resident: String(row.resident || row.user || '').trim(),
+        recorder: String(row.recorder || row.staff || '').trim(),
+        measuredAt,
+        weight: String(row.weight ?? '').trim(),
+        bpSys: String(row.bpSys ?? row.bpHigh ?? '').trim(),
+        bpDia: String(row.bpDia ?? row.bpLow ?? '').trim(),
+        pulse: String(row.pulse ?? '').trim(),
+        memo: String(row.memo ?? '').trim(),
+      };
+    }
+
+    function mergeVitalsById(localList, remoteList) {
+      const map = new Map();
+      for (const item of Array.isArray(localList) ? localList : []) {
+        if (!item || !item.id) continue;
+        map.set(item.id, item);
+      }
+      for (const item of Array.isArray(remoteList) ? remoteList : []) {
+        if (!item || !item.id) continue;
+        map.set(item.id, item);
+      }
+      return Array.from(map.values()).sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
+    }
+
+    async function remoteGet(params) {
+      const url = GOOGLE_SHARE_URL + '?' + new URLSearchParams(params).toString();
+      const res = await fetch(url, { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有読込に失敗しました');
+      return json;
+    }
+
+    async function remotePost(params) {
+      const res = await fetch(GOOGLE_SHARE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: new URLSearchParams(params).toString(),
+      });
+      const json = await res.json();
+      if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有保存に失敗しました');
+      return json;
+    }
+
+    async function saveVitalRemote(entry) {
+      if (!hasRemoteEnabled()) return { ok:false, skipped:true };
+      const d = new Date(entry.measuredAt);
+      return remotePost({
+        action: 'saveVitalRecord',
+        id: entry.id || '',
+        date: `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,
+        time: `${pad2(d.getHours())}:${pad2(d.getMinutes())}`,
+        user: entry.resident || '',
+        staff: entry.recorder || '',
+        weight: entry.weight || '',
+        bpSys: entry.bpSys || '',
+        bpDia: entry.bpDia || '',
+        pulse: entry.pulse || '',
+        memo: entry.memo || '',
+        measuredAt: entry.measuredAt || '',
+      });
+    }
+
+    async function deleteVitalRemote(id) {
+      if (!hasRemoteEnabled()) return { ok:false, skipped:true };
+      return remotePost({ action: 'deleteVitalRecord', id: id || '' });
+    }
+
+    async function syncRemoteVitals(options = {}) {
+      if (!hasRemoteEnabled()) {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+        if (!options.silent) toast('共有URLが未設定です');
+        return [];
+      }
+      setRemoteStatus('共有読込中…');
+      const json = await remoteGet({ action: 'getVitalRecords' });
+      const remoteList = (Array.isArray(json.records) ? json.records : []).map(normalizeRemoteRecord).filter(Boolean);
+      const merged = mergeVitalsById(loadVitals(), remoteList);
+      saveVitals(merged);
+      setRemoteStatus(`共有接続OK：${remoteList.length}件読込`);
+      if (!options.silent) toast('共有読込しました');
+      return remoteList;
+    }
 
     const pad2 = (n) => String(n).padStart(2, '0');
     const nowLocalDate = () => {
@@ -946,7 +1050,7 @@
       return { date, time, resident, recorder, weight, bpSys, bpDia, pulse, memo };
     }
 
-    function saveDraftToVitals() {
+    async function saveDraftToVitals() {
       const d = getCurrentDraft();
       if (!d.resident) {
         toast('利用者を選択してください');
@@ -973,19 +1077,25 @@
       all.push(entry);
       saveVitals(all);
 
-      $('quickStatus').textContent = '保存しました';
-      toast('保存しました');
+      let statusMsg = '保存しました';
+      if (hasRemoteEnabled()) {
+        try {
+          await saveVitalRemote(entry);
+          setRemoteStatus('共有接続OK：保存しました');
+          statusMsg = '保存しました（共有OK）';
+        } catch (e) {
+          console.warn('saveVitalRemote failed', e);
+          setRemoteStatus('共有保存に失敗しました');
+          statusMsg = '端末に保存しました（共有失敗）';
+        }
+      }
 
-      // 次の入力用に時刻だけ更新（体重等はクリア）
+      $('quickStatus').textContent = statusMsg;
+      toast(statusMsg);
+
       $('vTime').value = nowLocalTime();
       clearInputs();
-
       renderList();
-
-      window.addEventListener('resize', () => {
-        // resize charts for new width
-        try { renderCharts(); } catch(e) {}
-      });
     }
 
     // --- 編集 ---
@@ -1017,7 +1127,7 @@
       $('modalBg').style.display = 'none';
     }
 
-    function applyEdit() {
+    async function applyEdit() {
       if (!editingId) return;
       const all = loadVitals();
       const idx = all.findIndex(x => x.id === editingId);
@@ -1040,30 +1150,45 @@
       };
 
       saveVitals(all);
-      toast('更新しました');
+      let msg = '更新しました';
+      if (hasRemoteEnabled()) {
+        try {
+          await saveVitalRemote(all[idx]);
+          setRemoteStatus('共有接続OK：更新しました');
+          msg = '更新しました（共有OK）';
+        } catch (e) {
+          console.warn('update remote failed', e);
+          setRemoteStatus('共有更新に失敗しました');
+          msg = '端末で更新しました（共有失敗）';
+        }
+      }
+      toast(msg);
       closeEdit();
       renderList();
-
-      window.addEventListener('resize', () => {
-        // resize charts for new width
-        try { renderCharts(); } catch(e) {}
-      });
     }
 
-    function deleteEdit() {
+    async function deleteEdit() {
       if (!editingId) return;
       const ok = confirm('このバイタル記録を削除しますか？');
       if (!ok) return;
-      const all = loadVitals().filter(x => x.id !== editingId);
+      const deletingId = editingId;
+      const all = loadVitals().filter(x => x.id !== deletingId);
       saveVitals(all);
-      toast('削除しました');
+      let msg = '削除しました';
+      if (hasRemoteEnabled()) {
+        try {
+          await deleteVitalRemote(deletingId);
+          setRemoteStatus('共有接続OK：削除しました');
+          msg = '削除しました（共有OK）';
+        } catch (e) {
+          console.warn('delete remote failed', e);
+          setRemoteStatus('共有削除に失敗しました');
+          msg = '端末で削除しました（共有失敗）';
+        }
+      }
+      toast(msg);
       closeEdit();
       renderList();
-
-      window.addEventListener('resize', () => {
-        // resize charts for new width
-        try { renderCharts(); } catch(e) {}
-      });
     }
 
     // --- CSV / バックアップ / 復元（このページ単体） ---
@@ -1131,7 +1256,14 @@
           if (!ok) return;
           saveVitals(Array.isArray(vitals)?vitals:[]);
           toast('復元しました');
-          renderList();
+          if (hasRemoteEnabled()) {
+        setRemoteStatus('共有URL設定済み：起動時に共有を確認します');
+        syncRemoteVitals({ silent:true }).then(() => renderList()).catch((e) => { console.warn('initial remote sync failed', e); setRemoteStatus('共有読込に失敗しました'); });
+      } else {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+      }
+
+      renderList();
 
       window.addEventListener('resize', () => {
         // resize charts for new width
@@ -1183,10 +1315,9 @@
         }
       } catch(e){}
 
-      $('saveVitalBtn').onclick = () => {
-        // last used
+      $('saveVitalBtn').onclick = async () => {
         try { saveJSON('group_home_vitals_last_v1', { resident: $('vResident').value, recorder: $('vRecorder').value }); } catch(e){}
-        saveDraftToVitals();
+        await saveDraftToVitals();
       };
       $('clearBtn').onclick = clearInputs;
       $('copyBtn').onclick = () => {
@@ -1200,6 +1331,7 @@
       $('filterRange').onchange = renderList;
       $('search').oninput = renderList;
 
+      $('syncRemoteBtn').onclick = async () => { try { await syncRemoteVitals(); renderList(); } catch(e){ console.warn(e); setRemoteStatus('共有読込に失敗しました'); toast('共有読込に失敗しました'); } };
       $('closeModalBtn').onclick = closeEdit;
       $('modalBg').addEventListener('click', (e) => { if (e.target === $('modalBg')) closeEdit(); });
       $('saveEditBtn').onclick = applyEdit;
@@ -1209,6 +1341,14 @@
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
       $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
+      $('hideUpdateBannerBtn').onclick = () => { const b = $('updateBanner'); if (b) b.style.display = 'none'; };
+
+      if (hasRemoteEnabled()) {
+        setRemoteStatus('共有URL設定済み：起動時に共有を確認します');
+        syncRemoteVitals({ silent:true }).then(() => renderList()).catch((e) => { console.warn('initial remote sync failed', e); setRemoteStatus('共有読込に失敗しました'); });
+      } else {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+      }
 
       renderList();
 
