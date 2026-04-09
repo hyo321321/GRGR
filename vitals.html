@@ -287,6 +287,8 @@
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
+<button class="btn btn-ghost" id="addResidentBtn">👤 利用者追加</button>
+<button class="btn btn-ghost" id="addRecorderBtn">✍ 記録者追加</button>
 <input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
 </div>
 </div>
@@ -424,6 +426,8 @@
     const VITALS_KEY    = "group_home_vitals_v1";
     const GOOGLE_SHARE_URL_KEY = "group_home_google_share_url";
     const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
+    const DEFAULT_RESIDENTS = ['利用者1','利用者2','利用者3','利用者4','利用者5','利用者6','利用者7'];
+    const DEFAULT_RECORDERS = ['太田'];
 
     const $ = (id) => document.getElementById(id);
 
@@ -448,6 +452,55 @@
     const saveJSON = (key, value) => {
       localStorage.setItem(key, JSON.stringify(value));
     };
+
+
+    function sanitizeNameList(list) {
+      return Array.from(new Set((Array.isArray(list) ? list : []).map(v => String(v || '').trim()).filter(Boolean)));
+    }
+
+    function ensureSeedLists() {
+      const currentResidents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
+      const currentRecorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
+      if (!currentResidents.length) saveJSON(RESIDENTS_KEY, DEFAULT_RESIDENTS.slice());
+      if (!currentRecorders.length) saveJSON(RECORDERS_KEY, DEFAULT_RECORDERS.slice());
+    }
+
+    function addNameToStorageList(key, name) {
+      const n = String(name || '').trim();
+      if (!n) return false;
+      const current = sanitizeNameList(loadJSON(key, []));
+      if (current.includes(n)) return false;
+      current.push(n);
+      saveJSON(key, current);
+      return true;
+    }
+
+    function refreshNameSelects(preserveValues = true) {
+      const residents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
+      const recorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
+
+      const prev = preserveValues ? {
+        vResident: $('vResident')?.value || '',
+        vRecorder: $('vRecorder')?.value || '',
+        filterResident: $('filterResident')?.value || '__all__',
+        eResident: $('eResident')?.value || '',
+        eRecorder: $('eRecorder')?.value || ''
+      } : {};
+
+      buildResidentsSelect($('vResident'), residents, false);
+      buildRecordersSelect($('vRecorder'), recorders);
+      buildResidentsSelect($('filterResident'), residents, true);
+      buildResidentsSelect($('eResident'), residents, false);
+      buildRecordersSelect($('eRecorder'), recorders);
+
+      if (preserveValues) {
+        if (prev.vResident && Array.from($('vResident').options).some(o => o.value === prev.vResident)) $('vResident').value = prev.vResident;
+        if (prev.vRecorder && Array.from($('vRecorder').options).some(o => o.value === prev.vRecorder)) $('vRecorder').value = prev.vRecorder;
+        if (prev.filterResident && Array.from($('filterResident').options).some(o => o.value === prev.filterResident)) $('filterResident').value = prev.filterResident;
+        if (prev.eResident && Array.from($('eResident').options).some(o => o.value === prev.eResident)) $('eResident').value = prev.eResident;
+        if (prev.eRecorder && Array.from($('eRecorder').options).some(o => o.value === prev.eRecorder)) $('eRecorder').value = prev.eRecorder;
+      }
+    }
 
 
     function setRemoteStatus(msg) {
@@ -1323,19 +1376,11 @@
       $('vDate').value = nowLocalDate();
       $('vTime').value = nowLocalTime();
 
-      const residents = loadJSON(RESIDENTS_KEY, []);
-      const recorders = loadJSON(RECORDERS_KEY, []);
-
-      buildResidentsSelect($('vResident'), residents, false);
-      buildRecordersSelect($('vRecorder'), recorders);
-      buildResidentsSelect($('filterResident'), residents, true);
+      ensureSeedLists();
+      refreshNameSelects(false);
 
       // filterResident: なるべく「最後に使った利用者」へ（グラフが見やすい）
       $('filterResident').value = '__all__';
-
-      // 編集モーダル側
-      buildResidentsSelect($('eResident'), residents, false);
-      buildRecordersSelect($('eRecorder'), recorders);
 
       // 設定の復元（最後に使った利用者/記録者）
       try {
@@ -1385,6 +1430,30 @@
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
       $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
       $('hideUpdateBannerBtn').onclick = () => { const b = $('updateBanner'); if (b) b.style.display = 'none'; };
+      $('addResidentBtn').onclick = () => {
+        const name = prompt('追加する利用者名を入力してください');
+        if (!name) return;
+        if (!addNameToStorageList(RESIDENTS_KEY, name)) {
+          toast('同じ利用者名があります');
+          return;
+        }
+        refreshNameSelects(true);
+        $('vResident').value = String(name).trim();
+        $('filterResident').value = String(name).trim();
+        toast('利用者を追加しました');
+        renderList();
+      };
+      $('addRecorderBtn').onclick = () => {
+        const name = prompt('追加する記録者名を入力してください');
+        if (!name) return;
+        if (!addNameToStorageList(RECORDERS_KEY, name)) {
+          toast('同じ記録者名があります');
+          return;
+        }
+        refreshNameSelects(true);
+        $('vRecorder').value = String(name).trim();
+        toast('記録者を追加しました');
+      };
 
       if (hasRemoteEnabled()) {
         setRemoteStatus('共有URL設定済み：起動時に共有を確認します');
@@ -1401,8 +1470,8 @@
       });
 
       // 注意表示
-      if (!Array.isArray(residents) || residents.length==0) {
-        $('quickStatus').textContent = '※利用者が未登録です（本体の「① 利用者管理」で登録してください）';
+      if (!sanitizeNameList(loadJSON(RESIDENTS_KEY, [])).length) {
+        $('quickStatus').textContent = '※利用者が未登録です';
       }
     }
 
