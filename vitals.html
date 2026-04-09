@@ -476,8 +476,10 @@
     function ensureSeedLists() {
       const currentResidents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
       const currentRecorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
-      if (!currentResidents.length) saveJSON(RESIDENTS_KEY, DEFAULT_RESIDENTS.slice());
-      if (!currentRecorders.length) saveJSON(RECORDERS_KEY, DEFAULT_RECORDERS.slice());
+      const mergedResidents = sanitizeNameList([...(currentResidents || []), ...DEFAULT_RESIDENTS]);
+      const mergedRecorders = sanitizeNameList([...(currentRecorders || []), ...DEFAULT_RECORDERS]);
+      saveJSON(RESIDENTS_KEY, mergedResidents);
+      saveJSON(RECORDERS_KEY, mergedRecorders);
     }
 
     function addNameToStorageList(key, name) {
