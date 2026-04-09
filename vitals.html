@@ -288,7 +288,9 @@
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
 <button class="btn btn-ghost" id="addResidentBtn">👤 利用者追加</button>
+<button class="btn btn-ghost" id="deleteResidentBtn">🗑 利用者を削除</button>
 <button class="btn btn-ghost" id="addRecorderBtn">✍ 記録者追加</button>
+<button class="btn btn-ghost" id="deleteRecorderBtn">🗑 記録者を削除</button>
 <input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
 </div>
 </div>
@@ -489,6 +491,16 @@
       if (current.includes(n)) return false;
       current.push(n);
       saveJSON(key, current);
+      return true;
+    }
+
+    function removeNameFromStorageList(key, name) {
+      const n = String(name || '').trim();
+      if (!n) return false;
+      const current = sanitizeNameList(loadJSON(key, []));
+      const next = current.filter(v => v !== n);
+      if (next.length === current.length) return false;
+      saveJSON(key, next);
       return true;
     }
 
@@ -1470,6 +1482,51 @@
         refreshNameSelects(true);
         $('vRecorder').value = String(name).trim();
         toast('記録者を追加しました');
+      };
+      $('deleteResidentBtn').onclick = () => {
+        const currentResidents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
+        if (!currentResidents.length) {
+          toast('削除できる利用者がありません');
+          return;
+        }
+        const current = $('vResident').value || currentResidents[0] || '';
+        const name = prompt('削除する利用者名を入力してください', current);
+        if (!name) return;
+        const trimmed = String(name).trim();
+        if (!currentResidents.includes(trimmed)) {
+          toast('その利用者名は見つかりません');
+          return;
+        }
+        if (!confirm('利用者「' + trimmed + '」を削除しますか？')) return;
+        if (!removeNameFromStorageList(RESIDENTS_KEY, trimmed)) {
+          toast('利用者を削除できませんでした');
+          return;
+        }
+        refreshNameSelects(false);
+        toast('利用者を削除しました');
+        renderList();
+      };
+      $('deleteRecorderBtn').onclick = () => {
+        const currentRecorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
+        if (!currentRecorders.length) {
+          toast('削除できる記録者がありません');
+          return;
+        }
+        const current = $('vRecorder').value || currentRecorders[0] || '';
+        const name = prompt('削除する記録者名を入力してください', current);
+        if (!name) return;
+        const trimmed = String(name).trim();
+        if (!currentRecorders.includes(trimmed)) {
+          toast('その記録者名は見つかりません');
+          return;
+        }
+        if (!confirm('記録者「' + trimmed + '」を削除しますか？')) return;
+        if (!removeNameFromStorageList(RECORDERS_KEY, trimmed)) {
+          toast('記録者を削除できませんでした');
+          return;
+        }
+        refreshNameSelects(false);
+        toast('記録者を削除しました');
       };
 
       if (hasRemoteEnabled()) {
