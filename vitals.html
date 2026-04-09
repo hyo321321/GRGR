@@ -426,7 +426,7 @@
     const VITALS_KEY    = "group_home_vitals_v1";
     const GOOGLE_SHARE_URL_KEY = "group_home_google_share_url";
     const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
-    const DEFAULT_RESIDENTS = ['利用者1','利用者2','利用者3','利用者4','利用者5','利用者6','利用者7'];
+    const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
     const DEFAULT_RECORDERS = ['太田'];
 
     const $ = (id) => document.getElementById(id);
@@ -452,6 +452,21 @@
     const saveJSON = (key, value) => {
       localStorage.setItem(key, JSON.stringify(value));
     };
+
+    function ensureDefaultPeople() {
+      let residents = loadJSON(RESIDENTS_KEY, []);
+      if (!Array.isArray(residents) || residents.length === 0) {
+        residents = DEFAULT_RESIDENTS.slice();
+        saveJSON(RESIDENTS_KEY, residents);
+      }
+      let recorders = loadJSON(RECORDERS_KEY, []);
+      if (!Array.isArray(recorders) || recorders.length === 0) {
+        recorders = DEFAULT_RECORDERS.slice();
+        saveJSON(RECORDERS_KEY, recorders);
+      }
+      return { residents, recorders };
+    }
+
 
 
     function sanitizeNameList(list) {
