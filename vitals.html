@@ -283,6 +283,7 @@
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
 <button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
+<button class="btn btn-ghost" id="migrateRemoteBtn">☁ 過去データを共有へ送る</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
@@ -325,6 +326,7 @@
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
+<div class="hint" id="remoteStatus" style="margin-bottom:10px;"></div>
 <div class="grid">
 <div>
 <label>日付</label>
@@ -546,6 +548,46 @@
       setRemoteStatus(`共有接続OK：${remoteList.length}件読込`);
       if (!options.silent) toast('共有読込しました');
       return remoteList;
+    }
+
+    async function migrateLocalVitalsToRemote() {
+      if (!hasRemoteEnabled()) {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+        toast('共有URLが未設定です');
+        return;
+      }
+      const localList = loadVitals().filter(v => v && v.id && v.measuredAt);
+      if (localList.length === 0) {
+        toast('送るデータがありません');
+        setRemoteStatus('送るデータがありません');
+        return;
+      }
+      const ok = confirm(`この端末の過去データ ${localList.length}件 を共有へ送ります。\n\n同じIDのものは上書きされます。続けますか？`);
+      if (!ok) return;
+
+      let success = 0;
+      let failed = 0;
+      for (let i = 0; i < localList.length; i++) {
+        const item = localList[i];
+        setRemoteStatus(`共有へ送信中… ${i + 1}/${localList.length}`);
+        try {
+          await saveVitalRemote(item);
+          success++;
+        } catch (e) {
+          console.warn('migrate remote failed', item, e);
+          failed++;
+        }
+      }
+
+      try {
+        await syncRemoteVitals({ silent:true });
+      } catch (e) {
+        console.warn('post migrate sync failed', e);
+      }
+      renderList();
+      const msg = failed ? `共有へ送信しました（成功 ${success}件 / 失敗 ${failed}件）` : `共有へ送信しました（${success}件）`;
+      setRemoteStatus(msg);
+      toast(failed ? `送信完了 成功${success}件 / 失敗${failed}件` : `送信完了 ${success}件`);
     }
 
     const pad2 = (n) => String(n).padStart(2, '0');
@@ -1332,6 +1374,7 @@
       $('search').oninput = renderList;
 
       $('syncRemoteBtn').onclick = async () => { try { await syncRemoteVitals(); renderList(); } catch(e){ console.warn(e); setRemoteStatus('共有読込に失敗しました'); toast('共有読込に失敗しました'); } };
+      $('migrateRemoteBtn').onclick = async () => { try { await migrateLocalVitalsToRemote(); } catch(e){ console.warn(e); setRemoteStatus('共有送信に失敗しました'); toast('共有送信に失敗しました'); } };
       $('closeModalBtn').onclick = closeEdit;
       $('modalBg').addEventListener('click', (e) => { if (e.target === $('modalBg')) closeEdit(); });
       $('saveEditBtn').onclick = applyEdit;
