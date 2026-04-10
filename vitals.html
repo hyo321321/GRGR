@@ -334,7 +334,11 @@
 <span>一覧</span>
 <span class="hint" id="countLabel"></span>
 </div>
+<div class="hint" id="listSummary" style="margin-bottom:10px;"></div>
 <div class="list" id="list"></div>
+<div class="btn-row" id="listMoreRow" style="display:none; margin-top:10px;">
+<button class="btn" id="listMoreBtn">もっと見る</button>
+</div>
 </div>
 </div><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
 <div class="chart-title">
@@ -401,6 +405,7 @@
     const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
     const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
     const DEFAULT_RECORDERS = ['太田'];
+    let listVisibleCount = 3;
 
     const $ = (id) => document.getElementById(id);
 
@@ -964,6 +969,41 @@
       return '全期間';
     }
 
+    function getVisibleLimit() {
+      const resident = $('filterResident').value;
+      const mode = $('filterRange').value;
+      if (resident === '__all__' && mode === 'today') return 9999;
+      return Math.max(3, Number(listVisibleCount || 3));
+    }
+
+    function formatPeriodLabel(filtered) {
+      if (!filtered.length) return getRangeLabel();
+      const sorted = filtered.slice().sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const start = String(first.measuredAt || '').slice(0,10).replace(/-/g,'/');
+      const end = String(last.measuredAt || '').slice(0,10).replace(/-/g,'/');
+      return start === end ? start : (start + ' ～ ' + end);
+    }
+
+    function avgText(filtered) {
+      const keys = [
+        ['weight','体重','kg'],
+        ['bpSys','血圧上',''],
+        ['bpDia','血圧下',''],
+        ['pulse','脈拍','']
+      ];
+      const out = [];
+      keys.forEach(([key,label,unit]) => {
+        const nums = filtered.map(v => parseNumOrNull(v[key])).filter(v => v != null);
+        if (!nums.length) return;
+        const avg = nums.reduce((a,b)=>a+b,0) / nums.length;
+        const val = key === 'weight' ? (Math.round(avg * 10) / 10).toFixed(1) : String(Math.round(avg));
+        out.push(label + '平均 ' + val + unit);
+      });
+      return out.join(' / ');
+    }
+
     function renderCharts() {
       const records = getFilteredForChart();
       const days = groupByDayLastMetrics(records);
@@ -1047,9 +1087,32 @@
           return true;
         });
 
-      $('countLabel').textContent = `${filtered.length}件`;
-      listEl.innerHTML = '';
+      const visibleLimit = getVisibleLimit();
+      const visible = filtered.slice(0, visibleLimit);
+      const hiddenCount = Math.max(0, filtered.length - visible.length);
 
+      $('countLabel').textContent = `${filtered.length}件`;
+      const listSummary = $('listSummary');
+      if (listSummary) {
+        const period = formatPeriodLabel(filtered);
+        const avg = avgText(filtered);
+        const rangeText = filtered.length ? `表示期間：${period}` : `表示期間：${getRangeLabel()}`;
+        const countText = filtered.length ? ` / 表示：1〜${visible.length}件` : '';
+        listSummary.textContent = avg ? `${rangeText}${countText} / ${avg}` : `${rangeText}${countText}`;
+      }
+
+      const moreRow = $('listMoreRow');
+      const moreBtn = $('listMoreBtn');
+      if (moreRow && moreBtn) {
+        if (hiddenCount > 0) {
+          moreRow.style.display = 'flex';
+          moreBtn.textContent = `もっと見る（残り${hiddenCount}件）`;
+        } else {
+          moreRow.style.display = 'none';
+        }
+      }
+
+      listEl.innerHTML = '';
       renderCharts();
 
       if (filtered.length === 0) {
@@ -1060,7 +1123,7 @@
         return;
       }
 
-      for (const v of filtered) {
+      for (const v of visible) {
         const item = document.createElement('div');
         item.className = 'item';
 
@@ -1386,7 +1449,8 @@
       ensureSeedLists();
       refreshNameSelects(false);
       $('filterResident').value = '__all__';
-      $('filterRange').value = 'month';
+      $('filterRange').value = 'today';
+      listVisibleCount = 3;
       $('vRecorder').value = '太田';
 
       try {
@@ -1413,9 +1477,10 @@
         navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(()=>{ fallbackCopy(txt); toast('コピーしました'); });
       };
 
-      $('filterResident').onchange = renderList;
-      $('filterRange').onchange = renderList;
-      $('search').oninput = renderList;
+      $('filterResident').onchange = () => { listVisibleCount = 3; renderList(); };
+      $('filterRange').onchange = () => { listVisibleCount = 3; renderList(); };
+      $('search').oninput = () => { listVisibleCount = 3; renderList(); };
+      $('listMoreBtn').onclick = () => { listVisibleCount += 3; renderList(); };
 
       $('addResidentBtn').onclick = () => {
         const name = prompt('追加する利用者名を入力してください');
