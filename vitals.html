@@ -253,19 +253,22 @@
 <div class="topbar-inner">
 <div>
 <div class="title">🩺 バイタル記録（体重・血圧・脈拍）</div>
-<div class="subtitle">※保存先は localStorage＋共有保存です。共有URLが設定されていれば、携帯からの保存も他端末と共有できます。</div>
+<div class="subtitle">※保存先は localStorage＋共有保存です。新規入力したデータは他端末でも確認できます。</div>
 </div>
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
+<button class="btn btn-ghost" id="addResidentBtn">👤 利用者追加</button>
+<button class="btn btn-ghost" id="deleteResidentBtn">🗑 利用者削除</button>
+<button class="btn btn-ghost" id="addRecorderBtn">✍ 記録者追加</button>
+<button class="btn btn-ghost" id="deleteRecorderBtn">🗑 記録者削除</button>
 <input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
 </div>
 </div>
 </div>
-<div class="wrap">
-<div class="layout">
+<div class="wrap"><div class="layout">
 <div class="card">
 <div class="card-title">
 <span>入力</span>
@@ -291,11 +294,6 @@
 <label>記録者</label>
 <select id="vRecorder"></select>
 </div>
-</div>
-<div class="btn-row" style="margin-top:8px;">
-<button class="btn" id="addRecorderBtn">✍ 記録者追加</button>
-<select id="deleteRecorderSelect" style="width:auto; min-width:180px;"></select>
-<button class="btn" id="deleteRecorderBtn">🗑 記録者削除</button>
 </div>
 <div class="grid-3" style="margin-top:10px;">
 <div>
@@ -336,20 +334,9 @@
 <span>一覧</span>
 <span class="hint" id="countLabel"></span>
 </div>
-<div class="tools" style="margin-bottom:8px;">
-<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-<label style="margin:0">件数：</label>
-<select id="listMode" style="width:auto">
-<option value="10" selected>最新10件</option>
-<option value="30">最新30件</option>
-<option value="all">全件</option>
-</select>
-</div>
-</div>
 <div class="list" id="list"></div>
 </div>
-</div>
-<div class="wrap"><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
+</div><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
 <div class="chart-title">
 <span>体重（kg）</span>
 <span class="chart-sub" id="chartResidentLabel"></span>
@@ -378,9 +365,7 @@
 </div>
 <input id="search" placeholder="検索（メモ/数値）" style="width: 180px;" type="text"/>
 </div></div>
-</div>
-</div>
-<div class="toast" id="toast"></div>
+</div><div class="toast" id="toast"></div>
 <div class="modal-backdrop" id="modalBg">
 <div class="modal">
 <div class="card-title"><span>編集</span><button class="btn" id="closeModalBtn">✕</button></div>
@@ -465,6 +450,27 @@
       return Array.from(new Set((Array.isArray(list) ? list : []).map(v => String(v || '').trim()).filter(Boolean)));
     }
 
+    function addNameToStorageList(key, name) {
+      const clean = String(name || '').trim();
+      if (!clean) return false;
+      const list = sanitizeNameList(loadJSON(key, []));
+      if (list.includes(clean)) return false;
+      list.push(clean);
+      saveJSON(key, list);
+      return true;
+    }
+
+    function removeNameFromStorageList(key, name) {
+      const clean = String(name || '').trim();
+      if (!clean) return false;
+      let list = sanitizeNameList(loadJSON(key, []));
+      if (!list.includes(clean)) return false;
+      list = list.filter(v => v !== clean);
+      if (key === RECORDERS_KEY && !list.includes('太田')) list.unshift('太田');
+      saveJSON(key, list);
+      return true;
+    }
+
     function ensureSeedLists() {
       const currentResidents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
       const mergedResidents = sanitizeNameList([...(currentResidents || []), ...DEFAULT_RESIDENTS]);
@@ -476,60 +482,32 @@
 
     function refreshNameSelects(preserveValues = true) {
       const residents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
-      const currentRecorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
-      const mergedRecorders = sanitizeNameList([...(currentRecorders || []), ...DEFAULT_RECORDERS]);
-      saveJSON(RECORDERS_KEY, mergedRecorders);
+      const recorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
+      if (!recorders.length) {
+        recorders.push(...DEFAULT_RECORDERS);
+        saveJSON(RECORDERS_KEY, recorders);
+      }
 
       const prev = preserveValues ? {
         vResident: $('vResident')?.value || '',
-        vRecorder: $('vRecorder')?.value || '太田',
         filterResident: $('filterResident')?.value || '__all__',
-        eResident: $('eResident')?.value || '',
-        eRecorder: $('eRecorder')?.value || '太田'
+        eResident: $('eResident')?.value || ''
       } : {};
 
       buildResidentsSelect($('vResident'), residents, false);
-      buildRecordersSelect($('vRecorder'), mergedRecorders);
+      buildRecordersSelect($('vRecorder'), recorders);
       buildResidentsSelect($('filterResident'), residents, true);
       buildResidentsSelect($('eResident'), residents, false);
-      buildRecordersSelect($('eRecorder'), mergedRecorders);
-      buildRecordersSelect($('deleteRecorderSelect'), mergedRecorders);
+      buildRecordersSelect($('eRecorder'), recorders);
 
-      $('vRecorder').value = (prev.vRecorder && Array.from($('vRecorder').options).some(o => o.value === prev.vRecorder)) ? prev.vRecorder : '太田';
-      $('eRecorder').value = (prev.eRecorder && Array.from($('eRecorder').options).some(o => o.value === prev.eRecorder)) ? prev.eRecorder : '太田';
+      if (Array.from($('vRecorder').options).some(o => o.value === '太田')) $('vRecorder').value = '太田';
+      if (Array.from($('eRecorder').options).some(o => o.value === '太田')) $('eRecorder').value = '太田';
 
       if (preserveValues) {
         if (prev.vResident && Array.from($('vResident').options).some(o => o.value === prev.vResident)) $('vResident').value = prev.vResident;
         if (prev.filterResident && Array.from($('filterResident').options).some(o => o.value === prev.filterResident)) $('filterResident').value = prev.filterResident;
         if (prev.eResident && Array.from($('eResident').options).some(o => o.value === prev.eResident)) $('eResident').value = prev.eResident;
       }
-    }
-
-    function addRecorder() {
-      const name = prompt('追加する記録者名を入力してください');
-      const trimmed = String(name || '').trim();
-      if (!trimmed) return;
-      const current = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
-      const next = sanitizeNameList([...current, trimmed]);
-      saveJSON(RECORDERS_KEY, next);
-      refreshNameSelects(true);
-      $('vRecorder').value = trimmed;
-      toast('記録者を追加しました');
-    }
-
-    function deleteSelectedRecorder() {
-      const name = String($('deleteRecorderSelect')?.value || '').trim();
-      if (!name) return;
-      if (name === '太田') {
-        alert('太田は初期記録者のため削除できません');
-        return;
-      }
-      if (!confirm('記録者「' + name + '」を削除しますか？')) return;
-      const current = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
-      const next = current.filter(v => v !== name);
-      saveJSON(RECORDERS_KEY, next);
-      refreshNameSelects(true);
-      toast('記録者を削除しました');
     }
 
     function setRemoteStatus(msg) {
@@ -1051,7 +1029,7 @@
       const q = String($('search').value || '').trim().toLowerCase();
       const { start, end } = getFilterRange();
 
-      let filtered = all
+      const filtered = all
         .slice()
         .sort((a,b) => (b.measuredAt || '').localeCompare(a.measuredAt || ''))
         .filter(v => {
@@ -1069,10 +1047,7 @@
           return true;
         });
 
-      const totalCount = filtered.length;
-      const listMode = $('listMode') ? $('listMode').value : '10';
-      if (listMode !== 'all') filtered = filtered.slice(0, Number(listMode || 10));
-      $('countLabel').textContent = `${filtered.length}/${totalCount}件`; 
+      $('countLabel').textContent = `${filtered.length}件`;
       listEl.innerHTML = '';
 
       renderCharts();
@@ -1427,7 +1402,7 @@
       } catch(e){}
 
       $('saveVitalBtn').onclick = async () => {
-        try { saveJSON('group_home_vitals_last_v1', { resident: $('vResident').value, recorder: '太田' }); } catch(e){}
+        try { saveJSON('group_home_vitals_last_v1', { resident: $('vResident').value, recorder: $('vRecorder').value }); } catch(e){}
         await saveDraftToVitals();
       };
       $('clearBtn').onclick = clearInputs;
@@ -1441,10 +1416,56 @@
       $('filterResident').onchange = renderList;
       $('filterRange').onchange = renderList;
       $('search').oninput = renderList;
-      if ($('listMode')) $('listMode').onchange = renderList;
-      if ($('addRecorderBtn')) $('addRecorderBtn').onclick = addRecorder;
-      if ($('deleteRecorderBtn')) $('deleteRecorderBtn').onclick = deleteSelectedRecorder;
 
+      $('addResidentBtn').onclick = () => {
+        const name = prompt('追加する利用者名を入力してください');
+        if (!name) return;
+        if (!addNameToStorageList(RESIDENTS_KEY, name)) {
+          toast('同じ利用者名があります');
+          return;
+        }
+        refreshNameSelects(true);
+        $('vResident').value = String(name).trim();
+        $('filterResident').value = String(name).trim();
+        toast('利用者を追加しました');
+        renderList();
+      };
+      $('deleteResidentBtn').onclick = () => {
+        const name = prompt('削除する利用者名を入力してください');
+        if (!name) return;
+        if (!removeNameFromStorageList(RESIDENTS_KEY, name)) {
+          toast('その利用者名はありません');
+          return;
+        }
+        refreshNameSelects(true);
+        toast('利用者を削除しました');
+        renderList();
+      };
+      $('addRecorderBtn').onclick = () => {
+        const name = prompt('追加する記録者名を入力してください');
+        if (!name) return;
+        if (!addNameToStorageList(RECORDERS_KEY, name)) {
+          toast('同じ記録者名があります');
+          return;
+        }
+        refreshNameSelects(true);
+        $('vRecorder').value = String(name).trim();
+        toast('記録者を追加しました');
+      };
+      $('deleteRecorderBtn').onclick = () => {
+        const name = prompt('削除する記録者名を入力してください');
+        if (!name) return;
+        if (String(name).trim() === '太田') {
+          toast('太田は削除できません');
+          return;
+        }
+        if (!removeNameFromStorageList(RECORDERS_KEY, name)) {
+          toast('その記録者名はありません');
+          return;
+        }
+        refreshNameSelects(true);
+        toast('記録者を削除しました');
+      };
       $('closeModalBtn').onclick = closeEdit;
       $('modalBg').addEventListener('click', (e) => { if (e.target === $('modalBg')) closeEdit(); });
       $('saveEditBtn').onclick = applyEdit;
