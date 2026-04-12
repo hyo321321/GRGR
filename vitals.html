@@ -123,6 +123,51 @@
     }
 
     .list { display: flex; flex-direction: column; gap: 10px; }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .vitals-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+      font-size: 13px;
+    }
+    .vitals-table th,
+    .vitals-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    .vitals-table th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 1;
+      font-size: 12px;
+      color: #475569;
+    }
+    .vitals-table td.memo-cell {
+      white-space: normal;
+      min-width: 180px;
+    }
+    .table-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+     .print-hide { }
+    .table-empty {
+      padding: 12px;
+      font-size: 13px;
+      color: #475569;
+    }
     .item {
       border: 1px solid #e5e7eb;
       border-radius: 12px;
@@ -242,6 +287,16 @@
     }
 
 
+
+    @media print {
+      .topbar, .btn-row, .table-actions, .toast, .modal-backdrop { display: none !important; }
+      body { background: #fff; }
+      .wrap { max-width: none; margin: 0; padding: 0; }
+      .card { box-shadow: none; border: 1px solid #d1d5db; page-break-inside: avoid; }
+      #chartsCard { display: none !important; }
+      .vitals-table th { position: static; }
+    }
+
     @media (max-width: 980px) {
       .layout { grid-template-columns: 1fr; }
     }
@@ -257,6 +312,7 @@
 </div>
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
+<button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
@@ -334,7 +390,11 @@
 <span>一覧</span>
 <span class="hint" id="countLabel"></span>
 </div>
-<div class="list" id="list"></div>
+<div class="hint" id="listSummary" style="margin-bottom:8px;"></div>
+<div class="table-wrap"><div class="list" id="list"></div></div>
+<div class="btn-row" style="margin-top:10px;">
+<button class="btn" id="moreBtn" style="display:none;">もっと見る</button>
+</div>
 </div>
 </div><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
 <div class="chart-title">
@@ -357,8 +417,8 @@
 <label style="margin:0">表示：</label>
 <select id="filterResident" style="width:auto; min-width: 180px;"></select>
 <select id="filterRange" style="width:auto">
-<option value="today">今日</option>
-<option selected="" value="week">直近7日</option>
+<option selected="" value="today">今日</option>
+<option value="week">直近7日</option>
 <option value="month">今月</option>
 <option value="all">全期間</option>
 </select>
@@ -538,49 +598,17 @@
       };
     }
 
-    function vitalSignature(item) {
-      if (!item) return '';
-      return [
-        String(item.resident || '').trim(),
-        String(item.recorder || '').trim(),
-        String(item.measuredAt || '').trim(),
-        String(item.weight || '').trim(),
-        String(item.bpSys || '').trim(),
-        String(item.bpDia || '').trim(),
-        String(item.pulse || '').trim(),
-        String(item.memo || '').trim(),
-      ].join('|');
-    }
-
     function mergeVitalsById(localList, remoteList) {
-      const idMap = new Map();
-      const sigMap = new Map();
-
-      const upsert = (item) => {
-        if (!item) return;
-        const sig = vitalSignature(item);
-        if (item.id && idMap.has(item.id)) {
-          const prev = idMap.get(item.id);
-          const merged = { ...prev, ...item };
-          idMap.set(item.id, merged);
-          if (sig) sigMap.set(sig, item.id);
-          return;
-        }
-        if (sig && sigMap.has(sig)) {
-          const sameId = sigMap.get(sig);
-          const prev = idMap.get(sameId) || {};
-          idMap.set(sameId, { ...prev, ...item, id: sameId || item.id });
-          return;
-        }
-        const id = item.id || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2));
-        idMap.set(id, { ...item, id });
-        if (sig) sigMap.set(sig, id);
-      };
-
-      for (const item of Array.isArray(localList) ? localList : []) upsert(item);
-      for (const item of Array.isArray(remoteList) ? remoteList : []) upsert(item);
-
-      return Array.from(idMap.values()).sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
+      const map = new Map();
+      for (const item of Array.isArray(localList) ? localList : []) {
+        if (!item || !item.id) continue;
+        map.set(item.id, item);
+      }
+      for (const item of Array.isArray(remoteList) ? remoteList : []) {
+        if (!item || !item.id) continue;
+        map.set(item.id, item);
+      }
+      return Array.from(map.values()).sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
     }
 
     async function remoteGet(params) {
@@ -797,6 +825,41 @@
       return s;
     }
 
+    function metricAverage(list, key) {
+      const nums = (Array.isArray(list) ? list : []).map(v => parseNumOrNull(v && v[key])).filter(v => v != null);
+      if (!nums.length) return '';
+      const avg = nums.reduce((a,b) => a + b, 0) / nums.length;
+      return key === 'weight' ? (Math.round(avg * 10) / 10).toFixed(1) : String(Math.round(avg * 10) / 10).replace(/\.0$/, '');
+    }
+
+    function getRangeLabelText(mode) {
+      if (mode === 'today') return '今日';
+      if (mode === 'week') return '直近7日';
+      if (mode === 'month') return '今月';
+      return '全期間';
+    }
+
+    function buildDisplayWindowText(filtered, shownCount, mode) {
+      if (!filtered.length) return `${getRangeLabelText(mode)} / 0件`;
+      const newest = filtered[0];
+      const oldestShown = filtered[Math.max(0, shownCount - 1)] || filtered[filtered.length - 1];
+      const newestDate = formatJP(newest.measuredAt || '').slice(0, 16);
+      const oldestDate = formatJP(oldestShown.measuredAt || '').slice(0, 16);
+      return `${getRangeLabelText(mode)} / 表示 ${Math.min(shownCount, filtered.length)}件 / ${newestDate} ～ ${oldestDate}`;
+    }
+
+    function buildDuplicateSignature(v) {
+      const measuredAt = String(v && v.measuredAt || '').trim();
+      const resident = String(v && v.resident || '').trim();
+      const recorder = String(v && v.recorder || '').trim();
+      const weight = String(v && v.weight || '').trim();
+      const bpSys = String(v && v.bpSys || '').trim();
+      const bpDia = String(v && v.bpDia || '').trim();
+      const pulse = String(v && v.pulse || '').trim();
+      const memo = String(v && v.memo || '').trim();
+      return [measuredAt,resident,recorder,weight,bpSys,bpDia,pulse,memo].join('||');
+    }
+
 
     function parseNumOrNull(v) {
       const s = String(v ?? '').trim();
@@ -996,6 +1059,11 @@
       return '全期間';
     }
 
+    let visibleRowCount = 3;
+    function resetVisibleRows() {
+      visibleRowCount = 3;
+    }
+
     function renderCharts() {
       const records = getFilteredForChart();
       const days = groupByDayLastMetrics(records);
@@ -1054,11 +1122,13 @@
       ], { yFmt: (v) => String(Math.round(v)) });
     }
 
+
     function renderList() {
       const listEl = $('list');
       const all = loadVitals();
       const resident = $('filterResident').value;
       const q = String($('search').value || '').trim().toLowerCase();
+      const mode = $('filterRange').value;
       const { start, end } = getFilterRange();
 
       const filtered = all
@@ -1079,74 +1149,99 @@
           return true;
         });
 
-      $('countLabel').textContent = `${filtered.length}件`;
-      listEl.innerHTML = '';
+      const showLimited = resident && resident !== '__all__';
+      const shownCount = showLimited ? Math.min(visibleRowCount, filtered.length) : filtered.length;
+      const shown = filtered.slice(0, shownCount);
 
+      $('countLabel').textContent = `${filtered.length}件`;
+      const avgWeight = metricAverage(filtered, 'weight');
+      const avgSys = metricAverage(filtered, 'bpSys');
+      const avgDia = metricAverage(filtered, 'bpDia');
+      const avgPulse = metricAverage(filtered, 'pulse');
+      const avgParts = [];
+      if (avgWeight) avgParts.push(`平均体重 ${avgWeight}kg`);
+      if (avgSys || avgDia) avgParts.push(`平均血圧 ${avgSys || '―'}/${avgDia || '―'}`);
+      if (avgPulse) avgParts.push(`平均脈拍 ${avgPulse}`);
+      $('listSummary').textContent = [buildDisplayWindowText(filtered, shownCount, mode), avgParts.join(' / ')].filter(Boolean).join(' / ');
+
+      const moreBtn = $('moreBtn');
+      if (moreBtn) {
+        if (showLimited && filtered.length > shownCount) {
+          moreBtn.style.display = '';
+          moreBtn.textContent = `もっと見る（残り${filtered.length - shownCount}件）`;
+        } else {
+          moreBtn.style.display = 'none';
+        }
+      }
+
+      listEl.innerHTML = '';
       renderCharts();
 
       if (filtered.length === 0) {
         const div = document.createElement('div');
-        div.className = 'hint';
+        div.className = 'table-empty';
         div.textContent = 'データがありません。左で入力して保存してください。';
         listEl.appendChild(div);
         return;
       }
 
-      for (const v of filtered) {
-        const item = document.createElement('div');
-        item.className = 'item';
+      const table = document.createElement('table');
+      table.className = 'vitals-table';
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>日時</th>
+            <th>利用者</th>
+            <th>体重</th>
+            <th>血圧</th>
+            <th>脈拍</th>
+            <th>記録者</th>
+            <th>メモ</th>
+            <th class="print-hide">操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
 
-        const head = document.createElement('div');
-        head.className = 'item-head';
+      const tbody = table.querySelector('tbody');
 
-        const left = document.createElement('div');
-        left.innerHTML = `<div class="item-title">${formatJP(v.measuredAt)} <span class="pill">${escapeHTML(v.resident || '')}</span></div>`;
+      for (const v of shown) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHTML(formatJP(v.measuredAt))}</td>
+          <td>${escapeHTML(v.resident || '')}</td>
+          <td>${escapeHTML(String(v.weight || ''))}${String(v.weight || '').trim() ? 'kg' : ''}</td>
+          <td>${escapeHTML((v.bpSys || '―') + '/' + (v.bpDia || '―'))}</td>
+          <td>${escapeHTML(String(v.pulse || ''))}</td>
+          <td>${escapeHTML(v.recorder || '')}</td>
+          <td>${escapeHTML(v.memo || '')}</td>
+          <td class="print-hide"></td>
+        `;
 
-        const right = document.createElement('div');
-        right.className = 'item-meta';
-        right.textContent = v.recorder ? `記録者：${v.recorder}` : '';
-
-        head.appendChild(left);
-        head.appendChild(right);
-
-        const body = document.createElement('div');
-        body.className = 'item-body';
-
-        const chunks = [];
-        if (String(v.weight||'').trim() !== '') chunks.push(`体重 ${v.weight}kg`);
-        if (String(v.bpSys||'').trim() !== '' || String(v.bpDia||'').trim() !== '') chunks.push(`血圧 ${v.bpSys||'―'}/${v.bpDia||'―'}`);
-        if (String(v.pulse||'').trim() !== '') chunks.push(`脈拍 ${v.pulse}`);
-        const memo = String(v.memo||'').trim();
-        body.innerHTML = `${chunks.map(c=>`<span class="pill">${escapeHTML(c)}</span>`).join(' ')}${memo?`<div class="item-meta" style="margin-top:6px">メモ：${escapeHTML(memo)}</div>`:''}`;
-
-        const btns = document.createElement('div');
-        btns.className = 'btn-row';
-        btns.style.marginTop = '8px';
-
+        const opTd = tr.querySelector('td:last-child');
+        const wrap = document.createElement('div');
+        wrap.className = 'btn-row';
+        wrap.style.marginTop = '0';
         const bCopy = document.createElement('button');
         bCopy.className = 'btn';
-        bCopy.textContent = '📋 コピー';
+        bCopy.textContent = '📋';
+        bCopy.title = 'コピー';
         bCopy.onclick = () => {
           const txt = vitalsToText(v);
-          navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(() => {
-            fallbackCopy(txt);
-            toast('コピーしました');
-          });
+          navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(() => { fallbackCopy(txt); toast('コピーしました'); });
         };
-
         const bEdit = document.createElement('button');
         bEdit.className = 'btn';
-        bEdit.textContent = '✏ 編集';
+        bEdit.textContent = '✏';
+        bEdit.title = '編集';
         bEdit.onclick = () => openEdit(v.id);
-
-        btns.appendChild(bCopy);
-        btns.appendChild(bEdit);
-
-        item.appendChild(head);
-        item.appendChild(body);
-        item.appendChild(btns);
-        listEl.appendChild(item);
+        wrap.appendChild(bCopy);
+        wrap.appendChild(bEdit);
+        opTd.appendChild(wrap);
+        tbody.appendChild(tr);
       }
+
+      listEl.appendChild(table);
     }
 
     function escapeHTML(s){
@@ -1184,7 +1279,7 @@
       return { date, time, resident, recorder, weight, bpSys, bpDia, pulse, memo };
     }
 
-    let savingNow = false;
+    async let savingNow = false;
 
     async function saveDraftToVitals() {
       if (savingNow) return;
@@ -1199,7 +1294,7 @@
       }
 
       const btn = $('saveVitalBtn');
-      const beforeText = btn ? btn.textContent : '💾 保存';
+      const oldText = btn ? btn.textContent : '💾 保存';
       savingNow = true;
       if (btn) {
         btn.disabled = true;
@@ -1220,16 +1315,16 @@
         };
 
         const all = loadVitals();
-        const sig = vitalSignature(entry);
-        const dup = all.find(v => vitalSignature(v) === sig);
-        if (dup) {
-          $('quickStatus').textContent = '同じ記録があるため保存しませんでした';
-          toast('同じ記録があるため保存しませんでした');
+        const dupSig = buildDuplicateSignature(entry);
+        const duplicate = all.find(v => buildDuplicateSignature(v) === dupSig);
+        if (duplicate) {
+          toast('同じ記録があるため保存を止めました');
+          $('quickStatus').textContent = '同じ記録があるため保存していません';
           return;
         }
 
         all.push(entry);
-        saveVitals(mergeVitalsById(all, []));
+        saveVitals(all);
 
         let statusMsg = '保存しました';
         if (hasRemoteEnabled()) {
@@ -1246,7 +1341,6 @@
 
         $('quickStatus').textContent = statusMsg;
         toast(statusMsg);
-
         $('vTime').value = nowLocalTime();
         clearInputs();
         renderList();
@@ -1254,7 +1348,7 @@
         savingNow = false;
         if (btn) {
           btn.disabled = false;
-          btn.textContent = beforeText;
+          btn.textContent = oldText;
         }
       }
     }
@@ -1445,7 +1539,7 @@
       ensureSeedLists();
       refreshNameSelects(false);
       $('filterResident').value = '__all__';
-      $('filterRange').value = 'month';
+      $('filterRange').value = 'today';
       $('vRecorder').value = '太田';
 
       try {
@@ -1455,10 +1549,6 @@
         }
       } catch(e){}
 
-      try {
-        const cur = $('vResident').value;
-        if (cur && Array.from($('filterResident').options).some(o=>o.value===cur)) $('filterResident').value = cur;
-      } catch(e){}
 
       $('saveVitalBtn').onclick = async () => {
         try { saveJSON('group_home_vitals_last_v1', { resident: $('vResident').value, recorder: $('vRecorder').value }); } catch(e){}
@@ -1472,9 +1562,10 @@
         navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(()=>{ fallbackCopy(txt); toast('コピーしました'); });
       };
 
-      $('filterResident').onchange = renderList;
-      $('filterRange').onchange = renderList;
-      $('search').oninput = renderList;
+      $('filterResident').onchange = () => { resetVisibleRows(); renderList(); };
+      $('filterRange').onchange = () => { resetVisibleRows(); renderList(); };
+      $('search').oninput = () => { resetVisibleRows(); renderList(); };
+      $('moreBtn').onclick = () => { visibleRowCount += 3; renderList(); };
 
       $('addResidentBtn').onclick = () => {
         const name = prompt('追加する利用者名を入力してください');
@@ -1530,6 +1621,7 @@
       $('saveEditBtn').onclick = applyEdit;
       $('deleteEditBtn').onclick = deleteEdit;
 
+      $('printBtn').onclick = () => window.print();
       $('exportCsvBtn').onclick = exportCsv;
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
@@ -1542,6 +1634,7 @@
         setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
       }
 
+      resetVisibleRows();
       renderList();
       window.addEventListener('resize', () => { try { renderCharts(); } catch(e) {} });
 
