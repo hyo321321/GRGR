@@ -246,6 +246,80 @@
       .layout { grid-template-columns: 1fr; }
     }
 
+
+    .print-note { display:none; }
+
+    @media print {
+      @page { size: A4 portrait; margin: 8mm; }
+      body { background:#fff; color:#000; font-size:10.5pt; }
+      .topbar {
+        position: static;
+        background: #fff;
+        backdrop-filter: none;
+        border-bottom: 1px solid #ccc;
+        padding: 6px 8px;
+      }
+      .title { font-size: 15px; }
+      .subtitle { font-size: 10px; }
+      .btn, a, .toast, .modal-backdrop, #quickStatus, #remoteStatus,
+      #exportCsvBtn, #backupVitalsBtn, #restoreVitalsBtn,
+      #addResidentBtn, #deleteResidentBtn, #addRecorderBtn, #deleteRecorderBtn,
+      #clearBtn, #copyBtn, #saveVitalBtn,
+      .hint, #search, #filterResident, #filterRange, .tools label,
+      #listMoreRow, #chartsCard {
+        display: none !important;
+      }
+      .wrap { max-width: none; margin: 0; padding: 0; }
+      .layout { display:block; }
+      .card {
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+        margin: 0 0 8px 0;
+      }
+      .card-title { margin-bottom: 4px; font-size: 12px; }
+      .list { gap: 3px; }
+      .item {
+        border: 1px solid #ccc;
+        background:#fff;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        padding: 4px 6px;
+        border-radius: 0;
+      }
+      .item-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 4px 8px;
+        align-items: start;
+      }
+      .item-title { font-size: 11px; font-weight: 700; }
+      .item-meta { font-size: 10px; color:#222; }
+      .item-body { margin-top: 2px; font-size: 10px; line-height: 1.25; }
+      .pill {
+        font-size: 10px;
+        padding: 0 4px;
+        margin-right: 3px;
+        border-radius: 999px;
+        border: 1px solid #bbb;
+        background:#fff;
+      }
+      .print-note {
+        display:block;
+        margin: 0 0 6px 0;
+        font-size: 10px;
+        color:#333;
+      }
+      #listSummary {
+        display:block !important;
+        margin: 0 0 6px 0 !important;
+        font-size: 10px !important;
+        color:#000 !important;
+      }
+      .btn-row { display:none !important; }
+    }
+
 </style>
 </head>
 <body>
@@ -253,10 +327,11 @@
 <div class="topbar-inner">
 <div>
 <div class="title">🩺 バイタル記録（体重・血圧・脈拍）</div>
-<div class="subtitle">※保存先は localStorage＋共有保存です。新規入力したデータは他端末でも確認できます。</div>
+<div class="subtitle">※保存先は localStorage＋共有保存です。新規入力したデータは他端末でも確認できます。印刷は現在表示中の内容が対象です。印刷時は一覧を1ページに収まりやすい表示へ自動調整します。</div>
 </div>
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
+<button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
@@ -268,7 +343,7 @@
 </div>
 </div>
 </div>
-<div class="wrap"><div class="layout">
+<div class="wrap"><div class="print-note" id="printNote"></div><div class="layout">
 <div class="card">
 <div class="card-title">
 <span>入力</span>
@@ -518,6 +593,20 @@
     function setRemoteStatus(msg) {
       const el = $('remoteStatus');
       if (el) el.textContent = msg || '';
+    }
+
+    function getPrintContextText() {
+      const residentSel = $('filterResident');
+      const rangeSel = $('filterRange');
+      const resident = residentSel ? (residentSel.options[residentSel.selectedIndex]?.text || residentSel.value || '全員') : '全員';
+      const range = rangeSel ? (rangeSel.options[rangeSel.selectedIndex]?.text || rangeSel.value || '') : '';
+      return `印刷日：${nowLocalDate()}　表示利用者：${resident}　表示期間：${range}`;
+    }
+
+    function printCurrentView() {
+      const note = $('printNote');
+      if (note) note.textContent = getPrintContextText();
+      window.print();
     }
 
     function hasRemoteEnabled() {
@@ -1536,6 +1625,7 @@
       $('saveEditBtn').onclick = applyEdit;
       $('deleteEditBtn').onclick = deleteEdit;
 
+      $('printBtn').onclick = printCurrentView;
       $('exportCsvBtn').onclick = exportCsv;
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
