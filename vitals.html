@@ -110,6 +110,10 @@
     .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
     .btn-danger { background: #ef4444; color: #fff; border-color: #ef4444; }
     .btn-ghost { background: #fff; color: #0f172a; }
+    .btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
 
     .hint { font-size: 12px; color: #475569; line-height: 1.45; }
 
@@ -441,6 +445,20 @@
       border-color: #ef4444;
       color: #991b1b;
     }
+    .weight-diff {
+      margin-left: 4px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .weight-diff-plus {
+      color: #dc2626 !important;
+    }
+    .weight-diff-minus {
+      color: #2563eb !important;
+    }
+    .weight-diff-zero {
+      color: #475569 !important;
+    }
     @media print {
       .avg-box {
         border: 0;
@@ -635,6 +653,46 @@
       localStorage.setItem(key, JSON.stringify(value));
     };
 
+    let isSavingVitalNow = false;
+    let lastSaveFingerprint = '';
+    let lastSaveAt = 0;
+
+    function setSavingState(isSaving) {
+      isSavingVitalNow = !!isSaving;
+      const btn = $('saveVitalBtn');
+      if (btn) {
+        btn.disabled = !!isSaving;
+        btn.textContent = isSaving ? '保存中…' : '💾 保存';
+      }
+    }
+
+    function makeVitalFingerprint(d) {
+      return [
+        String(d.date || '').trim(),
+        String(d.time || '').trim(),
+        String(d.resident || '').trim(),
+        String(d.recorder || '').trim(),
+        String(d.weight || '').trim(),
+        String(d.bpSys || '').trim(),
+        String(d.bpDia || '').trim(),
+        String(d.pulse || '').trim(),
+        String(d.memo || '').trim(),
+      ].join('||');
+    }
+
+    function shouldBlockRapidDuplicateSave(d) {
+      const fp = makeVitalFingerprint(d);
+      const now = Date.now();
+      if (fp && fp === lastSaveFingerprint && (now - lastSaveAt) < 4000) {
+        return true;
+      }
+      return false;
+    }
+
+    function rememberJustSaved(d) {
+      lastSaveFingerprint = makeVitalFingerprint(d);
+      lastSaveAt = Date.now();
+    }
 
     function setRemoteStatus(msg) {
       const el = $('remoteStatus');
@@ -937,6 +995,52 @@
       return (sys != null && sys >= 135) || (dia != null && dia >= 85);
     }
 
+    function buildResidentDailyWeightDiffMap(records) {
+      const byResident = new Map();
+      const list = (Array.isArray(records) ? records : [])
+        .slice()
+        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
+
+      for (const v of list) {
+        if (!v || !v.resident || !v.measuredAt) continue;
+        const weight = parseNumOrNull(v.weight);
+        if (weight == null) continue;
+        const day = dayKeyFromISO(v.measuredAt);
+        if (!byResident.has(v.resident)) byResident.set(v.resident, new Map());
+        byResident.get(v.resident).set(day, weight); // latest of the day wins because ASC loop
+      }
+
+      const diffMap = {};
+      for (const [resident, dayMap] of byResident.entries()) {
+        const days = Array.from(dayMap.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+        let prevWeight = null;
+        diffMap[resident] = {};
+        for (const [day, weight] of days) {
+          diffMap[resident][day] = prevWeight == null ? null : Number((weight - prevWeight).toFixed(1));
+          prevWeight = weight;
+        }
+      }
+      return diffMap;
+    }
+
+    function getWeightDiffForRecord(record, diffMap) {
+      if (!record || !record.resident || !record.measuredAt) return null;
+      const day = dayKeyFromISO(record.measuredAt);
+      const residentMap = diffMap && diffMap[record.resident];
+      if (!residentMap || !(day in residentMap)) return null;
+      return residentMap[day];
+    }
+
+    function formatWeightWithDiffHtml(weight, diff) {
+      const n = parseNumOrNull(weight);
+      if (n == null) return '―';
+      const base = escapeHTML(`${String(weight).trim()}kg`);
+      if (diff == null) return base;
+      const sign = diff > 0 ? '+' : '';
+      const cls = diff > 0 ? 'weight-diff-plus' : (diff < 0 ? 'weight-diff-minus' : 'weight-diff-zero');
+      return `${base}<span class="weight-diff ${cls}">(${sign}${diff.toFixed(1)})</span>`;
+    }
+
     function dayKeyFromISO(iso) {
       const d = new Date(iso);
       return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
@@ -1156,7 +1260,19 @@
             parts.push(`血圧 <span class="${bpClass}">${last.bpSys}/${last.bpDia}</span>`);
           }
           if (last.pulse != null) parts.push(`脈拍 ${last.pulse}`);
-          if (last.weight != null) parts.push(`体重 ${last.weight}`);
+          if (last.weight != null) {
+            let weightPart = `体重 ${last.weight}`;
+            if (resident && resident !== '__all__') {
+              const residentWeightDiffMap = buildResidentDailyWeightDiffMap(records);
+              const latestDiff = residentWeightDiffMap[resident] ? residentWeightDiffMap[resident][last.day] : null;
+              if (latestDiff != null) {
+                const sign = latestDiff > 0 ? '+' : '';
+                const cls = latestDiff > 0 ? 'weight-diff-plus' : (latestDiff < 0 ? 'weight-diff-minus' : 'weight-diff-zero');
+                weightPart += ` <span class="weight-diff ${cls}">(${sign}${latestDiff.toFixed(1)})</span>`;
+              }
+            }
+            parts.push(weightPart);
+          }
           sumEl.innerHTML = `最新：${last.label}  ${parts.join(' / ')}`;
         }
       }
@@ -1219,6 +1335,8 @@
 
       renderCharts();
 
+      const weightDiffMap = buildResidentDailyWeightDiffMap(all);
+
       const avgSys = averageOf(filtered.map(v => v.bpSys), 1);
       const avgDia = averageOf(filtered.map(v => v.bpDia), 1);
       const avgWeight = averageOf(filtered.map(v => v.weight), 1);
@@ -1271,10 +1389,11 @@
         const bpFlag = isManualFlagOn(v.id, 'bp');
         const pulseFlag = isManualFlagOn(v.id, 'pulse');
         const bpAutoFlag = isAutoHighBp(v.bpSys, v.bpDia);
+        const weightDiff = getWeightDiffForRecord(v, weightDiffMap);
         tr.innerHTML = `
           <td>${escapeHTML(formatJP(v.measuredAt))}</td>
           <td>${escapeHTML(v.resident || '')}</td>
-          <td class="${weightFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.weight || '').trim() ? `${v.weight}kg` : '―')}</td>
+          <td class="${weightFlag ? 'manual-flag' : ''}">${formatWeightWithDiffHtml(v.weight, weightDiff)}</td>
           <td class="${(bpFlag || bpAutoFlag) ? 'manual-flag' : ''}">${escapeHTML((String(v.bpSys || '').trim() || String(v.bpDia || '').trim()) ? `${v.bpSys || '―'}/${v.bpDia || '―'}` : '―')}</td>
           <td class="${pulseFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.pulse || '').trim() ? String(v.pulse) : '―')}</td>
           <td>${escapeHTML(v.recorder || '')}</td>
@@ -1365,6 +1484,11 @@
     }
 
     async function saveDraftToVitals() {
+      if (isSavingVitalNow) {
+        toast('保存中です。少し待ってください');
+        return;
+      }
+
       const d = getCurrentDraft();
       if (!d.resident) {
         toast('利用者を選択してください');
@@ -1374,42 +1498,52 @@
         toast('日付と時刻を入力してください');
         return;
       }
-
-      const entry = {
-        id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2),
-        resident: d.resident,
-        recorder: d.recorder || '',
-        measuredAt: buildMeasuredAt(d.date, d.time),
-        weight: d.weight,
-        bpSys: d.bpSys,
-        bpDia: d.bpDia,
-        pulse: d.pulse,
-        memo: d.memo,
-      };
-
-      const all = loadVitals();
-      all.push(entry);
-      saveVitals(all);
-
-      let statusMsg = '保存しました';
-      if (hasRemoteEnabled()) {
-        try {
-          await saveVitalRemote(entry);
-          setRemoteStatus('共有接続OK：保存しました');
-          statusMsg = '保存しました（共有OK）';
-        } catch (e) {
-          console.warn('saveVitalRemote failed', e);
-          setRemoteStatus('共有保存に失敗しました');
-          statusMsg = '端末に保存しました（共有失敗）';
-        }
+      if (shouldBlockRapidDuplicateSave(d)) {
+        toast('同じ内容の連続保存を止めました');
+        return;
       }
 
-      $('quickStatus').textContent = statusMsg;
-      toast(statusMsg);
+      setSavingState(true);
+      try {
+        const entry = {
+          id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2),
+          resident: d.resident,
+          recorder: d.recorder || '',
+          measuredAt: buildMeasuredAt(d.date, d.time),
+          weight: d.weight,
+          bpSys: d.bpSys,
+          bpDia: d.bpDia,
+          pulse: d.pulse,
+          memo: d.memo,
+        };
 
-      $('vTime').value = nowLocalTime();
-      clearInputs();
-      renderList();
+        const all = loadVitals();
+        all.push(entry);
+        saveVitals(all);
+        rememberJustSaved(d);
+
+        let statusMsg = '保存しました';
+        if (hasRemoteEnabled()) {
+          try {
+            await saveVitalRemote(entry);
+            setRemoteStatus('共有接続OK：保存しました');
+            statusMsg = '保存しました（共有OK）';
+          } catch (e) {
+            console.warn('saveVitalRemote failed', e);
+            setRemoteStatus('共有保存に失敗しました');
+            statusMsg = '端末に保存しました（共有失敗）';
+          }
+        }
+
+        $('quickStatus').textContent = statusMsg;
+        toast(statusMsg);
+
+        $('vTime').value = nowLocalTime();
+        clearInputs();
+        renderList();
+      } finally {
+        setSavingState(false);
+      }
     }
 
     // --- 編集 ---
