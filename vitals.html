@@ -357,6 +357,44 @@
       font-size: 13px;
       color: #475569;
     }
+    .select-col {
+      width: 42px;
+      text-align: center !important;
+    }
+    .row-check,
+    .check-all {
+      width: 16px;
+      height: 16px;
+      accent-color: #2563eb;
+      cursor: pointer;
+    }
+    .bulk-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 10px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .bulk-actions .left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #475569;
+    }
+    .bulk-actions .left strong {
+      color: #0f172a;
+    }
+    .bulk-actions .btn {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
 
 
     .tools input[type="text"] {
@@ -395,7 +433,7 @@
       .table-wrap { overflow: visible; border:0; }
       .vitals-table { min-width:0; font-size:11px; }
       .vitals-table th, .vitals-table td { padding:4px 6px; }
-      .table-actions { display:none !important; }
+      .table-actions, .bulk-actions, .select-col { display:none !important; }
       canvas.chart { height:220px !important; }
     }
 
@@ -949,6 +987,67 @@
       renderList();
     }
 
+    function removeManualFlagsForIds(ids) {
+      const set = new Set((ids || []).filter(Boolean));
+      if (!set.size) return;
+      const map = loadManualFlags();
+      let changed = false;
+      for (const id of set) {
+        if (map[id]) {
+          delete map[id];
+          changed = true;
+        }
+      }
+      if (changed) saveManualFlags(map);
+    }
+
+    function setSelectedVital(id, checked) {
+      if (!id) return;
+      if (checked) selectedVitalIds.add(id);
+      else selectedVitalIds.delete(id);
+      renderList();
+    }
+
+    function setSelectedVisibleVitals(ids, checked) {
+      for (const id of ids) {
+        if (!id) continue;
+        if (checked) selectedVitalIds.add(id);
+        else selectedVitalIds.delete(id);
+      }
+      renderList();
+    }
+
+    async function deleteCheckedVitals(visibleIds) {
+      const ids = Array.from(selectedVitalIds).filter(id => visibleIds.includes(id));
+      if (!ids.length) {
+        toast('チェックした記録がありません');
+        return;
+      }
+      const ok = confirm(`チェックした ${ids.length}件 を削除しますか？`);
+      if (!ok) return;
+
+      saveVitals(loadVitals().filter(v => !ids.includes(v.id)));
+      removeManualFlagsForIds(ids);
+      selectedVitalIds = new Set();
+
+      let remoteFail = 0;
+      if (hasRemoteEnabled()) {
+        setRemoteStatus(`共有側を削除中… ${ids.length}件`);
+        for (const id of ids) {
+          try {
+            await deleteVitalRemote(id);
+          } catch (e) {
+            console.warn('bulk delete remote failed', id, e);
+            remoteFail++;
+          }
+        }
+        setRemoteStatus(remoteFail ? `共有削除で一部失敗（${remoteFail}件）` : '共有接続OK：まとめて削除しました');
+      }
+
+      renderList();
+      toast(remoteFail ? `削除しました（共有失敗 ${remoteFail}件）` : `削除しました（${ids.length}件）`);
+    }
+
     function averageOf(values, digits = 1) {
       const nums = values.map(parseNumOrNull).filter(v => v != null);
       if (!nums.length) return null;
@@ -1330,6 +1429,9 @@
           return true;
         });
 
+      const visibleIds = filtered.map(v => v.id).filter(Boolean);
+      selectedVitalIds = new Set(Array.from(selectedVitalIds).filter(id => visibleIds.includes(id)));
+
       $('countLabel').textContent = `${filtered.length}件`;
       listEl.innerHTML = '';
 
@@ -1354,6 +1456,20 @@
       `;
       listEl.appendChild(avgBox);
 
+      const bulkBar = document.createElement('div');
+      bulkBar.className = 'bulk-actions';
+      bulkBar.innerHTML = `
+        <div class="left">
+          <strong>まとめて削除</strong>
+          <span>チェックした記録を削除できます</span>
+          <span>選択中 ${selectedVitalIds.size}件</span>
+        </div>
+        <button type="button" class="btn btn-danger" ${selectedVitalIds.size ? '' : 'disabled'}>チェック削除</button>
+      `;
+      const bulkDeleteBtn = bulkBar.querySelector('button');
+      bulkDeleteBtn.onclick = () => deleteCheckedVitals(visibleIds);
+      listEl.appendChild(bulkBar);
+
       if (filtered.length === 0) {
         const div = document.createElement('div');
         div.className = 'table-empty';
@@ -1367,6 +1483,7 @@
       table.innerHTML = `
         <thead>
           <tr>
+            <th class="select-col"><input type="checkbox" class="check-all" aria-label="全件選択"></th>
             <th>日時</th>
             <th>利用者</th>
             <th>体重</th>
@@ -1381,6 +1498,12 @@
       `;
 
       const tbody = table.querySelector('tbody');
+      const checkAll = table.querySelector('.check-all');
+      if (checkAll) {
+        checkAll.checked = visibleIds.length > 0 && visibleIds.every(id => selectedVitalIds.has(id));
+        checkAll.indeterminate = selectedVitalIds.size > 0 && !checkAll.checked;
+        checkAll.onchange = () => setSelectedVisibleVitals(visibleIds, checkAll.checked);
+      }
 
       for (const v of filtered) {
         const tr = document.createElement('tr');
@@ -1391,6 +1514,7 @@
         const bpAutoFlag = isAutoHighBp(v.bpSys, v.bpDia);
         const weightDiff = getWeightDiffForRecord(v, weightDiffMap);
         tr.innerHTML = `
+          <td class="select-col"><input type="checkbox" class="row-check" ${selectedVitalIds.has(v.id) ? 'checked' : ''} aria-label="この行を選択"></td>
           <td>${escapeHTML(formatJP(v.measuredAt))}</td>
           <td>${escapeHTML(v.resident || '')}</td>
           <td class="${weightFlag ? 'manual-flag' : ''}">${formatWeightWithDiffHtml(v.weight, weightDiff)}</td>
@@ -1400,6 +1524,9 @@
           <td class="memo-cell">${escapeHTML(memo || '―')}</td>
           <td></td>
         `;
+
+        const rowCheck = tr.querySelector('.row-check');
+        if (rowCheck) rowCheck.onchange = () => setSelectedVital(v.id, rowCheck.checked);
 
         const actionTd = tr.lastElementChild;
         const actions = document.createElement('div');
@@ -1548,6 +1675,7 @@
 
     // --- 編集 ---
     let editingId = null;
+    let selectedVitalIds = new Set();
 
     function openEdit(id) {
       const all = loadVitals();
