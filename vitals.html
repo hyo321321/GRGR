@@ -306,29 +306,57 @@
     }
   
 
-    .update-banner {
-      margin: 10px auto 0;
-      max-width: 1120px;
-      background: #ecfeff;
-      border: 1px solid #a5f3fc;
-      color: #0e7490;
-      border-radius: 12px;
+    .avg-box {
+      margin: 0 0 10px;
       padding: 10px 12px;
+      border: 1px solid #dbe5f1;
+      border-radius: 12px;
+      background: #f8fafc;
       font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      line-height: 1.6;
     }
-    .update-banner .msg { line-height: 1.4; }
-    .update-banner button {
-      border: 1px solid #a5f3fc;
-      background: #cffafe;
-      color: #0e7490;
-      border-radius: 10px;
-      padding: 6px 10px;
+    .avg-title {
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .avg-items {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .avg-item {
+      white-space: nowrap;
+    }
+    .manual-flag {
+      color: #dc2626;
+      font-weight: 800;
+    }
+    .manual-flag-btn {
+      border: 1px solid #fca5a5;
+      background: #fff5f5;
+      color: #b91c1c;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
       cursor: pointer;
-      font-weight: 600;
+      white-space: nowrap;
+    }
+    .manual-flag-btn.is-on {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+    }
+    @media print {
+      .avg-box {
+        border: 0;
+        padding: 0 0 6px;
+        margin: 0 0 8px;
+        background: transparent;
+      }
+      .manual-flag-btn {
+        display: none !important;
+      }
     }
 </style>
 </head>
@@ -350,7 +378,7 @@
 <input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
 </div>
 </div>
-</div><div class="update-banner" id="updateBanner"><div class="msg">✅ アップデートしました（2026-01-21）：グラフを大きく表示＋「最新」サマリー表示。入力欄（血圧/体重/脈拍）も従来どおり使えます。</div><button id="hideUpdateBannerBtn" type="button">閉じる</button></div>
+</div>
 <div class="wrap"><div class="layout">
 <div class="card">
 <div class="card-title">
@@ -486,6 +514,10 @@
     const VITALS_KEY    = "group_home_vitals_v1";
     const GOOGLE_SHARE_URL_KEY = "group_home_google_share_url";
     const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
+
+    const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
+    const DEFAULT_RECORDERS = ['太田'];
+    const VITALS_MANUAL_FLAGS_KEY = 'group_home_vitals_manual_flags_v1';
 
     const $ = (id) => document.getElementById(id);
 
@@ -740,6 +772,38 @@
     }
     function saveVitals(list) {
       saveJSON(VITALS_KEY, list);
+    }
+
+    function loadManualFlags() {
+      const v = loadJSON(VITALS_MANUAL_FLAGS_KEY, {});
+      return v && typeof v === 'object' ? v : {};
+    }
+
+    function saveManualFlags(map) {
+      saveJSON(VITALS_MANUAL_FLAGS_KEY, map || {});
+    }
+
+    function isManualFlagOn(id, field) {
+      const map = loadManualFlags();
+      return !!(map && map[id] && map[id][field]);
+    }
+
+    function toggleManualFlag(id, field) {
+      if (!id || !field) return;
+      const map = loadManualFlags();
+      map[id] = map[id] || {};
+      map[id][field] = !map[id][field];
+      if (!map[id][field]) delete map[id][field];
+      if (!Object.keys(map[id]).length) delete map[id];
+      saveManualFlags(map);
+      renderList();
+    }
+
+    function averageOf(values, digits = 1) {
+      const nums = values.map(parseNumOrNull).filter(v => v != null);
+      if (!nums.length) return null;
+      const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+      return avg.toFixed(digits);
     }
 
     function getFilterRange() {
@@ -1054,6 +1118,23 @@
 
       renderCharts();
 
+      const avgSys = averageOf(filtered.map(v => v.bpSys), 1);
+      const avgDia = averageOf(filtered.map(v => v.bpDia), 1);
+      const avgWeight = averageOf(filtered.map(v => v.weight), 1);
+      const avgPulse = averageOf(filtered.map(v => v.pulse), 1);
+
+      const avgBox = document.createElement('div');
+      avgBox.className = 'avg-box';
+      avgBox.innerHTML = `
+        <div class="avg-title">平均</div>
+        <div class="avg-items">
+          <span class="avg-item">血圧 ${avgSys != null || avgDia != null ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―'}</span>
+          <span class="avg-item">体重 ${avgWeight != null ? `${avgWeight}kg` : '―'}</span>
+          <span class="avg-item">脈拍 ${avgPulse != null ? avgPulse : '―'}</span>
+        </div>
+      `;
+      listEl.appendChild(avgBox);
+
       if (filtered.length === 0) {
         const div = document.createElement('div');
         div.className = 'table-empty';
@@ -1085,12 +1166,15 @@
       for (const v of filtered) {
         const tr = document.createElement('tr');
         const memo = String(v.memo || '').trim();
+        const weightFlag = isManualFlagOn(v.id, 'weight');
+        const bpFlag = isManualFlagOn(v.id, 'bp');
+        const pulseFlag = isManualFlagOn(v.id, 'pulse');
         tr.innerHTML = `
           <td>${escapeHTML(formatJP(v.measuredAt))}</td>
           <td>${escapeHTML(v.resident || '')}</td>
-          <td>${escapeHTML(String(v.weight || '').trim() ? `${v.weight}kg` : '―')}</td>
-          <td>${escapeHTML((String(v.bpSys || '').trim() || String(v.bpDia || '').trim()) ? `${v.bpSys || '―'}/${v.bpDia || '―'}` : '―')}</td>
-          <td>${escapeHTML(String(v.pulse || '').trim() ? String(v.pulse) : '―')}</td>
+          <td class="${weightFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.weight || '').trim() ? `${v.weight}kg` : '―')}</td>
+          <td class="${bpFlag ? 'manual-flag' : ''}">${escapeHTML((String(v.bpSys || '').trim() || String(v.bpDia || '').trim()) ? `${v.bpSys || '―'}/${v.bpDia || '―'}` : '―')}</td>
+          <td class="${pulseFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.pulse || '').trim() ? String(v.pulse) : '―')}</td>
           <td>${escapeHTML(v.recorder || '')}</td>
           <td class="memo-cell">${escapeHTML(memo || '―')}</td>
           <td></td>
@@ -1116,8 +1200,26 @@
         bEdit.textContent = '編集';
         bEdit.onclick = () => openEdit(v.id);
 
+        const bWeightFlag = document.createElement('button');
+        bWeightFlag.className = 'manual-flag-btn' + (weightFlag ? ' is-on' : '');
+        bWeightFlag.textContent = '体重赤字';
+        bWeightFlag.onclick = () => toggleManualFlag(v.id, 'weight');
+
+        const bBpFlag = document.createElement('button');
+        bBpFlag.className = 'manual-flag-btn' + (bpFlag ? ' is-on' : '');
+        bBpFlag.textContent = '血圧赤字';
+        bBpFlag.onclick = () => toggleManualFlag(v.id, 'bp');
+
+        const bPulseFlag = document.createElement('button');
+        bPulseFlag.className = 'manual-flag-btn' + (pulseFlag ? ' is-on' : '');
+        bPulseFlag.textContent = '脈拍赤字';
+        bPulseFlag.onclick = () => toggleManualFlag(v.id, 'pulse');
+
         actions.appendChild(bCopy);
         actions.appendChild(bEdit);
+        actions.appendChild(bWeightFlag);
+        actions.appendChild(bBpFlag);
+        actions.appendChild(bPulseFlag);
         actionTd.appendChild(actions);
         tbody.appendChild(tr);
       }
@@ -1393,17 +1495,19 @@
 
       const residents = loadJSON(RESIDENTS_KEY, []);
       const recorders = loadJSON(RECORDERS_KEY, []);
+      const residentList = Array.isArray(residents) && residents.length ? residents : DEFAULT_RESIDENTS;
+      const recorderList = Array.isArray(recorders) && recorders.length ? recorders : DEFAULT_RECORDERS;
 
-      buildResidentsSelect($('vResident'), residents, false);
-      buildRecordersSelect($('vRecorder'), recorders);
-      buildResidentsSelect($('filterResident'), residents, true);
+      buildResidentsSelect($('vResident'), residentList, false);
+      buildRecordersSelect($('vRecorder'), recorderList);
+      buildResidentsSelect($('filterResident'), residentList, true);
 
       // filterResident: なるべく「最後に使った利用者」へ（グラフが見やすい）
       $('filterResident').value = '__all__';
 
       // 編集モーダル側
-      buildResidentsSelect($('eResident'), residents, false);
-      buildRecordersSelect($('eRecorder'), recorders);
+      buildResidentsSelect($('eResident'), residentList, false);
+      buildRecordersSelect($('eRecorder'), recorderList);
 
       // 設定の復元（最後に使った利用者/記録者）
       try {
@@ -1414,16 +1518,8 @@
         }
       } catch(e){}
 
-      // できれば一覧も同じ利用者に合わせる（見やすさ優先）
-      try {
-        const cur = $('vResident').value;
-        if (cur && Array.from($('filterResident').options).some(o=>o.value===cur)) {
-          $('filterResident').value = cur;
-        } else {
-          const first = Array.from($('filterResident').options).find(o => o.value && o.value !== '__all__');
-          if (first) $('filterResident').value = first.value;
-        }
-      } catch(e){}
+      // 一覧は初期表示を全員にする
+      $('filterResident').value = '__all__';
 
       $('saveVitalBtn').onclick = async () => {
         try { saveJSON('group_home_vitals_last_v1', { resident: $('vResident').value, recorder: $('vRecorder').value }); } catch(e){}
@@ -1454,7 +1550,6 @@
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
       $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
-      $('hideUpdateBannerBtn').onclick = () => { const b = $('updateBanner'); if (b) b.style.display = 'none'; };
 
       if (hasRemoteEnabled()) {
         setRemoteStatus('共有URL設定済み：起動時に共有を確認します');
@@ -1472,7 +1567,7 @@
 
       // 注意表示
       if (!Array.isArray(residents) || residents.length==0) {
-        $('quickStatus').textContent = '※利用者が未登録です（本体の「① 利用者管理」で登録してください）';
+        $('quickStatus').textContent = '※初期利用者を表示しています。本体で登録済みならそちらが優先されます。';
       }
     }
 
