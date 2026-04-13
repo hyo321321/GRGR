@@ -931,6 +931,12 @@
       return Number.isFinite(n) ? n : null;
     }
 
+    function isAutoHighBp(bpSys, bpDia) {
+      const sys = parseNumOrNull(bpSys);
+      const dia = parseNumOrNull(bpDia);
+      return (sys != null && sys >= 135) || (dia != null && dia >= 85);
+    }
+
     function dayKeyFromISO(iso) {
       const d = new Date(iso);
       return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
@@ -1145,10 +1151,13 @@
           sumEl.textContent = '';
         } else {
           const parts = [];
-          if (last.bpSys != null && last.bpDia != null) parts.push(`血圧 ${last.bpSys}/${last.bpDia}`);
+          if (last.bpSys != null && last.bpDia != null) {
+            const bpClass = isAutoHighBp(last.bpSys, last.bpDia) ? 'manual-flag' : '';
+            parts.push(`血圧 <span class="${bpClass}">${last.bpSys}/${last.bpDia}</span>`);
+          }
           if (last.pulse != null) parts.push(`脈拍 ${last.pulse}`);
           if (last.weight != null) parts.push(`体重 ${last.weight}`);
-          sumEl.textContent = `最新：${last.label}  ${parts.join(' / ')}`;
+          sumEl.innerHTML = `最新：${last.label}  ${parts.join(' / ')}`;
         }
       }
 
@@ -1261,11 +1270,12 @@
         const weightFlag = isManualFlagOn(v.id, 'weight');
         const bpFlag = isManualFlagOn(v.id, 'bp');
         const pulseFlag = isManualFlagOn(v.id, 'pulse');
+        const bpAutoFlag = isAutoHighBp(v.bpSys, v.bpDia);
         tr.innerHTML = `
           <td>${escapeHTML(formatJP(v.measuredAt))}</td>
           <td>${escapeHTML(v.resident || '')}</td>
           <td class="${weightFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.weight || '').trim() ? `${v.weight}kg` : '―')}</td>
-          <td class="${bpFlag ? 'manual-flag' : ''}">${escapeHTML((String(v.bpSys || '').trim() || String(v.bpDia || '').trim()) ? `${v.bpSys || '―'}/${v.bpDia || '―'}` : '―')}</td>
+          <td class="${(bpFlag || bpAutoFlag) ? 'manual-flag' : ''}">${escapeHTML((String(v.bpSys || '').trim() || String(v.bpDia || '').trim()) ? `${v.bpSys || '―'}/${v.bpDia || '―'}` : '―')}</td>
           <td class="${pulseFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.pulse || '').trim() ? String(v.pulse) : '―')}</td>
           <td>${escapeHTML(v.recorder || '')}</td>
           <td class="memo-cell">${escapeHTML(memo || '―')}</td>
