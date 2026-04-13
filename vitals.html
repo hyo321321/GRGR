@@ -123,50 +123,6 @@
     }
 
     .list { display: flex; flex-direction: column; gap: 10px; }
-
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      background: #fff;
-    }
-    .vitals-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 860px;
-      font-size: 13px;
-    }
-    .vitals-table th,
-    .vitals-table td {
-      border-bottom: 1px solid #e5e7eb;
-      padding: 8px 10px;
-      text-align: left;
-      vertical-align: top;
-      white-space: nowrap;
-    }
-    .vitals-table th {
-      position: sticky;
-      top: 0;
-      background: #f8fafc;
-      z-index: 1;
-      font-size: 12px;
-      color: #475569;
-    }
-    .vitals-table td.memo-cell {
-      white-space: normal;
-      min-width: 180px;
-    }
-    .table-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .table-empty {
-      padding: 12px;
-      font-size: 13px;
-      color: #475569;
-    }
     .item {
       border: 1px solid #e5e7eb;
       border-radius: 12px;
@@ -286,20 +242,94 @@
     }
 
 
+    
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .vitals-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+      font-size: 13px;
+    }
+    .vitals-table th,
+    .vitals-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    .vitals-table th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 1;
+      font-size: 12px;
+      color: #475569;
+    }
+    .vitals-table td.memo-cell {
+      white-space: normal;
+      min-width: 180px;
+    }
+    .table-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .table-empty {
+      padding: 14px;
+      font-size: 13px;
+      color: #475569;
+    }
 
     @media print {
-      .topbar, .btn-row, .table-actions, .toast, .modal-backdrop { display: none !important; }
-      body { background: #fff; }
-      .wrap { max-width: none; margin: 0; padding: 0; }
-      .card { box-shadow: none; border: 1px solid #d1d5db; page-break-inside: avoid; }
-      #chartsCard { display: none !important; }
-      .vitals-table th { position: static; }
+      body { background:#fff; }
+      .topbar, .toast, .modal-backdrop { display:none !important; }
+      .layout { grid-template-columns: 1fr !important; }
+      .layout > .card:first-child { display:none !important; }
+      .wrap { max-width:none; margin:0; padding:0; }
+      .card { box-shadow:none; border:0; padding:0; margin:0 0 14px; }
+      .table-wrap { overflow: visible; border:0; }
+      .vitals-table { min-width:0; font-size:11px; }
+      .vitals-table th, .vitals-table td { padding:4px 6px; }
+      .table-actions { display:none !important; }
+      canvas.chart { height:220px !important; }
     }
 
     @media (max-width: 980px) {
       .layout { grid-template-columns: 1fr; }
     }
+  
 
+    .update-banner {
+      margin: 10px auto 0;
+      max-width: 1120px;
+      background: #ecfeff;
+      border: 1px solid #a5f3fc;
+      color: #0e7490;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .update-banner .msg { line-height: 1.4; }
+    .update-banner button {
+      border: 1px solid #a5f3fc;
+      background: #cffafe;
+      color: #0e7490;
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
 </style>
 </head>
 <body>
@@ -307,23 +337,20 @@
 <div class="topbar-inner">
 <div>
 <div class="title">🩺 バイタル記録（体重・血圧・脈拍）</div>
-<div class="subtitle">※保存先は localStorage＋共有保存です。新規入力したデータは他端末でも確認できます。必要な時だけ「共有読込」を押してください。</div>
+<div class="subtitle">※保存先は localStorage＋共有保存です。共有URLが設定されていれば、携帯からの保存も他端末と共有できます。</div>
 </div>
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
 <button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
-<button class="btn btn-ghost" id="sharedReloadBtn">☁ 共有読込</button>
+<button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
+<button class="btn btn-ghost" id="migrateRemoteBtn">☁ 過去データを共有へ送る</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
-<button class="btn btn-ghost" id="addResidentBtn">👤 利用者追加</button>
-<button class="btn btn-ghost" id="deleteResidentBtn">🗑 利用者削除</button>
-<button class="btn btn-ghost" id="addRecorderBtn">✍ 記録者追加</button>
-<button class="btn btn-ghost" id="deleteRecorderBtn">🗑 記録者削除</button>
 <input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
 </div>
 </div>
-</div>
+</div><div class="update-banner" id="updateBanner"><div class="msg">✅ アップデートしました（2026-01-21）：グラフを大きく表示＋「最新」サマリー表示。入力欄（血圧/体重/脈拍）も従来どおり使えます。</div><button id="hideUpdateBannerBtn" type="button">閉じる</button></div>
 <div class="wrap"><div class="layout">
 <div class="card">
 <div class="card-title">
@@ -383,16 +410,31 @@
 <div class="hint" style="margin-top:10px;">
           ・保存すると右の一覧に出ます（新しい順）。<br/>
           ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
-        </div>
+</div>
 </div>
 <div class="card">
 <div class="card-title">
 <span>一覧</span>
 <span class="hint" id="countLabel"></span>
 </div>
+<div class="tools">
+<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+<label style="margin:0">表示：</label>
+<select id="filterResident" style="width:auto; min-width: 180px;"></select>
+<select id="filterRange" style="width:auto">
+<option selected="" value="today">今日</option>
+<option value="week">直近7日</option>
+<option value="month">今月</option>
+<option value="all">全期間</option>
+</select>
+</div>
+<input id="search" placeholder="検索（メモ/数値）" style="width: 180px;" type="text"/>
+</div>
 <div class="table-wrap"><div class="list" id="list"></div></div>
 </div>
-</div><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
+</div>
+</div>
+<div class="wrap"><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
 <div class="chart-title">
 <span>体重（kg）</span>
 <span class="chart-sub" id="chartResidentLabel"></span>
@@ -408,20 +450,9 @@
 <span><i style="background:#10b981"></i>脈拍</span>
 </div>
 <div class="hint" id="chartVitalsHint" style="margin-top:6px"></div>
-</div></div><div class="tools">
-<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-<label style="margin:0">表示：</label>
-<select id="filterResident" style="width:auto; min-width: 180px;"></select>
-<select id="filterRange" style="width:auto">
-<option selected="" value="today">今日</option>
-<option value="week">直近7日</option>
-<option value="month">今月</option>
-<option value="all">全期間</option>
-</select>
+</div></div></div>
 </div>
-<input id="search" placeholder="検索（メモ/数値）" style="width: 180px;" type="text"/>
-</div></div>
-</div><div class="toast" id="toast"></div>
+<div class="toast" id="toast"></div>
 <div class="modal-backdrop" id="modalBg">
 <div class="modal">
 <div class="card-title"><span>編集</span><button class="btn" id="closeModalBtn">✕</button></div>
@@ -455,8 +486,6 @@
     const VITALS_KEY    = "group_home_vitals_v1";
     const GOOGLE_SHARE_URL_KEY = "group_home_google_share_url";
     const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
-    const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
-    const DEFAULT_RECORDERS = ['太田'];
 
     const $ = (id) => document.getElementById(id);
 
@@ -482,89 +511,6 @@
       localStorage.setItem(key, JSON.stringify(value));
     };
 
-    function ensureDefaultPeople() {
-      let residents = loadJSON(RESIDENTS_KEY, []);
-      if (!Array.isArray(residents) || residents.length === 0) {
-        residents = DEFAULT_RESIDENTS.slice();
-      } else {
-        residents = sanitizeNameList([...(residents || []), ...DEFAULT_RESIDENTS]);
-      }
-      saveJSON(RESIDENTS_KEY, residents);
-      let recorders = loadJSON(RECORDERS_KEY, []);
-      if (!Array.isArray(recorders) || recorders.length === 0) {
-        recorders = DEFAULT_RECORDERS.slice();
-      } else {
-        recorders = sanitizeNameList([...(recorders || []), ...DEFAULT_RECORDERS]);
-      }
-      saveJSON(RECORDERS_KEY, recorders);
-      return { residents, recorders };
-    }
-
-
-
-    function sanitizeNameList(list) {
-      return Array.from(new Set((Array.isArray(list) ? list : []).map(v => String(v || '').trim()).filter(Boolean)));
-    }
-
-    function addNameToStorageList(key, name) {
-      const clean = String(name || '').trim();
-      if (!clean) return false;
-      const list = sanitizeNameList(loadJSON(key, []));
-      if (list.includes(clean)) return false;
-      list.push(clean);
-      saveJSON(key, list);
-      return true;
-    }
-
-    function removeNameFromStorageList(key, name) {
-      const clean = String(name || '').trim();
-      if (!clean) return false;
-      let list = sanitizeNameList(loadJSON(key, []));
-      if (!list.includes(clean)) return false;
-      list = list.filter(v => v !== clean);
-      if (key === RECORDERS_KEY && !list.includes('太田')) list.unshift('太田');
-      saveJSON(key, list);
-      return true;
-    }
-
-    function ensureSeedLists() {
-      const currentResidents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
-      const mergedResidents = sanitizeNameList([...(currentResidents || []), ...DEFAULT_RESIDENTS]);
-      saveJSON(RESIDENTS_KEY, mergedResidents);
-      const currentRecorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
-      const mergedRecorders = sanitizeNameList([...(currentRecorders || []), ...DEFAULT_RECORDERS]);
-      saveJSON(RECORDERS_KEY, mergedRecorders);
-    }
-
-    function refreshNameSelects(preserveValues = true) {
-      const residents = sanitizeNameList(loadJSON(RESIDENTS_KEY, []));
-      const recorders = sanitizeNameList(loadJSON(RECORDERS_KEY, []));
-      if (!recorders.length) {
-        recorders.push(...DEFAULT_RECORDERS);
-        saveJSON(RECORDERS_KEY, recorders);
-      }
-
-      const prev = preserveValues ? {
-        vResident: $('vResident')?.value || '',
-        filterResident: $('filterResident')?.value || '__all__',
-        eResident: $('eResident')?.value || ''
-      } : {};
-
-      buildResidentsSelect($('vResident'), residents, false);
-      buildRecordersSelect($('vRecorder'), recorders);
-      buildResidentsSelect($('filterResident'), residents, true);
-      buildResidentsSelect($('eResident'), residents, false);
-      buildRecordersSelect($('eRecorder'), recorders);
-
-      if (Array.from($('vRecorder').options).some(o => o.value === '太田')) $('vRecorder').value = '太田';
-      if (Array.from($('eRecorder').options).some(o => o.value === '太田')) $('eRecorder').value = '太田';
-
-      if (preserveValues) {
-        if (prev.vResident && Array.from($('vResident').options).some(o => o.value === prev.vResident)) $('vResident').value = prev.vResident;
-        if (prev.filterResident && Array.from($('filterResident').options).some(o => o.value === prev.filterResident)) $('filterResident').value = prev.filterResident;
-        if (prev.eResident && Array.from($('eResident').options).some(o => o.value === prev.eResident)) $('eResident').value = prev.eResident;
-      }
-    }
 
     function setRemoteStatus(msg) {
       const el = $('remoteStatus');
@@ -1078,7 +1024,6 @@
       ], { yFmt: (v) => String(Math.round(v)) });
     }
 
-
     function renderList() {
       const listEl = $('list');
       const all = loadVitals();
@@ -1446,21 +1391,38 @@
       $('vDate').value = nowLocalDate();
       $('vTime').value = nowLocalTime();
 
-      ensureSeedLists();
-      refreshNameSelects(false);
-      $('filterResident').value = '__all__';
-      $('filterRange').value = 'today';
-      $('vRecorder').value = '太田';
+      const residents = loadJSON(RESIDENTS_KEY, []);
+      const recorders = loadJSON(RECORDERS_KEY, []);
 
+      buildResidentsSelect($('vResident'), residents, false);
+      buildRecordersSelect($('vRecorder'), recorders);
+      buildResidentsSelect($('filterResident'), residents, true);
+
+      // filterResident: なるべく「最後に使った利用者」へ（グラフが見やすい）
+      $('filterResident').value = '__all__';
+
+      // 編集モーダル側
+      buildResidentsSelect($('eResident'), residents, false);
+      buildRecordersSelect($('eRecorder'), recorders);
+
+      // 設定の復元（最後に使った利用者/記録者）
       try {
         const last = loadJSON('group_home_vitals_last_v1', {});
         if (last && typeof last === 'object') {
           if (last.resident && Array.from($('vResident').options).some(o=>o.value===last.resident)) $('vResident').value = last.resident;
+          if (last.recorder && Array.from($('vRecorder').options).some(o=>o.value===last.recorder)) $('vRecorder').value = last.recorder;
         }
       } catch(e){}
 
+      // できれば一覧も同じ利用者に合わせる（見やすさ優先）
       try {
-        $('filterResident').value = '__all__';
+        const cur = $('vResident').value;
+        if (cur && Array.from($('filterResident').options).some(o=>o.value===cur)) {
+          $('filterResident').value = cur;
+        } else {
+          const first = Array.from($('filterResident').options).find(o => o.value && o.value !== '__all__');
+          if (first) $('filterResident').value = first.value;
+        }
       } catch(e){}
 
       $('saveVitalBtn').onclick = async () => {
@@ -1479,69 +1441,20 @@
       $('filterRange').onchange = renderList;
       $('search').oninput = renderList;
 
-      $('addResidentBtn').onclick = () => {
-        const name = prompt('追加する利用者名を入力してください');
-        if (!name) return;
-        if (!addNameToStorageList(RESIDENTS_KEY, name)) {
-          toast('同じ利用者名があります');
-          return;
-        }
-        refreshNameSelects(true);
-        $('vResident').value = String(name).trim();
-        $('filterResident').value = String(name).trim();
-        toast('利用者を追加しました');
-        renderList();
-      };
-      $('deleteResidentBtn').onclick = () => {
-        const name = prompt('削除する利用者名を入力してください');
-        if (!name) return;
-        if (!removeNameFromStorageList(RESIDENTS_KEY, name)) {
-          toast('その利用者名はありません');
-          return;
-        }
-        refreshNameSelects(true);
-        toast('利用者を削除しました');
-        renderList();
-      };
-      $('addRecorderBtn').onclick = () => {
-        const name = prompt('追加する記録者名を入力してください');
-        if (!name) return;
-        if (!addNameToStorageList(RECORDERS_KEY, name)) {
-          toast('同じ記録者名があります');
-          return;
-        }
-        refreshNameSelects(true);
-        $('vRecorder').value = String(name).trim();
-        toast('記録者を追加しました');
-      };
-      $('deleteRecorderBtn').onclick = () => {
-        const name = prompt('削除する記録者名を入力してください');
-        if (!name) return;
-        if (String(name).trim() === '太田') {
-          toast('太田は削除できません');
-          return;
-        }
-        if (!removeNameFromStorageList(RECORDERS_KEY, name)) {
-          toast('その記録者名はありません');
-          return;
-        }
-        refreshNameSelects(true);
-        toast('記録者を削除しました');
-      };
+      $('syncRemoteBtn').onclick = async () => { try { await syncRemoteVitals(); renderList(); } catch(e){ console.warn(e); setRemoteStatus('共有読込に失敗しました'); toast('共有読込に失敗しました'); } };
+      $('migrateRemoteBtn').onclick = async () => { try { await migrateLocalVitalsToRemote(); } catch(e){ console.warn(e); setRemoteStatus('共有送信に失敗しました'); toast('共有送信に失敗しました'); } };
       $('closeModalBtn').onclick = closeEdit;
       $('modalBg').addEventListener('click', (e) => { if (e.target === $('modalBg')) closeEdit(); });
       $('saveEditBtn').onclick = applyEdit;
       $('deleteEditBtn').onclick = deleteEdit;
 
-      $('printBtn').onclick = () => window.print();
-      $('sharedReloadBtn').onclick = () => {
-        if (!hasRemoteEnabled()) { toast('共有URL未設定です'); return; }
-        syncRemoteVitals({ silent:false }).catch(() => {});
-      };
+      const printBtn = $('printBtn');
+      if (printBtn) printBtn.onclick = () => window.print();
       $('exportCsvBtn').onclick = exportCsv;
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
       $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
+      $('hideUpdateBannerBtn').onclick = () => { const b = $('updateBanner'); if (b) b.style.display = 'none'; };
 
       if (hasRemoteEnabled()) {
         setRemoteStatus('共有URL設定済み：起動時に共有を確認します');
@@ -1551,13 +1464,19 @@
       }
 
       renderList();
-      window.addEventListener('resize', () => { try { renderCharts(); } catch(e) {} });
 
-      if (!sanitizeNameList(loadJSON(RESIDENTS_KEY, [])).length) {
-        $('quickStatus').textContent = '※利用者が未登録です';
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+
+      // 注意表示
+      if (!Array.isArray(residents) || residents.length==0) {
+        $('quickStatus').textContent = '※利用者が未登録です（本体の「① 利用者管理」で登録してください）';
       }
     }
 
+  
     document.addEventListener('DOMContentLoaded', init);
 
   </script>
