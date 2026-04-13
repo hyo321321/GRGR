@@ -26,7 +26,7 @@
       z-index: 10;
     }
     .topbar-inner {
-      max-width: 1100px;
+      max-width: 1400px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -44,11 +44,11 @@
       margin-top: 2px;
     }
 
-    .wrap { max-width: 1100px; margin: 14px auto 24px; padding: 0 16px; }
+    .wrap { max-width: 1400px; margin: 14px auto 24px; padding: 0 16px; }
 
     .layout {
       display: grid;
-      grid-template-columns: 1fr 520px;
+      grid-template-columns: 1fr;
       gap: 12px;
       align-items: start;
     }
@@ -112,6 +112,73 @@
     .btn-ghost { background: #fff; color: #0f172a; }
 
     .hint { font-size: 12px; color: #475569; line-height: 1.45; }
+
+    .input-card {
+      padding: 10px;
+    }
+    .input-card .card-title {
+      margin-bottom: 8px;
+    }
+    .input-card .hint {
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .input-card label {
+      font-size: 10px;
+      margin: 0 0 3px;
+    }
+    .input-card input,
+    .input-card select,
+    .input-card textarea {
+      padding: 6px 7px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    .input-grid-4 {
+      display: grid;
+      grid-template-columns: 0.95fr 0.85fr 1.3fr 1fr 0.8fr 0.8fr 0.8fr 0.8fr;
+      gap: 6px;
+      align-items: end;
+    }
+    .input-grid-2 {
+      display: grid;
+      grid-template-columns: 1.25fr auto;
+      gap: 6px;
+      align-items: end;
+      margin-top: 6px;
+    }
+    .input-card .btn-row {
+      gap: 5px;
+      margin-top: 6px;
+      flex-wrap: nowrap;
+    }
+    .input-card .btn {
+      padding: 7px 9px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .input-card .field-compact {
+      min-width: 0;
+    }
+    .input-card #vMemo {
+      min-width: 0;
+    }
+    @media (max-width: 1100px) {
+      .input-grid-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 900px) {
+      .input-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .input-grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .input-card .btn-row {
+        flex-wrap: wrap;
+      }
+    }
 
     .tools {
       display: flex;
@@ -253,13 +320,13 @@
     .vitals-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 860px;
+      min-width: 720px;
       font-size: 13px;
     }
     .vitals-table th,
     .vitals-table td {
       border-bottom: 1px solid #e5e7eb;
-      padding: 8px 10px;
+      padding: 6px 8px;
       text-align: left;
       vertical-align: top;
       white-space: nowrap;
@@ -285,6 +352,33 @@
       padding: 14px;
       font-size: 13px;
       color: #475569;
+    }
+
+
+    .tools input[type="text"] {
+      max-width: 220px;
+    }
+    .table-actions {
+      gap: 4px;
+    }
+    .table-actions .btn,
+    .manual-flag-btn {
+      padding: 4px 6px;
+      font-size: 10px;
+    }
+    .vitals-table td:nth-child(1),
+    .vitals-table th:nth-child(1) {
+      min-width: 120px;
+    }
+    .vitals-table td:nth-child(2),
+    .vitals-table th:nth-child(2),
+    .vitals-table td:nth-child(6),
+    .vitals-table th:nth-child(6) {
+      min-width: 74px;
+    }
+    .vitals-table td:nth-child(7),
+    .vitals-table th:nth-child(7) {
+      min-width: 120px;
     }
 
     @media print {
@@ -370,8 +464,8 @@
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
 <button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
+<button class="btn btn-ghost" id="pdfBtn">📄 PDFにする</button>
 <button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
-<button class="btn btn-ghost" id="migrateRemoteBtn">☁ 過去データを共有へ送る</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
@@ -380,62 +474,60 @@
 </div>
 </div>
 <div class="wrap"><div class="layout">
-<div class="card">
+<div class="card input-card">
 <div class="card-title">
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
-<div class="hint" id="remoteStatus" style="margin-bottom:10px;"></div>
-<div class="grid">
-<div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div>
+<div class="input-grid-4">
+<div class="field-compact">
 <label>日付</label>
 <input id="vDate" type="date"/>
 </div>
-<div>
+<div class="field-compact">
 <label>時刻</label>
 <input id="vTime" type="time"/>
 </div>
-</div>
-<div class="grid" style="margin-top:10px;">
-<div>
+<div class="field-compact">
 <label>利用者</label>
 <select id="vResident"></select>
 </div>
-<div>
+<div class="field-compact">
 <label>記録者</label>
 <select id="vRecorder"></select>
 </div>
-</div>
-<div class="grid-3" style="margin-top:10px;">
-<div>
+<div class="field-compact">
 <label>体重（kg）</label>
 <input id="vWeight" inputmode="decimal" placeholder="例）58.4" step="0.1" type="number"/>
 </div>
-<div>
+<div class="field-compact">
 <label>血圧（上）</label>
 <input id="vBpSys" inputmode="numeric" placeholder="例）128" step="1" type="number"/>
 </div>
-<div>
+<div class="field-compact">
 <label>血圧（下）</label>
 <input id="vBpDia" inputmode="numeric" placeholder="例）78" step="1" type="number"/>
 </div>
-</div>
-<div class="grid" style="margin-top:10px;">
-<div>
+<div class="field-compact">
 <label>脈拍（回/分）</label>
 <input id="vPulse" inputmode="numeric" placeholder="例）72" step="1" type="number"/>
 </div>
-<div>
+</div>
+<div class="input-grid-2">
+<div class="field-compact">
 <label>メモ（任意）</label>
 <input id="vMemo" placeholder="例）起床後、服薬前" type="text"/>
 </div>
-</div>
+<div>
 <div class="btn-row">
 <button class="btn btn-primary" id="saveVitalBtn">💾 保存</button>
 <button class="btn" id="clearBtn">🧹 クリア</button>
 <button class="btn" id="copyBtn">📋 コピー</button>
 </div>
-<div class="hint" style="margin-top:10px;">
+</div>
+</div>
+<div class="hint" style="margin-top:6px;">
           ・保存すると右の一覧に出ます（新しい順）。<br/>
           ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
 </div>
@@ -1538,7 +1630,6 @@
       $('search').oninput = renderList;
 
       $('syncRemoteBtn').onclick = async () => { try { await syncRemoteVitals(); renderList(); } catch(e){ console.warn(e); setRemoteStatus('共有読込に失敗しました'); toast('共有読込に失敗しました'); } };
-      $('migrateRemoteBtn').onclick = async () => { try { await migrateLocalVitalsToRemote(); } catch(e){ console.warn(e); setRemoteStatus('共有送信に失敗しました'); toast('共有送信に失敗しました'); } };
       $('closeModalBtn').onclick = closeEdit;
       $('modalBg').addEventListener('click', (e) => { if (e.target === $('modalBg')) closeEdit(); });
       $('saveEditBtn').onclick = applyEdit;
@@ -1546,6 +1637,8 @@
 
       const printBtn = $('printBtn');
       if (printBtn) printBtn.onclick = () => window.print();
+      const pdfBtn = $('pdfBtn');
+      if (pdfBtn) pdfBtn.onclick = () => window.print();
       $('exportCsvBtn').onclick = exportCsv;
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
