@@ -568,6 +568,7 @@
 <div class="field-compact">
 <label>日付</label>
 <input id="vDate" type="date"/>
+<div class="weekday-text" id="vWeekday"></div>
 </div>
 <div class="field-compact">
 <label>測定区分</label>
@@ -667,7 +668,7 @@
 <div class="modal">
 <div class="card-title"><span>編集</span><button class="btn" id="closeModalBtn">✕</button></div>
 <div class="grid">
-<div><label>日付</label><input id="eDate" type="date"/></div>
+<div><label>日付</label><input id="eDate" type="date"/><div class="weekday-text" id="eWeekday"></div></div>
 <div>
 <label>測定区分</label>
 <div class="slot-group" id="eSlotGroup">
@@ -933,6 +934,25 @@
       noon: '昼',
       evening: '夕',
     };
+    const WEEKDAY_LABELS = ['日','月','火','水','木','金','土'];
+
+    function getWeekdayLabelFromDate(dateStr) {
+      const s = String(dateStr || '').trim();
+      if (!s) return '';
+      const parts = s.split('-').map(Number);
+      if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return '';
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      if (isNaN(d)) return '';
+      return WEEKDAY_LABELS[d.getDay()] || '';
+    }
+
+    function updateWeekdayLabel(inputId, outputId) {
+      const input = $(inputId);
+      const output = $(outputId);
+      if (!input || !output) return;
+      const w = getWeekdayLabelFromDate(input.value);
+      output.textContent = w ? `曜日：${w}` : '';
+    }
 
     function getTimeForSlot(slot) {
       return SLOT_TIME_MAP[slot] || SLOT_TIME_MAP.morning;
@@ -989,8 +1009,9 @@
       const y = d.getFullYear();
       const m = pad2(d.getMonth()+1);
       const da = pad2(d.getDate());
+      const weekday = WEEKDAY_LABELS[d.getDay()] || '';
       const slot = getSlotLabel(getSlotFromTime(`${pad2(d.getHours())}:${pad2(d.getMinutes())}`));
-      return `${y}/${m}/${da} ${slot}`;
+      return `${y}/${m}/${da}（${weekday}） ${slot}`;
     }
 
     function vitalsToText(v) {
@@ -1778,6 +1799,7 @@
 
       const d = new Date(v.measuredAt);
       $('eDate').value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      updateWeekdayLabel('eDate', 'eWeekday');
       setSlotSelection('eSlotGroup', getSlotFromTime(`${pad2(d.getHours())}:${pad2(d.getMinutes())}`));
 
       $('eResident').value = v.resident || '';
@@ -1949,6 +1971,10 @@
     // --- 初期化 ---
     function init(){
       $('vDate').value = nowLocalDate();
+      updateWeekdayLabel('vDate', 'vWeekday');
+      updateWeekdayLabel('eDate', 'eWeekday');
+      $('vDate').addEventListener('change', () => updateWeekdayLabel('vDate', 'vWeekday'));
+      $('eDate').addEventListener('change', () => updateWeekdayLabel('eDate', 'eWeekday'));
       bindSlotGroup('vSlotGroup');
       bindSlotGroup('eSlotGroup');
       setSlotSelection('vSlotGroup', 'morning');
