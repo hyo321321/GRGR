@@ -16,6 +16,8 @@
   input,select,textarea,button{font:inherit}
   input,select,textarea{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
   textarea{min-height:150px;resize:vertical}
+  input[type="date"].date-completed{background:#dcfce7;border-color:#4ade80;color:#166534;font-weight:700}
+  input[type="date"].date-completed::-webkit-calendar-picker-indicator{opacity:1}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
   .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
   button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}
@@ -57,6 +59,33 @@
   .bulk-item input{width:auto;margin:0}
   .bulk-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .bulk-small{border:1px solid #cfd5df;background:#fff;color:#1f2937;border-radius:10px;padding:8px 10px;font-weight:700;cursor:pointer}
+
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .inline-check{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--text);font-size:13px}
+  .inline-check input{width:auto;margin:0;transform:scale(1)}
+  .day-state{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;background:#f3f4f6;color:#374151}
+  .day-state.completed{background:#dcfce7;color:#166534}
+  .day-state.incomplete{background:#fef3c7;color:#92400e}
+  .calendar-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .calendar-nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .calendar-nav button{padding:7px 10px;font-size:12px}
+  .calendar-title{font-size:15px;font-weight:800}
+  .calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+  .calendar-weekdays div{text-align:center;font-size:10px;color:var(--muted);padding:2px 0}
+  .calendar-day{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:10px;min-height:46px;padding:6px 5px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:2px}
+  .calendar-day.muted{background:#f8fafc;color:#94a3b8}
+  .calendar-day.selected{outline:2px solid #2563eb;outline-offset:0}
+  .calendar-day.completed{background:#bbf7d0;border-color:#4ade80}
+  .calendar-day.today .day-num{text-decoration:underline;text-underline-offset:3px}
+  .day-num{font-weight:800;font-size:13px}
+  .day-note{display:none}
+  .calendar-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--muted)}
+  .legend-chip{display:inline-flex;align-items:center;gap:6px}
+  .legend-box{width:12px;height:12px;border-radius:4px;border:1px solid var(--line);background:#fff}
+  .legend-box.completed{background:#dcfce7;border-color:#86efac}
+  .legend-box.selected{outline:2px solid #2563eb;outline-offset:-2px}
+  .calendar-meta{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .calendar-compact{max-width:360px}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}.bulk-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -103,7 +132,7 @@
       <input id="recordDate" type="date">
 
       <details class="warn">
-        <summary style="cursor:pointer;font-weight:700;">削除・訂正方法を見る</summary>
+        <summary style="cursor:pointer;font-weight:700;">削除・訂正方法・完成状況カレンダーを見る</summary>
         <div style="margin-top:8px;line-height:1.6;font-size:14px;">
           <div style="font-weight:700;">削除したい時</div>
           <div>間違えて送った文章をコピーして貼り付けてください。<br>最後に「削除依頼」と入力して送ってください。</div>
@@ -111,6 +140,28 @@
           <div style="font-weight:700;margin-top:8px;">訂正したい時</div>
           <div>訂正したい内容を正しい文章で入力してください。<br>最後に「訂正依頼」と入力して送ってください。</div>
           <div style="margin-top:4px;padding-left:8px;color:#444;">例<br>朝は服薬確認を実施。血圧測定は未実施。<br>訂正依頼</div>
+        </div>
+
+        <div class="template-wrap calendar-compact" style="margin-top:12px;">
+          <div class="calendar-title">完成状況カレンダー</div>
+          <div class="template-head">完成した日は緑で表示されます。日付を押すと、その日を選べます。</div>
+          <div class="calendar-head" style="margin-top:10px;">
+            <div class="calendar-nav">
+              <button id="prevMonthBtn" class="ghost" type="button">前の月</button>
+              <button id="todayMonthBtn" class="ghost" type="button">今月</button>
+              <button id="nextMonthBtn" class="ghost" type="button">次の月</button>
+            </div>
+          </div>
+          <div id="calendarMonthLabel" class="meta" style="margin-top:0;"></div>
+          <div class="calendar-weekdays">
+            <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div class="calendar-legend">
+            <span class="legend-chip"><span class="legend-box completed"></span>完成</span>
+            <span class="legend-chip"><span class="legend-box selected"></span>選択中の日付</span>
+          </div>
+          <div id="calendarStatus" class="calendar-meta">完成にチェックした日は緑になります。Apps Script連携で全端末共通表示になります。</div>
         </div>
       </details>
 
@@ -155,7 +206,13 @@
     </div>
 
     <div class="card">
-      <h2>記録確認</h2>
+      <div class="card-head">
+        <h2 style="margin:0;">記録確認</h2>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <label class="inline-check"><input id="dayCompleteCheck" type="checkbox">この日を完成</label>
+          
+        </div>
+      </div>
       <div id="checkStatus" class="status"></div>
       <div id="mainCheckBox" class="output">ここに選択した日の記録が表示されます。</div>
     </div>
@@ -193,6 +250,19 @@ const bulkSelectAllBtn = document.getElementById('bulkSelectAllBtn');
 const bulkClearBtn = document.getElementById('bulkClearBtn');
 const bulkSendBtn = document.getElementById('bulkSendBtn');
 const bulkStatus = document.getElementById('bulkStatus');
+
+const dayCompleteCheck = document.getElementById('dayCompleteCheck');
+const dayCompleteBadge = document.getElementById('dayCompleteBadge');
+const calendarMonthLabel = document.getElementById('calendarMonthLabel');
+const calendarGrid = document.getElementById('calendarGrid');
+const calendarStatus = document.getElementById('calendarStatus');
+const prevMonthBtn = document.getElementById('prevMonthBtn');
+const todayMonthBtn = document.getElementById('todayMonthBtn');
+const nextMonthBtn = document.getElementById('nextMonthBtn');
+const DAILY_STATUS_LOCAL_KEY = 'easy_daily_status_v1';
+let calendarMonthCursor = '';
+let dayStatusRemoteMode = 'unknown';
+let suppressDayCompleteChange = false;
 
 function unlockApp(){ authScreen.style.display = 'none'; appRoot.classList.remove('app-hidden'); }
 function showAuthError(msg){ authError.textContent = msg || ''; }
@@ -325,6 +395,271 @@ function initTemplates(){
   renderTemplateList();
 }
 
+
+function selectedDateYmd(){
+  return String(recordDateEl.value || '').trim() || todayYmd();
+}
+function monthYmd(dateStr){
+  return String(dateStr || todayYmd()).slice(0,7);
+}
+function formatMonthLabel(monthStr){
+  const parts = String(monthStr || '').split('-');
+  return parts.length === 2 ? (parts[0] + '年' + Number(parts[1]) + '月') : monthStr;
+}
+function shiftMonth(monthStr, diff){
+  const [y,m] = String(monthStr || monthYmd(todayYmd())).split('-').map(Number);
+  const d = new Date(y, (m - 1) + diff, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0');
+}
+function nowLocalText(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function loadDailyStatusLocal(){
+  try {
+    const map = JSON.parse(localStorage.getItem(DAILY_STATUS_LOCAL_KEY) || '{}');
+    return map && typeof map === 'object' ? map : {};
+  } catch(e){ return {}; }
+}
+function saveDailyStatusLocal(map){
+  localStorage.setItem(DAILY_STATUS_LOCAL_KEY, JSON.stringify(map || {}));
+}
+function setLocalDayStatus(date, completed, checkedBy){
+  const map = loadDailyStatusLocal();
+  if (completed) {
+    map[date] = {
+      status:'completed',
+      checkedBy:String(checkedBy || '').trim(),
+      checkedAt:nowLocalText(),
+      updatedAt:nowLocalText()
+    };
+  } else {
+    delete map[date];
+  }
+  saveDailyStatusLocal(map);
+  return completed ? map[date] : null;
+}
+function getLocalDayStatus(date){
+  const map = loadDailyStatusLocal();
+  return map[date] || null;
+}
+function getLocalMonthStatusMap(monthStr){
+  const map = loadDailyStatusLocal();
+  const out = {};
+  Object.keys(map).forEach((date) => {
+    if (date.indexOf(monthStr) === 0 && map[date] && map[date].status === 'completed') out[date] = map[date];
+  });
+  return out;
+}
+function isDailyStatusUnsupportedError(err){
+  const msg = String(err && err.message ? err.message : err || '').toLowerCase();
+  return msg.includes('unknown action') || msg.includes('invalid action') || msg.includes('not supported') || msg.includes('no such action');
+}
+function normalizeDayStatusResponse(data, date){
+  const item = (data && (data.item || data.record || data.statusInfo)) || data || {};
+  const status = String(item.status || data.status || '').trim();
+  if (status === 'completed') {
+    return {
+      date,
+      status:'completed',
+      checkedBy:String(item.checkedBy || data.checkedBy || '').trim(),
+      checkedAt:String(item.checkedAt || data.checkedAt || '').trim(),
+      updatedAt:String(item.updatedAt || data.updatedAt || '').trim()
+    };
+  }
+  return { date, status:'incomplete', checkedBy:'', checkedAt:'', updatedAt:'' };
+}
+function normalizeMonthStatusResponse(data, monthStr){
+  const items = Array.isArray(data && data.items) ? data.items : Array.isArray(data && data.records) ? data.records : Array.isArray(data && data.list) ? data.list : [];
+  const out = {};
+  items.forEach((item) => {
+    const date = String(item && item.date || '').trim();
+    if (!date || date.indexOf(monthStr) !== 0) return;
+    if (String(item.status || '').trim() === 'completed') {
+      out[date] = {
+        status:'completed',
+        checkedBy:String(item.checkedBy || '').trim(),
+        checkedAt:String(item.checkedAt || '').trim(),
+        updatedAt:String(item.updatedAt || '').trim()
+      };
+    }
+  });
+  return out;
+}
+async function fetchDayStatus(date){
+  const localEntry = getLocalDayStatus(date);
+  if (dayStatusRemoteMode === 'unsupported') {
+    return localEntry ? { date, ...localEntry } : { date, status:'incomplete' };
+  }
+  try {
+    const data = await fetchJson(WEB_APP_URL + '?action=getDailyStatus&date=' + encodeURIComponent(date));
+    dayStatusRemoteMode = 'supported';
+    const remoteEntry = normalizeDayStatusResponse(data, date);
+    if (remoteEntry.status === 'completed') return remoteEntry;
+    return localEntry ? { date, ...localEntry } : remoteEntry;
+  } catch(err){
+    if (isDailyStatusUnsupportedError(err)) {
+      dayStatusRemoteMode = 'unsupported';
+      return localEntry ? { date, ...localEntry } : { date, status:'incomplete' };
+    }
+    throw err;
+  }
+}
+async function saveDayStatus(date, completed){
+  const checkedBy = String(staffNameEl.value || '').trim();
+  const localEntry = setLocalDayStatus(date, completed, checkedBy);
+  if (dayStatusRemoteMode === 'unsupported') {
+    return { entry: completed ? { date, ...localEntry } : { date, status:'incomplete' }, saved:'local' };
+  }
+  try {
+    const data = await postJson({
+      action:'saveDailyStatus',
+      date,
+      status: completed ? 'completed' : 'incomplete',
+      checkedBy,
+      checkedAt: nowLocalText(),
+      updatedAt: nowLocalText(),
+      source:'easy_v2_complete'
+    });
+    dayStatusRemoteMode = 'supported';
+    return { entry: normalizeDayStatusResponse(data, date), saved:'remote' };
+  } catch(err){
+    if (isDailyStatusUnsupportedError(err)) {
+      dayStatusRemoteMode = 'unsupported';
+      return { entry: completed ? { date, ...localEntry } : { date, status:'incomplete' }, saved:'local' };
+    }
+    throw err;
+  }
+}
+async function fetchMonthStatusMap(monthStr){
+  const localMap = getLocalMonthStatusMap(monthStr);
+  if (dayStatusRemoteMode === 'unsupported') return localMap;
+  try {
+    const data = await fetchJson(WEB_APP_URL + '?action=listDailyStatusMonth&month=' + encodeURIComponent(monthStr));
+    dayStatusRemoteMode = 'supported';
+    const remoteMap = normalizeMonthStatusResponse(data, monthStr);
+    return Object.assign({}, localMap, remoteMap);
+  } catch(err){
+    if (isDailyStatusUnsupportedError(err)) {
+      dayStatusRemoteMode = 'unsupported';
+      return localMap;
+    }
+    throw err;
+  }
+}
+function applyDayCompleteUi(entry){
+  const completed = !!(entry && entry.status === 'completed');
+  suppressDayCompleteChange = true;
+  dayCompleteCheck.checked = completed;
+  suppressDayCompleteChange = false;
+  if (recordDateEl) {
+    recordDateEl.classList.toggle('date-completed', completed);
+  }
+  if (dayCompleteBadge) {
+    dayCompleteBadge.textContent = completed ? '完成' : '未完成';
+    dayCompleteBadge.classList.toggle('completed', completed);
+    dayCompleteBadge.classList.toggle('incomplete', !completed);
+  }
+}
+async function refreshDayCompleteUi(){
+  const date = selectedDateYmd();
+  const entry = await fetchDayStatus(date);
+  applyDayCompleteUi(entry);
+  return entry;
+}
+async function renderCalendar(){
+  const targetMonth = calendarMonthCursor || monthYmd(selectedDateYmd());
+  const selected = selectedDateYmd();
+  const today = todayYmd();
+  const monthMap = await fetchMonthStatusMap(targetMonth);
+  calendarMonthLabel.textContent = formatMonthLabel(targetMonth);
+
+  const [year, month] = targetMonth.split('-').map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const firstWeekday = firstDay.getDay();
+  const daysInCurrent = new Date(year, month, 0).getDate();
+  const daysInPrev = new Date(year, month - 1, 0).getDate();
+
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    let dayNum = 0;
+    let cellDate = '';
+    let muted = false;
+
+    if (i < firstWeekday) {
+      dayNum = daysInPrev - firstWeekday + i + 1;
+      const d = new Date(year, month - 2, dayNum);
+      cellDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      muted = true;
+    } else if (i >= firstWeekday + daysInCurrent) {
+      dayNum = i - firstWeekday - daysInCurrent + 1;
+      const d = new Date(year, month, dayNum);
+      cellDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      muted = true;
+    } else {
+      dayNum = i - firstWeekday + 1;
+      cellDate = year + '-' + String(month).padStart(2,'0') + '-' + String(dayNum).padStart(2,'0');
+    }
+
+    const completed = !!(monthMap[cellDate] && monthMap[cellDate].status === 'completed');
+    const classes = ['calendar-day'];
+    if (muted) classes.push('muted');
+    if (completed) classes.push('completed');
+    if (cellDate === selected) classes.push('selected');
+    if (cellDate === today) classes.push('today');
+    cells.push(
+      '<button class="' + classes.join(' ') + '" type="button" data-date="' + cellDate + '">' +
+      '<div class="day-num">' + dayNum + '</div>' +
+      '</button>'
+    );
+  }
+
+  calendarGrid.innerHTML = cells.join('');
+  Array.from(calendarGrid.querySelectorAll('button[data-date]')).forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const date = String(btn.dataset.date || '').trim();
+      if (!date) return;
+      recordDateEl.value = date;
+      calendarMonthCursor = monthYmd(date);
+      await refreshDayCompleteUi();
+      await renderCalendar();
+    });
+  });
+
+  if (dayStatusRemoteMode === 'unsupported') {
+    calendarStatus.textContent = '完成状態はこの端末で保存されます。全端末で共通にしたい場合は Apps Script に daily_status 追加が必要です。';
+  } else {
+    calendarStatus.textContent = '完成にチェックした日は緑になります。';
+  }
+}
+async function handleDayCompleteChange(){
+  if (suppressDayCompleteChange) return;
+  const date = selectedDateYmd();
+  const checked = !!dayCompleteCheck.checked;
+  dayCompleteCheck.disabled = true;
+  try {
+    const result = await saveDayStatus(date, checked);
+    applyDayCompleteUi(result.entry);
+    await renderCalendar();
+    const savedText = result.saved === 'local' ? 'この端末で保存しました。' : '保存しました。';
+    checkStatus.textContent = date + (checked ? ' を完成にしました。' : ' を未完成に戻しました。') + savedText;
+  } catch(err){
+    checkStatus.textContent = '完成状態の保存に失敗しました。\n' + (err && err.message ? err.message : err);
+    await refreshDayCompleteUi();
+    await renderCalendar();
+  } finally {
+    dayCompleteCheck.disabled = false;
+  }
+}
+async function handleRecordDateChange(){
+  calendarMonthCursor = monthYmd(selectedDateYmd());
+  try {
+    await refreshDayCompleteUi();
+    await renderCalendar();
+  } catch(err){
+    calendarStatus.textContent = '完成状態の読込に失敗しました。';
+  }
+}
 async function fetchJson(url){
   const res = await fetch(url, { cache:'no-store' });
   const text = await res.text();
@@ -552,6 +887,7 @@ function openTransportPage(){ try{localStorage.setItem('transport_easy_page_url_
   window.location.href = 'transport_expense_app_car_meter_v5_auth_residents.html'; }
 
 if (!recordDateEl.value) recordDateEl.value = todayYmd();
+calendarMonthCursor = monthYmd(recordDateEl.value || todayYmd());
 renderRecent();
 renderBulkResidents();
 initTemplates();
@@ -560,12 +896,18 @@ unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 sendBtn.addEventListener('click', sendRecord);
 allCheckBtn.addEventListener('click', checkAllMainRecords);
+recordDateEl.addEventListener('change', handleRecordDateChange);
+if (dayCompleteCheck) dayCompleteCheck.addEventListener('change', handleDayCompleteChange);
+if (prevMonthBtn) prevMonthBtn.addEventListener('click', async () => { calendarMonthCursor = shiftMonth(calendarMonthCursor || monthYmd(selectedDateYmd()), -1); await renderCalendar(); });
+if (todayMonthBtn) todayMonthBtn.addEventListener('click', async () => { calendarMonthCursor = monthYmd(todayYmd()); recordDateEl.value = todayYmd(); await refreshDayCompleteUi(); await renderCalendar(); });
+if (nextMonthBtn) nextMonthBtn.addEventListener('click', async () => { calendarMonthCursor = shiftMonth(calendarMonthCursor || monthYmd(selectedDateYmd()), 1); await renderCalendar(); });
 if (bulkSelectAllBtn) bulkSelectAllBtn.addEventListener('click', () => setAllBulkResidents(true));
 if (bulkClearBtn) bulkClearBtn.addEventListener('click', () => setAllBulkResidents(false));
 if (bulkSendBtn) bulkSendBtn.addEventListener('click', sendBulkRecords);
 openSearchBtn.addEventListener('click', openSearchPage);
 openVitalsBtn.addEventListener('click', openVitalsPage);
 openTransportBtn.addEventListener('click', openTransportPage);
+handleRecordDateChange();
 </script>
 </body>
 </html>
