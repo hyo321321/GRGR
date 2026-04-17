@@ -167,6 +167,34 @@
     .input-card #vMemo {
       min-width: 0;
     }
+
+    .slot-group {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .slot-btn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #0f172a;
+      border-radius: 8px;
+      padding: 8px 6px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .slot-btn.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+    .slot-hint {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
     @media (max-width: 1100px) {
       .input-grid-4 {
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -542,8 +570,13 @@
 <input id="vDate" type="date"/>
 </div>
 <div class="field-compact">
-<label>時刻</label>
-<input id="vTime" type="time"/>
+<label>測定区分</label>
+<div class="slot-group" id="vSlotGroup">
+<button class="slot-btn active" data-slot="morning" type="button">朝</button>
+<button class="slot-btn" data-slot="noon" type="button">昼</button>
+<button class="slot-btn" data-slot="evening" type="button">夕</button>
+</div>
+<div class="slot-hint">実際の測定時刻はメモに入力してください。</div>
 </div>
 <div class="field-compact">
 <label>利用者</label>
@@ -573,7 +606,7 @@
 <div class="input-grid-2">
 <div class="field-compact">
 <label>メモ（任意）</label>
-<input id="vMemo" placeholder="例）起床後、服薬前" type="text"/>
+<input id="vMemo" placeholder="例）14:20 測定、受診後に再測定" type="text"/>
 </div>
 <div>
 <div class="btn-row">
@@ -585,6 +618,7 @@
 </div>
 <div class="hint" style="margin-top:6px;">
           ・保存すると右の一覧に出ます（新しい順）。<br/>
+          ・時刻欄はなく、朝・昼・夕で保存されます。実際の測定時刻はメモへ入力してください。<br/>
           ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
 </div>
 </div>
@@ -634,7 +668,15 @@
 <div class="card-title"><span>編集</span><button class="btn" id="closeModalBtn">✕</button></div>
 <div class="grid">
 <div><label>日付</label><input id="eDate" type="date"/></div>
-<div><label>時刻</label><input id="eTime" type="time"/></div>
+<div>
+<label>測定区分</label>
+<div class="slot-group" id="eSlotGroup">
+<button class="slot-btn active" data-slot="morning" type="button">朝</button>
+<button class="slot-btn" data-slot="noon" type="button">昼</button>
+<button class="slot-btn" data-slot="evening" type="button">夕</button>
+</div>
+<div class="slot-hint">実際の測定時刻はメモへ入力してください。</div>
+</div>
 </div>
 <div class="grid" style="margin-top:10px;">
 <div><label>利用者</label><select id="eResident"></select></div>
@@ -881,6 +923,58 @@
       const d = new Date();
       return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     };
+    const SLOT_TIME_MAP = {
+      morning: '08:00',
+      noon: '12:00',
+      evening: '18:00',
+    };
+    const SLOT_LABEL_MAP = {
+      morning: '朝',
+      noon: '昼',
+      evening: '夕',
+    };
+
+    function getTimeForSlot(slot) {
+      return SLOT_TIME_MAP[slot] || SLOT_TIME_MAP.morning;
+    }
+
+    function getSlotFromTime(timeStr) {
+      const time = String(timeStr || '').trim();
+      if (time === SLOT_TIME_MAP.noon) return 'noon';
+      if (time === SLOT_TIME_MAP.evening) return 'evening';
+      return 'morning';
+    }
+
+    function getSlotLabel(slot) {
+      return SLOT_LABEL_MAP[slot] || '朝';
+    }
+
+    function setSlotSelection(groupId, slot) {
+      const group = $(groupId);
+      if (!group) return;
+      const next = SLOT_TIME_MAP[slot] ? slot : 'morning';
+      group.dataset.value = next;
+      Array.from(group.querySelectorAll('.slot-btn')).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.slot === next);
+      });
+    }
+
+    function getSelectedSlot(groupId) {
+      const group = $(groupId);
+      if (!group) return 'morning';
+      const current = String(group.dataset.value || '').trim();
+      return SLOT_TIME_MAP[current] ? current : 'morning';
+    }
+
+    function bindSlotGroup(groupId) {
+      const group = $(groupId);
+      if (!group) return;
+      group.addEventListener('click', (e) => {
+        const btn = e.target.closest('.slot-btn');
+        if (!btn) return;
+        setSlotSelection(groupId, btn.dataset.slot || 'morning');
+      });
+    }
 
     function buildMeasuredAt(dateStr, timeStr) {
       // date/time (local) -> ISO string
@@ -895,9 +989,8 @@
       const y = d.getFullYear();
       const m = pad2(d.getMonth()+1);
       const da = pad2(d.getDate());
-      const h = pad2(d.getHours());
-      const mi = pad2(d.getMinutes());
-      return `${y}/${m}/${da} ${h}:${mi}`;
+      const slot = getSlotLabel(getSlotFromTime(`${pad2(d.getHours())}:${pad2(d.getMinutes())}`));
+      return `${y}/${m}/${da} ${slot}`;
     }
 
     function vitalsToText(v) {
@@ -1484,7 +1577,7 @@
         <thead>
           <tr>
             <th class="select-col"><input type="checkbox" class="check-all" aria-label="全件選択"></th>
-            <th>日時</th>
+            <th>日付</th>
             <th>利用者</th>
             <th>体重</th>
             <th>血圧</th>
@@ -1599,7 +1692,8 @@
 
     function getCurrentDraft() {
       const date = $('vDate').value;
-      const time = $('vTime').value;
+      const slot = getSelectedSlot('vSlotGroup');
+      const time = getTimeForSlot(slot);
       const resident = $('vResident').value;
       const recorder = $('vRecorder').value;
       const weight = String($('vWeight').value || '').trim();
@@ -1607,7 +1701,7 @@
       const bpDia = String($('vBpDia').value || '').trim();
       const pulse = String($('vPulse').value || '').trim();
       const memo = String($('vMemo').value || '').trim();
-      return { date, time, resident, recorder, weight, bpSys, bpDia, pulse, memo };
+      return { date, slot, time, resident, recorder, weight, bpSys, bpDia, pulse, memo };
     }
 
     async function saveDraftToVitals() {
@@ -1621,8 +1715,8 @@
         toast('利用者を選択してください');
         return;
       }
-      if (!d.date || !d.time) {
-        toast('日付と時刻を入力してください');
+      if (!d.date) {
+        toast('日付を入力してください');
         return;
       }
       if (shouldBlockRapidDuplicateSave(d)) {
@@ -1665,7 +1759,6 @@
         $('quickStatus').textContent = statusMsg;
         toast(statusMsg);
 
-        $('vTime').value = nowLocalTime();
         clearInputs();
         renderList();
       } finally {
@@ -1685,7 +1778,7 @@
 
       const d = new Date(v.measuredAt);
       $('eDate').value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-      $('eTime').value = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+      setSlotSelection('eSlotGroup', getSlotFromTime(`${pad2(d.getHours())}:${pad2(d.getMinutes())}`));
 
       $('eResident').value = v.resident || '';
       $('eRecorder').value = v.recorder || '';
@@ -1710,8 +1803,9 @@
       if (idx < 0) return;
 
       const date = $('eDate').value;
-      const time = $('eTime').value;
-      if (!date || !time) { toast('日付と時刻を入力してください'); return; }
+      const slot = getSelectedSlot('eSlotGroup');
+      const time = getTimeForSlot(slot);
+      if (!date) { toast('日付を入力してください'); return; }
 
       all[idx] = {
         ...all[idx],
@@ -1855,7 +1949,10 @@
     // --- 初期化 ---
     function init(){
       $('vDate').value = nowLocalDate();
-      $('vTime').value = nowLocalTime();
+      bindSlotGroup('vSlotGroup');
+      bindSlotGroup('eSlotGroup');
+      setSlotSelection('vSlotGroup', 'morning');
+      setSlotSelection('eSlotGroup', 'morning');
 
       const residents = loadJSON(RESIDENTS_KEY, []);
       const recorders = loadJSON(RECORDERS_KEY, []);
