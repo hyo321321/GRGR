@@ -1208,6 +1208,26 @@
       return (sys != null && sys >= 135) || (dia != null && dia >= 85);
     }
 
+    function formatBpHtml(bpSys, bpDia, forceRed) {
+      const sysRaw = String(bpSys ?? '').trim();
+      const diaRaw = String(bpDia ?? '').trim();
+      if (!sysRaw && !diaRaw) return '―';
+
+      const sysNum = parseNumOrNull(bpSys);
+      const diaNum = parseNumOrNull(bpDia);
+      const sysHigh = forceRed || (sysNum != null && sysNum >= 135);
+      const diaHigh = forceRed || (diaNum != null && diaNum >= 85);
+
+      const sysHtml = sysRaw
+        ? `<span class="${sysHigh ? 'manual-flag' : ''}">${escapeHTML(sysRaw)}</span>`
+        : '―';
+      const diaHtml = diaRaw
+        ? `<span class="${diaHigh ? 'manual-flag' : ''}">${escapeHTML(diaRaw)}</span>`
+        : '―';
+
+      return `${sysHtml}/${diaHtml}`;
+    }
+
     function buildResidentDailyWeightDiffMap(records) {
       const byResident = new Map();
       const list = (Array.isArray(records) ? records : [])
@@ -1468,9 +1488,8 @@
           sumEl.textContent = '';
         } else {
           const parts = [];
-          if (last.bpSys != null && last.bpDia != null) {
-            const bpClass = isAutoHighBp(last.bpSys, last.bpDia) ? 'manual-flag' : '';
-            parts.push(`血圧 <span class="${bpClass}">${last.bpSys}/${last.bpDia}</span>`);
+          if (last.bpSys != null || last.bpDia != null) {
+            parts.push(`血圧 ${formatBpHtml(last.bpSys, last.bpDia, false)}`);
           }
           if (last.pulse != null) parts.push(`脈拍 ${last.pulse}`);
           if (last.weight != null) {
@@ -1632,7 +1651,7 @@
           <td>${escapeHTML(formatJP(v.measuredAt))}</td>
           <td>${escapeHTML(v.resident || '')}</td>
           <td class="${weightFlag ? 'manual-flag' : ''}">${formatWeightWithDiffHtml(v.weight, weightDiff)}</td>
-          <td class="${(bpFlag || bpAutoFlag) ? 'manual-flag' : ''}">${escapeHTML((String(v.bpSys || '').trim() || String(v.bpDia || '').trim()) ? `${v.bpSys || '―'}/${v.bpDia || '―'}` : '―')}</td>
+          <td>${formatBpHtml(v.bpSys, v.bpDia, bpFlag)}</td>
           <td class="${pulseFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.pulse || '').trim() ? String(v.pulse) : '―')}</td>
           <td>${escapeHTML(v.recorder || '')}</td>
           <td class="memo-cell">${escapeHTML(memo || '―')}</td>
