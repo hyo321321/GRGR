@@ -491,6 +491,12 @@
     .avg-item {
       white-space: nowrap;
     }
+    .avg-legend {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.6;
+    }
     .manual-flag {
       color: #dc2626;
       font-weight: 800;
@@ -1586,6 +1592,7 @@
           <span class="avg-item">体重 ${avgWeight != null ? `${avgWeight}kg` : '―'}</span>
           <span class="avg-item">脈拍 ${avgPulse != null ? avgPulse : '―'}</span>
         </div>
+        <div class="avg-legend">体重：前日比で増加は赤、減少は青 ／ 血圧：上135以上・下85以上は赤</div>
       `;
       listEl.appendChild(avgBox);
 
