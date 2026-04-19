@@ -26,27 +26,15 @@
   .title{font-weight:800;font-size:20px}
   .subtitle{font-size:12px;color:#475569;margin-top:2px}
   .wrap{max-width:1280px;margin:16px auto 28px;padding:0 16px}
-  .layout{
-    display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start;
-  }
-  .card{
-    background:#fff;border:1px solid #e5e7eb;border-radius:16px;
-    box-shadow:0 4px 16px rgba(2,6,23,.04);padding:14px;
-  }
-  .card-title{
-    font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;
-  }
+  .layout{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 4px 16px rgba(2,6,23,.04);padding:14px}
+  .card-title{font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
   .hint{font-size:12px;color:#64748b;line-height:1.5}
   .resident-list{display:flex;flex-direction:column;gap:8px}
-  .resident-btn{
-    width:100%;text-align:left;border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:10px 12px;
-    cursor:pointer;font-weight:700;font-size:14px;
-  }
+  .resident-btn{width:100%;text-align:left;border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:700;font-size:14px}
   .resident-btn.active{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{
-    border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:700;font-size:13px;
-  }
+  .btn{border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:700;font-size:13px}
   .btn-primary{background:#2563eb;border-color:#2563eb;color:#fff}
   .btn-danger{background:#ef4444;border-color:#ef4444;color:#fff}
   .section{margin-top:14px}
@@ -57,41 +45,24 @@
   .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
   .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
   label{display:block;font-size:12px;color:#475569;margin:0 0 6px}
-  input,select,textarea{
-    width:100%;padding:10px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;font-size:14px;
-  }
-  input:focus,select:focus,textarea:focus{
-    outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.15)
-  }
+  input,select,textarea{width:100%;padding:10px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;font-size:14px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
   textarea{resize:vertical;min-height:88px}
-  .photo-wrap{
-    display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:start;
-  }
-  .photo-box{
-    border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;padding:10px;
-  }
-  .photo-preview{
-    width:100%;aspect-ratio:3 / 4;border-radius:10px;border:1px solid #e5e7eb;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;
-  }
+  .photo-wrap{display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:start}
+  .photo-box{border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;padding:10px}
+  .photo-preview{width:100%;aspect-ratio:3 / 4;border-radius:10px;border:1px solid #e5e7eb;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
   .photo-empty{font-size:12px;color:#64748b;text-align:center;padding:12px}
-  .meta-line{
-    display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:8px;
-  }
-  .badge{
-    display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;color:#334155;
-  }
-  .toast{
-    position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:50;
-  }
+  .meta-line{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:8px}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;color:#334155}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:50}
   .toast.show{opacity:1}
   .print-only{display:none}
-  @media (max-width: 1080px){
-    .layout{grid-template-columns:1fr}
-  }
-  @media (max-width: 760px){
-    .grid-2,.grid-3,.grid-4,.photo-wrap{grid-template-columns:1fr}
-  }
+  details.fold{border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;background:#fafcff}
+  details.fold summary{cursor:pointer;font-weight:800}
+  .loading{font-size:12px;color:#2563eb}
+  @media (max-width: 1080px){.layout{grid-template-columns:1fr}}
+  @media (max-width: 760px){.grid-2,.grid-3,.grid-4,.photo-wrap{grid-template-columns:1fr}}
   @media print{
     body{background:#fff}
     .topbar,.sidebar-actions,.resident-list-wrap,.screen-only,.toast{display:none !important}
@@ -109,11 +80,12 @@
     <div class="topbar-inner">
       <div>
         <div class="title">利用者別 個人情報</div>
-        <div class="subtitle">7人分の基本情報・連絡先・医療・福祉・支援メモを保存できます。写真も保存できます。</div>
+        <div class="subtitle">共有で保存・閲覧できます。写真はサイズが大きいと重くなるため、小さめ推奨です。</div>
       </div>
       <div class="toolbar">
-        <button class="btn" id="backEasyBtn">← かんたんページに戻る</button>
+        <button class="btn" id="backBtn">← かんたんページに戻る</button>
         <button class="btn btn-primary" id="saveBtn">💾 保存</button>
+        <button class="btn" id="reloadBtn">↻ 共有再読込</button>
         <button class="btn" id="printBtn">📄 PDF/印刷</button>
         <button class="btn" id="backupBtn">🧷 バックアップ</button>
         <button class="btn" id="restoreBtn">♻ 復元</button>
@@ -130,7 +102,7 @@
           <span>利用者</span>
           <span class="badge" id="residentCount"></span>
         </div>
-        <div class="hint" style="margin-bottom:10px;">左から利用者を選ぶと、その人の個人情報を編集できます。</div>
+        <div class="hint" style="margin-bottom:10px;">左から利用者を選ぶと、その人の個人情報を共有で読み込みます。</div>
         <div class="resident-list" id="residentList"></div>
       </div>
 
@@ -141,6 +113,7 @@
         </div>
 
         <div class="print-only" id="printTitle" style="font-weight:800;font-size:20px;margin-bottom:10px;"></div>
+        <div id="loadingLabel" class="loading" style="display:none;margin-bottom:10px;">共有データ読込中です...</div>
 
         <div class="section">
           <div class="section-title">基本情報</div>
@@ -226,20 +199,11 @@
         </div>
 
         <div class="section">
-          <div class="section-title">緊急連絡先</div>
+          <div class="section-title">緊急連絡先 1</div>
           <div class="grid-4">
-            <div>
-              <label>氏名</label>
-              <input id="emergencyName" type="text">
-            </div>
-            <div>
-              <label>続柄</label>
-              <input id="emergencyRelation" type="text">
-            </div>
-            <div>
-              <label>電話番号</label>
-              <input id="emergencyPhone" type="tel">
-            </div>
+            <div><label>氏名</label><input id="emergencyName" type="text"></div>
+            <div><label>続柄</label><input id="emergencyRelation" type="text"></div>
+            <div><label>電話番号</label><input id="emergencyPhone" type="tel"></div>
             <div>
               <label>連絡優先</label>
               <select id="emergencyPriority">
@@ -259,78 +223,33 @@
         <div class="section">
           <div class="section-title">医療情報</div>
           <div class="grid-3">
-            <div>
-              <label>かかりつけ医 / 主治医</label>
-              <input id="doctor" type="text">
-            </div>
-            <div>
-              <label>通院先</label>
-              <input id="hospital" type="text">
-            </div>
-            <div>
-              <label>薬局</label>
-              <input id="pharmacy" type="text">
-            </div>
+            <div><label>かかりつけ医 / 主治医</label><input id="doctor" type="text"></div>
+            <div><label>通院先</label><input id="hospital" type="text"></div>
+            <div><label>薬局</label><input id="pharmacy" type="text"></div>
           </div>
           <div class="grid-2" style="margin-top:10px;">
-            <div>
-              <label>既往歴</label>
-              <textarea id="medicalHistory"></textarea>
-            </div>
-            <div>
-              <label>アレルギー / 禁忌</label>
-              <textarea id="allergy"></textarea>
-            </div>
+            <div><label>既往歴</label><textarea id="medicalHistory"></textarea></div>
+            <div><label>アレルギー / 禁忌</label><textarea id="allergy"></textarea></div>
           </div>
           <div class="grid-2" style="margin-top:10px;">
-            <div>
-              <label>服薬情報</label>
-              <textarea id="medication"></textarea>
-            </div>
-            <div>
-              <label>受診時の注意 / 医療メモ</label>
-              <textarea id="medicalMemo"></textarea>
-            </div>
+            <div><label>服薬情報</label><textarea id="medication"></textarea></div>
+            <div><label>受診時の注意 / 医療メモ</label><textarea id="medicalMemo"></textarea></div>
           </div>
         </div>
 
         <div class="section">
           <div class="section-title">福祉情報</div>
           <div class="grid-4">
-            <div>
-              <label>障害支援区分</label>
-              <input id="supportLevel" type="text">
-            </div>
-            <div>
-              <label>障害者手帳</label>
-              <input id="handbook" type="text" placeholder="例）精神2級">
-            </div>
-            <div>
-              <label>自立支援医療</label>
-              <input id="selfSupport" type="text">
-            </div>
-            <div>
-              <label>受給者証</label>
-              <input id="benefitCert" type="text">
-            </div>
+            <div><label>障害支援区分</label><input id="supportLevel" type="text"></div>
+            <div><label>障害者手帳</label><input id="handbook" type="text" placeholder="例）精神2級"></div>
+            <div><label>自立支援医療</label><input id="selfSupport" type="text"></div>
+            <div><label>受給者証</label><input id="benefitCert" type="text"></div>
           </div>
           <div class="grid-4" style="margin-top:10px;">
-            <div>
-              <label>手帳有効期限</label>
-              <input id="handbookExpiry" type="date">
-            </div>
-            <div>
-              <label>自立支援期限</label>
-              <input id="selfSupportExpiry" type="date">
-            </div>
-            <div>
-              <label>受給者証期限</label>
-              <input id="benefitExpiry" type="date">
-            </div>
-            <div>
-              <label>担当相談員 / 事業所</label>
-              <input id="caseworker" type="text">
-            </div>
+            <div><label>手帳有効期限</label><input id="handbookExpiry" type="date"></div>
+            <div><label>自立支援期限</label><input id="selfSupportExpiry" type="date"></div>
+            <div><label>受給者証期限</label><input id="benefitExpiry" type="date"></div>
+            <div><label>担当相談員 / 事業所</label><input id="caseworker" type="text"></div>
           </div>
           <div style="margin-top:10px;">
             <label>福祉メモ</label>
@@ -339,30 +258,31 @@
         </div>
 
         <div class="section">
+          <details class="fold" open>
+            <summary>保険証情報</summary>
+            <div class="grid-4" style="margin-top:10px;">
+              <div><label>保険証</label><input id="insuranceName" type="text"></div>
+              <div><label>記号番号</label><input id="insuranceNumber" type="text"></div>
+              <div><label>負担割合</label><input id="insuranceRate" type="text"></div>
+              <div><label>有効期限</label><input id="insuranceExpiry" type="date"></div>
+            </div>
+            <div style="margin-top:10px;">
+              <label>保険証メモ</label>
+              <textarea id="insuranceMemo"></textarea>
+            </div>
+          </details>
+        </div>
+
+        <div class="section">
           <div class="section-title">生活・支援情報</div>
           <div class="grid-3">
-            <div>
-              <label>金銭管理</label>
-              <textarea id="moneyMemo"></textarea>
-            </div>
-            <div>
-              <label>生活面の特徴</label>
-              <textarea id="lifeMemo"></textarea>
-            </div>
-            <div>
-              <label>支援上の注意点</label>
-              <textarea id="supportMemo"></textarea>
-            </div>
+            <div><label>金銭管理</label><textarea id="moneyMemo"></textarea></div>
+            <div><label>生活面の特徴</label><textarea id="lifeMemo"></textarea></div>
+            <div><label>支援上の注意点</label><textarea id="supportMemo"></textarea></div>
           </div>
           <div class="grid-2" style="margin-top:10px;">
-            <div>
-              <label>本人の希望・こだわり</label>
-              <textarea id="preferenceMemo"></textarea>
-            </div>
-            <div>
-              <label>特記事項 / 引継ぎ</label>
-              <textarea id="handoverMemo"></textarea>
-            </div>
+            <div><label>本人の希望・こだわり</label><textarea id="preferenceMemo"></textarea></div>
+            <div><label>特記事項 / 引継ぎ</label><textarea id="handoverMemo"></textarea></div>
           </div>
         </div>
 
@@ -377,27 +297,21 @@
   <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'group_home_resident_info_v1';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
+const EASY_PAGE_URL = 'easy_google_send_v2.html';
 const RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
 const FIELD_IDS = [
   'kana','bloodType','birthDate','age','gender','moveInDate','room','phone','email','address','photoMemo',
   'emergencyName','emergencyRelation','emergencyPhone','emergencyPriority','emergencyMemo',
   'doctor','hospital','pharmacy','medicalHistory','allergy','medication','medicalMemo',
   'supportLevel','handbook','selfSupport','benefitCert','handbookExpiry','selfSupportExpiry','benefitExpiry','caseworker','welfareMemo',
+  'insuranceName','insuranceNumber','insuranceRate','insuranceExpiry','insuranceMemo',
   'moneyMemo','lifeMemo','supportMemo','preferenceMemo','handoverMemo','freeMemo'
 ];
 
 const $ = (id) => document.getElementById(id);
 let currentResident = RESIDENTS[0];
-
-function goBackEasyPage(){
-  const params = new URLSearchParams(location.search);
-  const resident = params.get('resident') || currentResident || '';
-  const url = resident
-    ? 'easy_google_send_v2.html?resident=' + encodeURIComponent(resident)
-    : 'easy_google_send_v2.html';
-  location.href = url;
-}
+let currentPhotoDataUrl = '';
 
 function toast(msg){
   const el = $('toast');
@@ -407,22 +321,17 @@ function toast(msg){
   window.__toastT = setTimeout(() => el.classList.remove('show'), 1400);
 }
 
-function loadStore(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  }catch(e){
-    return {};
-  }
-}
-
-function saveStore(data){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function normalizeDateString(v){
+  if(!v) return '';
+  if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d = new Date(v);
+  if(Number.isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
 function defaultResidentData(name){
   return {
+    resident: name,
     fullName: name,
     photoDataUrl: '',
     savedAt: '',
@@ -430,24 +339,32 @@ function defaultResidentData(name){
     emergencyName:'', emergencyRelation:'', emergencyPhone:'', emergencyPriority:'', emergencyMemo:'',
     doctor:'', hospital:'', pharmacy:'', medicalHistory:'', allergy:'', medication:'', medicalMemo:'',
     supportLevel:'', handbook:'', selfSupport:'', benefitCert:'', handbookExpiry:'', selfSupportExpiry:'', benefitExpiry:'', caseworker:'', welfareMemo:'',
+    insuranceName:'', insuranceNumber:'', insuranceRate:'', insuranceExpiry:'', insuranceMemo:'',
     moneyMemo:'', lifeMemo:'', supportMemo:'', preferenceMemo:'', handoverMemo:'', freeMemo:''
   };
 }
 
-function ensureStore(){
-  const store = loadStore();
-  let changed = false;
-  for(const name of RESIDENTS){
-    if(!store[name]){
-      store[name] = defaultResidentData(name);
-      changed = true;
-    } else if(!('fullName' in store[name])) {
-      store[name].fullName = name;
-      changed = true;
-    }
-  }
-  if(changed) saveStore(store);
-  return store;
+async function fetchJson(url){
+  const res = await fetch(url, { cache:'no-store' });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { ok:false, rawText:text }; }
+  if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
+  return data;
+}
+
+async function postJson(payload){
+  const res = await fetch(WEB_APP_URL, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+    cache:'no-store'
+  });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { ok:false, rawText:text }; }
+  if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
+  return data;
 }
 
 function renderResidentList(){
@@ -458,10 +375,10 @@ function renderResidentList(){
     btn.type = 'button';
     btn.className = 'resident-btn' + (name === currentResident ? ' active' : '');
     btn.textContent = name;
-    btn.onclick = () => {
+    btn.onclick = async () => {
       currentResident = name;
       renderResidentList();
-      fillForm();
+      await fillForm();
     };
     list.appendChild(btn);
   }
@@ -489,24 +406,50 @@ function renderPhoto(dataUrl){
   }
 }
 
-function fillForm(){
-  const store = ensureStore();
-  const data = store[currentResident] || defaultResidentData(currentResident);
-  $('editorTitle').textContent = currentResident + ' の個人情報';
-  $('printTitle').textContent = currentResident + ' 個人情報';
-  $('fullName').value = currentResident;
-  for(const id of FIELD_IDS){
-    const el = $(id);
-    if(el) el.value = data[id] || '';
+async function fillForm(){
+  $('loadingLabel').style.display = 'block';
+  try{
+    const data = await fetchJson(WEB_APP_URL + '?action=getResidentInfo&resident=' + encodeURIComponent(currentResident));
+    const record = data && data.record ? data.record : defaultResidentData(currentResident);
+
+    $('editorTitle').textContent = currentResident + ' の個人情報';
+    $('printTitle').textContent = currentResident + ' 個人情報';
+    $('fullName').value = currentResident;
+
+    for(const id of FIELD_IDS){
+      const el = $(id);
+      if(el) el.value = normalizeDateField(id, record[id] || '');
+    }
+    currentPhotoDataUrl = record.photoDataUrl || '';
+    renderPhoto(currentPhotoDataUrl);
+    $('savedAtLabel').textContent = record.savedAt ? '最終保存：' + record.savedAt : '';
+  }catch(e){
+    $('editorTitle').textContent = currentResident + ' の個人情報';
+    $('printTitle').textContent = currentResident + ' 個人情報';
+    $('fullName').value = currentResident;
+    for(const id of FIELD_IDS){
+      const el = $(id);
+      if(el) el.value = '';
+    }
+    currentPhotoDataUrl = '';
+    renderPhoto('');
+    $('savedAtLabel').textContent = '';
+    toast('共有読込に失敗');
+    console.error(e);
+  } finally {
+    $('loadingLabel').style.display = 'none';
   }
-  renderPhoto(data.photoDataUrl || '');
-  $('savedAtLabel').textContent = data.savedAt ? '最終保存：' + data.savedAt : '';
+}
+
+function normalizeDateField(id, value){
+  const dateFields = ['birthDate','moveInDate','handbookExpiry','selfSupportExpiry','benefitExpiry','insuranceExpiry'];
+  return dateFields.includes(id) ? normalizeDateString(value) : value;
 }
 
 function collectForm(){
-  const store = ensureStore();
-  const current = store[currentResident] || defaultResidentData(currentResident);
-  const next = {...current, fullName: currentResident};
+  const next = defaultResidentData(currentResident);
+  next.fullName = currentResident;
+  next.photoDataUrl = currentPhotoDataUrl || '';
   for(const id of FIELD_IDS){
     const el = $(id);
     if(el) next[id] = el.value || '';
@@ -516,66 +459,78 @@ function collectForm(){
   return next;
 }
 
-function saveCurrent(){
-  const store = ensureStore();
-  const next = collectForm();
-  store[currentResident] = next;
-  saveStore(store);
-  $('savedAtLabel').textContent = '最終保存：' + next.savedAt;
-  toast('保存しました');
+async function saveCurrent(){
+  try{
+    const next = collectForm();
+    const payload = { action:'saveResidentInfo', resident:currentResident, ...next };
+    const result = await postJson(payload);
+    $('savedAtLabel').textContent = result.savedAt ? '最終保存：' + result.savedAt : (next.savedAt ? '最終保存：' + next.savedAt : '');
+    toast('共有保存しました');
+  }catch(e){
+    toast('保存失敗');
+    alert('共有保存に失敗しました\n' + (e && e.message ? e.message : e));
+  }
 }
 
-function clearCurrent(){
+async function clearCurrent(){
   const ok = confirm(currentResident + ' の個人情報を初期化しますか？');
   if(!ok) return;
-  const store = ensureStore();
-  store[currentResident] = defaultResidentData(currentResident);
-  saveStore(store);
-  fillForm();
-  toast('初期化しました');
+  try{
+    const blank = defaultResidentData(currentResident);
+    const payload = { action:'saveResidentInfo', resident:currentResident, ...blank };
+    await postJson(payload);
+    currentPhotoDataUrl = '';
+    await fillForm();
+    toast('初期化しました');
+  }catch(e){
+    alert('初期化に失敗しました\n' + (e && e.message ? e.message : e));
+  }
 }
 
-function backupAll(){
-  const store = ensureStore();
-  const payload = {
-    app: 'group_home_resident_info',
-    schemaVersion: 1,
-    exportedAt: new Date().toISOString(),
-    residents: RESIDENTS,
-    data: store
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'resident_info_backup.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 3000);
-  toast('バックアップを保存しました');
+async function backupAll(){
+  try{
+    const res = await fetchJson(WEB_APP_URL + '?action=listResidentInfo');
+    const payload = {
+      app: 'group_home_resident_info',
+      schemaVersion: 2,
+      exportedAt: new Date().toISOString(),
+      residents: RESIDENTS,
+      data: Array.isArray(res.records) ? res.records : []
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'resident_info_backup.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    toast('バックアップを保存しました');
+  }catch(e){
+    alert('バックアップに失敗しました\n' + (e && e.message ? e.message : e));
+  }
 }
 
-function restoreFromFile(file){
+async function restoreFromFile(file){
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try{
       const parsed = JSON.parse(String(reader.result || '{}'));
-      const data = parsed && parsed.data && typeof parsed.data === 'object' ? parsed.data : null;
+      const data = Array.isArray(parsed.data) ? parsed.data : null;
       if(!data){
         alert('復元用ファイルとして読み取れませんでした');
         return;
       }
       const ok = confirm('バックアップから復元しますか？\n\n現在の内容は上書きされます。');
       if(!ok) return;
-      const next = {};
-      for(const name of RESIDENTS){
-        next[name] = {...defaultResidentData(name), ...(data[name] || {})};
-        next[name].fullName = name;
+      for(const item of data){
+        const resident = String(item.resident || item.fullName || '').trim();
+        if(!resident) continue;
+        await postJson({ action:'saveResidentInfo', resident, ...defaultResidentData(resident), ...item });
       }
-      saveStore(next);
-      fillForm();
+      await fillForm();
       renderResidentList();
       toast('復元しました');
     }catch(e){
@@ -589,36 +544,42 @@ function handlePhoto(file){
   if(!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    const store = ensureStore();
-    store[currentResident] = store[currentResident] || defaultResidentData(currentResident);
-    store[currentResident].photoDataUrl = String(reader.result || '');
-    saveStore(store);
-    renderPhoto(store[currentResident].photoDataUrl);
-    toast('写真を保存しました');
+    currentPhotoDataUrl = String(reader.result || '');
+    renderPhoto(currentPhotoDataUrl);
+    toast('写真を反映しました。保存で共有されます');
   };
   reader.readAsDataURL(file);
 }
 
 function removePhoto(){
-  const store = ensureStore();
-  store[currentResident] = store[currentResident] || defaultResidentData(currentResident);
-  store[currentResident].photoDataUrl = '';
-  saveStore(store);
+  currentPhotoDataUrl = '';
   renderPhoto('');
-  toast('写真を削除しました');
+  toast('写真を削除しました。保存で共有されます');
 }
 
-function init(){
-  ensureStore();
+function goBackEasyPage(){
+  const url = currentResident ? (EASY_PAGE_URL + '?resident=' + encodeURIComponent(currentResident)) : EASY_PAGE_URL;
+  location.href = url;
+}
+
+function applyResidentFromQuery(){
+  const params = new URLSearchParams(location.search);
+  const resident = params.get('resident') || '';
+  if (resident && RESIDENTS.includes(resident)) currentResident = resident;
+}
+
+async function init(){
+  applyResidentFromQuery();
   renderResidentList();
-  fillForm();
+  await fillForm();
 
   $('birthDate').addEventListener('change', () => {
     if(!$('age').value) $('age').value = calcAgeFromBirth($('birthDate').value);
   });
 
-  $('backEasyBtn').onclick = goBackEasyPage;
+  $('backBtn').onclick = goBackEasyPage;
   $('saveBtn').onclick = saveCurrent;
+  $('reloadBtn').onclick = fillForm;
   $('clearBtn').onclick = clearCurrent;
   $('backupBtn').onclick = backupAll;
   $('restoreBtn').onclick = () => $('restoreFile').click();
