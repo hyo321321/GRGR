@@ -353,12 +353,45 @@
             </div>
           </div>
 
-          <div class="grid-2" style="margin-top:10px;">
-            <div>
-              <label>服薬情報</label>
-              <textarea id="medication"></textarea>
+          <div class="section" style="margin-top:10px;">
+            <div class="section-title">服薬情報</div>
+
+            <div class="grid-2">
+              <div>
+                <label>朝の薬一覧</label>
+                <textarea id="morningMeds" placeholder="例）
+リスペリドン 1錠
+アムロジピン 1錠"></textarea>
+              </div>
+              <div>
+                <label>昼の薬一覧</label>
+                <textarea id="noonMeds" placeholder="例）
+ゾテピン 1錠
+整腸剤 1包"></textarea>
+              </div>
             </div>
-            <div>
+
+            <div class="grid-2" style="margin-top:10px;">
+              <div>
+                <label>夕の薬一覧</label>
+                <textarea id="eveningMeds" placeholder="例）
+リスペリドン 1錠
+酸化マグネシウム 2錠"></textarea>
+              </div>
+              <div>
+                <label>寝る前の薬一覧</label>
+                <textarea id="bedtimeMeds" placeholder="例）
+睡眠薬 1錠
+頓服 1錠"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:10px;">
+              <label>薬の詳細説明</label>
+              <textarea id="medicationDetail" placeholder="薬の目的、変更履歴、頓服の使い方、注意点など"></textarea>
+            </div>
+
+            <div style="margin-top:10px;">
               <label>受診時の注意 / 医療メモ</label>
               <textarea id="medicalMemo"></textarea>
             </div>
@@ -510,7 +543,9 @@ const FIELD_IDS = [
   'kana','bloodType','birthDate','age','gender','moveInDate','room','phone','email','address','photoMemo',
   'emergencyName1','emergencyRelation1','emergencyPhone1','emergencyEmail1','emergencyPriority1','emergencyAddress1','emergencyMemo1',
   'emergencyName2','emergencyRelation2','emergencyPhone2','emergencyEmail2','emergencyPriority2','emergencyAddress2','emergencyMemo2',
-  'doctor','hospital','pharmacy','medicalHistory','allergy','medication','medicalMemo',
+  'doctor','hospital','pharmacy','medicalHistory','allergy',
+  'morningMeds','noonMeds','eveningMeds','bedtimeMeds',
+  'medicationDetail','medicalMemo',
   'baseWeight','baseBpSys','baseBpDia','vitalMemo',
   'supportLevel','handbook','selfSupport','benefitCert','handbookExpiry','selfSupportExpiry','benefitExpiry','caseworker','welfareMemo',
   'insuranceMemo','insuranceNumber','insuranceValidUntil','insuranceNote',
@@ -527,11 +562,7 @@ function toast(msg){
   el.textContent = msg || '';
   el.classList.add('show');
   clearTimeout(window.__toastT);
-  window.__toastT = setTimeout(() => el.classList.remove('show'), 1500);
-}
-
-function normalizeString(v){
-  return String(v == null ? '' : v).trim();
+  window.__toastT = setTimeout(() => el.classList.remove('show'), 1600);
 }
 
 function defaultResidentData(name){
@@ -543,7 +574,9 @@ function defaultResidentData(name){
     kana:'', bloodType:'', birthDate:'', age:'', gender:'', moveInDate:'', room:'', phone:'', email:'', address:'', photoMemo:'',
     emergencyName1:'', emergencyRelation1:'', emergencyPhone1:'', emergencyEmail1:'', emergencyPriority1:'', emergencyAddress1:'', emergencyMemo1:'',
     emergencyName2:'', emergencyRelation2:'', emergencyPhone2:'', emergencyEmail2:'', emergencyPriority2:'', emergencyAddress2:'', emergencyMemo2:'',
-    doctor:'', hospital:'', pharmacy:'', medicalHistory:'', allergy:'', medication:'', medicalMemo:'',
+    doctor:'', hospital:'', pharmacy:'', medicalHistory:'', allergy:'',
+    morningMeds:'', noonMeds:'', eveningMeds:'', bedtimeMeds:'',
+    medicationDetail:'', medicalMemo:'',
     baseWeight:'', baseBpSys:'', baseBpDia:'', vitalMemo:'',
     supportLevel:'', handbook:'', selfSupport:'', benefitCert:'', handbookExpiry:'', selfSupportExpiry:'', benefitExpiry:'', caseworker:'', welfareMemo:'',
     insuranceMemo:'', insuranceNumber:'', insuranceValidUntil:'', insuranceNote:'',
@@ -690,8 +723,8 @@ async function saveCurrent(){
       ...next
     });
     currentRecordCache = { ...next, savedAt: result.savedAt || next.savedAt || '' };
-    $('savedAtLabel').textContent = result.savedAt ? '最終保存：' + result.savedAt : '';
-    toast('共有保存しました');
+    $('savedAtLabel').textContent = '保存しました　' + (result.savedAt || '');
+    toast('保存しました');
   } catch(e){
     alert('共有保存に失敗しました\n' + (e && e.message ? e.message : e));
     console.error(e);
