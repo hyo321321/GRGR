@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>利用者別 個人情報</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Yu Gothic UI",sans-serif;
+    background:#f6f7fb;
+    color:#0f172a;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid #e5e7eb;
+    padding:12px 16px;
+  }
+  .topbar-inner{
+    max-width:1280px;margin:0 auto;
+    display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  }
+  .title{font-weight:800;font-size:20px}
+  .subtitle{font-size:12px;color:#475569;margin-top:2px}
+  .wrap{max-width:1280px;margin:16px auto 28px;padding:0 16px}
+  .layout{
+    display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start;
+  }
+  .card{
+    background:#fff;border:1px solid #e5e7eb;border-radius:16px;
+    box-shadow:0 4px 16px rgba(2,6,23,.04);padding:14px;
+  }
+  .card-title{
+    font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .hint{font-size:12px;color:#64748b;line-height:1.5}
+  .resident-list{display:flex;flex-direction:column;gap:8px}
+  .resident-btn{
+    width:100%;text-align:left;border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:10px 12px;
+    cursor:pointer;font-weight:700;font-size:14px;
+  }
+  .resident-btn.active{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{
+    border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:700;font-size:13px;
+  }
+  .btn-primary{background:#2563eb;border-color:#2563eb;color:#fff}
+  .btn-danger{background:#ef4444;border-color:#ef4444;color:#fff}
+  .section{margin-top:14px}
+  .section:first-child{margin-top:0}
+  .section-title{font-weight:800;font-size:15px;margin-bottom:10px}
+  .grid-2,.grid-3,.grid-4{display:grid;gap:10px}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  label{display:block;font-size:12px;color:#475569;margin:0 0 6px}
+  input,select,textarea{
+    width:100%;padding:10px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;font-size:14px;
+  }
+  input:focus,select:focus,textarea:focus{
+    outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.15)
+  }
+  textarea{resize:vertical;min-height:88px}
+  .photo-wrap{
+    display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:start;
+  }
+  .photo-box{
+    border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;padding:10px;
+  }
+  .photo-preview{
+    width:100%;aspect-ratio:3 / 4;border-radius:10px;border:1px solid #e5e7eb;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo-empty{font-size:12px;color:#64748b;text-align:center;padding:12px}
+  .meta-line{
+    display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:8px;
+  }
+  .badge{
+    display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;color:#334155;
+  }
+  .toast{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:50;
+  }
+  .toast.show{opacity:1}
+  .print-only{display:none}
+  @media (max-width: 1080px){
+    .layout{grid-template-columns:1fr}
+  }
+  @media (max-width: 760px){
+    .grid-2,.grid-3,.grid-4,.photo-wrap{grid-template-columns:1fr}
+  }
+  @media print{
+    body{background:#fff}
+    .topbar,.sidebar-actions,.resident-list-wrap,.screen-only,.toast{display:none !important}
+    .wrap{max-width:none;margin:0;padding:0}
+    .layout{display:block}
+    .card{box-shadow:none;border:0;padding:0}
+    .section{break-inside:avoid}
+    .print-only{display:block}
+    input,select,textarea{border:1px solid #e5e7eb;box-shadow:none}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar screen-only">
+    <div class="topbar-inner">
+      <div>
+        <div class="title">利用者別 個人情報</div>
+        <div class="subtitle">7人分の基本情報・連絡先・医療・福祉・支援メモを保存できます。写真も保存できます。</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="backEasyBtn">← かんたんページに戻る</button>
+        <button class="btn btn-primary" id="saveBtn">💾 保存</button>
+        <button class="btn" id="printBtn">📄 PDF/印刷</button>
+        <button class="btn" id="backupBtn">🧷 バックアップ</button>
+        <button class="btn" id="restoreBtn">♻ 復元</button>
+        <button class="btn btn-danger" id="clearBtn">🗑 この利用者を初期化</button>
+        <input type="file" id="restoreFile" accept=".json,application/json" style="display:none">
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="layout">
+      <div class="card resident-list-wrap">
+        <div class="card-title">
+          <span>利用者</span>
+          <span class="badge" id="residentCount"></span>
+        </div>
+        <div class="hint" style="margin-bottom:10px;">左から利用者を選ぶと、その人の個人情報を編集できます。</div>
+        <div class="resident-list" id="residentList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span id="editorTitle">個人情報</span>
+          <span class="hint" id="savedAtLabel"></span>
+        </div>
+
+        <div class="print-only" id="printTitle" style="font-weight:800;font-size:20px;margin-bottom:10px;"></div>
+
+        <div class="section">
+          <div class="section-title">基本情報</div>
+          <div class="photo-wrap">
+            <div class="photo-box">
+              <div class="photo-preview" id="photoPreview"><div class="photo-empty">写真なし</div></div>
+              <div class="meta-line screen-only">
+                <input type="file" id="photoFile" accept="image/*" style="padding:6px">
+              </div>
+              <div class="meta-line screen-only">
+                <button class="btn" type="button" id="removePhotoBtn">写真を削除</button>
+              </div>
+            </div>
+            <div>
+              <div class="grid-3">
+                <div>
+                  <label>氏名</label>
+                  <input id="fullName" type="text" readonly>
+                </div>
+                <div>
+                  <label>フリガナ</label>
+                  <input id="kana" type="text" placeholder="例）カワイ シンゴ">
+                </div>
+                <div>
+                  <label>血液型</label>
+                  <select id="bloodType">
+                    <option value="">未入力</option>
+                    <option>A型</option>
+                    <option>B型</option>
+                    <option>O型</option>
+                    <option>AB型</option>
+                    <option>不明</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid-4" style="margin-top:10px;">
+                <div>
+                  <label>生年月日</label>
+                  <input id="birthDate" type="date">
+                </div>
+                <div>
+                  <label>年齢</label>
+                  <input id="age" type="text" placeholder="自動/手入力OK">
+                </div>
+                <div>
+                  <label>性別</label>
+                  <select id="gender">
+                    <option value="">未入力</option>
+                    <option>男性</option>
+                    <option>女性</option>
+                    <option>その他</option>
+                  </select>
+                </div>
+                <div>
+                  <label>入居日</label>
+                  <input id="moveInDate" type="date">
+                </div>
+              </div>
+              <div class="grid-3" style="margin-top:10px;">
+                <div>
+                  <label>居室</label>
+                  <input id="room" type="text" placeholder="例）101号室">
+                </div>
+                <div>
+                  <label>本人電話番号</label>
+                  <input id="phone" type="tel" placeholder="例）090-1234-5678">
+                </div>
+                <div>
+                  <label>本人メール</label>
+                  <input id="email" type="email" placeholder="任意">
+                </div>
+              </div>
+              <div style="margin-top:10px;">
+                <label>住所</label>
+                <input id="address" type="text" placeholder="住所を入力">
+              </div>
+              <div style="margin-top:10px;">
+                <label>写真メモ</label>
+                <input id="photoMemo" type="text" placeholder="例）眼鏡あり、杖使用、髪型など">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">緊急連絡先</div>
+          <div class="grid-4">
+            <div>
+              <label>氏名</label>
+              <input id="emergencyName" type="text">
+            </div>
+            <div>
+              <label>続柄</label>
+              <input id="emergencyRelation" type="text">
+            </div>
+            <div>
+              <label>電話番号</label>
+              <input id="emergencyPhone" type="tel">
+            </div>
+            <div>
+              <label>連絡優先</label>
+              <select id="emergencyPriority">
+                <option value="">未入力</option>
+                <option>第一連絡先</option>
+                <option>第二連絡先</option>
+                <option>状況に応じて</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <label>住所・連絡メモ</label>
+            <textarea id="emergencyMemo" placeholder="連絡時間帯、注意点など"></textarea>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">医療情報</div>
+          <div class="grid-3">
+            <div>
+              <label>かかりつけ医 / 主治医</label>
+              <input id="doctor" type="text">
+            </div>
+            <div>
+              <label>通院先</label>
+              <input id="hospital" type="text">
+            </div>
+            <div>
+              <label>薬局</label>
+              <input id="pharmacy" type="text">
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:10px;">
+            <div>
+              <label>既往歴</label>
+              <textarea id="medicalHistory"></textarea>
+            </div>
+            <div>
+              <label>アレルギー / 禁忌</label>
+              <textarea id="allergy"></textarea>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:10px;">
+            <div>
+              <label>服薬情報</label>
+              <textarea id="medication"></textarea>
+            </div>
+            <div>
+              <label>受診時の注意 / 医療メモ</label>
+              <textarea id="medicalMemo"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">福祉情報</div>
+          <div class="grid-4">
+            <div>
+              <label>障害支援区分</label>
+              <input id="supportLevel" type="text">
+            </div>
+            <div>
+              <label>障害者手帳</label>
+              <input id="handbook" type="text" placeholder="例）精神2級">
+            </div>
+            <div>
+              <label>自立支援医療</label>
+              <input id="selfSupport" type="text">
+            </div>
+            <div>
+              <label>受給者証</label>
+              <input id="benefitCert" type="text">
+            </div>
+          </div>
+          <div class="grid-4" style="margin-top:10px;">
+            <div>
+              <label>手帳有効期限</label>
+              <input id="handbookExpiry" type="date">
+            </div>
+            <div>
+              <label>自立支援期限</label>
+              <input id="selfSupportExpiry" type="date">
+            </div>
+            <div>
+              <label>受給者証期限</label>
+              <input id="benefitExpiry" type="date">
+            </div>
+            <div>
+              <label>担当相談員 / 事業所</label>
+              <input id="caseworker" type="text">
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <label>福祉メモ</label>
+            <textarea id="welfareMemo"></textarea>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">生活・支援情報</div>
+          <div class="grid-3">
+            <div>
+              <label>金銭管理</label>
+              <textarea id="moneyMemo"></textarea>
+            </div>
+            <div>
+              <label>生活面の特徴</label>
+              <textarea id="lifeMemo"></textarea>
+            </div>
+            <div>
+              <label>支援上の注意点</label>
+              <textarea id="supportMemo"></textarea>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:10px;">
+            <div>
+              <label>本人の希望・こだわり</label>
+              <textarea id="preferenceMemo"></textarea>
+            </div>
+            <div>
+              <label>特記事項 / 引継ぎ</label>
+              <textarea id="handoverMemo"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">自由メモ</div>
+          <textarea id="freeMemo" style="min-height:120px;"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'group_home_resident_info_v1';
+const RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
+const FIELD_IDS = [
+  'kana','bloodType','birthDate','age','gender','moveInDate','room','phone','email','address','photoMemo',
+  'emergencyName','emergencyRelation','emergencyPhone','emergencyPriority','emergencyMemo',
+  'doctor','hospital','pharmacy','medicalHistory','allergy','medication','medicalMemo',
+  'supportLevel','handbook','selfSupport','benefitCert','handbookExpiry','selfSupportExpiry','benefitExpiry','caseworker','welfareMemo',
+  'moneyMemo','lifeMemo','supportMemo','preferenceMemo','handoverMemo','freeMemo'
+];
+
+const $ = (id) => document.getElementById(id);
+let currentResident = RESIDENTS[0];
+
+function goBackEasyPage(){
+  const params = new URLSearchParams(location.search);
+  const resident = params.get('resident') || currentResident || '';
+  const url = resident
+    ? 'easy_google_send_v2_emergency.html?resident=' + encodeURIComponent(resident)
+    : 'easy_google_send_v2_emergency.html';
+  location.href = url;
+}
+
+function toast(msg){
+  const el = $('toast');
+  el.textContent = msg || '';
+  el.classList.add('show');
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(() => el.classList.remove('show'), 1400);
+}
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  }catch(e){
+    return {};
+  }
+}
+
+function saveStore(data){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function defaultResidentData(name){
+  return {
+    fullName: name,
+    photoDataUrl: '',
+    savedAt: '',
+    kana:'', bloodType:'', birthDate:'', age:'', gender:'', moveInDate:'', room:'', phone:'', email:'', address:'', photoMemo:'',
+    emergencyName:'', emergencyRelation:'', emergencyPhone:'', emergencyPriority:'', emergencyMemo:'',
+    doctor:'', hospital:'', pharmacy:'', medicalHistory:'', allergy:'', medication:'', medicalMemo:'',
+    supportLevel:'', handbook:'', selfSupport:'', benefitCert:'', handbookExpiry:'', selfSupportExpiry:'', benefitExpiry:'', caseworker:'', welfareMemo:'',
+    moneyMemo:'', lifeMemo:'', supportMemo:'', preferenceMemo:'', handoverMemo:'', freeMemo:''
+  };
+}
+
+function ensureStore(){
+  const store = loadStore();
+  let changed = false;
+  for(const name of RESIDENTS){
+    if(!store[name]){
+      store[name] = defaultResidentData(name);
+      changed = true;
+    } else if(!('fullName' in store[name])) {
+      store[name].fullName = name;
+      changed = true;
+    }
+  }
+  if(changed) saveStore(store);
+  return store;
+}
+
+function renderResidentList(){
+  const list = $('residentList');
+  list.innerHTML = '';
+  for(const name of RESIDENTS){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'resident-btn' + (name === currentResident ? ' active' : '');
+    btn.textContent = name;
+    btn.onclick = () => {
+      currentResident = name;
+      renderResidentList();
+      fillForm();
+    };
+    list.appendChild(btn);
+  }
+  $('residentCount').textContent = RESIDENTS.length + '人';
+}
+
+function calcAgeFromBirth(dateStr){
+  if(!dateStr) return '';
+  const birth = new Date(dateStr);
+  if(Number.isNaN(birth.getTime())) return '';
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const md = (today.getMonth() + 1) * 100 + today.getDate();
+  const bmd = (birth.getMonth() + 1) * 100 + birth.getDate();
+  if(md < bmd) age--;
+  return age >= 0 ? String(age) : '';
+}
+
+function renderPhoto(dataUrl){
+  const box = $('photoPreview');
+  if(dataUrl){
+    box.innerHTML = '<img alt="利用者写真" src="' + dataUrl + '">';
+  } else {
+    box.innerHTML = '<div class="photo-empty">写真なし</div>';
+  }
+}
+
+function fillForm(){
+  const store = ensureStore();
+  const data = store[currentResident] || defaultResidentData(currentResident);
+  $('editorTitle').textContent = currentResident + ' の個人情報';
+  $('printTitle').textContent = currentResident + ' 個人情報';
+  $('fullName').value = currentResident;
+  for(const id of FIELD_IDS){
+    const el = $(id);
+    if(el) el.value = data[id] || '';
+  }
+  renderPhoto(data.photoDataUrl || '');
+  $('savedAtLabel').textContent = data.savedAt ? '最終保存：' + data.savedAt : '';
+}
+
+function collectForm(){
+  const store = ensureStore();
+  const current = store[currentResident] || defaultResidentData(currentResident);
+  const next = {...current, fullName: currentResident};
+  for(const id of FIELD_IDS){
+    const el = $(id);
+    if(el) next[id] = el.value || '';
+  }
+  if(next.birthDate && !next.age) next.age = calcAgeFromBirth(next.birthDate);
+  next.savedAt = new Date().toLocaleString('ja-JP');
+  return next;
+}
+
+function saveCurrent(){
+  const store = ensureStore();
+  const next = collectForm();
+  store[currentResident] = next;
+  saveStore(store);
+  $('savedAtLabel').textContent = '最終保存：' + next.savedAt;
+  toast('保存しました');
+}
+
+function clearCurrent(){
+  const ok = confirm(currentResident + ' の個人情報を初期化しますか？');
+  if(!ok) return;
+  const store = ensureStore();
+  store[currentResident] = defaultResidentData(currentResident);
+  saveStore(store);
+  fillForm();
+  toast('初期化しました');
+}
+
+function backupAll(){
+  const store = ensureStore();
+  const payload = {
+    app: 'group_home_resident_info',
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    residents: RESIDENTS,
+    data: store
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'resident_info_backup.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  toast('バックアップを保存しました');
+}
+
+function restoreFromFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(String(reader.result || '{}'));
+      const data = parsed && parsed.data && typeof parsed.data === 'object' ? parsed.data : null;
+      if(!data){
+        alert('復元用ファイルとして読み取れませんでした');
+        return;
+      }
+      const ok = confirm('バックアップから復元しますか？\n\n現在の内容は上書きされます。');
+      if(!ok) return;
+      const next = {};
+      for(const name of RESIDENTS){
+        next[name] = {...defaultResidentData(name), ...(data[name] || {})};
+        next[name].fullName = name;
+      }
+      saveStore(next);
+      fillForm();
+      renderResidentList();
+      toast('復元しました');
+    }catch(e){
+      alert('復元に失敗しました：' + (e && e.message ? e.message : e));
+    }
+  };
+  reader.readAsText(file);
+}
+
+function handlePhoto(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const store = ensureStore();
+    store[currentResident] = store[currentResident] || defaultResidentData(currentResident);
+    store[currentResident].photoDataUrl = String(reader.result || '');
+    saveStore(store);
+    renderPhoto(store[currentResident].photoDataUrl);
+    toast('写真を保存しました');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(){
+  const store = ensureStore();
+  store[currentResident] = store[currentResident] || defaultResidentData(currentResident);
+  store[currentResident].photoDataUrl = '';
+  saveStore(store);
+  renderPhoto('');
+  toast('写真を削除しました');
+}
+
+function init(){
+  ensureStore();
+  renderResidentList();
+  fillForm();
+
+  $('birthDate').addEventListener('change', () => {
+    if(!$('age').value) $('age').value = calcAgeFromBirth($('birthDate').value);
+  });
+
+  $('backEasyBtn').onclick = goBackEasyPage;
+  $('saveBtn').onclick = saveCurrent;
+  $('clearBtn').onclick = clearCurrent;
+  $('backupBtn').onclick = backupAll;
+  $('restoreBtn').onclick = () => $('restoreFile').click();
+  $('restoreFile').addEventListener('change', (e) => restoreFromFile(e.target.files && e.target.files[0]));
+  $('printBtn').onclick = () => window.print();
+  $('photoFile').addEventListener('change', (e) => handlePhoto(e.target.files && e.target.files[0]));
+  $('removePhotoBtn').onclick = removePhoto;
+}
+
+init();
+</script>
+</body>
+</html>
