@@ -49,7 +49,6 @@
   }
   .btn-primary{background:#2563eb;border-color:#2563eb;color:#fff}
   .btn-danger{background:#ef4444;border-color:#ef4444;color:#fff}
-  .btn-green{background:#16a34a;border-color:#16a34a;color:#fff}
   .section{margin-top:14px}
   .section:first-child{margin-top:0}
   .section-title{font-weight:800;font-size:15px;margin-bottom:10px}
@@ -367,6 +366,28 @@
         </div>
 
         <div class="section">
+          <div class="section-title">バイタル基準</div>
+          <div class="grid-4">
+            <div>
+              <label>通常体重</label>
+              <input id="baseWeight" type="text" placeholder="例）58.4kg">
+            </div>
+            <div>
+              <label>通常上の血圧</label>
+              <input id="baseBpSys" type="text" placeholder="例）128">
+            </div>
+            <div>
+              <label>通常下の血圧</label>
+              <input id="baseBpDia" type="text" placeholder="例）78">
+            </div>
+            <div>
+              <label>バイタル備考</label>
+              <input id="vitalMemo" type="text" placeholder="例）朝はやや高め">
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
           <div class="section-title">福祉情報</div>
           <div class="grid-4">
             <div>
@@ -490,6 +511,7 @@ const FIELD_IDS = [
   'emergencyName1','emergencyRelation1','emergencyPhone1','emergencyEmail1','emergencyPriority1','emergencyAddress1','emergencyMemo1',
   'emergencyName2','emergencyRelation2','emergencyPhone2','emergencyEmail2','emergencyPriority2','emergencyAddress2','emergencyMemo2',
   'doctor','hospital','pharmacy','medicalHistory','allergy','medication','medicalMemo',
+  'baseWeight','baseBpSys','baseBpDia','vitalMemo',
   'supportLevel','handbook','selfSupport','benefitCert','handbookExpiry','selfSupportExpiry','benefitExpiry','caseworker','welfareMemo',
   'insuranceMemo','insuranceNumber','insuranceValidUntil','insuranceNote',
   'moneyMemo','lifeMemo','supportMemo','preferenceMemo','handoverMemo','freeMemo','canDoMemo'
@@ -522,6 +544,7 @@ function defaultResidentData(name){
     emergencyName1:'', emergencyRelation1:'', emergencyPhone1:'', emergencyEmail1:'', emergencyPriority1:'', emergencyAddress1:'', emergencyMemo1:'',
     emergencyName2:'', emergencyRelation2:'', emergencyPhone2:'', emergencyEmail2:'', emergencyPriority2:'', emergencyAddress2:'', emergencyMemo2:'',
     doctor:'', hospital:'', pharmacy:'', medicalHistory:'', allergy:'', medication:'', medicalMemo:'',
+    baseWeight:'', baseBpSys:'', baseBpDia:'', vitalMemo:'',
     supportLevel:'', handbook:'', selfSupport:'', benefitCert:'', handbookExpiry:'', selfSupportExpiry:'', benefitExpiry:'', caseworker:'', welfareMemo:'',
     insuranceMemo:'', insuranceNumber:'', insuranceValidUntil:'', insuranceNote:'',
     moneyMemo:'', lifeMemo:'', supportMemo:'', preferenceMemo:'', handoverMemo:'', freeMemo:'', canDoMemo:'',
