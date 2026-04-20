@@ -69,23 +69,23 @@
   .calendar-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
   .calendar-nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .calendar-nav button{padding:7px 10px;font-size:12px}
-  .calendar-title{font-size:15px;font-weight:800}
+  .calendar-title{font-size:14px;font-weight:800}
   .calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-  .calendar-weekdays div{text-align:center;font-size:10px;color:var(--muted);padding:2px 0}
-  .calendar-day{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:10px;min-height:46px;padding:6px 5px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:2px}
+  .calendar-weekdays div{text-align:center;font-size:9px;color:var(--muted);padding:1px 0}
+  .calendar-day{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;min-height:36px;padding:4px 4px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:1px}
   .calendar-day.muted{background:#f8fafc;color:#94a3b8}
   .calendar-day.selected{outline:2px solid #2563eb;outline-offset:0}
   .calendar-day.completed{background:#bbf7d0;border-color:#4ade80}
   .calendar-day.today .day-num{text-decoration:underline;text-underline-offset:3px}
-  .day-num{font-weight:800;font-size:13px}
+  .day-num{font-weight:800;font-size:11px}
   .day-note{display:none}
-  .calendar-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--muted)}
+  .calendar-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:10px;color:var(--muted)}
   .legend-chip{display:inline-flex;align-items:center;gap:6px}
   .legend-box{width:12px;height:12px;border-radius:4px;border:1px solid var(--line);background:#fff}
   .legend-box.completed{background:#dcfce7;border-color:#86efac}
   .legend-box.selected{outline:2px solid #2563eb;outline-offset:-2px}
-  .calendar-meta{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
-  .calendar-compact{max-width:360px}
+  .calendar-meta{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4}
+  .calendar-compact{max-width:300px}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}.bulk-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -132,7 +132,7 @@
       <input id="recordDate" type="date">
 
       <details class="warn">
-        <summary style="cursor:pointer;font-weight:700;">削除・訂正方法・完成状況カレンダーを見る</summary>
+        <summary style="cursor:pointer;font-weight:700;">削除・訂正方法・共有メモ・完成状況カレンダーを見る</summary>
         <div style="margin-top:8px;line-height:1.6;font-size:14px;">
           <div style="font-weight:700;">削除したい時</div>
           <div>間違えて送った文章をコピーして貼り付けてください。<br>最後に「削除依頼」と入力して送ってください。</div>
@@ -140,6 +140,18 @@
           <div style="font-weight:700;margin-top:8px;">訂正したい時</div>
           <div>訂正したい内容を正しい文章で入力してください。<br>最後に「訂正依頼」と入力して送ってください。</div>
           <div style="margin-top:4px;padding-left:8px;color:#444;">例<br>朝は服薬確認を実施。血圧測定は未実施。<br>訂正依頼</div>
+        </div>
+
+
+        <div class="template-wrap" style="margin-top:12px;">
+          <div class="calendar-title">共有メモ</div>
+          <div class="template-head">受診、引継ぎ、注意事項など、みんなで見たい内容をここへ入力して保存できます。</div>
+          <textarea id="sharedMemoInput" style="min-height:90px;margin-top:10px;" placeholder="共有したいメモを入力"></textarea>
+          <div class="mini-btns" style="margin-top:10px;">
+            <button id="saveSharedMemoBtn" class="orange" type="button">共有メモを保存</button>
+            <button id="reloadSharedMemoBtn" class="mini-btn" type="button">再読込</button>
+          </div>
+          <div id="sharedMemoStatus" class="status"></div>
         </div>
 
         <div class="template-wrap calendar-compact" style="margin-top:12px;">
@@ -201,7 +213,6 @@
       </div>
       <div class="btns" style="margin-top:8px;">
         <button id="openTransportBtn" class="ghost" type="button">交通費ページを開く</button>
-        <button id="openEmergencyBtn" class="ghost" type="button">緊急時情報</button>
       </div>
       <div id="sendStatus" class="status"></div>
     </div>
@@ -239,7 +250,6 @@ const allCheckBtn = document.getElementById('allCheckBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
 const openVitalsBtn = document.getElementById('openVitalsBtn');
 const openTransportBtn = document.getElementById('openTransportBtn');
-const openEmergencyBtn = document.getElementById('openEmergencyBtn');
 const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
 const mainCheckBox = document.getElementById('mainCheckBox');
@@ -252,6 +262,11 @@ const bulkSelectAllBtn = document.getElementById('bulkSelectAllBtn');
 const bulkClearBtn = document.getElementById('bulkClearBtn');
 const bulkSendBtn = document.getElementById('bulkSendBtn');
 const bulkStatus = document.getElementById('bulkStatus');
+const sharedMemoInput = document.getElementById('sharedMemoInput');
+const saveSharedMemoBtn = document.getElementById('saveSharedMemoBtn');
+const reloadSharedMemoBtn = document.getElementById('reloadSharedMemoBtn');
+const sharedMemoStatus = document.getElementById('sharedMemoStatus');
+const SHARED_MEMO_KEY = 'easy_shared_memo';
 
 const dayCompleteCheck = document.getElementById('dayCompleteCheck');
 const dayCompleteBadge = document.getElementById('dayCompleteBadge');
@@ -397,6 +412,38 @@ function initTemplates(){
   renderTemplateList();
 }
 
+
+
+async function loadSharedMemo(){
+  if (!sharedMemoInput) return;
+  try {
+    const data = await fetchJson(WEB_APP_URL + '?action=getSharedNotice&noticeKey=' + encodeURIComponent(SHARED_MEMO_KEY));
+    sharedMemoInput.value = String(data.text || '');
+    sharedMemoStatus.textContent = '';
+  } catch(err){
+    sharedMemoStatus.textContent = '共有メモの読込に失敗しました。';
+  }
+}
+
+async function saveSharedMemo(){
+  if (!sharedMemoInput) return;
+  saveSharedMemoBtn.disabled = true;
+  reloadSharedMemoBtn.disabled = true;
+  sharedMemoStatus.textContent = '保存中です...';
+  try {
+    const data = await postJson({
+      action:'saveSharedNotice',
+      noticeKey: SHARED_MEMO_KEY,
+      text: String(sharedMemoInput.value || '')
+    });
+    sharedMemoStatus.textContent = data.message || '保存しました。';
+  } catch(err){
+    sharedMemoStatus.textContent = '保存に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    saveSharedMemoBtn.disabled = false;
+    reloadSharedMemoBtn.disabled = false;
+  }
+}
 
 function selectedDateYmd(){
   return String(recordDateEl.value || '').trim() || todayYmd();
@@ -887,12 +934,6 @@ function openSearchPage(){ window.location.href = 'easy_google_records_search.ht
 function openVitalsPage(){ window.location.href = 'vitals.html'; }
 function openTransportPage(){ try{localStorage.setItem('transport_easy_page_url_v1', location.href);}catch(e){}
   window.location.href = 'transport_expense_app_car_meter_v5_auth_residents.html'; }
-function openEmergencyPage(){
-  const resident = String(userNameEl.value || '').trim();
-  const base = 'resident_info.html';
-  const url = resident ? (base + '?resident=' + encodeURIComponent(resident)) : base;
-  window.location.href = url;
-}
 
 if (!recordDateEl.value) recordDateEl.value = todayYmd();
 calendarMonthCursor = monthYmd(recordDateEl.value || todayYmd());
@@ -915,8 +956,10 @@ if (bulkSendBtn) bulkSendBtn.addEventListener('click', sendBulkRecords);
 openSearchBtn.addEventListener('click', openSearchPage);
 openVitalsBtn.addEventListener('click', openVitalsPage);
 openTransportBtn.addEventListener('click', openTransportPage);
-if (openEmergencyBtn) openEmergencyBtn.addEventListener('click', openEmergencyPage);
+if (saveSharedMemoBtn) saveSharedMemoBtn.addEventListener('click', saveSharedMemo);
+if (reloadSharedMemoBtn) reloadSharedMemoBtn.addEventListener('click', loadSharedMemo);
 handleRecordDateChange();
+loadSharedMemo();
 </script>
 </body>
 </html>
