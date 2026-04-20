@@ -212,6 +212,7 @@
         <button id="openVitalsBtn" class="ghost" type="button">バイタルページを開く</button>
       </div>
       <div class="btns" style="margin-top:8px;">
+        <button id="openResidentInfoBtn" class="ghost" type="button">緊急時情報</button>
         <button id="openTransportBtn" class="ghost" type="button">交通費ページを開く</button>
       </div>
       <div id="sendStatus" class="status"></div>
@@ -249,6 +250,7 @@ const sendBtn = document.getElementById('sendBtn');
 const allCheckBtn = document.getElementById('allCheckBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
 const openVitalsBtn = document.getElementById('openVitalsBtn');
+const openResidentInfoBtn = document.getElementById('openResidentInfoBtn');
 const openTransportBtn = document.getElementById('openTransportBtn');
 const sendStatus = document.getElementById('sendStatus');
 const checkStatus = document.getElementById('checkStatus');
@@ -932,6 +934,13 @@ async function sendRecord(){
 function clearText(){ memoInput.value = ''; sendStatus.textContent = ''; }
 function openSearchPage(){ window.location.href = 'easy_google_records_search.html'; }
 function openVitalsPage(){ window.location.href = 'vitals.html'; }
+function openResidentInfoPage(){
+  const user = String((userNameEl && userNameEl.value) || '').trim();
+  const url = user
+    ? 'resident_info.html?resident=' + encodeURIComponent(user)
+    : 'resident_info.html';
+  window.location.href = url;
+}
 function openTransportPage(){ try{localStorage.setItem('transport_easy_page_url_v1', location.href);}catch(e){}
   window.location.href = 'transport_expense_app_car_meter_v5_auth_residents.html'; }
 
@@ -955,6 +964,7 @@ if (bulkClearBtn) bulkClearBtn.addEventListener('click', () => setAllBulkResiden
 if (bulkSendBtn) bulkSendBtn.addEventListener('click', sendBulkRecords);
 openSearchBtn.addEventListener('click', openSearchPage);
 openVitalsBtn.addEventListener('click', openVitalsPage);
+if (openResidentInfoBtn) openResidentInfoBtn.addEventListener('click', openResidentInfoPage);
 openTransportBtn.addEventListener('click', openTransportPage);
 if (saveSharedMemoBtn) saveSharedMemoBtn.addEventListener('click', saveSharedMemo);
 if (reloadSharedMemoBtn) reloadSharedMemoBtn.addEventListener('click', loadSharedMemo);
