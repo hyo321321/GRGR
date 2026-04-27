@@ -843,10 +843,6 @@
       return json;
     }
 
-    async function postJson(params) {
-      return remotePost(params);
-    }
-
     async function saveVitalRemote(entry) {
       if (!hasRemoteEnabled()) return { ok:false, skipped:true };
       const d = new Date(entry.measuredAt);
@@ -1735,6 +1731,10 @@
     }
 
 
+    async function postJson(params) {
+      return remotePost(params);
+    }
+
     function normalizeImportRow(row) {
       const date = String(row.date || '').trim();
       if (!date) return null;
@@ -1759,7 +1759,7 @@
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
         if (ch === '"') {
-          if (inQuotes && line[i+1] === '"') {
+          if (inQuotes && line[i + 1] === '"') {
             cur += '"';
             i++;
           } else {
@@ -1777,7 +1777,11 @@
     }
 
     function parseCsvSimple(text) {
-      const lines = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
+      const lines = String(text || '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .filter(line => line.trim() !== '');
       if (!lines.length) return [];
       const head = parseCsvLineSimple(lines[0]).map(v => v.trim());
       return lines.slice(1).map(line => {
@@ -1795,7 +1799,9 @@
         return;
       }
 
+      setRemoteStatus('まとめて取込中…');
       let done = 0;
+
       for (const row of normalized) {
         const payload = {
           action: 'saveVitalRecord',
@@ -1815,11 +1821,21 @@
       }
 
       try {
-        await syncRemoteVitals({ silent:true });
-      } catch (e) {}
+        await syncRemoteVitals({ silent: true });
+      } catch (e) {
+        console.warn('bulk import sync failed', e);
+      }
+
+      // 利用者が1人だけなら、その人を選択
+      const residents = Array.from(new Set(normalized.map(v => v.resident).filter(Boolean)));
+      if (residents.length === 1 && Array.from($('filterResident').options).some(o => o.value === residents[0])) {
+        $('filterResident').value = residents[0];
+      }
+
       renderList();
-      toast(done + '件取り込みました');
       $('quickStatus').textContent = done + '件取り込みました';
+      setRemoteStatus('まとめて取込完了');
+      toast(done + '件取り込みました');
     }
 
     async function handleBulkImportFile(file) {
@@ -1833,6 +1849,7 @@
       }
       await importBulkRows(rows);
     }
+
 
     function clearInputs() {
       $('vWeight').value = '';
@@ -2167,17 +2184,21 @@
       const pdfBtn = $('pdfBtn');
       if (pdfBtn) pdfBtn.onclick = () => window.print();
       $('exportCsvBtn').onclick = exportCsv;
-      $('bulkImportBtn').onclick = () => $('bulkImportFile').click();
-      $('bulkImportFile').addEventListener('change', async (e) => {
-        try {
-          await handleBulkImportFile(e.target.files?.[0]);
-        } catch (err) {
-          console.error(err);
-          alert('まとめて取込に失敗しました\n' + (err && err.message ? err.message : err));
-        } finally {
-          e.target.value = '';
-        }
-      });
+      const bulkImportBtn = $('bulkImportBtn');
+      const bulkImportFile = $('bulkImportFile');
+      if (bulkImportBtn && bulkImportFile) {
+        bulkImportBtn.onclick = () => bulkImportFile.click();
+        bulkImportFile.addEventListener('change', async (e) => {
+          try {
+            await handleBulkImportFile(e.target.files?.[0]);
+          } catch (err) {
+            console.error(err);
+            alert('まとめて取込に失敗しました\n' + (err && err.message ? err.message : err));
+          } finally {
+            e.target.value = '';
+          }
+        });
+      }
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
       $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
