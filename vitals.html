@@ -556,6 +556,7 @@
 <button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
 <button class="btn btn-ghost" id="pdfBtn">📄 PDFにする</button>
 <button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
+<button class="btn btn-ghost" id="pushLocalToRemoteBtn">☁ 端末内データを共有へ送る</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="bulkImportBtn">📥 まとめて取込</button>
 <input accept=".json,.csv,application/json,text/csv" id="bulkImportFile" style="display:none" type="file"/>
@@ -2202,6 +2203,17 @@
       const pdfBtn = $('pdfBtn');
       if (pdfBtn) pdfBtn.onclick = () => window.print();
       $('exportCsvBtn').onclick = exportCsv;
+      const pushLocalToRemoteBtn = $('pushLocalToRemoteBtn');
+      if (pushLocalToRemoteBtn) {
+        pushLocalToRemoteBtn.onclick = async () => {
+          try {
+            await migrateLocalVitalsToRemote();
+          } catch (err) {
+            console.error(err);
+            alert('端末内データの共有送信に失敗しました\n' + (err && err.message ? err.message : err));
+          }
+        };
+      }
       const bulkImportBtn = $('bulkImportBtn');
       const bulkImportFile = $('bulkImportFile');
       if (bulkImportBtn && bulkImportFile) {
