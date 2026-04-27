@@ -1554,7 +1554,7 @@
 
       const filtered = all
         .slice()
-        .sort((a,b) => (b.measuredAt || '').localeCompare(a.measuredAt || ''))
+        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''))
         .filter(v => {
           const t = new Date(v.measuredAt || 0).getTime();
           if (start && t < start) return false;
@@ -1826,10 +1826,12 @@
         console.warn('bulk import sync failed', e);
       }
 
-      // 利用者が1人だけなら、その人を選択
+      $('filterRange').value = 'all';
       const residents = Array.from(new Set(normalized.map(v => v.resident).filter(Boolean)));
-      if (residents.length === 1 && Array.from($('filterResident').options).some(o => o.value === residents[0])) {
-        $('filterResident').value = residents[0];
+      if (residents.length === 1) {
+        const target = residents[0];
+        const hasOption = Array.from($('filterResident').options).some(o => o.value === target);
+        if (hasOption) $('filterResident').value = target;
       }
 
       renderList();
