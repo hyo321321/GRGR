@@ -557,6 +557,8 @@
 <button class="btn btn-ghost" id="pdfBtn">📄 PDFにする</button>
 <button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
+<button class="btn btn-ghost" id="bulkImportBtn">📥 まとめて取込</button>
+<input accept=".json,.csv,application/json,text/csv" id="bulkImportFile" style="display:none" type="file"/>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
 <input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
@@ -1726,6 +1728,106 @@
       ta.select();
       document.execCommand('copy');
       ta.remove();
+    }
+
+
+    function normalizeImportRow(row) {
+      const date = String(row.date || '').trim();
+      if (!date) return null;
+      return {
+        id: String(row.id || '').trim(),
+        date,
+        time: String(row.time || '').trim() || '09:00',
+        resident: String(row.resident || row.user || '').trim(),
+        recorder: String(row.recorder || row.staff || '').trim(),
+        weight: String(row.weight ?? '').trim(),
+        bpSys: String(row.bpSys ?? '').trim(),
+        bpDia: String(row.bpDia ?? '').trim(),
+        pulse: String(row.pulse ?? '').trim(),
+        memo: String(row.memo || '').trim(),
+      };
+    }
+
+    function parseCsvLineSimple(line) {
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i+1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          result.push(cur);
+          cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      result.push(cur);
+      return result;
+    }
+
+    function parseCsvSimple(text) {
+      const lines = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
+      if (!lines.length) return [];
+      const head = parseCsvLineSimple(lines[0]).map(v => v.trim());
+      return lines.slice(1).map(line => {
+        const cols = parseCsvLineSimple(line);
+        const obj = {};
+        head.forEach((k, i) => obj[k] = String(cols[i] ?? '').trim());
+        return obj;
+      });
+    }
+
+    async function importBulkRows(rows) {
+      const normalized = rows.map(normalizeImportRow).filter(Boolean);
+      if (!normalized.length) {
+        toast('取込データがありません');
+        return;
+      }
+
+      let done = 0;
+      for (const row of normalized) {
+        const payload = {
+          action: 'saveVitalRecord',
+          id: row.id || (row.date + '-' + row.time + '-' + row.resident + '-' + done),
+          date: row.date,
+          time: row.time,
+          user: row.resident,
+          staff: row.recorder,
+          weight: row.weight,
+          bpSys: row.bpSys,
+          bpDia: row.bpDia,
+          pulse: row.pulse,
+          memo: row.memo
+        };
+        await postJson(payload);
+        done++;
+      }
+
+      try {
+        await syncRemoteVitals({ silent:true });
+      } catch (e) {}
+      renderList();
+      toast(done + '件取り込みました');
+      $('quickStatus').textContent = done + '件取り込みました';
+    }
+
+    async function handleBulkImportFile(file) {
+      if (!file) return;
+      const text = await file.text();
+      let rows = [];
+      if (file.name.toLowerCase().endsWith('.json')) {
+        rows = JSON.parse(text);
+      } else {
+        rows = parseCsvSimple(text);
+      }
+      await importBulkRows(rows);
     }
 
     function clearInputs() {
