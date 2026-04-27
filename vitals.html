@@ -843,6 +843,10 @@
       return json;
     }
 
+    async function postJson(params) {
+      return remotePost(params);
+    }
+
     async function saveVitalRemote(entry) {
       if (!hasRemoteEnabled()) return { ok:false, skipped:true };
       const d = new Date(entry.measuredAt);
@@ -2163,6 +2167,17 @@
       const pdfBtn = $('pdfBtn');
       if (pdfBtn) pdfBtn.onclick = () => window.print();
       $('exportCsvBtn').onclick = exportCsv;
+      $('bulkImportBtn').onclick = () => $('bulkImportFile').click();
+      $('bulkImportFile').addEventListener('change', async (e) => {
+        try {
+          await handleBulkImportFile(e.target.files?.[0]);
+        } catch (err) {
+          console.error(err);
+          alert('まとめて取込に失敗しました\n' + (err && err.message ? err.message : err));
+        } finally {
+          e.target.value = '';
+        }
+      });
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
       $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
