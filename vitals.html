@@ -821,7 +821,11 @@
         if (!item || !item.id) continue;
         map.set(item.id, item);
       }
-      return Array.from(map.values()).sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
+      return Array.from(map.values()).sort((a, b) => {
+      const ta = new Date(a.measuredAt || 0).getTime();
+      const tb = new Date(b.measuredAt || 0).getTime();
+      return ta - tb;
+    });
     }
 
     async function remoteGet(params) {
@@ -1240,7 +1244,11 @@
       const byResident = new Map();
       const list = (Array.isArray(records) ? records : [])
         .slice()
-        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
+        .sort((a, b) => {
+        const ta = new Date(a.measuredAt || 0).getTime();
+        const tb = new Date(b.measuredAt || 0).getTime();
+        return ta - tb;
+      });
 
       for (const v of list) {
         if (!v || !v.resident || !v.measuredAt) continue;
@@ -1455,7 +1463,11 @@
       const { start, end } = getFilterRange();
       return all
         .slice()
-        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''))
+        .sort((a, b) => {
+        const ta = new Date(a.measuredAt || 0).getTime();
+        const tb = new Date(b.measuredAt || 0).getTime();
+        return ta - tb;
+      })
         .filter(v => {
           const t = new Date(v.measuredAt || 0).getTime();
           if (start && t < start) return false;
@@ -1554,7 +1566,11 @@
 
       const filtered = all
         .slice()
-        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''))
+        .sort((a, b) => {
+        const ta = new Date(a.measuredAt || 0).getTime();
+        const tb = new Date(b.measuredAt || 0).getTime();
+        return ta - tb;
+      })
         .filter(v => {
           const t = new Date(v.measuredAt || 0).getTime();
           if (start && t < start) return false;
