@@ -25,6 +25,10 @@
   .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
   .output{white-space:pre-wrap;line-height:1.6;background:#fbfbfd;border:1px solid var(--line);border-radius:12px;padding:14px;min-height:120px}
   .meta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+  .shared-memo-top-box{background:#fff7ed;border:2px solid #fb923c;border-radius:14px;padding:10px 12px;margin:10px 0 14px;color:#7c2d12;font-size:15px;line-height:1.6}
+  .shared-memo-top-title{font-weight:800;color:#c2410c;margin-bottom:5px}
+  .shared-memo-top-text{white-space:pre-wrap;word-break:break-word}
+  .shared-memo-empty{color:#9a3412;opacity:.8}
   details{margin:10px 0;border-radius:8px;padding:8px 10px}
   .help{border:1px solid #d9e2f0;background:#f5f7fb}
   .warn{border:1px solid #ead39c;background:#fff8e8}
@@ -104,8 +108,10 @@
   <div class="wrap">
     <div class="card">
       <h1>かんたん記録送信</h1>
-      <div class="meta" style="color:#dc2626;">過去の日付の記録も送信できます。利用者名と日付を確認して入力してください。交通費計算、バイタル完成です。</div>
-
+      <div id="sharedMemoTopBox" class="shared-memo-top-box">
+        <div class="shared-memo-top-title">📌 共有メモ・受診予定</div>
+        <div id="sharedMemoTopText" class="shared-memo-top-text">まだ共有メモはありません。</div>
+      </div>
 
       <div class="row">
         <div>
@@ -268,6 +274,7 @@ const sharedMemoInput = document.getElementById('sharedMemoInput');
 const saveSharedMemoBtn = document.getElementById('saveSharedMemoBtn');
 const reloadSharedMemoBtn = document.getElementById('reloadSharedMemoBtn');
 const sharedMemoStatus = document.getElementById('sharedMemoStatus');
+const sharedMemoTopText = document.getElementById('sharedMemoTopText');
 const SHARED_MEMO_KEY = 'easy_shared_memo';
 
 const dayCompleteCheck = document.getElementById('dayCompleteCheck');
@@ -416,11 +423,23 @@ function initTemplates(){
 
 
 
+function setSharedMemoTopText(text){
+  if (!sharedMemoTopText) return;
+  const clean = String(text || '').trim();
+  if (!clean) {
+    sharedMemoTopText.innerHTML = '<span class="shared-memo-empty">まだ共有メモはありません。</span>';
+    return;
+  }
+  sharedMemoTopText.textContent = clean;
+}
+
 async function loadSharedMemo(){
   if (!sharedMemoInput) return;
   try {
     const data = await fetchJson(WEB_APP_URL + '?action=getSharedNotice&noticeKey=' + encodeURIComponent(SHARED_MEMO_KEY));
-    sharedMemoInput.value = String(data.text || '');
+    const text = String(data.text || '');
+    sharedMemoInput.value = text;
+    setSharedMemoTopText(text);
     sharedMemoStatus.textContent = '';
   } catch(err){
     sharedMemoStatus.textContent = '共有メモの読込に失敗しました。';
@@ -433,11 +452,13 @@ async function saveSharedMemo(){
   reloadSharedMemoBtn.disabled = true;
   sharedMemoStatus.textContent = '保存中です...';
   try {
+    const text = String(sharedMemoInput.value || '');
     const data = await postJson({
       action:'saveSharedNotice',
       noticeKey: SHARED_MEMO_KEY,
-      text: String(sharedMemoInput.value || '')
+      text: text
     });
+    setSharedMemoTopText(text);
     sharedMemoStatus.textContent = data.message || '保存しました。';
   } catch(err){
     sharedMemoStatus.textContent = '保存に失敗しました。\n' + (err && err.message ? err.message : err);
