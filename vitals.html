@@ -575,7 +575,7 @@
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
-<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は自動で共有再読込します。別端末分も反映しやすくしています。</div>
 <div class="input-grid-4">
 <div class="field-compact">
 <label>日付</label>
@@ -914,6 +914,23 @@
       return remoteList;
     }
 
+    async function refreshVitalsViewNow(options = {}) {
+      try {
+        if (hasRemoteEnabled()) {
+          await syncRemoteVitals({ silent: true });
+        }
+      } catch (e) {
+        console.warn('refreshVitalsViewNow remote sync failed', e);
+      }
+      renderList();
+      try { renderCharts(); } catch (e) {}
+      if (!options.silent) {
+        const msg = options.message || '反映しました';
+        $('quickStatus').textContent = msg;
+        toast(msg);
+      }
+    }
+
     async function migrateLocalVitalsToRemote() {
       if (!hasRemoteEnabled()) {
         setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
@@ -1138,6 +1155,12 @@
       if (!Object.keys(map[id]).length) delete map[id];
       saveManualFlags(map);
       renderList();
+      setTimeout(() => {
+        syncRemoteVitals({ silent: true }).then(() => {
+          renderList();
+          try { renderCharts(); } catch (e) {}
+        }).catch(err => console.warn('initial remote sync failed', err));
+      }, 300);
     }
 
     function removeManualFlagsForIds(ids) {
