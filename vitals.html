@@ -549,7 +549,7 @@
 <div class="topbar-inner">
 <div>
 <div class="title">🩺 バイタル記録（体重・血圧・脈拍）</div>
-<div class="subtitle">※保存先は localStorage＋共有保存です。共有URLが設定されていれば、携帯からの保存も他端末と共有できます。</div>
+<div class="subtitle">※保存先は localStorage＋共有保存です。保存直後に画面へ即反映し、裏で共有同期します。</div>
 </div>
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
@@ -575,7 +575,7 @@
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
-<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は自動で共有再読込します。別端末分も反映しやすくしています。</div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。</div>
 <div class="input-grid-4">
 <div class="field-compact">
 <label>日付</label>
@@ -819,40 +819,232 @@
       return !!GOOGLE_SHARE_URL;
     }
 
+
+    function makeSafeId(prefix = 'vital') {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+      } catch (e) {}
+      return prefix + '_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+    }
+
+    function dateKeyFromDateObject(d) {
+      if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+
+    function timeKeyFromDateObject(d) {
+      if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function normalizeVitalDate(value) {
+      if (value === null || value === undefined || value === '') return '';
+
+      if (Object.prototype.toString.call(value) === '[object Date]') {
+        return dateKeyFromDateObject(value);
+      }
+
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        // Google Sheets / Excel の日付シリアル値対策
+        const base = new Date(Date.UTC(1899, 11, 30));
+        const d = new Date(base.getTime() + value * 24 * 60 * 60 * 1000);
+        return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`;
+      }
+
+      const s = String(value || '').trim();
+      if (!s) return '';
+
+      // ISO文字列は先頭の日付ではなく、日本時間に直して日付化する
+      if (/[T]\d{1,2}:\d{2}/.test(s) || /Z$/.test(s) || /[+-]\d{2}:?\d{2}$/.test(s)) {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) return dateKeyFromDateObject(d);
+      }
+
+      // 例：2025-10-01 / 2025/10/01 / 2025-10-01-09:00-木村元子-0
+      const m1 = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      if (m1) {
+        return `${m1[1]}-${String(m1[2]).padStart(2,'0')}-${String(m1[3]).padStart(2,'0')}`;
+      }
+
+      // 例：2025年10月1日
+      const m2 = s.match(/(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日/);
+      if (m2) {
+        return `${m2[1]}-${String(m2[2]).padStart(2,'0')}-${String(m2[3]).padStart(2,'0')}`;
+      }
+
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return dateKeyFromDateObject(d);
+
+      return '';
+    }
+
+    function normalizeVitalTime(value) {
+      if (value === null || value === undefined || value === '') return '';
+
+      if (Object.prototype.toString.call(value) === '[object Date]') {
+        return timeKeyFromDateObject(value);
+      }
+
+      const s = String(value || '').trim();
+      if (!s) return '';
+
+      if (s === '朝' || s === 'morning') return '08:00';
+      if (s === '昼' || s === 'noon') return '12:00';
+      if (s === '夕' || s === 'evening') return '18:00';
+
+      const m = s.match(/(?:^|[-\sT])(\d{1,2}):(\d{2})(?::\d{2})?/);
+      if (m) return `${String(m[1]).padStart(2,'0')}:${String(m[2]).padStart(2,'0')}`;
+
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return timeKeyFromDateObject(d);
+
+      return '';
+    }
+
+    function getVitalRecordDateKey(recordOrValue) {
+      if (recordOrValue && typeof recordOrValue === 'object' && !(recordOrValue instanceof Date)) {
+        return normalizeVitalDate(
+          recordOrValue.dateKey ||
+          recordOrValue.date ||
+          recordOrValue.measuredAt ||
+          recordOrValue.id
+        );
+      }
+      return normalizeVitalDate(recordOrValue);
+    }
+
+    function getVitalRecordTime(recordOrValue) {
+      if (recordOrValue && typeof recordOrValue === 'object' && !(recordOrValue instanceof Date)) {
+        return normalizeVitalTime(
+          recordOrValue.time ||
+          recordOrValue.measuredAt ||
+          recordOrValue.id
+        ) || '08:00';
+      }
+      return normalizeVitalTime(recordOrValue) || '08:00';
+    }
+
+    function getVitalSortNumber(recordOrValue) {
+      const dateKey = getVitalRecordDateKey(recordOrValue);
+      if (!dateKey) return 0;
+      const timeKey = getVitalRecordTime(recordOrValue);
+      const [y,m,d] = dateKey.split('-').map(Number);
+      const [h,mi] = String(timeKey || '00:00').split(':').map(Number);
+      const dt = new Date(y, (m || 1) - 1, d || 1, h || 0, mi || 0, 0, 0);
+      return isNaN(dt.getTime()) ? 0 : dt.getTime();
+    }
+
+    function compareVitalsAsc(a, b) {
+      return getVitalSortNumber(a) - getVitalSortNumber(b);
+    }
+
+    function compareVitalsDesc(a, b) {
+      return getVitalSortNumber(b) - getVitalSortNumber(a);
+    }
+
+    function dateKeyAddDays(dateKey, days) {
+      const parts = String(dateKey || '').split('-').map(Number);
+      if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return '';
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      d.setDate(d.getDate() + days);
+      return dateKeyFromDateObject(d);
+    }
+
+    function recordMatchesCurrentRange(record) {
+      const mode = $('filterRange') ? $('filterRange').value : 'today';
+      const key = getVitalRecordDateKey(record);
+      if (!key) return false;
+
+      const today = nowLocalDate();
+
+      if (mode === 'today') {
+        return key === today;
+      }
+
+      if (mode === 'week') {
+        const startKey = dateKeyAddDays(today, -6);
+        return (!startKey || key >= startKey) && key <= today;
+      }
+
+      if (mode === 'month') {
+        return key.slice(0, 7) === today.slice(0, 7);
+      }
+
+      return true;
+    }
+
+    function normalizeVitalRecordObject(record) {
+      if (!record || typeof record !== 'object') return null;
+      const id = String(record.id || record._id || '').trim() || makeSafeId('vital');
+      const dateKey = getVitalRecordDateKey(record);
+      const timeKey = getVitalRecordTime(record);
+      const measuredAt = dateKey ? buildMeasuredAt(dateKey, timeKey) : String(record.measuredAt || '').trim();
+
+      return {
+        ...record,
+        id,
+        date: dateKey || String(record.date || '').trim(),
+        time: timeKey,
+        dateKey: dateKey || String(record.dateKey || '').trim(),
+        measuredAt,
+        resident: String(record.resident || record.user || '').trim(),
+        recorder: String(record.recorder || record.staff || '').trim(),
+        weight: String(record.weight ?? '').trim(),
+        bpSys: String(record.bpSys ?? record.bpHigh ?? '').trim(),
+        bpDia: String(record.bpDia ?? record.bpLow ?? '').trim(),
+        pulse: String(record.pulse ?? '').trim(),
+        memo: String(record.memo ?? '').trim()
+      };
+    }
+
     function normalizeRemoteRecord(row) {
       if (!row || typeof row !== 'object') return null;
-      const date = String(row.date || row.vDate || '').trim();
-      const time = String(row.time || row.vTime || '').trim();
-      const measuredAt = row.measuredAt || ((date && time) ? buildMeasuredAt(date, time) : '');
-      const id = String(row.id || row._id || '').trim() || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2));
-      return {
-        id,
+
+      const date = row.dateKey || row.date || row.vDate || row.measuredAt || row.id || '';
+      const time = row.time || row.vTime || row.measuredAt || row.id || '';
+      const base = {
+        id: String(row.id || row._id || '').trim() || makeSafeId('vital_remote'),
+        date: normalizeVitalDate(date),
+        time: normalizeVitalTime(time) || '08:00',
         resident: String(row.resident || row.user || '').trim(),
         recorder: String(row.recorder || row.staff || '').trim(),
-        measuredAt,
         weight: String(row.weight ?? '').trim(),
         bpSys: String(row.bpSys ?? row.bpHigh ?? '').trim(),
         bpDia: String(row.bpDia ?? row.bpLow ?? '').trim(),
         pulse: String(row.pulse ?? '').trim(),
-        memo: String(row.memo ?? '').trim(),
+        memo: String(row.memo ?? '').trim()
       };
+      base.dateKey = base.date;
+      base.measuredAt = base.date ? buildMeasuredAt(base.date, base.time) : String(row.measuredAt || '').trim();
+      return base;
     }
 
     function mergeVitalsById(localList, remoteList) {
       const map = new Map();
-      for (const item of Array.isArray(localList) ? localList : []) {
-        if (!item || !item.id) continue;
-        map.set(item.id, item);
-      }
-      for (const item of Array.isArray(remoteList) ? remoteList : []) {
-        if (!item || !item.id) continue;
-        map.set(item.id, item);
-      }
-      return Array.from(map.values()).sort((a, b) => {
-      const ta = new Date(a.measuredAt || 0).getTime();
-      const tb = new Date(b.measuredAt || 0).getTime();
-      return ta - tb;
-    });
+
+      const put = (item) => {
+        const normalized = normalizeVitalRecordObject(item);
+        if (!normalized || !normalized.id) return;
+        const current = map.get(normalized.id);
+        if (!current) {
+          map.set(normalized.id, normalized);
+          return;
+        }
+
+        // 同じIDがあった場合は、updated_at / updatedAt が新しい方を優先
+        const curUpdated = new Date(current.updated_at || current.updatedAt || current.measuredAt || 0).getTime();
+        const nextUpdated = new Date(normalized.updated_at || normalized.updatedAt || normalized.measuredAt || 0).getTime();
+        if (!curUpdated || !nextUpdated || nextUpdated >= curUpdated) {
+          map.set(normalized.id, { ...current, ...normalized });
+        }
+      };
+
+      for (const item of Array.isArray(localList) ? localList : []) put(item);
+      for (const item of Array.isArray(remoteList) ? remoteList : []) put(item);
+
+      return Array.from(map.values()).sort(compareVitalsAsc);
     }
 
     async function remoteGet(params) {
@@ -876,12 +1068,15 @@
 
     async function saveVitalRemote(entry) {
       if (!hasRemoteEnabled()) return { ok:false, skipped:true };
-      const d = new Date(entry.measuredAt);
+
+      const dateKey = getVitalRecordDateKey(entry);
+      const timeKey = getVitalRecordTime(entry);
+
       return remotePost({
         action: 'saveVitalRecord',
         id: entry.id || '',
-        date: `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,
-        time: `${pad2(d.getHours())}:${pad2(d.getMinutes())}`,
+        date: dateKey || '',
+        time: timeKey || '08:00',
         user: entry.resident || '',
         staff: entry.recorder || '',
         weight: entry.weight || '',
@@ -889,7 +1084,7 @@
         bpDia: entry.bpDia || '',
         pulse: entry.pulse || '',
         memo: entry.memo || '',
-        measuredAt: entry.measuredAt || '',
+        measuredAt: dateKey ? buildMeasuredAt(dateKey, timeKey || '08:00') : (entry.measuredAt || ''),
       });
     }
 
@@ -1053,21 +1248,25 @@
     }
 
     function buildMeasuredAt(dateStr, timeStr) {
-      // date/time (local) -> ISO string
-      const [y,m,da] = dateStr.split('-').map(Number);
-      const [h,mi] = timeStr.split(':').map(Number);
-      const d = new Date(y, (m-1), da, h, mi, 0, 0);
+      const dateKey = normalizeVitalDate(dateStr);
+      const timeKey = normalizeVitalTime(timeStr) || '08:00';
+      if (!dateKey) return '';
+      const [y,m,da] = dateKey.split('-').map(Number);
+      const [h,mi] = timeKey.split(':').map(Number);
+      const d = new Date(y, (m-1), da, h || 0, mi || 0, 0, 0);
       return d.toISOString();
     }
 
-    function formatJP(iso) {
-      const d = new Date(iso);
-      const y = d.getFullYear();
-      const m = pad2(d.getMonth()+1);
-      const da = pad2(d.getDate());
+    function formatJP(recordOrIso) {
+      const dateKey = getVitalRecordDateKey(recordOrIso);
+      const timeKey = getVitalRecordTime(recordOrIso);
+      if (!dateKey) return '日付不明';
+
+      const [y,m,da] = dateKey.split('-').map(Number);
+      const d = new Date(y, (m-1), da);
       const weekday = WEEKDAY_LABELS[d.getDay()] || '';
-      const slot = getSlotLabel(getSlotFromTime(`${pad2(d.getHours())}:${pad2(d.getMinutes())}`));
-      return `${y}/${m}/${da}（${weekday}） ${slot}`;
+      const slot = getSlotLabel(getSlotFromTime(timeKey));
+      return `${y}/${pad2(m)}/${pad2(da)}（${weekday}） ${slot}`;
     }
 
     function vitalsToText(v) {
@@ -1126,7 +1325,8 @@
 
     function loadVitals() {
       const v = loadJSON(VITALS_KEY, []);
-      return Array.isArray(v) ? v : [];
+      if (!Array.isArray(v)) return [];
+      return v.map(normalizeVitalRecordObject).filter(Boolean);
     }
     function saveVitals(list) {
       saveJSON(VITALS_KEY, list);
@@ -1232,22 +1432,14 @@
     }
 
     function getFilterRange() {
-      const mode = $('filterRange').value;
-      const now = new Date();
-      const end = now.getTime();
-      let start = 0;
-      if (mode === 'today') {
-        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
-        start = d.getTime();
-      } else if (mode === 'week') {
-        start = end - 7*24*60*60*1000;
-      } else if (mode === 'month') {
-        const d = new Date(now.getFullYear(), now.getMonth(), 1, 0,0,0,0);
-        start = d.getTime();
-      } else {
-        start = 0;
-      }
-      return { start, end };
+      const mode = $('filterRange') ? $('filterRange').value : 'today';
+      const today = nowLocalDate();
+      return {
+        mode,
+        today,
+        startKey: mode === 'week' ? dateKeyAddDays(today, -6) : (mode === 'month' ? today.slice(0, 7) + '-01' : ''),
+        endKey: today
+      };
     }
 
     function normalizeNum(v) {
@@ -1294,17 +1486,13 @@
       const byResident = new Map();
       const list = (Array.isArray(records) ? records : [])
         .slice()
-        .sort((a, b) => {
-        const ta = new Date(a.measuredAt || 0).getTime();
-        const tb = new Date(b.measuredAt || 0).getTime();
-        return ta - tb;
-      });
+.sort(compareVitalsAsc);
 
       for (const v of list) {
         if (!v || !v.resident || !v.measuredAt) continue;
         const weight = parseNumOrNull(v.weight);
         if (weight == null) continue;
-        const day = dayKeyFromISO(v.measuredAt);
+        const day = dayKeyFromISO(v);
         if (!byResident.has(v.resident)) byResident.set(v.resident, new Map());
         byResident.get(v.resident).set(day, weight); // latest of the day wins because ASC loop
       }
@@ -1324,7 +1512,7 @@
 
     function getWeightDiffForRecord(record, diffMap) {
       if (!record || !record.resident || !record.measuredAt) return null;
-      const day = dayKeyFromISO(record.measuredAt);
+      const day = dayKeyFromISO(record);
       const residentMap = diffMap && diffMap[record.resident];
       if (!residentMap || !(day in residentMap)) return null;
       return residentMap[day];
@@ -1340,33 +1528,36 @@
       return `${base}<span class="weight-diff ${cls}">(${sign}${diff.toFixed(1)})</span>`;
     }
 
-    function dayKeyFromISO(iso) {
-      const d = new Date(iso);
-      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    function dayKeyFromISO(recordOrIso) {
+      return getVitalRecordDateKey(recordOrIso);
     }
 
-    function shortLabelFromISO(iso) {
-      const d = new Date(iso);
-      return `${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`;
+    function shortLabelFromISO(recordOrIso) {
+      const key = getVitalRecordDateKey(recordOrIso);
+      if (!key) return '';
+      const parts = key.split('-');
+      return `${parts[1]}/${parts[2]}`;
     }
 
     function groupByDayLastMetrics(records) {
-      // records: measuredAt ASC recommended
+      // 同じ日の複数記録は、その日の最後の値をグラフへ使う
       const map = new Map();
-      for (const v of records) {
-        const iso = v.measuredAt;
-        if (!iso) continue;
-        const k = dayKeyFromISO(iso);
+      for (const v of (records || []).slice().sort(compareVitalsAsc)) {
+        const k = dayKeyFromISO(v);
+        if (!k) continue;
+
+        const sortNo = getVitalSortNumber(v);
         let cur = map.get(k);
         if (!cur) {
-          cur = { day: k, label: shortLabelFromISO(iso), lastISO: iso, weight: null, bpSys: null, bpDia: null, pulse: null };
+          cur = { day: k, label: shortLabelFromISO(v), lastSort: sortNo, weight: null, bpSys: null, bpDia: null, pulse: null };
           map.set(k, cur);
         }
-        // keep latest ISO for label positioning
-        if (String(iso).localeCompare(String(cur.lastISO)) > 0) {
-          cur.lastISO = iso;
-          cur.label = shortLabelFromISO(iso);
+
+        if (sortNo >= (cur.lastSort || 0)) {
+          cur.lastSort = sortNo;
+          cur.label = shortLabelFromISO(v);
         }
+
         const w = parseNumOrNull(v.weight);
         const s = parseNumOrNull(v.bpSys);
         const d = parseNumOrNull(v.bpDia);
@@ -1376,8 +1567,7 @@
         if (d != null) cur.bpDia = d;
         if (p != null) cur.pulse = p;
       }
-      const days = Array.from(map.values()).sort((a,b) => a.day.localeCompare(b.day));
-      return days;
+      return Array.from(map.values()).sort((a,b) => a.day.localeCompare(b.day));
     }
 
     function sizeCanvasToCSS(canvas) {
@@ -1510,20 +1700,13 @@
     function getFilteredForChart() {
       const all = loadVitals();
       const resident = $('filterResident').value;
-      const { start, end } = getFilterRange();
       return all
         .slice()
-        .sort((a, b) => {
-          const ta = new Date(a.measuredAt || 0).getTime();
-          const tb = new Date(b.measuredAt || 0).getTime();
-          return ta - tb;
-        })
+        .sort(compareVitalsAsc)
         .filter(v => {
-          const t = new Date(v.measuredAt || 0).getTime();
-          if (start && t < start) return false;
-          if (end && t > end) return false;
+          if (!recordMatchesCurrentRange(v)) return false;
           if (resident && resident !== '__all__' && v.resident !== resident) return false;
-          if (!inPrintMonthRange(v.measuredAt)) return false;
+          if (!inPrintMonthRange(v)) return false;
           return true;
         });
     }
@@ -1621,9 +1804,9 @@
     }
 
 
-    function monthKeyFromISO(iso) {
-      const d = new Date(iso);
-      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+    function monthKeyFromISO(recordOrIso) {
+      const key = getVitalRecordDateKey(recordOrIso);
+      return key ? key.slice(0, 7) : '';
     }
 
     function monthLabelFromKey(key) {
@@ -1631,8 +1814,11 @@
       return y && m ? `${y}/${m}` : String(key || '');
     }
 
-    function getWeekdayFromISO(iso) {
-      return String(new Date(iso).getDay());
+    function getWeekdayFromISO(recordOrIso) {
+      const key = getVitalRecordDateKey(recordOrIso);
+      if (!key) return '';
+      const [y,m,d] = key.split('-').map(Number);
+      return String(new Date(y, m - 1, d).getDay());
     }
 
     function getWeekdayLabel(weekday) {
@@ -1643,7 +1829,7 @@
       const sel = $('monthFilter');
       if (!sel) return;
       const current = sel.value || 'all';
-      const months = Array.from(new Set((records || []).map(v => monthKeyFromISO(v.measuredAt)).filter(Boolean))).sort();
+      const months = Array.from(new Set((records || []).map(v => monthKeyFromISO(v)).filter(Boolean))).sort();
       sel.innerHTML = '<option value="all">全月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
       sel.value = months.includes(current) ? current : 'all';
     }
@@ -1675,7 +1861,7 @@
     function renderSummaryTable(listEl, filtered, mode) {
       const groups = new Map();
       filtered.forEach(v => {
-        const key = mode === 'weekday' ? getWeekdayFromISO(v.measuredAt) : monthKeyFromISO(v.measuredAt);
+        const key = mode === 'weekday' ? getWeekdayFromISO(v) : monthKeyFromISO(v);
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push(v);
       });
@@ -1740,7 +1926,7 @@
 
 
     function getAllMonthKeys(records) {
-      return Array.from(new Set((records || []).map(v => monthKeyFromISO(v.measuredAt)).filter(Boolean))).sort();
+      return Array.from(new Set((records || []).map(v => monthKeyFromISO(v)).filter(Boolean))).sort();
     }
 
     function populatePrintMonthFilters(records) {
@@ -1758,14 +1944,15 @@
       toSel.value = months.includes(currentTo) ? currentTo : 'all';
     }
 
-    function inPrintMonthRange(iso) {
+    function inPrintMonthRange(recordOrIso) {
       const fromSel = $('printMonthFrom');
       const toSel = $('printMonthTo');
       if (!fromSel || !toSel) return true;
       const from = fromSel.value || 'all';
       const to = toSel.value || 'all';
       if (from === 'all' && to === 'all') return true;
-      const key = monthKeyFromISO(iso);
+      const key = monthKeyFromISO(recordOrIso);
+      if (!key) return false;
       if (from !== 'all' && key < from) return false;
       if (to !== 'all' && key > to) return false;
       return true;
@@ -1816,25 +2003,19 @@
 
       const resident = $('filterResident').value;
       const q = String($('search').value || '').trim().toLowerCase();
-      const { start, end } = getFilterRange();
+      getFilterRange();
       const summaryMode = $('summaryMode') ? $('summaryMode').value : 'list';
       const weekdayFilter = $('weekdayFilter') ? $('weekdayFilter').value : 'all';
       const monthFilter = $('monthFilter') ? $('monthFilter').value : 'all';
 
       const filtered = all
         .slice()
-        .sort((a, b) => {
-          const ta = new Date(a.measuredAt || 0).getTime();
-          const tb = new Date(b.measuredAt || 0).getTime();
-          return ta - tb;
-        })
+.sort(compareVitalsAsc)
         .filter(v => {
-          const t = new Date(v.measuredAt || 0).getTime();
-          if (start && t < start) return false;
-          if (end && t > end) return false;
+          if (!recordMatchesCurrentRange(v)) return false;
           if (resident && resident !== '__all__' && v.resident !== resident) return false;
-          if (weekdayFilter !== 'all' && getWeekdayFromISO(v.measuredAt) !== weekdayFilter) return false;
-          if (monthFilter !== 'all' && monthKeyFromISO(v.measuredAt) !== monthFilter) return false;
+          if (weekdayFilter !== 'all' && getWeekdayFromISO(v) !== weekdayFilter) return false;
+          if (monthFilter !== 'all' && monthKeyFromISO(v) !== monthFilter) return false;
           if (!matchesHighThresholds(v)) return false;
           if (q) {
             const hay = [
@@ -1935,7 +2116,7 @@
 
       for (const v of filtered) {
         const tr = document.createElement('tr');
-        tr.setAttribute('data-month-key', monthKeyFromISO(v.measuredAt));
+        tr.setAttribute('data-month-key', monthKeyFromISO(v));
         const memo = String(v.memo || '').trim();
         const weightFlag = isManualFlagOn(v.id, 'weight');
         const bpFlag = isManualFlagOn(v.id, 'bp');
@@ -1943,7 +2124,7 @@
         const weightDiff = getWeightDiffForRecord(v, weightDiffMap);
         tr.innerHTML = `
           <td class="select-col"><input type="checkbox" class="row-check" ${selectedVitalIds.has(v.id) ? 'checked' : ''} aria-label="この行を選択"></td>
-          <td>${escapeHTML(formatJP(v.measuredAt))}</td>
+          <td>${escapeHTML(formatJP(v))}</td>
           <td>${escapeHTML(v.resident || '')}</td>
           <td class="${weightFlag ? 'manual-flag' : ''}">${formatWeightWithDiffHtml(v.weight, weightDiff)}</td>
           <td>${formatBpHtml(v.bpSys, v.bpDia, bpFlag)}</td>
@@ -2185,8 +2366,11 @@
 
       setSavingState(true);
       try {
-        const entry = {
-          id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2),
+        const entry = normalizeVitalRecordObject({
+          id: makeSafeId('vital'),
+          date: d.date,
+          time: d.time,
+          dateKey: d.date,
           resident: d.resident,
           recorder: d.recorder || '',
           measuredAt: buildMeasuredAt(d.date, d.time),
@@ -2195,31 +2379,49 @@
           bpDia: d.bpDia,
           pulse: d.pulse,
           memo: d.memo,
-        };
+          _localJustSaved: true
+        });
 
-        const all = loadVitals();
-        all.push(entry);
+        const all = mergeVitalsById(loadVitals(), [entry]);
         saveVitals(all);
         rememberJustSaved(d);
 
-        let statusMsg = '保存しました';
+        // 先に画面へ出す。共有保存の反映待ちはしない。
+        $('filterRange').value = 'today';
+        const hasResidentOption = Array.from($('filterResident').options).some(o => o.value === entry.resident);
+        if (hasResidentOption) $('filterResident').value = entry.resident;
+
+        $('quickStatus').textContent = '保存しました（画面に反映済み・共有保存中）';
+        setRemoteStatus('共有保存中…');
+        clearInputs();
+        renderList();
+        toast('保存しました');
+
         if (hasRemoteEnabled()) {
           try {
             await saveVitalRemote(entry);
             setRemoteStatus('共有接続OK：保存しました');
-            statusMsg = '保存しました（共有OK）';
+            $('quickStatus').textContent = '保存しました（共有OK）';
+
+            // 共有側の反映をあとから確認。ローカル表示は残したまま統合する。
+            syncRemoteVitals({ silent: true }).then(() => {
+              renderList();
+              try { renderCharts(); } catch (e) {}
+              setRemoteStatus('共有接続OK：保存後に再読込しました');
+            }).catch(e => {
+              console.warn('post save sync failed', e);
+              setRemoteStatus('共有保存OK。再読込は手動でも確認できます');
+            });
           } catch (e) {
             console.warn('saveVitalRemote failed', e);
-            setRemoteStatus('共有保存に失敗しました');
-            statusMsg = '端末に保存しました（共有失敗）';
+            setRemoteStatus('共有保存に失敗しました。端末内には保存済みです');
+            $('quickStatus').textContent = '端末に保存しました（共有失敗）';
+            toast('端末に保存しました（共有失敗）');
           }
+        } else {
+          setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+          $('quickStatus').textContent = '端末に保存しました';
         }
-
-        $('quickStatus').textContent = statusMsg;
-        toast(statusMsg);
-
-        clearInputs();
-        renderList();
       } finally {
         setSavingState(false);
       }
@@ -2235,10 +2437,11 @@
       if (!v) return;
       editingId = id;
 
-      const d = new Date(v.measuredAt);
-      $('eDate').value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      const editDateKey = getVitalRecordDateKey(v);
+      const editTimeKey = getVitalRecordTime(v);
+      $('eDate').value = editDateKey || nowLocalDate();
       updateWeekdayLabel('eDate', 'eWeekday');
-      setSlotSelection('eSlotGroup', getSlotFromTime(`${pad2(d.getHours())}:${pad2(d.getMinutes())}`));
+      setSlotSelection('eSlotGroup', getSlotFromTime(editTimeKey));
 
       $('eResident').value = v.resident || '';
       $('eRecorder').value = v.recorder || '';
@@ -2267,8 +2470,11 @@
       const time = getTimeForSlot(slot);
       if (!date) { toast('日付を入力してください'); return; }
 
-      all[idx] = {
+      all[idx] = normalizeVitalRecordObject({
         ...all[idx],
+        date,
+        time,
+        dateKey: date,
         resident: $('eResident').value || '',
         recorder: $('eRecorder').value || '',
         measuredAt: buildMeasuredAt(date, time),
@@ -2277,9 +2483,10 @@
         bpDia: String($('eBpDia').value || '').trim(),
         pulse: String($('ePulse').value || '').trim(),
         memo: String($('eMemo').value || '').trim(),
-      };
+      });
 
-      saveVitals(all);
+      saveVitals(mergeVitalsById(all, []));
+      renderList();
       let msg = '更新しました';
       if (hasRemoteEnabled()) {
         try {
@@ -2341,11 +2548,11 @@
 
     function exportCsv(){
       const rows = [
-        ['measuredAt','resident','recorder','weight','bpSys','bpDia','pulse','memo']
+        ['date','time','measuredAt','resident','recorder','weight','bpSys','bpDia','pulse','memo']
       ];
       for (const v of loadVitals()) {
         rows.push([
-          v.measuredAt||'', v.resident||'', v.recorder||'', v.weight||'', v.bpSys||'', v.bpDia||'', v.pulse||'', (v.memo||'').replace(/\r?\n/g,' ')
+          getVitalRecordDateKey(v), getVitalRecordTime(v), v.measuredAt||'', v.resident||'', v.recorder||'', v.weight||'', v.bpSys||'', v.bpDia||'', v.pulse||'', (v.memo||'').replace(/\r?\n/g,' ')
         ]);
       }
       const csv = rows.map(r => r.map(cell => {
