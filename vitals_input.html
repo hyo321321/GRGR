@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>バイタル入力専用</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Yu Gothic UI", sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-size: 18px;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #ffffffee;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #dbe5f1;
+    padding: 12px;
+  }
+  .topbar-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .title {
+    font-weight: 900;
+    font-size: 20px;
+    line-height: 1.25;
+  }
+  .sub {
+    font-size: 13px;
+    color: #475569;
+    margin-top: 2px;
+  }
+  a { color: #2563eb; text-decoration: none; font-weight: 800; }
+  .wrap {
+    max-width: 760px;
+    margin: 12px auto 28px;
+    padding: 0 12px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #dbe5f1;
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, .06);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  label {
+    display: block;
+    font-size: 15px;
+    color: #334155;
+    font-weight: 800;
+    margin: 0 0 6px;
+  }
+  input, select, textarea {
+    width: 100%;
+    border: 2px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 14px 12px;
+    font-size: 20px;
+    background: #fff;
+    color: #0f172a;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .16);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .slot-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .slot-btn, .btn {
+    border: 2px solid #cbd5e1;
+    background: #fff;
+    color: #0f172a;
+    border-radius: 14px;
+    padding: 14px 12px;
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    text-align: center;
+  }
+  .slot-btn.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+  }
+  .btn-primary {
+    width: 100%;
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+    font-size: 22px;
+    padding: 18px 12px;
+  }
+  .btn-sub {
+    background: #f8fafc;
+  }
+  .btn-danger {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+  .btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+  }
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .hint {
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .status {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1e3a8a;
+    line-height: 1.45;
+  }
+  .status.warn {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    color: #9a3412;
+  }
+  .status.ok {
+    background: #ecfdf5;
+    border-color: #bbf7d0;
+    color: #166534;
+  }
+  .latest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .latest-item {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 10px;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .latest-main {
+    font-weight: 900;
+    color: #0f172a;
+  }
+  .latest-sub {
+    color: #475569;
+    margin-top: 3px;
+  }
+  .pill {
+    display: inline-block;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    padding: 2px 8px;
+    font-size: 13px;
+    font-weight: 900;
+    margin-left: 4px;
+  }
+  .red { color: #dc2626; font-weight: 900; }
+  @media (max-width: 420px) {
+    body { font-size: 17px; }
+    input, select, textarea { font-size: 19px; padding: 13px 11px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .btn-row { grid-template-columns: 1fr; }
+    .title { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="title">📱 バイタル入力専用</div>
+      <div class="sub">大きい画面表示でも入力しやすい簡易ページ</div>
+    </div>
+    <a href="vitals.html">一覧へ戻る</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="card-title">
+      <span>入力</span>
+      <span class="hint" id="weekdayText"></span>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>日付</label>
+        <input id="vDate" type="date" />
+      </div>
+
+      <div>
+        <label>測定区分</label>
+        <div class="slot-group" id="slotGroup">
+          <button type="button" class="slot-btn active" data-slot="morning">朝</button>
+          <button type="button" class="slot-btn" data-slot="noon">昼</button>
+          <button type="button" class="slot-btn" data-slot="evening">夕</button>
+        </div>
+        <div class="hint" style="margin-top:6px;">時刻は内部で 朝08:00・昼12:00・夕18:00 として保存します。</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <label>利用者</label>
+          <select id="vResident"></select>
+        </div>
+        <div>
+          <label>記録者</label>
+          <input id="vRecorder" list="recorderList" placeholder="例）太田" />
+          <datalist id="recorderList"></datalist>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div>
+          <label>体重 kg</label>
+          <input id="vWeight" type="number" step="0.1" inputmode="decimal" placeholder="60.9" />
+        </div>
+        <div>
+          <label>血圧 上</label>
+          <input id="vBpSys" type="number" step="1" inputmode="numeric" placeholder="126" />
+        </div>
+        <div>
+          <label>血圧 下</label>
+          <input id="vBpDia" type="number" step="1" inputmode="numeric" placeholder="59" />
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <label>脈拍</label>
+          <input id="vPulse" type="number" step="1" inputmode="numeric" placeholder="65" />
+        </div>
+        <div>
+          <label>メモ 任意</label>
+          <input id="vMemo" type="text" placeholder="例）朝食前、再測定など" />
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="saveBtn" type="button">💾 共有へ保存</button>
+      <div class="btn-row">
+        <button class="btn btn-sub" id="checkTodayBtn" type="button">🔍 今日の記録を確認</button>
+        <button class="btn btn-sub" id="clearBtn" type="button">🧹 入力クリア</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">状態</div>
+    <div class="status" id="status">入力して保存してください。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>この端末で最近保存した記録</span>
+      <button class="btn btn-sub" id="reloadLocalBtn" type="button" style="font-size:14px; padding:8px 10px;">更新</button>
+    </div>
+    <div class="latest-list" id="latestList"></div>
+  </div>
+</div>
+
+<script>
+  const RESIDENTS_KEY = "group_home_residents_v1";
+  const RECORDERS_KEY = "group_home_recorders_v1";
+  const VITALS_KEY = "group_home_vitals_v1";
+  const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
+  const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
+  const DEFAULT_RECORDERS = ['太田'];
+  const SLOT_TIME_MAP = { morning: '08:00', noon: '12:00', evening: '18:00' };
+  const SLOT_LABEL_MAP = { morning: '朝', noon: '昼', evening: '夕' };
+  const WEEKDAY_LABELS = ['日','月','火','水','木','金','土'];
+  const $ = id => document.getElementById(id);
+
+  let selectedSlot = 'morning';
+  let saving = false;
+  let lastSaveFingerprint = '';
+  let lastSaveAt = 0;
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  }
+  function escapeHTML(s) {
+    return String(s ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  }
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return parsed ?? fallback;
+    } catch(e) { return fallback; }
+  }
+  function saveJSON(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+  function loadVitals() {
+    const v = loadJSON(VITALS_KEY, []);
+    return Array.isArray(v) ? v : [];
+  }
+  function saveVitals(list) { saveJSON(VITALS_KEY, Array.isArray(list) ? list : []); }
+
+  function dateKeyFromAny(value) {
+    if (!value) return '';
+    if (value instanceof Date) {
+      return `${value.getFullYear()}-${pad2(value.getMonth()+1)}-${pad2(value.getDate())}`;
+    }
+    const s = String(value).trim();
+    const m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    return '';
+  }
+  function timeFromSlot(slot) { return SLOT_TIME_MAP[slot] || SLOT_TIME_MAP.morning; }
+  function labelFromSlot(slot) { return SLOT_LABEL_MAP[slot] || '朝'; }
+  function buildMeasuredAt(dateStr, timeStr) {
+    const [y, m, d] = String(dateStr).split('-').map(Number);
+    const [h, mi] = String(timeStr).split(':').map(Number);
+    return new Date(y, m - 1, d, h, mi, 0, 0).toISOString();
+  }
+  function formatDateJP(dateKey) {
+    const [y,m,d] = String(dateKey || '').split('-').map(Number);
+    if (!y || !m || !d) return '';
+    const wd = WEEKDAY_LABELS[new Date(y, m - 1, d).getDay()] || '';
+    return `${y}/${pad2(m)}/${pad2(d)}（${wd}）`;
+  }
+  function updateWeekday() {
+    const date = $('vDate').value;
+    const [y,m,d] = String(date || '').split('-').map(Number);
+    if (!y || !m || !d) { $('weekdayText').textContent = ''; return; }
+    const wd = WEEKDAY_LABELS[new Date(y, m - 1, d).getDay()] || '';
+    $('weekdayText').textContent = `${wd}曜日`;
+  }
+  function setStatus(msg, type) {
+    const el = $('status');
+    el.className = 'status' + (type ? ` ${type}` : '');
+    el.innerHTML = msg;
+  }
+  function setSaving(flag) {
+    saving = !!flag;
+    $('saveBtn').disabled = saving;
+    $('saveBtn').textContent = saving ? '保存中…' : '💾 共有へ保存';
+  }
+  function initSelects() {
+    const residents = loadJSON(RESIDENTS_KEY, DEFAULT_RESIDENTS);
+    const recorders = loadJSON(RECORDERS_KEY, DEFAULT_RECORDERS);
+    $('vResident').innerHTML = (Array.isArray(residents) && residents.length ? residents : DEFAULT_RESIDENTS)
+      .map(name => `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`).join('');
+    const recorderList = Array.isArray(recorders) && recorders.length ? recorders : DEFAULT_RECORDERS;
+    $('recorderList').innerHTML = recorderList.map(name => `<option value="${escapeHTML(name)}"></option>`).join('');
+    $('vRecorder').value = recorderList[0] || '太田';
+  }
+  function bindSlots() {
+    $('slotGroup').addEventListener('click', e => {
+      const btn = e.target.closest('.slot-btn');
+      if (!btn) return;
+      selectedSlot = btn.dataset.slot || 'morning';
+      document.querySelectorAll('.slot-btn').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  }
+  function makeId(entry) {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return `${entry.date}-${entry.time}-${entry.resident}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+  function getFormEntry() {
+    const date = $('vDate').value || todayStr();
+    const time = timeFromSlot(selectedSlot);
+    const resident = $('vResident').value;
+    const recorder = $('vRecorder').value.trim() || '太田';
+    const entry = {
+      date,
+      time,
+      dateKey: date,
+      slot: selectedSlot,
+      resident,
+      recorder,
+      weight: $('vWeight').value.trim(),
+      bpSys: $('vBpSys').value.trim(),
+      bpDia: $('vBpDia').value.trim(),
+      pulse: $('vPulse').value.trim(),
+      memo: $('vMemo').value.trim(),
+    };
+    entry.measuredAt = buildMeasuredAt(date, time);
+    entry.id = makeId(entry);
+    return entry;
+  }
+  function validateEntry(entry) {
+    if (!entry.date) return '日付を入れてください。';
+    if (!entry.resident) return '利用者を選んでください。';
+    if (!entry.recorder) return '記録者を入れてください。';
+    if (!entry.weight && !entry.bpSys && !entry.bpDia && !entry.pulse && !entry.memo) return '体重・血圧・脈拍・メモのどれかを入れてください。';
+    return '';
+  }
+  function fingerprint(entry) {
+    return [entry.date, entry.time, entry.resident, entry.recorder, entry.weight, entry.bpSys, entry.bpDia, entry.pulse, entry.memo].join('|');
+  }
+  function saveLocal(entry) {
+    const list = loadVitals().filter(v => v && v.id !== entry.id);
+    list.unshift(entry);
+    saveVitals(list);
+  }
+  async function remotePost(params) {
+    const res = await fetch(GOOGLE_SHARE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: new URLSearchParams(params).toString(),
+    });
+    const json = await res.json();
+    if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有保存に失敗しました');
+    return json;
+  }
+  async function remoteGet(params) {
+    const url = GOOGLE_SHARE_URL + '?' + new URLSearchParams(params).toString();
+    const res = await fetch(url, { cache: 'no-store' });
+    const json = await res.json();
+    if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有読込に失敗しました');
+    return json;
+  }
+  async function saveRemote(entry) {
+    return remotePost({
+      action: 'saveVitalRecord',
+      id: entry.id,
+      date: entry.date,
+      time: entry.time,
+      user: entry.resident,
+      staff: entry.recorder,
+      weight: entry.weight,
+      bpSys: entry.bpSys,
+      bpDia: entry.bpDia,
+      pulse: entry.pulse,
+      memo: entry.memo,
+      measuredAt: entry.measuredAt,
+    });
+  }
+  function entryText(entry) {
+    const bp = (entry.bpSys || entry.bpDia) ? `${entry.bpSys || '―'}/${entry.bpDia || '―'}` : '―';
+    const high = (Number(entry.bpSys) >= 135 || Number(entry.bpDia) >= 85) ? '<span class="pill red">血圧高め</span>' : '';
+    return `
+      <div class="latest-main">${formatDateJP(entry.dateKey || entry.date)} ${labelFromSlot(entry.slot)}　${escapeHTML(entry.resident)} ${high}</div>
+      <div class="latest-sub">体重 ${escapeHTML(entry.weight || '―')}kg ／ 血圧 ${escapeHTML(bp)} ／ 脈拍 ${escapeHTML(entry.pulse || '―')} ／ 記録者 ${escapeHTML(entry.recorder || '―')}</div>
+      ${entry.memo ? `<div class="latest-sub">メモ：${escapeHTML(entry.memo)}</div>` : ''}
+    `;
+  }
+  function renderLatest() {
+    const list = loadVitals().slice().sort((a,b) => new Date(b.measuredAt || 0) - new Date(a.measuredAt || 0));
+    const el = $('latestList');
+    const latest = list.slice(0, 6);
+    if (!latest.length) {
+      el.innerHTML = '<div class="hint">まだこの端末の保存記録はありません。</div>';
+      return;
+    }
+    el.innerHTML = latest.map(v => `<div class="latest-item">${entryText(v)}</div>`).join('');
+  }
+  async function checkTodayRemote() {
+    const date = $('vDate').value || todayStr();
+    const resident = $('vResident').value;
+    setStatus('共有から確認中です…', '');
+    try {
+      const json = await remoteGet({ action: 'getVitalRecords', t: String(Date.now()) });
+      const records = Array.isArray(json.records) ? json.records : [];
+      const matches = records.filter(r => {
+        const d = dateKeyFromAny(r.date || r.dateKey || r.measuredAt);
+        const name = String(r.resident || r.user || '').trim();
+        return d === date && name === resident;
+      });
+      if (!matches.length) {
+        setStatus(`${formatDateJP(date)} ${escapeHTML(resident)} の共有記録はまだ見つかりません。保存直後の場合は少し待って再確認してください。`, 'warn');
+        return;
+      }
+      const html = matches.slice(-5).reverse().map(r => {
+        const time = String(r.time || '').trim();
+        const bp = `${r.bpSys || r.bpHigh || '―'}/${r.bpDia || r.bpLow || '―'}`;
+        return `<div style="margin-top:6px;">${escapeHTML(time || '')} 体重${escapeHTML(r.weight || '―')}kg ／ 血圧${escapeHTML(bp)} ／ 脈拍${escapeHTML(r.pulse || '―')}</div>`;
+      }).join('');
+      setStatus(`共有で確認できました。${formatDateJP(date)} ${escapeHTML(resident)}：${matches.length}件${html}`, 'ok');
+    } catch (e) {
+      setStatus(`共有確認に失敗しました：${escapeHTML(e.message || e)}`, 'warn');
+    }
+  }
+  async function saveEntry() {
+    if (saving) return;
+    const entry = getFormEntry();
+    const err = validateEntry(entry);
+    if (err) { setStatus(err, 'warn'); return; }
+
+    const fp = fingerprint(entry);
+    const now = Date.now();
+    if (fp === lastSaveFingerprint && now - lastSaveAt < 5000) {
+      setStatus('同じ内容を続けて保存しようとしています。少し待ってから保存してください。', 'warn');
+      return;
+    }
+    lastSaveFingerprint = fp;
+    lastSaveAt = now;
+
+    setSaving(true);
+    saveLocal(entry);
+    renderLatest();
+    setStatus('この端末には保存しました。共有へ送信中です…', '');
+
+    try {
+      await saveRemote(entry);
+      setStatus(`共有保存できました。<br>${entryText(entry)}`, 'ok');
+    } catch (e) {
+      setStatus(`この端末には保存しましたが、共有保存に失敗しました。<br>${escapeHTML(e.message || e)}<br>通信状態を確認して、必要ならもう一度入力してください。`, 'warn');
+    } finally {
+      setSaving(false);
+    }
+  }
+  function clearForm() {
+    $('vWeight').value = '';
+    $('vBpSys').value = '';
+    $('vBpDia').value = '';
+    $('vPulse').value = '';
+    $('vMemo').value = '';
+    $('vWeight').focus();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initSelects();
+    bindSlots();
+    $('vDate').value = todayStr();
+    updateWeekday();
+    $('vDate').addEventListener('change', updateWeekday);
+    $('saveBtn').addEventListener('click', saveEntry);
+    $('clearBtn').addEventListener('click', clearForm);
+    $('checkTodayBtn').addEventListener('click', checkTodayRemote);
+    $('reloadLocalBtn').addEventListener('click', renderLatest);
+    renderLatest();
+  });
+</script>
+</body>
+</html>
