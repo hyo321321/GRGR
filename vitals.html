@@ -556,10 +556,7 @@
 <button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
 <button class="btn btn-ghost" id="pdfBtn">📄 PDFにする</button>
 <button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
-<button class="btn btn-ghost" id="pushLocalToRemoteBtn">☁ 端末内データを共有へ送る</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
-<button class="btn btn-ghost" id="bulkImportBtn">📥 まとめて取込</button>
-<input accept=".json,.csv,application/json,text/csv" id="bulkImportFile" style="display:none" type="file"/>
 <button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
 <button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
 <input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
@@ -647,6 +644,29 @@
 <option value="month">今月</option>
 <option value="all">全期間</option>
 </select>
+<select id="summaryMode" style="width:auto">
+<option value="list">通常一覧</option>
+<option value="weekday">曜日別</option>
+<option value="month_summary">月別</option>
+</select>
+<select id="weekdayFilter" style="width:auto">
+<option value="all">全曜日</option>
+<option value="1">月</option>
+<option value="2">火</option>
+<option value="3">水</option>
+<option value="4">木</option>
+<option value="5">金</option>
+<option value="6">土</option>
+<option value="0">日</option>
+</select>
+<select id="monthFilter" style="width:auto; min-width:120px;">
+<option value="all">全月</option>
+</select>
+<label style="margin:0; font-size:12px;">高い日だけ</label>
+<input id="highOnlyToggle" type="checkbox" style="width:auto;">
+<input id="minWeightFilter" type="number" step="0.1" placeholder="体重≧" style="width:90px;">
+<input id="minBpSysFilter" type="number" step="1" placeholder="上≧" style="width:80px;">
+<input id="minBpDiaFilter" type="number" step="1" placeholder="下≧" style="width:80px;">
 </div>
 <input id="search" placeholder="検索（メモ/数値）" style="width: 180px;" type="text"/>
 </div>
@@ -822,11 +842,7 @@
         if (!item || !item.id) continue;
         map.set(item.id, item);
       }
-      return Array.from(map.values()).sort((a, b) => {
-      const ta = new Date(a.measuredAt || 0).getTime();
-      const tb = new Date(b.measuredAt || 0).getTime();
-      return ta - tb;
-    });
+      return Array.from(map.values()).sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
     }
 
     async function remoteGet(params) {
@@ -1245,11 +1261,7 @@
       const byResident = new Map();
       const list = (Array.isArray(records) ? records : [])
         .slice()
-        .sort((a, b) => {
-        const ta = new Date(a.measuredAt || 0).getTime();
-        const tb = new Date(b.measuredAt || 0).getTime();
-        return ta - tb;
-      });
+        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''));
 
       for (const v of list) {
         if (!v || !v.resident || !v.measuredAt) continue;
@@ -1464,11 +1476,7 @@
       const { start, end } = getFilterRange();
       return all
         .slice()
-        .sort((a, b) => {
-        const ta = new Date(a.measuredAt || 0).getTime();
-        const tb = new Date(b.measuredAt || 0).getTime();
-        return ta - tb;
-      })
+        .sort((a,b) => (a.measuredAt || '').localeCompare(b.measuredAt || ''))
         .filter(v => {
           const t = new Date(v.measuredAt || 0).getTime();
           if (start && t < start) return false;
@@ -1558,25 +1566,152 @@
       ], { yFmt: (v) => String(Math.round(v)) });
     }
 
+
+    function monthKeyFromISO(iso) {
+      const d = new Date(iso);
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+    }
+
+    function monthLabelFromKey(key) {
+      const [y, m] = String(key || '').split('-');
+      return y && m ? `${y}/${m}` : String(key || '');
+    }
+
+    function getWeekdayFromISO(iso) {
+      return String(new Date(iso).getDay());
+    }
+
+    function getWeekdayLabel(weekday) {
+      return ({'0':'日','1':'月','2':'火','3':'水','4':'木','5':'金','6':'土'})[String(weekday)] || '';
+    }
+
+    function populateMonthFilter(records) {
+      const sel = $('monthFilter');
+      if (!sel) return;
+      const current = sel.value || 'all';
+      const months = Array.from(new Set((records || []).map(v => monthKeyFromISO(v.measuredAt)).filter(Boolean))).sort();
+      sel.innerHTML = '<option value="all">全月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      sel.value = months.includes(current) ? current : 'all';
+    }
+
+    function renderSummaryTable(listEl, filtered, mode) {
+      const groups = new Map();
+      filtered.forEach(v => {
+        const key = mode === 'weekday' ? getWeekdayFromISO(v.measuredAt) : monthKeyFromISO(v.measuredAt);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(v);
+      });
+
+      const keys = Array.from(groups.keys()).sort((a, b) => {
+        if (mode === 'weekday') {
+          const order = ['1','2','3','4','5','6','0'];
+          return order.indexOf(String(a)) - order.indexOf(String(b));
+        }
+        return String(a).localeCompare(String(b));
+      });
+
+      if (!keys.length) {
+        const empty = document.createElement('div');
+        empty.className = 'table-empty';
+        empty.textContent = 'データがありません。';
+        listEl.appendChild(empty);
+        return;
+      }
+
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      const table = document.createElement('table');
+      table.className = 'vitals-table';
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>${mode === 'weekday' ? '曜日' : '月'}</th>
+            <th>件数</th>
+            <th>平均体重</th>
+            <th>平均血圧</th>
+            <th>平均脈拍</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+
+      keys.forEach(key => {
+        const rows = groups.get(key) || [];
+        const avgWeight = averageOf(rows.map(v => v.weight), 1);
+        const avgSys = averageOf(rows.map(v => v.bpSys), 1);
+        const avgDia = averageOf(rows.map(v => v.bpDia), 1);
+        const avgPulse = averageOf(rows.map(v => v.pulse), 1);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHTML(mode === 'weekday' ? (getWeekdayLabel(key) + '曜日') : monthLabelFromKey(key))}</td>
+          <td>${rows.length}</td>
+          <td>${avgWeight != null ? avgWeight + 'kg' : '―'}</td>
+          <td>${avgSys != null || avgDia != null ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―'}</td>
+          <td>${avgPulse != null ? avgPulse : '―'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      wrap.appendChild(table);
+      listEl.appendChild(wrap);
+    }
+
+
+
+    function matchesHighThresholds(v) {
+      const highOnly = $('highOnlyToggle') ? $('highOnlyToggle').checked : false;
+      const minWeight = parseNumOrNull($('minWeightFilter') ? $('minWeightFilter').value : '');
+      const minSys = parseNumOrNull($('minBpSysFilter') ? $('minBpSysFilter').value : '');
+      const minDia = parseNumOrNull($('minBpDiaFilter') ? $('minBpDiaFilter').value : '');
+
+      if (!highOnly && minWeight == null && minSys == null && minDia == null) return true;
+
+      const weight = parseNumOrNull(v.weight);
+      const sys = parseNumOrNull(v.bpSys);
+      const dia = parseNumOrNull(v.bpDia);
+
+      const checks = [];
+      if (minWeight != null) checks.push(weight != null && weight >= minWeight)
+      if (minSys != null) checks.push(sys != null && sys >= minSys)
+      if (minDia != null) checks.push(dia != null && dia >= minDia)
+
+      if (!checks.length) {
+        if (!highOnly) return true;
+        return isAutoHighBp(v.bpSys, v.bpDia);
+      }
+      return checks.some(Boolean);
+    }
+
+
     function renderList() {
       const listEl = $('list');
       const all = loadVitals();
+      populateMonthFilter(all);
+
       const resident = $('filterResident').value;
       const q = String($('search').value || '').trim().toLowerCase();
       const { start, end } = getFilterRange();
+      const summaryMode = $('summaryMode') ? $('summaryMode').value : 'list';
+      const weekdayFilter = $('weekdayFilter') ? $('weekdayFilter').value : 'all';
+      const monthFilter = $('monthFilter') ? $('monthFilter').value : 'all';
 
       const filtered = all
         .slice()
         .sort((a, b) => {
-        const ta = new Date(a.measuredAt || 0).getTime();
-        const tb = new Date(b.measuredAt || 0).getTime();
-        return ta - tb;
-      })
+          const ta = new Date(a.measuredAt || 0).getTime();
+          const tb = new Date(b.measuredAt || 0).getTime();
+          return ta - tb;
+        })
         .filter(v => {
           const t = new Date(v.measuredAt || 0).getTime();
           if (start && t < start) return false;
           if (end && t > end) return false;
           if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          if (weekdayFilter !== 'all' && getWeekdayFromISO(v.measuredAt) !== weekdayFilter) return false;
+          if (monthFilter !== 'all' && monthKeyFromISO(v.measuredAt) !== monthFilter) return false;
+          if (!matchesHighThresholds(v)) return false;
           if (q) {
             const hay = [
               v.resident, v.recorder, v.memo,
@@ -1590,7 +1725,10 @@
       const visibleIds = filtered.map(v => v.id).filter(Boolean);
       selectedVitalIds = new Set(Array.from(selectedVitalIds).filter(id => visibleIds.includes(id)));
 
-      $('countLabel').textContent = `${filtered.length}件`;
+      const highOnlyOn = $('highOnlyToggle') && $('highOnlyToggle').checked;
+      $('countLabel').textContent = summaryMode === 'list'
+        ? `${filtered.length}件${highOnlyOn ? '（高い日抽出）' : ''}`
+        : `${filtered.length}件を集計${highOnlyOn ? '（高い日抽出）' : ''}`;
       listEl.innerHTML = '';
 
       renderCharts();
@@ -1614,6 +1752,11 @@
         <div class="avg-legend">体重：前日比で増加は赤、減少は青 ／ 血圧：上135以上・下85以上は赤</div>
       `;
       listEl.appendChild(avgBox);
+
+      if (summaryMode === 'weekday' || summaryMode === 'month_summary') {
+        renderSummaryTable(listEl, filtered, summaryMode === 'weekday' ? 'weekday' : 'month');
+        return;
+      }
 
       const bulkBar = document.createElement('div');
       bulkBar.className = 'bulk-actions';
@@ -1670,7 +1813,6 @@
         const weightFlag = isManualFlagOn(v.id, 'weight');
         const bpFlag = isManualFlagOn(v.id, 'bp');
         const pulseFlag = isManualFlagOn(v.id, 'pulse');
-        const bpAutoFlag = isAutoHighBp(v.bpSys, v.bpDia);
         const weightDiff = getWeightDiffForRecord(v, weightDiffMap);
         tr.innerHTML = `
           <td class="select-col"><input type="checkbox" class="row-check" ${selectedVitalIds.has(v.id) ? 'checked' : ''} aria-label="この行を選択"></td>
@@ -1746,129 +1888,6 @@
       document.execCommand('copy');
       ta.remove();
     }
-
-
-    async function postJson(params) {
-      return remotePost(params);
-    }
-
-    function normalizeImportRow(row) {
-      const date = String(row.date || '').trim();
-      if (!date) return null;
-      return {
-        id: String(row.id || '').trim(),
-        date,
-        time: String(row.time || '').trim() || '09:00',
-        resident: String(row.resident || row.user || '').trim(),
-        recorder: String(row.recorder || row.staff || '').trim(),
-        weight: String(row.weight ?? '').trim(),
-        bpSys: String(row.bpSys ?? '').trim(),
-        bpDia: String(row.bpDia ?? '').trim(),
-        pulse: String(row.pulse ?? '').trim(),
-        memo: String(row.memo || '').trim(),
-      };
-    }
-
-    function parseCsvLineSimple(line) {
-      const result = [];
-      let cur = '';
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQuotes && line[i + 1] === '"') {
-            cur += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (ch === ',' && !inQuotes) {
-          result.push(cur);
-          cur = '';
-        } else {
-          cur += ch;
-        }
-      }
-      result.push(cur);
-      return result;
-    }
-
-    function parseCsvSimple(text) {
-      const lines = String(text || '')
-        .replace(/\r\n/g, '\n')
-        .replace(/\r/g, '\n')
-        .split('\n')
-        .filter(line => line.trim() !== '');
-      if (!lines.length) return [];
-      const head = parseCsvLineSimple(lines[0]).map(v => v.trim());
-      return lines.slice(1).map(line => {
-        const cols = parseCsvLineSimple(line);
-        const obj = {};
-        head.forEach((k, i) => obj[k] = String(cols[i] ?? '').trim());
-        return obj;
-      });
-    }
-
-    async function importBulkRows(rows) {
-      const normalized = rows.map(normalizeImportRow).filter(Boolean);
-      if (!normalized.length) {
-        toast('取込データがありません');
-        return;
-      }
-
-      setRemoteStatus('まとめて取込中…');
-      let done = 0;
-
-      for (const row of normalized) {
-        const payload = {
-          action: 'saveVitalRecord',
-          id: row.id || (row.date + '-' + row.time + '-' + row.resident + '-' + done),
-          date: row.date,
-          time: row.time,
-          user: row.resident,
-          staff: row.recorder,
-          weight: row.weight,
-          bpSys: row.bpSys,
-          bpDia: row.bpDia,
-          pulse: row.pulse,
-          memo: row.memo
-        };
-        await postJson(payload);
-        done++;
-      }
-
-      try {
-        await syncRemoteVitals({ silent: true });
-      } catch (e) {
-        console.warn('bulk import sync failed', e);
-      }
-
-      $('filterRange').value = 'all';
-      const residents = Array.from(new Set(normalized.map(v => v.resident).filter(Boolean)));
-      if (residents.length === 1) {
-        const target = residents[0];
-        const hasOption = Array.from($('filterResident').options).some(o => o.value === target);
-        if (hasOption) $('filterResident').value = target;
-      }
-
-      renderList();
-      $('quickStatus').textContent = done + '件取り込みました';
-      setRemoteStatus('まとめて取込完了');
-      toast(done + '件取り込みました');
-    }
-
-    async function handleBulkImportFile(file) {
-      if (!file) return;
-      const text = await file.text();
-      let rows = [];
-      if (file.name.toLowerCase().endsWith('.json')) {
-        rows = JSON.parse(text);
-      } else {
-        rows = parseCsvSimple(text);
-      }
-      await importBulkRows(rows);
-    }
-
 
     function clearInputs() {
       $('vWeight').value = '';
@@ -2190,7 +2209,14 @@
 
       $('filterResident').onchange = renderList;
       $('filterRange').onchange = renderList;
+      if ($('summaryMode')) $('summaryMode').onchange = renderList;
+      if ($('weekdayFilter')) $('weekdayFilter').onchange = renderList;
+      if ($('monthFilter')) $('monthFilter').onchange = renderList;
       $('search').oninput = renderList;
+      if ($('highOnlyToggle')) $('highOnlyToggle').onchange = renderList;
+      if ($('minWeightFilter')) $('minWeightFilter').oninput = renderList;
+      if ($('minBpSysFilter')) $('minBpSysFilter').oninput = renderList;
+      if ($('minBpDiaFilter')) $('minBpDiaFilter').oninput = renderList;
 
       $('syncRemoteBtn').onclick = async () => { try { await syncRemoteVitals(); renderList(); } catch(e){ console.warn(e); setRemoteStatus('共有読込に失敗しました'); toast('共有読込に失敗しました'); } };
       $('closeModalBtn').onclick = closeEdit;
@@ -2203,32 +2229,6 @@
       const pdfBtn = $('pdfBtn');
       if (pdfBtn) pdfBtn.onclick = () => window.print();
       $('exportCsvBtn').onclick = exportCsv;
-      const pushLocalToRemoteBtn = $('pushLocalToRemoteBtn');
-      if (pushLocalToRemoteBtn) {
-        pushLocalToRemoteBtn.onclick = async () => {
-          try {
-            await migrateLocalVitalsToRemote();
-          } catch (err) {
-            console.error(err);
-            alert('端末内データの共有送信に失敗しました\n' + (err && err.message ? err.message : err));
-          }
-        };
-      }
-      const bulkImportBtn = $('bulkImportBtn');
-      const bulkImportFile = $('bulkImportFile');
-      if (bulkImportBtn && bulkImportFile) {
-        bulkImportBtn.onclick = () => bulkImportFile.click();
-        bulkImportFile.addEventListener('change', async (e) => {
-          try {
-            await handleBulkImportFile(e.target.files?.[0]);
-          } catch (err) {
-            console.error(err);
-            alert('まとめて取込に失敗しました\n' + (err && err.message ? err.message : err));
-          } finally {
-            e.target.value = '';
-          }
-        });
-      }
       $('backupVitalsBtn').onclick = backupVitals;
       $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
       $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
