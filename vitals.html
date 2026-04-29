@@ -555,6 +555,10 @@
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
 <button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
 <button class="btn btn-ghost" id="pdfBtn">📄 PDFにする</button>
+<label style="font-size:12px;">印刷月</label>
+<select id="printMonthFrom" style="width:auto; min-width:110px;"><option value="all">開始月</option></select>
+<span style="font-size:12px; color:#475569;">〜</span>
+<select id="printMonthTo" style="width:auto; min-width:110px;"><option value="all">終了月</option></select>
 <button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="bulkImportBtn">📥 まとめて取込</button>
@@ -672,7 +676,7 @@
 </div>
 <input id="search" placeholder="検索（メモ/数値）" style="width: 180px;" type="text"/>
 </div>
-<div class="table-wrap"><div class="list" id="list"></div></div>
+<div class="hint" id="printRangeNote" style="margin-bottom:6px;"></div><div class="table-wrap"><div class="list" id="list"></div></div>
 </div>
 </div>
 </div>
@@ -1487,15 +1491,16 @@
       return all
         .slice()
         .sort((a, b) => {
-        const ta = new Date(a.measuredAt || 0).getTime();
-        const tb = new Date(b.measuredAt || 0).getTime();
-        return ta - tb;
-      })
+          const ta = new Date(a.measuredAt || 0).getTime();
+          const tb = new Date(b.measuredAt || 0).getTime();
+          return ta - tb;
+        })
         .filter(v => {
           const t = new Date(v.measuredAt || 0).getTime();
           if (start && t < start) return false;
           if (end && t > end) return false;
           if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          if (!inPrintMonthRange(v.measuredAt)) return false;
           return true;
         });
     }
@@ -1520,7 +1525,19 @@
       const cr = $('chartResidentLabel');
       const rg = $('chartRangeLabel');
       if (cr) cr.textContent = residentLabel;
-      if (rg) rg.textContent = rangeLabel;
+      if (rg) {
+        const fromSel = $('printMonthFrom');
+        const toSel = $('printMonthTo');
+        const from = fromSel ? fromSel.value : 'all';
+        const to = toSel ? toSel.value : 'all';
+        if (from !== 'all' || to !== 'all') {
+          const fromTxt = from === 'all' ? '最初' : monthLabelFromKey(from);
+          const toTxt = to === 'all' ? '最後' : monthLabelFromKey(to);
+          rg.textContent = `${rangeLabel} / ${fromTxt}〜${toTxt}`;
+        } else {
+          rg.textContent = rangeLabel;
+        }
+      }
       // summary (最新)
       const sumEl = $('chartsSummary');
       if (sumEl) {
@@ -1682,6 +1699,7 @@
         const avgPulse = averageOf(rows.map(v => v.pulse), 1);
 
         const tr = document.createElement('tr');
+        if (mode !== 'weekday') tr.setAttribute('data-month-key', String(key));
         tr.innerHTML = `
           <td>${escapeHTML(mode === 'weekday' ? (getWeekdayLabel(key) + '曜日') : monthLabelFromKey(key))}</td>
           <td>${rows.length}</td>
@@ -1697,10 +1715,81 @@
     }
 
 
+
+    function getAllMonthKeys(records) {
+      return Array.from(new Set((records || []).map(v => monthKeyFromISO(v.measuredAt)).filter(Boolean))).sort();
+    }
+
+    function populatePrintMonthFilters(records) {
+      const fromSel = $('printMonthFrom');
+      const toSel = $('printMonthTo');
+      if (!fromSel || !toSel) return;
+      const currentFrom = fromSel.value || 'all';
+      const currentTo = toSel.value || 'all';
+      const months = getAllMonthKeys(records);
+      const options = '<option value="all">開始月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      const toOptions = '<option value="all">終了月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      fromSel.innerHTML = options;
+      toSel.innerHTML = toOptions;
+      fromSel.value = months.includes(currentFrom) ? currentFrom : 'all';
+      toSel.value = months.includes(currentTo) ? currentTo : 'all';
+    }
+
+    function inPrintMonthRange(iso) {
+      const fromSel = $('printMonthFrom');
+      const toSel = $('printMonthTo');
+      if (!fromSel || !toSel) return true;
+      const from = fromSel.value || 'all';
+      const to = toSel.value || 'all';
+      if (from === 'all' && to === 'all') return true;
+      const key = monthKeyFromISO(iso);
+      if (from !== 'all' && key < from) return false;
+      if (to !== 'all' && key > to) return false;
+      return true;
+    }
+
+    function applyPrintRangeVisibility() {
+      const fromSel = $('printMonthFrom');
+      const toSel = $('printMonthTo');
+      const from = fromSel ? fromSel.value : 'all';
+      const to = toSel ? toSel.value : 'all';
+
+      document.querySelectorAll('[data-month-key]').forEach(el => {
+        const key = el.getAttribute('data-month-key') || '';
+        let show = true;
+        if (from !== 'all' && key < from) show = false;
+        if (to !== 'all' && key > to) show = false;
+        el.style.display = show ? '' : 'none';
+      });
+
+      const note = $('printRangeNote');
+      if (note) {
+        if (from === 'all' && to === 'all') {
+          note.textContent = '';
+        } else {
+          const fromTxt = from === 'all' ? '最初' : monthLabelFromKey(from);
+          const toTxt = to === 'all' ? '最後' : monthLabelFromKey(to);
+          note.textContent = `印刷範囲：${fromTxt}〜${toTxt}`;
+        }
+      }
+    }
+
+    function printWithMonthRange() {
+      applyPrintRangeVisibility();
+      window.print();
+      setTimeout(() => {
+        document.querySelectorAll('[data-month-key]').forEach(el => {
+          el.style.display = '';
+        });
+      }, 300);
+    }
+
+
     function renderList() {
       const listEl = $('list');
       const all = loadVitals();
       populateMonthFilter(all);
+      populatePrintMonthFilters(all);
 
       const resident = $('filterResident').value;
       const q = String($('search').value || '').trim().toLowerCase();
@@ -1767,6 +1856,7 @@
 
       if (summaryMode === 'weekday' || summaryMode === 'month_summary') {
         renderSummaryTable(listEl, filtered, summaryMode === 'weekday' ? 'weekday' : 'month');
+        applyPrintRangeVisibility();
         return;
       }
 
@@ -1789,6 +1879,7 @@
         div.className = 'table-empty';
         div.textContent = 'データがありません。左で入力して保存してください。';
         listEl.appendChild(div);
+        applyPrintRangeVisibility();
         return;
       }
 
@@ -1821,6 +1912,7 @@
 
       for (const v of filtered) {
         const tr = document.createElement('tr');
+        tr.setAttribute('data-month-key', monthKeyFromISO(v.measuredAt));
         const memo = String(v.memo || '').trim();
         const weightFlag = isManualFlagOn(v.id, 'weight');
         const bpFlag = isManualFlagOn(v.id, 'bp');
@@ -1886,6 +1978,7 @@
       }
 
       listEl.appendChild(table);
+      applyPrintRangeVisibility();
     }
 
     function escapeHTML(s){
@@ -2347,6 +2440,8 @@
       if ($('summaryMode')) $('summaryMode').onchange = renderList;
       if ($('weekdayFilter')) $('weekdayFilter').onchange = renderList;
       if ($('monthFilter')) $('monthFilter').onchange = renderList;
+      if ($('printMonthFrom')) $('printMonthFrom').onchange = () => { applyPrintRangeVisibility(); renderCharts(); };
+      if ($('printMonthTo')) $('printMonthTo').onchange = () => { applyPrintRangeVisibility(); renderCharts(); };
       if ($('highOnlyToggle')) $('highOnlyToggle').onchange = renderList;
       if ($('minWeightFilter')) $('minWeightFilter').oninput = renderList;
       if ($('minBpSysFilter')) $('minBpSysFilter').oninput = renderList;
@@ -2360,9 +2455,9 @@
       $('deleteEditBtn').onclick = deleteEdit;
 
       const printBtn = $('printBtn');
-      if (printBtn) printBtn.onclick = () => window.print();
+      if (printBtn) printBtn.onclick = () => printWithMonthRange();
       const pdfBtn = $('pdfBtn');
-      if (pdfBtn) pdfBtn.onclick = () => window.print();
+      if (pdfBtn) pdfBtn.onclick = () => printWithMonthRange();
       $('exportCsvBtn').onclick = exportCsv;
       const bulkImportBtn = $('bulkImportBtn');
       const bulkImportFile = $('bulkImportFile');
