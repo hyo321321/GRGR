@@ -34,6 +34,9 @@
     .primary{background:var(--blue);color:#fff;}
     .secondary{background:#eef2ff;color:#3730a3;}
     .danger{background:#fee2e2;color:#991b1b;}
+    .editBtn{background:#e0f2fe;color:#075985;}
+    .actionBtns{display:flex;gap:6px;flex-wrap:wrap;}
+    .editingBanner{display:none;background:#ecfdf5;border:1px solid #86efac;color:#166534;border-radius:12px;padding:10px 12px;font-size:13px;margin:10px 0;line-height:1.6;font-weight:700;}
     .ghost{background:#f3f4f6;color:#374151;}
     .success{background:#dcfce7;color:#166534;}
     .sumGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
@@ -112,6 +115,7 @@
             <button class="ghost" id="resetBtn" type="button">入力をクリア</button>
           </div>
           <div class="statusMini" id="tapStatus"></div>
+          <div class="editingBanner" id="editingBanner"></div>
 
           <div class="row one" style="margin-top:10px;">
             <div class="field"><label for="memo">メモ</label><textarea id="memo" placeholder="例：駐車場代は別途、など"></textarea></div>
@@ -126,6 +130,7 @@
 
           <div class="btns" style="margin-top:14px;">
             <button class="primary" id="saveBtn" type="button">保存する</button>
+            <button class="ghost" id="cancelEditBtn" type="button" style="display:none;">編集をやめる</button>
             <button class="ghost" id="reloadBtn" type="button">最新を読み込む</button>
           </div>
         </section>
@@ -184,6 +189,7 @@
     const RESIDENT_OPTIONS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
     const els = {};
     let remoteRecords = [];
+    let editingRecord = null;
 
     function $(id){ return document.getElementById(id); }
     function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -357,7 +363,53 @@
       };
     }
 
+    function setEditingState(record){
+      editingRecord = record || null;
+      if (els.saveBtn) els.saveBtn.textContent = editingRecord ? '編集内容を保存' : '保存する';
+      if (els.cancelEditBtn) els.cancelEditBtn.style.display = editingRecord ? 'inline-flex' : 'none';
+      if (els.editingBanner) {
+        if (editingRecord) {
+          els.editingBanner.style.display = 'block';
+          els.editingBanner.textContent = '編集中：' + residentName(editingRecord) + ' ／ ' + (normalizeYmd(editingRecord.date) || editingRecord.date || '') + ' の交通費';
+        } else {
+          els.editingBanner.style.display = 'none';
+          els.editingBanner.textContent = '';
+        }
+      }
+      if (els.currentStatus) els.currentStatus.textContent = editingRecord ? '編集中' : '入力中';
+    }
+
+    function startEdit(id){
+      const record = remoteRecords.find(r => String(r.id) === String(id));
+      if (!record) { alert('編集する記録が見つかりません。最新を読み込んでから再度お試しください。'); return; }
+      setEditingState(record);
+      els.date.value = normalizeYmd(record.date) || todayStr();
+      els.staff.value = record.staff || '';
+      els.resident.value = record.resident || '';
+      els.purpose.value = record.purpose || '';
+      els.memo.value = record.memo || '';
+      els.monthFilter.value = monthKey(record.date) || monthStr(todayStr());
+      els.trips.innerHTML = '';
+      const trips = Array.isArray(record.trips) && record.trips.length ? record.trips : [{}];
+      trips.forEach(t => createTrip(t));
+      calcCurrent();
+      renderAll();
+      setTapStatus('編集内容を入力欄へ戻しました');
+      const inputCard = document.querySelector('.card');
+      if (inputCard && inputCard.scrollIntoView) inputCard.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+    function cancelEdit(){
+      setEditingState(null);
+      resetForm();
+      setTapStatus('編集をやめました');
+    }
+
     function resetForm(){
+      editingRecord = null;
+      if (els.saveBtn) els.saveBtn.textContent = '保存する';
+      if (els.cancelEditBtn) els.cancelEditBtn.style.display = 'none';
+      if (els.editingBanner) { els.editingBanner.style.display = 'none'; els.editingBanner.textContent = ''; }
       els.date.value = todayStr();
       els.staff.value = '';
       els.resident.value = '';
@@ -481,7 +533,12 @@
           </td>
           <td class="yen">${distanceText(r.totalDistance)}</td>
           <td class="yen">${yen(r.total)}</td>
-          <td><button type="button" class="danger delBtn" data-id="${escapeHtml(r.id)}">削除</button></td>
+          <td>
+            <div class="actionBtns">
+              <button type="button" class="editBtn editRowBtn" data-id="${escapeHtml(r.id)}">編集</button>
+              <button type="button" class="danger delBtn" data-id="${escapeHtml(r.id)}">削除</button>
+            </div>
+          </td>
         </tr>
       `).join('');
       els.emptyState.style.display = rows.length ? 'none' : 'block';
@@ -517,23 +574,36 @@
 
     async function saveEntry(){
       const entry = buildEntry();
+      const oldEditingRecord = editingRecord;
+      const isEditing = !!(oldEditingRecord && oldEditingRecord.id);
       if (!entry.staff) { alert('氏名を入力してください。'); els.staff.focus(); return; }
       if (!entry.resident) { alert('利用者名・対象を選んでください。'); els.resident.focus(); return; }
       if (!entry.purpose) { alert('用件を入力してください。'); els.purpose.focus(); return; }
       if (!entry.trips.length) { alert('移動を1件以上入力してください。'); return; }
       const hasInvalid = entry.trips.some(t => !Number.isFinite(Number(t.meterStart)) || !Number.isFinite(Number(t.meterEnd)) || Number(t.meterEnd) < Number(t.meterStart));
       if (hasInvalid) { alert('乗車時メーター・降車時メーターを確認してください。出発・到着は空欄でOKです。'); return; }
-      if (!confirm(entry.resident + ' の交通費を保存しますか？\n\n合計: ' + yen(entry.total))) return;
-      setSyncStatus('保存中です...');
+      const confirmText = isEditing
+        ? entry.resident + ' の交通費を編集保存しますか？\n\n合計: ' + yen(entry.total) + '\n※古い記録は自動で削除され、新しい内容に差し替わります。'
+        : entry.resident + ' の交通費を保存しますか？\n\n合計: ' + yen(entry.total);
+      if (!confirm(confirmText)) return;
+      setSyncStatus(isEditing ? '編集内容を保存中です...' : '保存中です...');
       try {
         await postJson({ action:'saveTransportRecord', record: entry });
-        setTapStatus('保存しました');
+        if (isEditing) {
+          try {
+            await postJson({ action:'deleteTransportRecord', id: oldEditingRecord.id });
+          } catch (deleteErr) {
+            setSyncStatus('編集内容は保存しましたが、古い記録の削除に失敗しました。\n保存一覧に同じ記録が2つ出た場合は、古い方を手動で削除してください。\n' + (deleteErr && deleteErr.message ? deleteErr.message : deleteErr));
+            alert('編集内容は保存しましたが、古い記録の削除に失敗しました。\n保存一覧に同じ記録が2つ出た場合は、古い方を手動で削除してください。');
+          }
+        }
+        setTapStatus(isEditing ? '編集保存しました' : '保存しました');
         resetForm();
         await loadRemoteRecords(false);
-        setSyncStatus('保存しました。共有データを更新済みです。');
+        setSyncStatus(isEditing ? '編集内容を保存しました。共有データを更新済みです。' : '保存しました。共有データを更新済みです。');
       } catch (err) {
-        setSyncStatus('保存に失敗しました。\n' + (err && err.message ? err.message : err));
-        alert('保存に失敗しました。\n' + (err && err.message ? err.message : err));
+        setSyncStatus((isEditing ? '編集保存に失敗しました。' : '保存に失敗しました。') + '\n' + (err && err.message ? err.message : err));
+        alert((isEditing ? '編集保存に失敗しました。' : '保存に失敗しました。') + '\n' + (err && err.message ? err.message : err));
       }
     }
 
@@ -794,6 +864,10 @@
         setTapStatus('入力をクリアしました');
         return;
       }
+      if (target.id === 'cancelEditBtn') {
+        cancelEdit();
+        return;
+      }
       if (target.id === 'saveBtn') {
         saveEntry();
         return;
@@ -829,6 +903,10 @@
         refreshTripTitles();
         calcCurrent();
         setTapStatus('移動を削除しました');
+        return;
+      }
+      if (target.classList.contains('editRowBtn')) {
+        startEdit(target.getAttribute('data-id'));
         return;
       }
       if (target.classList.contains('delBtn')) {
@@ -907,6 +985,9 @@
       els.tapStatus = $('tapStatus');
       els.calcWarn = $('calcWarn');
       els.syncStatus = $('syncStatus');
+      els.saveBtn = $('saveBtn');
+      els.cancelEditBtn = $('cancelEditBtn');
+      els.editingBanner = $('editingBanner');
 
       const current = els.resident.value;
       els.resident.innerHTML = ['<option value="">選択してください</option>']
