@@ -90,6 +90,14 @@
   .legend-box.selected{outline:2px solid #2563eb;outline-offset:-2px}
   .calendar-meta{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4}
   .calendar-compact{max-width:300px}
+
+  .edit-mode-box{display:none;border:2px solid #22c55e;background:#f0fdf4;color:#14532d;border-radius:12px;padding:10px 12px;margin:10px 0;line-height:1.5}
+  .edit-mode-box.show{display:block}
+  .edit-mode-title{font-weight:800;margin-bottom:4px}
+  .edit-mode-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .edit-cancel-btn{border:1px solid #86efac;background:#fff;color:#166534;border-radius:10px;padding:8px 10px;font-weight:800}
+  .record-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .record-edit-btn{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:10px;padding:8px 10px;font-weight:800}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}.bulk-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -207,6 +215,13 @@
       </details>
 
       <label for="memoInput">本文</label>
+      <div id="editModeBox" class="edit-mode-box">
+        <div class="edit-mode-title">✏ 編集中</div>
+        <div id="editModeText">この記録を修正して保存できます。</div>
+        <div class="edit-mode-actions">
+          <button id="cancelEditBtn" class="edit-cancel-btn" type="button">編集をやめる</button>
+        </div>
+      </div>
       <textarea id="memoInput" placeholder="ここに自分の記録だけ入力してください"></textarea>
 
       <div class="btns">
@@ -252,6 +267,9 @@ const userNameEl = document.getElementById('userName');
 const staffNameEl = document.getElementById('staffName');
 const recordDateEl = document.getElementById('recordDate');
 const memoInput = document.getElementById('memoInput');
+const editModeBox = document.getElementById('editModeBox');
+const editModeText = document.getElementById('editModeText');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
 const sendBtn = document.getElementById('sendBtn');
 const allCheckBtn = document.getElementById('allCheckBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
@@ -289,6 +307,8 @@ const DAILY_STATUS_LOCAL_KEY = 'easy_daily_status_v1';
 let calendarMonthCursor = '';
 let dayStatusRemoteMode = 'unknown';
 let suppressDayCompleteChange = false;
+let editState = null;
+let mainRecordCache = {};
 
 function unlockApp(){ authScreen.style.display = 'none'; appRoot.classList.remove('app-hidden'); }
 function showAuthError(msg){ authError.textContent = msg || ''; }
@@ -783,6 +803,105 @@ function buildPayload(text, userOverride){
     }
   };
 }
+function pickRecordId(record, user, date){
+  const r = record || {};
+  return String(r.id || r.serverId || r._serverId || r.mainId || r.recordId || r.key || ('main-' + date + '-' + user)).trim();
+}
+function setEditMode(user, date, text, record){
+  editState = { user, date, text, record: record || {} };
+  userNameEl.value = user;
+  recordDateEl.value = date;
+  memoInput.value = text || '';
+  sendBtn.textContent = '💾 修正を保存';
+  sendBtn.classList.remove('primary');
+  sendBtn.classList.add('green');
+  if (editModeText) editModeText.textContent = user + '　' + date + ' の記録を編集中です。記録者欄は未入力でも修正保存できます。';
+  if (editModeBox) editModeBox.classList.add('show');
+  sendStatus.textContent = '編集中です。修正時は記録者欄が空でも保存できます。';
+  memoInput.focus();
+  window.scrollTo({ top: memoInput.getBoundingClientRect().top + window.scrollY - 160, behavior:'smooth' });
+}
+function clearEditMode(clearMemo){
+  editState = null;
+  sendBtn.textContent = '送信';
+  sendBtn.classList.remove('green');
+  sendBtn.classList.add('primary');
+  if (editModeBox) editModeBox.classList.remove('show');
+  if (clearMemo) memoInput.value = '';
+}
+function buildEditPayload(text){
+  const user = String(userNameEl.value || '').trim();
+  const staffInput = String(staffNameEl.value || '').trim();
+  const date = String(recordDateEl.value || '').trim() || todayYmd();
+  const body = normalizeText(text);
+  const record = (editState && editState.record) || {};
+  const originalStaff = String(record.recorder || record.staffName || record.staff || '').trim();
+  const staff = staffInput || originalStaff;
+  const id = pickRecordId(record, user, date);
+  return {
+    action:'saveMainRecord',
+    id,
+    serverId:id,
+    _serverId:id,
+    date,
+    user,
+    userName:user,
+    resident:user,
+    staff,
+    staffName:staff,
+    recorder:staff,
+    text:body,
+    body:body,
+    note:body,
+    mode:'edit',
+    overwrite:true,
+    source:'easy_v2_edit',
+    raw:Object.assign({}, record, {
+      id,
+      serverId:id,
+      _serverId:id,
+      date,
+      resident:user,
+      userName:user,
+      recorder:staff,
+      staffName:staff,
+      note:body,
+      text:body,
+      body:body,
+      updatedFrom:'easy_google_send_v2_edit',
+      updatedAt:nowLocalText()
+    })
+  };
+}
+async function saveEditedRecord(){
+  const user = String(userNameEl.value || '').trim();
+  const staffInput = String(staffNameEl.value || '').trim();
+  const date = String(recordDateEl.value || '').trim() || todayYmd();
+  const text = normalizeText(memoInput.value);
+  if (!editState) { await sendRecord(); return; }
+  if (!user) { sendStatus.textContent = '利用者名を選んでください。'; userNameEl.focus(); return; }
+  if (!text) { sendStatus.textContent = '本文を入力してください。'; memoInput.focus(); return; }
+  const ok = confirm('修正内容を保存しますか？\n※保存すると、この日の本体記録を上書きします。\n\n利用者名: ' + user + '\n日付: ' + date + '\n\n【修正後の本文】\n' + text);
+  if (!ok) return;
+  sendBtn.disabled = true;
+  allCheckBtn.disabled = true;
+  sendStatus.textContent = '修正を保存中です...';
+  try {
+    if (staffInput) {
+      saveRecentStaff(staffInput);
+      renderRecent();
+    }
+    await postJson(buildEditPayload(text));
+    clearEditMode(true);
+    sendStatus.textContent = '修正を保存しました。';
+    await checkAllMainRecords();
+  } catch(err){
+    sendStatus.textContent = '修正保存に失敗しました。\nApps Script側に saveMainRecord が必要です。\n' + (err && err.message ? err.message : err);
+  } finally {
+    sendBtn.disabled = false;
+    allCheckBtn.disabled = false;
+  }
+}
 function getResidentNames(){
   return Array.from(userNameEl.options)
     .map(opt => String(opt.value || '').trim())
@@ -887,8 +1006,9 @@ async function checkAllMainRecords(){
     const results = await Promise.all(users.map(async (user) => {
       try {
         const data = await fetchJson(WEB_APP_URL + '?action=getMainRecord&user=' + encodeURIComponent(user) + '&date=' + encodeURIComponent(date));
-        const text = normalizeText(data.text || (data.record && data.record.text) || '');
-        return { user, text, ok: true };
+        const record = (data.record && typeof data.record === 'object') ? data.record : data;
+        const text = normalizeText(data.text || (data.record && (data.record.text || data.record.body || data.record.note)) || data.body || data.note || '');
+        return { user, text, record, ok: true };
       } catch (err) {
         return { user, text: '', ok: false, error: err && err.message ? err.message : String(err) };
       }
@@ -896,12 +1016,16 @@ async function checkAllMainRecords(){
 
     const blocks = [];
     let hitCount = 0;
+    mainRecordCache = {};
 
     results.forEach((item) => {
       let body = '';
+      let actions = '';
       if (item.ok && item.text) {
         body = escapeHtml(item.text);
         hitCount++;
+        mainRecordCache[item.user] = item;
+        actions = '<div class="record-actions"><button class="record-edit-btn" type="button" data-edit-user="' + escapeHtml(item.user) + '">✏ 編集</button></div>';
       } else if (item.ok) {
         body = '記録なし';
       } else {
@@ -911,11 +1035,20 @@ async function checkAllMainRecords(){
         '<div class="resident-block">' +
         '<div class="resident-title">【' + escapeHtml(item.user) + '】</div>' +
         '<div class="resident-text">' + body + '</div>' +
+        actions +
         '</div>'
       );
     });
 
     mainCheckBox.innerHTML = blocks.join('');
+    Array.from(mainCheckBox.querySelectorAll('button[data-edit-user]')).forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const user = String(btn.dataset.editUser || '').trim();
+        const item = mainRecordCache[user];
+        if (!item || !item.text) return;
+        setEditMode(user, date, item.text, item.record);
+      });
+    });
     checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件';
   } catch(err){
     mainCheckBox.innerHTML = 'ここに選択した日の記録が表示されます。';
@@ -926,6 +1059,7 @@ async function checkAllMainRecords(){
 }
 
 async function sendRecord(){
+  if (editState) { await saveEditedRecord(); return; }
   const user = String(userNameEl.value || '').trim();
   const staff = String(staffNameEl.value || '').trim();
   const date = String(recordDateEl.value || '').trim() || todayYmd();
@@ -983,6 +1117,7 @@ if (nextMonthBtn) nextMonthBtn.addEventListener('click', async () => { calendarM
 if (bulkSelectAllBtn) bulkSelectAllBtn.addEventListener('click', () => setAllBulkResidents(true));
 if (bulkClearBtn) bulkClearBtn.addEventListener('click', () => setAllBulkResidents(false));
 if (bulkSendBtn) bulkSendBtn.addEventListener('click', sendBulkRecords);
+if (cancelEditBtn) cancelEditBtn.addEventListener('click', () => { clearEditMode(true); sendStatus.textContent = '編集をやめました。本文欄を空にしました。'; });
 openSearchBtn.addEventListener('click', openSearchPage);
 openVitalsBtn.addEventListener('click', openVitalsPage);
 if (openResidentInfoBtn) openResidentInfoBtn.addEventListener('click', openResidentInfoPage);
