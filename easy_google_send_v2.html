@@ -965,7 +965,11 @@ async function saveEditedRecord(){
   const text = normalizeText(memoInput.value);
   if (!editState) { await sendRecord(); return; }
   if (!user) { sendStatus.textContent = '利用者名を選んでください。'; userNameEl.focus(); return; }
-  if (!text) { sendStatus.textContent = '本文を入力してください。'; memoInput.focus(); return; }
+  if (!text) {
+    sendStatus.textContent = '本文が空欄のため、修正保存できません。間違えて記録を消さないため、1文字以上入力してください。';
+    memoInput.focus();
+    return;
+  }
   const ok = confirm('修正内容を保存しますか？\n※保存すると、この日の本体記録を上書きします。\n\n利用者名: ' + user + '\n日付: ' + date + '\n\n【修正後の本文】\n' + text);
   if (!ok) return;
   sendBtn.disabled = true;
