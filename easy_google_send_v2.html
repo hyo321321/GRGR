@@ -76,17 +76,23 @@
   .calendar-title{font-size:14px;font-weight:800}
   .calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
   .calendar-weekdays div{text-align:center;font-size:9px;color:var(--muted);padding:1px 0}
-  .calendar-day{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;min-height:36px;padding:4px 4px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:1px}
+  .calendar-day{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;min-height:44px;padding:4px 4px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:1px}
   .calendar-day.muted{background:#f8fafc;color:#94a3b8}
-  .calendar-day.selected{outline:2px solid #2563eb;outline-offset:0}
+  .calendar-day.saturday{background:#eff6ff;border-color:#bfdbfe}
+  .calendar-day.sunday,.calendar-day.holiday{background:#fff1f2;border-color:#fecdd3}
   .calendar-day.completed{background:#bbf7d0;border-color:#4ade80}
+  .calendar-day.selected{outline:2px solid #2563eb;outline-offset:0}
   .calendar-day.today .day-num{text-decoration:underline;text-underline-offset:3px}
-  .day-num{font-weight:800;font-size:11px}
-  .day-note{display:none}
+  .day-num{font-weight:800;font-size:11px;color:inherit}
+  .calendar-day.saturday .day-num{color:#1d4ed8}
+  .calendar-day.sunday .day-num,.calendar-day.holiday .day-num{color:#dc2626}
+  .day-note{display:block;font-size:8px;line-height:1.1;font-weight:800;color:#dc2626;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .calendar-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:10px;color:var(--muted)}
   .legend-chip{display:inline-flex;align-items:center;gap:6px}
   .legend-box{width:12px;height:12px;border-radius:4px;border:1px solid var(--line);background:#fff}
   .legend-box.completed{background:#dcfce7;border-color:#86efac}
+  .legend-box.saturday{background:#eff6ff;border-color:#bfdbfe}
+  .legend-box.sunday{background:#fff1f2;border-color:#fecdd3}
   .legend-box.selected{outline:2px solid #2563eb;outline-offset:-2px}
   .calendar-meta{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4}
   .calendar-compact{max-width:300px}
@@ -146,14 +152,14 @@
       <input id="recordDate" type="date">
 
       <details class="warn">
-        <summary style="cursor:pointer;font-weight:700;">削除・訂正方法・共有メモ・完成状況カレンダーを見る</summary>
+        <summary style="cursor:pointer;font-weight:700;">編集方法・共有メモ・個人記録の完成状況カレンダーを見る</summary>
         <div style="margin-top:8px;line-height:1.6;font-size:14px;">
-          <div style="font-weight:700;">削除したい時</div>
-          <div>間違えて送った文章をコピーして貼り付けてください。<br>最後に「削除依頼」と入力して送ってください。</div>
-          <div style="margin-top:4px;padding-left:8px;color:#444;">例<br>血圧測定、服薬確認を行いました。<br>削除依頼</div>
-          <div style="font-weight:700;margin-top:8px;">訂正したい時</div>
-          <div>訂正したい内容を正しい文章で入力してください。<br>最後に「訂正依頼」と入力して送ってください。</div>
-          <div style="margin-top:4px;padding-left:8px;color:#444;">例<br>朝は服薬確認を実施。血圧測定は未実施。<br>訂正依頼</div>
+          <div style="font-weight:800;color:#1d4ed8;">記録を直したい時</div>
+          <div>下の「この日の全員分を確認」を押し、直したい利用者の記録にある「✏ 編集」を押してください。<br>本文欄に記録が戻るので、内容を直して「💾 修正を保存」を押します。</div>
+
+          <div style="font-weight:800;color:#1d4ed8;margin-top:10px;">編集をやめたい時</div>
+          <div>「編集をやめる」を押すと、編集中の内容を取り消して本文欄を空にできます。</div>
+
         </div>
 
 
@@ -169,8 +175,8 @@
         </div>
 
         <div class="template-wrap calendar-compact" style="margin-top:12px;">
-          <div class="calendar-title">完成状況カレンダー</div>
-          <div class="template-head">完成した日は緑で表示されます。日付を押すと、その日を選べます。</div>
+          <div class="calendar-title">個人記録の完成状況カレンダー</div>
+          <div class="template-head">その日の個人記録が全員分確認でき、入力が完了した日にチェックを入れると緑で表示されます。土曜は青、日曜・祝日は赤で分かるように表示されます。</div>
           <div class="calendar-head" style="margin-top:10px;">
             <div class="calendar-nav">
               <button id="prevMonthBtn" class="ghost" type="button">前の月</button>
@@ -184,10 +190,12 @@
           </div>
           <div id="calendarGrid" class="calendar-grid"></div>
           <div class="calendar-legend">
-            <span class="legend-chip"><span class="legend-box completed"></span>完成</span>
+            <span class="legend-chip"><span class="legend-box completed"></span>個人記録 完成</span>
+            <span class="legend-chip"><span class="legend-box saturday"></span>土曜日</span>
+            <span class="legend-chip"><span class="legend-box sunday"></span>日曜・祝日</span>
             <span class="legend-chip"><span class="legend-box selected"></span>選択中の日付</span>
           </div>
-          <div id="calendarStatus" class="calendar-meta">完成にチェックした日は緑になります。Apps Script連携で全端末共通表示になります。</div>
+          <div id="calendarStatus" class="calendar-meta">個人記録がその日完成した日は緑、土曜は青、日曜・祝日は赤で表示されます。Apps Script連携で全端末共通表示になります。</div>
         </div>
       </details>
 
@@ -243,7 +251,7 @@
       <div class="card-head">
         <h2 style="margin:0;">記録確認</h2>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <label class="inline-check"><input id="dayCompleteCheck" type="checkbox">この日を完成</label>
+          <label class="inline-check"><input id="dayCompleteCheck" type="checkbox">この日の個人記録を完成</label>
           
         </div>
       </div>
@@ -659,6 +667,77 @@ async function refreshDayCompleteUi(){
   applyDayCompleteUi(entry);
   return entry;
 }
+
+function nthMonday(year, month, nth){
+  const first = new Date(year, month - 1, 1);
+  const firstMonday = 1 + ((8 - first.getDay()) % 7);
+  return firstMonday + (nth - 1) * 7;
+}
+function vernalEquinoxDay(year){
+  if (year <= 1979) return Math.floor(20.8357 + 0.242194 * (year - 1980) - Math.floor((year - 1983) / 4));
+  if (year <= 2099) return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+  return 20;
+}
+function autumnalEquinoxDay(year){
+  if (year <= 1979) return Math.floor(23.2588 + 0.242194 * (year - 1980) - Math.floor((year - 1983) / 4));
+  if (year <= 2099) return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+  return 23;
+}
+function addHoliday(map, year, month, day, name){
+  const key = year + '-' + String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+  map[key] = name;
+}
+function baseJapaneseHolidayMap(year){
+  const map = {};
+  addHoliday(map, year, 1, 1, '元日');
+  addHoliday(map, year, 1, nthMonday(year, 1, 2), '成人の日');
+  addHoliday(map, year, 2, 11, '建国記念の日');
+  addHoliday(map, year, 2, 23, '天皇誕生日');
+  addHoliday(map, year, 3, vernalEquinoxDay(year), '春分の日');
+  addHoliday(map, year, 4, 29, '昭和の日');
+  addHoliday(map, year, 5, 3, '憲法記念日');
+  addHoliday(map, year, 5, 4, 'みどりの日');
+  addHoliday(map, year, 5, 5, 'こどもの日');
+  addHoliday(map, year, 7, nthMonday(year, 7, 3), '海の日');
+  addHoliday(map, year, 8, 11, '山の日');
+  addHoliday(map, year, 9, nthMonday(year, 9, 3), '敬老の日');
+  addHoliday(map, year, 9, autumnalEquinoxDay(year), '秋分の日');
+  addHoliday(map, year, 10, nthMonday(year, 10, 2), 'スポーツの日');
+  addHoliday(map, year, 11, 3, '文化の日');
+  addHoliday(map, year, 11, 23, '勤労感謝の日');
+  return map;
+}
+function getJapaneseHolidayMap(year){
+  const map = Object.assign({}, baseJapaneseHolidayMap(year - 1), baseJapaneseHolidayMap(year), baseJapaneseHolidayMap(year + 1));
+  const keys = Object.keys(map).sort();
+  keys.forEach((key) => {
+    const d = new Date(key + 'T00:00:00');
+    if (d.getDay() !== 0) return;
+    let sub = new Date(d);
+    do {
+      sub.setDate(sub.getDate() + 1);
+      var subKey = sub.getFullYear() + '-' + String(sub.getMonth()+1).padStart(2,'0') + '-' + String(sub.getDate()).padStart(2,'0');
+    } while (map[subKey]);
+    map[subKey] = '振替休日';
+  });
+  for (let m = 1; m <= 12; m++) {
+    const days = new Date(year, m, 0).getDate();
+    for (let d = 2; d < days; d++) {
+      const prev = year + '-' + String(m).padStart(2,'0') + '-' + String(d - 1).padStart(2,'0');
+      const cur = year + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const next = year + '-' + String(m).padStart(2,'0') + '-' + String(d + 1).padStart(2,'0');
+      if (!map[cur] && map[prev] && map[next]) map[cur] = '国民の休日';
+    }
+  }
+  return Object.fromEntries(Object.entries(map).filter(([key]) => key.slice(0,4) === String(year)));
+}
+function getHolidayName(dateStr){
+  const year = Number(String(dateStr || '').slice(0,4));
+  if (!year) return '';
+  const map = getJapaneseHolidayMap(year);
+  return map[dateStr] || '';
+}
+
 async function renderCalendar(){
   const targetMonth = calendarMonthCursor || monthYmd(selectedDateYmd());
   const selected = selectedDateYmd();
@@ -694,14 +773,20 @@ async function renderCalendar(){
     }
 
     const completed = !!(monthMap[cellDate] && monthMap[cellDate].status === 'completed');
+    const weekday = new Date(cellDate + 'T00:00:00').getDay();
+    const holidayName = getHolidayName(cellDate);
     const classes = ['calendar-day'];
     if (muted) classes.push('muted');
+    if (weekday === 6) classes.push('saturday');
+    if (weekday === 0) classes.push('sunday');
+    if (holidayName) classes.push('holiday');
     if (completed) classes.push('completed');
     if (cellDate === selected) classes.push('selected');
     if (cellDate === today) classes.push('today');
     cells.push(
-      '<button class="' + classes.join(' ') + '" type="button" data-date="' + cellDate + '">' +
+      '<button class="' + classes.join(' ') + '" type="button" data-date="' + cellDate + '" title="' + escapeHtml(holidayName || cellDate) + '">' +
       '<div class="day-num">' + dayNum + '</div>' +
+      (holidayName ? '<div class="day-note">' + escapeHtml(holidayName) + '</div>' : '') +
       '</button>'
     );
   }
@@ -719,9 +804,9 @@ async function renderCalendar(){
   });
 
   if (dayStatusRemoteMode === 'unsupported') {
-    calendarStatus.textContent = '完成状態はこの端末で保存されます。全端末で共通にしたい場合は Apps Script に daily_status 追加が必要です。';
+    calendarStatus.textContent = '個人記録の完成状態はこの端末で保存されます。全端末で共通にしたい場合は Apps Script に daily_status 追加が必要です。';
   } else {
-    calendarStatus.textContent = '完成にチェックした日は緑になります。';
+    calendarStatus.textContent = '個人記録がその日完成した日は緑、土曜は青、日曜・祝日は赤で表示されます。';
   }
 }
 async function handleDayCompleteChange(){
@@ -734,9 +819,9 @@ async function handleDayCompleteChange(){
     applyDayCompleteUi(result.entry);
     await renderCalendar();
     const savedText = result.saved === 'local' ? 'この端末で保存しました。' : '保存しました。';
-    checkStatus.textContent = date + (checked ? ' を完成にしました。' : ' を未完成に戻しました。') + savedText;
+    checkStatus.textContent = date + (checked ? ' の個人記録を完成にしました。' : ' の個人記録を未完成に戻しました。') + savedText;
   } catch(err){
-    checkStatus.textContent = '完成状態の保存に失敗しました。\n' + (err && err.message ? err.message : err);
+    checkStatus.textContent = '個人記録の完成状態の保存に失敗しました。\n' + (err && err.message ? err.message : err);
     await refreshDayCompleteUi();
     await renderCalendar();
   } finally {
@@ -749,7 +834,7 @@ async function handleRecordDateChange(){
     await refreshDayCompleteUi();
     await renderCalendar();
   } catch(err){
-    calendarStatus.textContent = '完成状態の読込に失敗しました。';
+    calendarStatus.textContent = '個人記録の完成状態の読込に失敗しました。';
   }
 }
 async function fetchJson(url){
