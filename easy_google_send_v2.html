@@ -214,7 +214,7 @@
           <div class="template-head">よく使う文章を選んで、本文へ入れるかコピーできます。必要な場合は、この中から複数人への一括送信も使えます。</div>
           <div id="templateTabs" class="template-tabs"></div>
           <div id="templateList" class="template-list"></div>
-          <div class="copy-note">本文へ入れる は下の本文欄に追加されます。コピー はそのまま貼り付け用です。定型文はこの端末に保存されます。</div>
+          <div class="copy-note">本文へ入れる は下の本文欄に追加されます。コピー はそのまま貼り付け用です。定型文はこの端末に保存されます。共有したい時は下の「💾 定型文を共有保存」を押してください。</div>
           <div class="template-edit-box">
             <div class="template-edit-title">定型文の追加・編集</div>
             <div class="template-head">上の分類を選んでから、定型文を追加・編集できます。</div>
@@ -226,6 +226,11 @@
               <button id="templateCancelBtn" class="mini-btn" type="button" style="display:none;">編集をやめる</button>
               <button id="templateResetBtn" class="mini-btn danger-lite" type="button">初期定型文に戻す</button>
             </div>
+            <div class="mini-btns" style="margin-top:8px;">
+              <button id="templateLoadSharedBtn" class="mini-btn primary-lite" type="button">☁ 共有定型文を読込</button>
+              <button id="templateSaveSharedBtn" class="mini-btn green-lite" type="button">💾 定型文を共有保存</button>
+            </div>
+            <div class="template-head" style="margin-top:6px;">共有保存するとGoogleスプレッドシートに保存され、他の端末でも「☁ 共有定型文を読込」から同じ定型文を使えます。</div>
             <div id="templateEditStatus" class="status"></div>
           </div>
       <div class="bulk-box">
@@ -317,6 +322,8 @@ const templateEditNote = document.getElementById('templateEditNote');
 const templateSaveBtn = document.getElementById('templateSaveBtn');
 const templateCancelBtn = document.getElementById('templateCancelBtn');
 const templateResetBtn = document.getElementById('templateResetBtn');
+const templateLoadSharedBtn = document.getElementById('templateLoadSharedBtn');
+const templateSaveSharedBtn = document.getElementById('templateSaveSharedBtn');
 const templateEditStatus = document.getElementById('templateEditStatus');
 const bulkResidentGrid = document.getElementById('bulkResidentGrid');
 const bulkSelectAllBtn = document.getElementById('bulkSelectAllBtn');
@@ -395,6 +402,7 @@ function renderRecent(){
 }
 
 const TEMPLATE_STORAGE_KEY = 'easy_template_data_v1';
+const SHARED_TEMPLATE_KEY = 'easy_shared_templates_v1';
 const LEGACY_TEMPLATE_CATEGORY_NAMES = ['日中支援1','日中支援２','日中支援2','日中支援１'];
 const DEFAULT_TEMPLATE_DATA = {
   "日中支援Ⅰ": [
@@ -677,6 +685,93 @@ function resetTemplatesToDefault(){
   renderTemplateList();
 }
 
+
+function normalizeTemplateDataForSave(data){
+  const out = {};
+  Object.keys(data || {}).forEach((cat) => {
+    const cleanCat = String(cat || '').trim();
+    if (!cleanCat || LEGACY_TEMPLATE_CATEGORY_NAMES.includes(cleanCat)) return;
+    const items = Array.isArray(data[cat]) ? data[cat] : [];
+    out[cleanCat] = items.map((item) => {
+      const text = getTemplateText(item);
+      const note = getTemplateSavedNote(item);
+      return note ? { text, note } : text;
+    }).filter((item) => getTemplateText(item));
+  });
+  return out;
+}
+function applyTemplateData(data, message){
+  const clean = normalizeTemplateDataForSave(data);
+  if (!Object.keys(clean).length) {
+    if (templateEditStatus) templateEditStatus.textContent = '読み込める定型文がありませんでした。';
+    return false;
+  }
+  TEMPLATE_DATA = clean;
+  activeTemplateCategory = Object.keys(TEMPLATE_DATA)[0] || '';
+  saveTemplateData();
+  clearTemplateEditor(message || '定型文を読み込みました。');
+  renderTemplateTabs();
+  renderTemplateList();
+  return true;
+}
+function setTemplateShareButtonsDisabled(disabled){
+  if (templateLoadSharedBtn) templateLoadSharedBtn.disabled = !!disabled;
+  if (templateSaveSharedBtn) templateSaveSharedBtn.disabled = !!disabled;
+  if (templateSaveBtn) templateSaveBtn.disabled = !!disabled;
+  if (templateResetBtn) templateResetBtn.disabled = !!disabled;
+}
+async function loadSharedTemplates(manualConfirm){
+  const manual = manualConfirm !== false;
+  if (!templateLoadSharedBtn && manual) return;
+  if (manual) {
+    const ok = confirm('Googleスプレッドシートに保存されている共有定型文を読み込みますか？\n\nこの端末の定型文は、共有定型文の内容に置き換わります。');
+    if (!ok) return;
+  }
+  setTemplateShareButtonsDisabled(true);
+  if (templateEditStatus) templateEditStatus.textContent = manual ? '共有定型文を読み込み中です...' : '共有定型文を自動読込中です...';
+  try {
+    const data = await fetchJson(WEB_APP_URL + '?action=getSharedNotice&noticeKey=' + encodeURIComponent(SHARED_TEMPLATE_KEY));
+    const raw = String(data.text || '').trim();
+    if (!raw) {
+      if (templateEditStatus && manual) templateEditStatus.textContent = 'まだ共有定型文は保存されていません。先にどれかの端末で「💾 定型文を共有保存」を押してください。';
+      return;
+    }
+    let parsed = null;
+    try { parsed = JSON.parse(raw); } catch(e) { parsed = null; }
+    const sharedData = parsed && parsed.data ? parsed.data : parsed;
+    applyTemplateData(sharedData, manual ? '共有定型文を読み込みました。' : '共有定型文を自動読込しました。');
+  } catch(err){
+    if (templateEditStatus && manual) templateEditStatus.textContent = '共有定型文の読込に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    setTemplateShareButtonsDisabled(false);
+  }
+}
+async function saveSharedTemplates(){
+  if (!templateSaveSharedBtn) return;
+  const ok = confirm('現在この端末に表示されている定型文を、共有定型文としてGoogleスプレッドシートに保存しますか？\n\n他の端末で「☁ 共有定型文を読込」を押すと、この内容が使えるようになります。');
+  if (!ok) return;
+  setTemplateShareButtonsDisabled(true);
+  if (templateEditStatus) templateEditStatus.textContent = '共有定型文を保存中です...';
+  try {
+    const payload = {
+      version: 'easy-template-v1',
+      updatedAt: nowLocalText(),
+      updatedBy: String(staffNameEl && staffNameEl.value || '').trim(),
+      data: normalizeTemplateDataForSave(TEMPLATE_DATA)
+    };
+    await postJson({
+      action:'saveSharedNotice',
+      noticeKey: SHARED_TEMPLATE_KEY,
+      text: JSON.stringify(payload)
+    });
+    if (templateEditStatus) templateEditStatus.textContent = '共有定型文を保存しました。他の端末では「☁ 共有定型文を読込」を押すと反映されます。';
+  } catch(err){
+    if (templateEditStatus) templateEditStatus.textContent = '共有定型文の保存に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    setTemplateShareButtonsDisabled(false);
+  }
+}
+
 function initTemplates(){
   if (!templateTabs || !templateList) return;
   LEGACY_TEMPLATE_CATEGORY_NAMES.forEach((cat) => { if (TEMPLATE_DATA[cat]) delete TEMPLATE_DATA[cat]; });
@@ -687,6 +782,8 @@ function initTemplates(){
   if (templateSaveBtn) templateSaveBtn.addEventListener('click', saveTemplateFromEditor);
   if (templateCancelBtn) templateCancelBtn.addEventListener('click', () => clearTemplateEditor('定型文の編集をやめました。'));
   if (templateResetBtn) templateResetBtn.addEventListener('click', resetTemplatesToDefault);
+  if (templateLoadSharedBtn) templateLoadSharedBtn.addEventListener('click', () => loadSharedTemplates(true));
+  if (templateSaveSharedBtn) templateSaveSharedBtn.addEventListener('click', saveSharedTemplates);
 }
 
 
@@ -1455,6 +1552,7 @@ if (saveSharedMemoBtn) saveSharedMemoBtn.addEventListener('click', saveSharedMem
 if (reloadSharedMemoBtn) reloadSharedMemoBtn.addEventListener('click', loadSharedMemo);
 handleRecordDateChange();
 loadSharedMemo();
+loadSharedTemplates(false);
 </script>
 </body>
 </html>
