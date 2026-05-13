@@ -221,6 +221,35 @@
       margin-bottom: 10px;
     }
 
+
+    .list-month-range {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 6px 8px;
+      border: 1px solid #dbe5f1;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .list-month-range label {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+    }
+    .list-month-range select {
+      width: auto;
+      min-width: 108px;
+      padding: 8px 9px;
+      font-size: 12px;
+    }
+    .list-month-range .range-sep {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 800;
+    }
+
     .list { display: flex; flex-direction: column; gap: 10px; }
     .item {
       border: 1px solid #e5e7eb;
@@ -758,6 +787,13 @@
 <option value="month">今月</option>
 <option value="all">全期間</option>
 </select>
+<div class="list-month-range">
+<label>一覧期間</label>
+<select id="listMonthFrom"><option value="all">開始月</option></select>
+<span class="range-sep">〜</span>
+<select id="listMonthTo"><option value="all">終了月</option></select>
+<button class="btn btn-ghost" id="clearListMonthBtn" type="button" style="padding:8px 10px;font-size:12px;">解除</button>
+</div>
 <select id="summaryMode" style="width:auto">
 <option value="list">通常一覧</option>
 <option value="weekday">曜日別</option>
@@ -1812,7 +1848,9 @@
         .slice()
         .sort(compareVitalsAsc)
         .filter(v => {
-          if (!recordMatchesCurrentRange(v)) return false;
+          if (hasListMonthRange()) {
+            if (!inListMonthRange(v)) return false;
+          } else if (!recordMatchesCurrentRange(v)) return false;
           if (resident && resident !== '__all__' && v.resident !== resident) return false;
           if (!inPrintMonthRange(v)) return false;
           return true;
@@ -1820,6 +1858,8 @@
     }
 
     function getRangeLabel() {
+      const listRange = getListMonthRangeLabel();
+      if (listRange) return `一覧期間 ${listRange}`;
       const mode = $('filterRange').value;
       if (mode === 'today') return '今日';
       if (mode === 'week') return '直近7日';
@@ -2052,6 +2092,62 @@
       toSel.value = months.includes(currentTo) ? currentTo : 'all';
     }
 
+
+
+    function populateListMonthFilters(records) {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return;
+      const currentFrom = fromSel.value || 'all';
+      const currentTo = toSel.value || 'all';
+      const months = getAllMonthKeys(records);
+      const fromOptions = '<option value="all">開始月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      const toOptions = '<option value="all">終了月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      fromSel.innerHTML = fromOptions;
+      toSel.innerHTML = toOptions;
+      fromSel.value = months.includes(currentFrom) ? currentFrom : 'all';
+      toSel.value = months.includes(currentTo) ? currentTo : 'all';
+    }
+
+    function hasListMonthRange() {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return false;
+      return (fromSel.value || 'all') !== 'all' || (toSel.value || 'all') !== 'all';
+    }
+
+    function inListMonthRange(recordOrIso) {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return true;
+      const from = fromSel.value || 'all';
+      const to = toSel.value || 'all';
+      if (from === 'all' && to === 'all') return true;
+      const key = monthKeyFromISO(recordOrIso);
+      if (!key) return false;
+      if (from !== 'all' && key < from) return false;
+      if (to !== 'all' && key > to) return false;
+      return true;
+    }
+
+    function getListMonthRangeLabel() {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return '';
+      const from = fromSel.value || 'all';
+      const to = toSel.value || 'all';
+      if (from === 'all' && to === 'all') return '';
+      const fromTxt = from === 'all' ? '最初' : monthLabelFromKey(from);
+      const toTxt = to === 'all' ? '最後' : monthLabelFromKey(to);
+      return `${fromTxt}〜${toTxt}`;
+    }
+
+    function clearListMonthRange() {
+      if ($('listMonthFrom')) $('listMonthFrom').value = 'all';
+      if ($('listMonthTo')) $('listMonthTo').value = 'all';
+      renderList();
+    }
+
     function inPrintMonthRange(recordOrIso) {
       const fromSel = $('printMonthFrom');
       const toSel = $('printMonthTo');
@@ -2105,6 +2201,7 @@
       const all = loadVitals();
       populateMonthFilter(all);
       populatePrintMonthFilters(all);
+      populateListMonthFilters(all);
 
       const resident = $('filterResident').value;
       const q = String($('search').value || '').trim().toLowerCase();
@@ -2136,9 +2233,10 @@
       selectedVitalIds = new Set(Array.from(selectedVitalIds).filter(id => visibleIds.includes(id)));
 
       const highOnlyOn = $('highOnlyToggle') && $('highOnlyToggle').checked;
+      const listRangeText = getListMonthRangeLabel();
       $('countLabel').textContent = summaryMode === 'list'
-        ? `${filtered.length}件${highOnlyOn ? '（高い日抽出）' : ''}`
-        : `${filtered.length}件を集計${highOnlyOn ? '（高い日抽出）' : ''}`;
+        ? `${filtered.length}件${listRangeText ? ' / ' + listRangeText : ''}${highOnlyOn ? '（高い日抽出）' : ''}`
+        : `${filtered.length}件を集計${listRangeText ? ' / ' + listRangeText : ''}${highOnlyOn ? '（高い日抽出）' : ''}`;
       listEl.innerHTML = '';
 
       renderCharts();
@@ -2153,7 +2251,7 @@
       const avgBox = document.createElement('div');
       avgBox.className = 'avg-box';
       avgBox.innerHTML = `
-        <div class="avg-title">平均</div>
+        <div class="avg-title">平均${getListMonthRangeLabel() ? `（一覧期間：${getListMonthRangeLabel()}）` : ``}</div>
         <div class="avg-items">
           <span class="avg-item">血圧 ${avgSys != null || avgDia != null ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―'}</span>
           <span class="avg-item">体重 ${avgWeight != null ? `${avgWeight}kg` : '―'}</span>
@@ -2772,6 +2870,9 @@
 
       $('filterResident').onchange = renderList;
       $('filterRange').onchange = renderList;
+      if ($('listMonthFrom')) $('listMonthFrom').onchange = renderList;
+      if ($('listMonthTo')) $('listMonthTo').onchange = renderList;
+      if ($('clearListMonthBtn')) $('clearListMonthBtn').onclick = clearListMonthRange;
       if ($('summaryMode')) $('summaryMode').onchange = renderList;
       if ($('weekdayFilter')) $('weekdayFilter').onchange = renderList;
       if ($('monthFilter')) $('monthFilter').onchange = renderList;
