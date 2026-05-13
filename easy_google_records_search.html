@@ -30,6 +30,23 @@
   .auth-text{color:var(--muted);line-height:1.6;margin:0 0 12px}
   .auth-error{color:#dc2626;font-size:13px;margin-top:8px;min-height:1.3em}
   .app-hidden{display:none}
+
+  .keyword-box{margin-top:10px;border:1px solid #dbe4f0;background:#f8fbff;border-radius:12px;padding:10px 12px}
+  .keyword-title{font-size:14px;font-weight:800;margin-bottom:4px}
+  .keyword-help{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+  .keyword-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+  .keyword-item{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #dbe4f0;border-radius:999px;padding:3px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+  .keyword-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid #93c5fd;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:800;cursor:pointer;transition:background .12s ease,color .12s ease,transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+  .keyword-chip::before{content:'🔍';font-size:12px;line-height:1}
+  .keyword-chip:hover{background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 3px 8px rgba(37,99,235,.25);transform:translateY(-1px)}
+  .keyword-chip:active{transform:translateY(0);box-shadow:0 1px 3px rgba(37,99,235,.18)}
+  .keyword-delete{border:1px solid #fecaca;background:#fff1f2;color:#be123c;border-radius:999px;padding:6px 9px;font-size:11px;line-height:1;font-weight:800;cursor:pointer}
+  .keyword-delete:hover{background:#ffe4e6}
+  .keyword-manage{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-top:8px}
+  .keyword-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .small-btn{border:1px solid #cfd5df;background:#fff;color:#1f2937;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:800;cursor:pointer}
+  .small-btn.blue{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+  .small-btn.green{background:#ecfdf5;border-color:#bbf7d0;color:#047857}
   a.back{display:inline-block;color:#2563eb;text-decoration:none;font-weight:700;margin-top:4px}
   @media (max-width:640px){.row3,.btns{grid-template-columns:1fr}}
 </style>
@@ -76,7 +93,25 @@
         </div>
       </div>
       <label for="keyword">キーワード</label>
-      <input id="keyword" type="text" placeholder="例：服薬 / 血圧 / 削除依頼 / 訂正依頼">
+      <input id="keyword" type="text" placeholder="例：服薬 / 血圧 / 日中支援 / 受診同行">
+      <div class="keyword-box">
+        <div class="keyword-title">よく使うキーワード</div>
+        <div class="keyword-help">青いキーワードボタンを押すと検索します。赤い「削除」はキーワードを消すボタンです。追加・削除したキーワードは共有保存できます。</div>
+        <div id="keywordChips" class="keyword-chips"></div>
+        <div class="keyword-manage">
+          <div>
+            <label for="keywordManageInput" style="margin-top:0;">キーワード追加</label>
+            <input id="keywordManageInput" type="text" placeholder="例：訪問看護 / 入浴 / 欠席">
+          </div>
+          <button id="addKeywordBtn" class="small-btn blue" type="button">＋追加</button>
+        </div>
+        <div class="keyword-actions">
+          <button id="reloadKeywordsBtn" class="small-btn" type="button">☁ 共有キーワードを読込</button>
+          <button id="saveKeywordsBtn" class="small-btn green" type="button">💾 キーワードを共有保存</button>
+          <button id="resetKeywordsBtn" class="small-btn" type="button">初期キーワードに戻す</button>
+        </div>
+        <div id="keywordShareStatus" class="status"></div>
+      </div>
       <div class="btns">
         <button id="searchBtn" class="primary" type="button">検索する</button>
         <button id="clearBtn" class="ghost" type="button">条件を消す</button>
@@ -93,6 +128,10 @@
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx2if_DzbHwI4bb1f3-493CiaMgA9ttqJVWTX10coubvD76VxnHEH4n5VkUzgNt-GSY/exec';
 const SITE_PASSWORD = '1122';
 const AUTH_KEY = 'easy_page_auth_ok';
+const SEARCH_KEYWORDS_KEY = 'easy_search_keywords_v1';
+const SEARCH_KEYWORDS_LOCAL_KEY = 'easy_search_keywords_local_v1';
+const DEFAULT_SEARCH_KEYWORDS = ['日中支援Ⅰ','日中支援Ⅱ','受診同行','服薬確認','血圧','体重','欠席','入浴','訪問看護','B型','A型','買い物','金銭管理'];
+let searchKeywords = DEFAULT_SEARCH_KEYWORDS.slice();
 const authScreen = document.getElementById('authScreen');
 const appRoot = document.getElementById('appRoot');
 const sitePasswordEl = document.getElementById('sitePassword');
@@ -106,6 +145,13 @@ const searchBtn = document.getElementById('searchBtn');
 const clearBtn = document.getElementById('clearBtn');
 const searchStatus = document.getElementById('searchStatus');
 const results = document.getElementById('results');
+const keywordChips = document.getElementById('keywordChips');
+const keywordManageInput = document.getElementById('keywordManageInput');
+const addKeywordBtn = document.getElementById('addKeywordBtn');
+const reloadKeywordsBtn = document.getElementById('reloadKeywordsBtn');
+const saveKeywordsBtn = document.getElementById('saveKeywordsBtn');
+const resetKeywordsBtn = document.getElementById('resetKeywordsBtn');
+const keywordShareStatus = document.getElementById('keywordShareStatus');
 
 function unlockApp(){ authScreen.style.display = 'none'; appRoot.classList.remove('app-hidden'); }
 function showAuthError(msg){ authError.textContent = msg || ''; }
@@ -131,6 +177,11 @@ function initAuth(){
 }
 function todayYmd(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function daysAgoYmd(days){ const d = new Date(); d.setDate(d.getDate() - days); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function defaultStartYmd(){
+  const d = new Date();
+  const year = d.getMonth() < 3 ? d.getFullYear() - 1 : d.getFullYear();
+  return year + '-04-01';
+}
 function normalizeText(text){ return String(text || '').replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n{3,}/g,'\n\n').trim(); }
 function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 async function fetchJson(url){
@@ -140,6 +191,147 @@ async function fetchJson(url){
   try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { ok:false, rawText:text }; }
   if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
   return data;
+}
+async function postJson(payload){
+  const res = await fetch(WEB_APP_URL, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+    cache:'no-store'
+  });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { ok:false, rawText:text }; }
+  if (!res.ok || data.ok === false) throw new Error(data.message || data.error || data.rawText || ('HTTP ' + res.status));
+  return data;
+}
+
+function uniqueKeywords(arr){
+  const out = [];
+  (Array.isArray(arr) ? arr : []).forEach((item) => {
+    const v = String(item || '').trim();
+    if (v && !out.includes(v)) out.push(v);
+  });
+  return out;
+}
+function loadKeywordsLocal(){
+  try {
+    const arr = JSON.parse(localStorage.getItem(SEARCH_KEYWORDS_LOCAL_KEY) || '[]');
+    const list = uniqueKeywords(arr);
+    return list.length ? list : DEFAULT_SEARCH_KEYWORDS.slice();
+  } catch(e){ return DEFAULT_SEARCH_KEYWORDS.slice(); }
+}
+function saveKeywordsLocal(){
+  localStorage.setItem(SEARCH_KEYWORDS_LOCAL_KEY, JSON.stringify(uniqueKeywords(searchKeywords)));
+}
+function renderKeywordChips(){
+  if (!keywordChips) return;
+  searchKeywords = uniqueKeywords(searchKeywords);
+  keywordChips.innerHTML = searchKeywords.map((kw, idx) => {
+    return '<span class="keyword-item">' +
+      '<button class="keyword-chip" type="button" data-idx="' + idx + '" title="このキーワードで検索">' + escapeHtml(kw) + '</button>' +
+      '<button class="keyword-delete" type="button" data-delete-idx="' + idx + '" title="このキーワードを削除">削除</button>' +
+      '</span>';
+  }).join('');
+  Array.from(keywordChips.querySelectorAll('.keyword-chip')).forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.idx || -1);
+      const kw = searchKeywords[idx] || '';
+      if (!kw) return;
+      keyword.value = kw;
+      searchRecords();
+    });
+  });
+  Array.from(keywordChips.querySelectorAll('.keyword-delete')).forEach((btn) => {
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const idx = Number(btn.dataset.deleteIdx || -1);
+      const kw = searchKeywords[idx] || '';
+      if (!kw) return;
+      if (!confirm('このキーワードを削除しますか？\n\n' + kw)) return;
+      searchKeywords.splice(idx, 1);
+      saveKeywordsLocal();
+      renderKeywordChips();
+      keywordShareStatus.textContent = '削除しました。全員に反映する場合は「💾 キーワードを共有保存」を押してください。';
+    });
+  });
+}
+function addSearchKeyword(){
+  const v = String(keywordManageInput.value || '').trim();
+  if (!v) {
+    keywordShareStatus.textContent = '追加するキーワードを入力してください。';
+    keywordManageInput.focus();
+    return;
+  }
+  if (searchKeywords.includes(v)) {
+    keywordShareStatus.textContent = '同じキーワードはすでにあります。';
+    keywordManageInput.focus();
+    return;
+  }
+  searchKeywords.push(v);
+  keywordManageInput.value = '';
+  saveKeywordsLocal();
+  renderKeywordChips();
+  keywordShareStatus.textContent = '追加しました。全員に反映する場合は「💾 キーワードを共有保存」を押してください。';
+}
+async function loadSharedKeywords(options){
+  const silent = !!(options && options.silent);
+  if (!silent) keywordShareStatus.textContent = '共有キーワードを読込中です...';
+  try {
+    const data = await fetchJson(WEB_APP_URL + '?action=getSharedNotice&noticeKey=' + encodeURIComponent(SEARCH_KEYWORDS_KEY));
+    const text = String(data.text || '').trim();
+    if (!text) {
+      if (!silent) keywordShareStatus.textContent = '共有キーワードはまだ保存されていません。';
+      return;
+    }
+    const parsed = JSON.parse(text);
+    const arr = Array.isArray(parsed) ? parsed : Array.isArray(parsed.keywords) ? parsed.keywords : [];
+    const list = uniqueKeywords(arr);
+    if (!list.length) {
+      if (!silent) keywordShareStatus.textContent = '共有キーワードのデータが空でした。';
+      return;
+    }
+    searchKeywords = list;
+    saveKeywordsLocal();
+    renderKeywordChips();
+    if (!silent) keywordShareStatus.textContent = '共有キーワードを読み込みました。';
+  } catch(err){
+    if (!silent) keywordShareStatus.textContent = '共有キーワードの読込に失敗しました。\n' + (err && err.message ? err.message : err);
+  }
+}
+async function saveSharedKeywords(){
+  searchKeywords = uniqueKeywords(searchKeywords);
+  if (!searchKeywords.length) {
+    keywordShareStatus.textContent = '保存するキーワードがありません。';
+    return;
+  }
+  saveKeywordsBtn.disabled = true;
+  keywordShareStatus.textContent = '共有保存中です...';
+  try {
+    await postJson({
+      action:'saveSharedNotice',
+      noticeKey: SEARCH_KEYWORDS_KEY,
+      text: JSON.stringify({ keywords: searchKeywords, updatedAt: new Date().toISOString() })
+    });
+    saveKeywordsLocal();
+    keywordShareStatus.textContent = 'キーワードを共有保存しました。他の端末にも反映できます。';
+  } catch(err){
+    keywordShareStatus.textContent = '共有保存に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    saveKeywordsBtn.disabled = false;
+  }
+}
+function resetKeywords(){
+  if (!confirm('初期キーワードに戻しますか？\n共有保存するまでは、この端末だけの変更です。')) return;
+  searchKeywords = DEFAULT_SEARCH_KEYWORDS.slice();
+  saveKeywordsLocal();
+  renderKeywordChips();
+  keywordShareStatus.textContent = '初期キーワードに戻しました。全員に反映する場合は「💾 キーワードを共有保存」を押してください。';
+}
+function initSearchKeywords(){
+  searchKeywords = loadKeywordsLocal();
+  renderKeywordChips();
+  loadSharedKeywords({silent:true});
 }
 function inDateRange(date, from, to){ if (from && date < from) return false; if (to && date > to) return false; return true; }
 function matchesKeyword(rec, kw){
@@ -190,20 +382,26 @@ async function searchRecords(){
 }
 function clearConditions(){
   searchUser.value = '';
-  dateFrom.value = daysAgoYmd(7);
+  dateFrom.value = defaultStartYmd();
   dateTo.value = todayYmd();
   keyword.value = '';
   results.innerHTML = '';
   searchStatus.textContent = '';
 }
 
-dateFrom.value = daysAgoYmd(7);
+dateFrom.value = defaultStartYmd();
 dateTo.value = todayYmd();
 initAuth();
 unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 searchBtn.addEventListener('click', searchRecords);
 clearBtn.addEventListener('click', clearConditions);
+if (addKeywordBtn) addKeywordBtn.addEventListener('click', addSearchKeyword);
+if (keywordManageInput) keywordManageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addSearchKeyword(); });
+if (reloadKeywordsBtn) reloadKeywordsBtn.addEventListener('click', () => loadSharedKeywords({silent:false}));
+if (saveKeywordsBtn) saveKeywordsBtn.addEventListener('click', saveSharedKeywords);
+if (resetKeywordsBtn) resetKeywordsBtn.addEventListener('click', resetKeywords);
+initSearchKeywords();
 </script>
 </body>
 </html>
