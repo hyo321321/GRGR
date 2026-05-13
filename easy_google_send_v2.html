@@ -51,10 +51,18 @@
   .template-list{display:grid;gap:10px}
   .template-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
   .template-text{white-space:pre-wrap;line-height:1.7;font-size:14px}
+  .template-note{font-size:12px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:5px 7px;margin-top:8px;line-height:1.5}
   .mini-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .mini-btn{border:1px solid #cfd5df;background:#fff;color:#1f2937;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}
   .mini-btn.primary-lite{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
   .copy-note{font-size:12px;color:var(--muted);margin-top:8px}
+  .template-edit-box{border:1px solid #dbe4f0;background:#fff;border-radius:12px;padding:10px;margin:10px 0}
+  .template-edit-title{font-size:14px;font-weight:800;margin-bottom:6px;color:#334155}
+  .template-edit-box textarea{min-height:90px}
+  .template-note-input{min-height:54px!important;font-size:13px;background:#f8fafc}
+  .mini-btn.danger-lite{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+  .mini-btn.green-lite{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+  .template-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .bulk-box{margin-top:10px;border:1px solid #d9e2f0;background:#f8fbff;border-radius:12px;padding:10px 12px}
   .bulk-title{font-size:14px;font-weight:800;margin-bottom:4px}
   .bulk-meta{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px}
@@ -165,10 +173,7 @@
 
         <div class="template-wrap" style="margin-top:12px;">
           <div class="calendar-title">共有メモ</div>
-          <div class="template-head">共有メモは、受診予定や引継ぎなど、みんなで確認したい内容を保存できます。
-「共有メモを保存」を押すと、入力した内容がGoogleスプレッドシートに保存され、他の端末からも確認できます。
-「🔄 再読込」は、Googleスプレッドシートに保存されている最新の共有メモを読み込み直すボタンです。
-他の職員が別のスマホやパソコンで共有メモを更新した時は、「🔄 再読込」を押すと最新の内容に更新されます。</div>
+          <div class="template-head">受診、引継ぎ、注意事項など、みんなで見たい内容をここへ入力して保存できます。</div>
           <textarea id="sharedMemoInput" style="min-height:90px;margin-top:10px;" placeholder="共有したいメモを入力"></textarea>
           <div class="mini-btns" style="margin-top:10px;">
             <button id="saveSharedMemoBtn" class="orange" type="button">共有メモを保存</button>
@@ -204,12 +209,25 @@
 
 
       <details class="help" id="templateDetails">
-        <summary style="cursor:pointer;font-weight:700;">定型文を開く（日中支援Ⅰ 日中支援Ⅱ バイタル 服薬）</summary>
+        <summary style="cursor:pointer;font-weight:700;">定型文を開く（日中支援・朝の様子・通所・受診など）</summary>
         <div class="template-wrap">
           <div class="template-head">よく使う文章を選んで、本文へ入れるかコピーできます。必要な場合は、この中から複数人への一括送信も使えます。</div>
           <div id="templateTabs" class="template-tabs"></div>
           <div id="templateList" class="template-list"></div>
-          <div class="copy-note">本文へ入れる は下の本文欄に追加されます。コピー はそのまま貼り付け用です。</div>
+          <div class="copy-note">本文へ入れる は下の本文欄に追加されます。コピー はそのまま貼り付け用です。定型文はこの端末に保存されます。</div>
+          <div class="template-edit-box">
+            <div class="template-edit-title">定型文の追加・編集</div>
+            <div class="template-head">上の分類を選んでから、定型文を追加・編集できます。</div>
+            <textarea id="templateEditText" placeholder="追加・修正したい定型文を入力"></textarea>
+            <label for="templateEditNote" style="font-size:13px;margin-top:8px;">メモ（どの利用者用か・どんな時用か）</label>
+            <textarea id="templateEditNote" class="template-note-input" placeholder="例：山本さん用、B型欠席時用、受診同行用"></textarea>
+            <div class="mini-btns">
+              <button id="templateSaveBtn" class="mini-btn green-lite" type="button">＋ 定型文を追加</button>
+              <button id="templateCancelBtn" class="mini-btn" type="button" style="display:none;">編集をやめる</button>
+              <button id="templateResetBtn" class="mini-btn danger-lite" type="button">初期定型文に戻す</button>
+            </div>
+            <div id="templateEditStatus" class="status"></div>
+          </div>
       <div class="bulk-box">
         <div class="bulk-title">複数人に同じ記録を送る</div>
         <div class="bulk-meta">同じ内容でよい利用者だけチェックしてください。本文欄の文章を、そのまま同じ日付・同じ記録者名で一括送信します。</div>
@@ -294,6 +312,12 @@ const recentStaff = document.getElementById('recentStaff');
 const templateDetails = document.getElementById('templateDetails');
 const templateTabs = document.getElementById('templateTabs');
 const templateList = document.getElementById('templateList');
+const templateEditText = document.getElementById('templateEditText');
+const templateEditNote = document.getElementById('templateEditNote');
+const templateSaveBtn = document.getElementById('templateSaveBtn');
+const templateCancelBtn = document.getElementById('templateCancelBtn');
+const templateResetBtn = document.getElementById('templateResetBtn');
+const templateEditStatus = document.getElementById('templateEditStatus');
 const bulkResidentGrid = document.getElementById('bulkResidentGrid');
 const bulkSelectAllBtn = document.getElementById('bulkSelectAllBtn');
 const bulkClearBtn = document.getElementById('bulkClearBtn');
@@ -370,24 +394,147 @@ function renderRecent(){
   recentStaff.innerHTML = loadRecent().map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
 }
 
-const TEMPLATE_DATA = {
-  '日中支援Ⅰ': [
-    '今日は日中ホームで過ごされていたため、こまめに様子を伺いながらお声がけしました。つい水分やタバコが進んでしまうご様子だったので、ご本人のペースを確認しつつ、安全に配慮して見守っています。買い物も一緒に。何が必要か相談しながら進めました。お気持ちが揺れやすい時期でもあったので、少しでもリラックスできるよう、お部屋の環境も整えています。',
-    '住居の外で過ごすことが困難なため、ホーム内にて日中支援を実施。水分摂取過多や喫煙過多に注意しながら見守り、声かけ、安全確認を行った。時折パニック様の様子がみられるため、刺激を減らすよう環境調整を行った。',
-    '住居の外で過ごすことが困難なため、ホーム内にて日中支援を実施。行動面の不安定さに配慮し、刺激を減らす環境調整、見守り、声かけ、安全確認を行った。',
-    '行動面の不安定さが見られ、住居の外で過ごすことが困難であったため、ホーム内にて日中支援を実施した。不穏な様子が強まらないよう刺激を減らす環境調整を行い、適宜見守り、声かけ、安全確認を継続した。',
-    '精神的に不安定な様子があり、住居の外で過ごすことが難しい状態であったため、ホーム内にて日中支援を行った。安心して過ごせるよう周囲の刺激に配慮しながら、継続して見守り、声かけ、安全確認を実施した。'
+const TEMPLATE_STORAGE_KEY = 'easy_template_data_v1';
+const LEGACY_TEMPLATE_CATEGORY_NAMES = ['日中支援1','日中支援２','日中支援2','日中支援１'];
+const DEFAULT_TEMPLATE_DATA = {
+  "日中支援Ⅰ": [
+    "今日は日中ホームで過ごされていたため、こまめに様子を伺いながらお声がけしました。つい水分やタバコが進んでしまうご様子だったので、ご本人のペースを確認しつつ、安全に配慮して見守っています。買い物も一緒に。何が必要か相談しながら進めました。お気持ちが揺れやすい時期でもあったので、少しでもリラックスできるよう、お部屋の環境も整えています。",
+    "住居の外で過ごすことが困難なため、ホーム内にて日中支援を実施。水分摂取過多や喫煙過多に注意しながら見守り、声かけ、安全確認を行った。時折パニック様の様子がみられるため、刺激を減らすよう環境調整を行った。",
+    "住居の外で過ごすことが困難なため、ホーム内にて日中支援を実施。行動面の不安定さに配慮し、刺激を減らす環境調整、見守り、声かけ、安全確認を行った。",
+    "行動面の不安定さが見られ、住居の外で過ごすことが困難であったため、ホーム内にて日中支援を実施した。不穏な様子が強まらないよう刺激を減らす環境調整を行い、適宜見守り、声かけ、安全確認を継続した。",
+    "精神的に不安定な様子があり、住居の外で過ごすことが難しい状態であったため、ホーム内にて日中支援を行った。安心して過ごせるよう周囲の刺激に配慮しながら、継続して見守り、声かけ、安全確認を実施した。",
+    "【日中支援Ⅰ】\n日中を通して、本人の体調や生活状況を確認しながら、清潔保持、居室環境の整備、服薬管理等の支援を実施した。年齢や体調面にも配慮し、体調変化に留意しながら必要な声かけと見守りを行った。",
+    "【日中支援Ⅰ】\n住居内で過ごされたため、状態確認を行いながら、見守り・声かけを中心に日中支援を実施した。安心して過ごせるよう必要な支援を行い、清潔保持や内服確認等の生活面の支援も実施した。",
+    "【日中支援Ⅰ】\n日中を通して、本人の体調や精神面の状態を確認しながら、必要に応じて声かけや見守りを行った。不安定な発言や不機嫌な様子もみられたため、刺激にならないよう配慮し、安心して過ごせるよう支援した。",
+    "【日中支援Ⅰ】\n本人の体調や生活状況を確認しながら、居室内の清掃、洗濯、入浴や整容等の日常生活支援を行った。本人のペースに配慮しながら声かけや見守りを行い、安全に生活できるよう支援した。",
+    "【日中支援Ⅰ】\n日中を通して状態確認を行いながら、金銭管理、買い物、受診同行等の必要な支援を実施した。本人の意向を確認しながら、安心して日中を過ごせるよう見守りと声かけを行った。"
   ],
-  '日中支援Ⅱ': [
-    '数日間体調不良が続いており、本日も不調が見られた。欠席連絡は本人にて行われている。ホーム内で休養したい意向があったため、日中はこまめに訪室し、状態確認と声かけを行いながら見守った。',
-    '本日、体調不良が見られた。欠席連絡は本人にて行われている。ホーム内で休みたい意向が聞かれたため、日中はこまめに訪室し、状態確認と声かけを行いながら見守り対応を実施した。',
-    '元気な様子は見られたが、朝の気分不良により活動意欲が低下し、通所に至らず欠席された。'
+  "日中支援Ⅱ": [
+    "数日間体調不良が続いており、本日も不調が見られた。欠席連絡は本人にて行われている。ホーム内で休養したい意向があったため、日中はこまめに訪室し、状態確認と声かけを行いながら見守った。",
+    "本日、体調不良が見られた。欠席連絡は本人にて行われている。ホーム内で休みたい意向が聞かれたため、日中はこまめに訪室し、状態確認と声かけを行いながら見守り対応を実施した。",
+    "元気な様子は見られたが、朝の気分不良により活動意欲が低下し、通所に至らず欠席された。",
+    "【日中支援Ⅱ】\n体調不良があり、住居の外で過ごすことが難しい状態であったため、ホーム内にて日中支援を行った。安心して過ごせるよう周囲の刺激に配慮しながら、継続して見守り、声かけ、安全確認を実施した。",
+    "【日中支援Ⅱ】\n本日は日中活動を欠席し、ホーム内で過ごされた。体調や精神面の状態を確認しながら、必要に応じて訪室、声かけ、見守りを行い、安心して休養できるよう支援した。",
+    "【日中支援Ⅱ】\n朝の起床が難しく、時間内に食事を受け取れない様子がみられたため、複数回声かけを行った。その後も状態確認を行いながら、服薬確認や必要な生活支援を実施した。",
+    "【日中支援Ⅱ】\n体調不良や気分の波により通所が難しい様子がみられたため、ホーム内で過ごせるよう支援した。こまめに様子を確認し、声かけ、見守り、安全確認を行った。",
+    "【日中支援Ⅱ】\n本人より不調の訴えがあり、日中活動を欠席された。日中は無理のない範囲で過ごせるよう配慮し、必要に応じて食事、服薬、清潔保持、居室環境の確認を行った。"
   ],
-  'バイタル': ['血圧・体重測定を実施し、異常はみられなかった。'],
-  '服薬': ['服薬管理を行い、内服を確認した。']
+  "バイタル": [
+    "血圧・体重測定を実施し、異常はみられなかった。",
+    "時間内に来室され、血圧・体重測定を実施した。普段と大きく変わった様子はみられなかった。",
+    "朝食受け取り時に血圧・体重測定を実施した。測定後も表情や会話の様子に大きな変化はみられなかった。",
+    "血圧・体重測定を実施した。血圧はやや高めであったため、体調変化に注意しながら様子を確認した。",
+    "訪問看護来所時、最近の血圧の状況や体重の変化について報告し、情報共有を行った。",
+    "体重に日ごとの増減がみられるため、食事量や水分摂取の様子も含めて経過を確認した。",
+    "脈拍が高めに出る傾向があるため、緊張や活動後の影響も考慮しながら、引き続き経過を確認する。"
+  ],
+  "服薬": [
+    "服薬管理を行い、内服を確認した。",
+    "朝薬を手渡しし、内服を確認した。",
+    "昼薬の時間になっても来室されなかったため声かけを行い、その後内服を確認した。",
+    "夕薬を手渡しし、内服を確認した。",
+    "処方薬は事務所管理とし、必要時に手渡しで内服確認を行った。",
+    "受診後、処方内容を確認し、服薬管理に反映した。",
+    "頓服薬の希望があり、残数を確認したうえで必要分を手渡した。"
+  ],
+  "朝の様子": [
+    "時間内に朝食を受け取り、血圧・体重測定を実施した。普段と変わりない様子がみられた。",
+    "時間内に朝食を受け取りに来られず、朝食は廃棄となった。その後、声かけを行い、状態確認を実施した。",
+    "朝食前に声かけを行ったが、起床に時間がかかる様子がみられた。起床後は血圧・体重測定を実施した。",
+    "朝から穏やかな表情がみられ、職員との会話もあり、普段と大きく変わった様子はみられなかった。",
+    "朝から不機嫌そうな様子がみられたため、刺激にならないよう配慮しながら声かけと見守りを行った。"
+  ],
+  "通所・外出": [
+    "A型事業所へ通所された。出発時には挨拶があり、普段と変わりない様子で出かけられた。",
+    "B型事業所へ通所された。時間内に準備を整え、送迎場所へ向かわれた。",
+    "本日は体調不良のため、日中活動を欠席された。ホーム内で休養しながら過ごされた。",
+    "帰宅後、買い物へ行く予定との話が聞かれた。外出先と帰宅予定を確認し、必要に応じて声かけを行った。",
+    "外出前に予定を確認し、忘れ物がないよう声かけを行った。"
+  ],
+  "清潔・掃除": [
+    "居室清掃のため訪室し、掃除機掛け、モップ掛け、シンク清掃、トイレ清掃を実施した。",
+    "入浴の声かけを行い、必要に応じて見守りや確認を行った。",
+    "洗髪の希望があり、洗髪支援を実施した。",
+    "髪の毛にべたつきがあり、洗髪ができていない様子がみられたため、清潔保持について声かけを行った。",
+    "洗濯の声かけを行い、洗濯物の確認や取り込みの支援を実施した。",
+    "居室内の物品が多くなっていたため、安全に過ごせるよう整理整頓について声かけを行った。"
+  ],
+  "受診・訪問看護": [
+    "受診同行を行った。本人の最近の様子や体調面について医師へ報告し、診察内容を確認した。",
+    "医師より処方内容の説明があり、薬の変更はなかった。次回受診予定を確認した。",
+    "医師より処方変更の説明があり、変更内容を確認した。今後の服薬管理に反映する。",
+    "訪問看護が来所され、最近の体調、血圧、体重変化について情報共有を行った。",
+    "受診後、処方薬を受け取り、内容を確認した。必要事項を職員間で共有した。",
+    "本人より体調に関する訴えがあり、受診時に医師へ報告した。医師の説明を確認し、今後も様子を見ることとなった。"
+  ],
+  "金銭・買い物": [
+    "お小遣いをお渡しし、小遣い帳への記載と残金の確認を一緒に行った。",
+    "買い物の希望があり、必要な物品を確認しながら買い物に同行した。",
+    "通帳を持参し、職員同行で銀行へ立ち寄った。必要な金額を確認しながら手続きを行った。",
+    "購入予定の物品について本人と確認し、必要な範囲で声かけや見守りを行った。",
+    "金銭や貴重品について確認し、必要に応じて事務所で保管した。"
+  ]
 };
-
+let TEMPLATE_DATA = loadTemplateData();
 let activeTemplateCategory = Object.keys(TEMPLATE_DATA)[0] || '';
+let editingTemplateIndex = -1;
+
+function cloneTemplateData(data){
+  return JSON.parse(JSON.stringify(data || {}));
+}
+function getTemplateText(item){
+  if (item && typeof item === 'object') return String(item.text || '').trim();
+  return String(item || '').trim();
+}
+function getTemplateSavedNote(item){
+  if (item && typeof item === 'object') return String(item.note || '').trim();
+  return '';
+}
+function makeTemplateItem(text, note){
+  const cleanText = normalizeText(text);
+  const cleanNote = normalizeText(note);
+  return cleanNote ? { text: cleanText, note: cleanNote } : cleanText;
+}
+function templateItemEquals(item, text){
+  return getTemplateText(item) === String(text || '').trim();
+}
+function loadTemplateData(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(TEMPLATE_STORAGE_KEY) || 'null');
+    if (saved && typeof saved === 'object') {
+      const merged = cloneTemplateData(DEFAULT_TEMPLATE_DATA);
+      Object.keys(saved).forEach((cat) => {
+        if (LEGACY_TEMPLATE_CATEGORY_NAMES.includes(String(cat || '').trim())) return;
+        if (!Array.isArray(saved[cat])) return;
+        if (!Array.isArray(merged[cat])) merged[cat] = [];
+        const savedItems = saved[cat].map((x) => {
+          if (x && typeof x === 'object') return makeTemplateItem(x.text, x.note);
+          return makeTemplateItem(x, '');
+        }).filter((x) => getTemplateText(x));
+        savedItems.forEach((item) => {
+          if (!merged[cat].some((existing) => templateItemEquals(existing, getTemplateText(item)))) merged[cat].push(item);
+        });
+      });
+      return merged;
+    }
+  } catch(e){}
+  return cloneTemplateData(DEFAULT_TEMPLATE_DATA);
+}
+function saveTemplateData(){
+  localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(TEMPLATE_DATA));
+}
+function setTemplateEditMode(idx){
+  editingTemplateIndex = typeof idx === 'number' ? idx : -1;
+  const isEdit = editingTemplateIndex >= 0;
+  if (templateSaveBtn) templateSaveBtn.textContent = isEdit ? '💾 定型文を修正保存' : '＋ 定型文を追加';
+  if (templateCancelBtn) templateCancelBtn.style.display = isEdit ? 'inline-block' : 'none';
+}
+function clearTemplateEditor(msg){
+  if (templateEditText) templateEditText.value = '';
+  if (templateEditNote) templateEditNote.value = '';
+  setTemplateEditMode(-1);
+  if (templateEditStatus) templateEditStatus.textContent = msg || '';
+}
 
 function appendToMemo(text){
   const current = normalizeText(memoInput.value);
@@ -408,12 +555,39 @@ async function copyTemplateText(text){
   }
 }
 
+function getTemplateNote(category, text){
+  const cat = String(category || '').trim();
+  const t = String(text || '');
+  if (t.includes('A型事業所')) return 'A型通所の利用者用';
+  if (t.includes('B型事業所')) return 'B型通所の利用者用';
+  if (t.includes('お小遣い') || t.includes('小遣い帳')) return 'お小遣い帳・金銭確認がある利用者用';
+  if (t.includes('銀行') || t.includes('通帳')) return '銀行同行・通帳確認がある利用者用';
+  if (t.includes('水分') || t.includes('喫煙') || t.includes('タバコ')) return '水分・喫煙の声かけが必要な利用者用';
+  if (t.includes('パニック') || t.includes('不穏') || t.includes('刺激')) return '精神面が不安定な時の記録用';
+  if (t.includes('洗髪') || t.includes('髪の毛')) return '洗髪・清潔保持の声かけが必要な利用者用';
+  if (t.includes('居室清掃') || t.includes('掃除') || t.includes('洗濯')) return '掃除・洗濯など生活支援用';
+  if (t.includes('受診同行') || t.includes('医師') || t.includes('処方')) return '受診同行・処方確認の記録用';
+  if (t.includes('訪問看護')) return '訪問看護の情報共有用';
+  if (t.includes('血圧') || t.includes('体重') || t.includes('脈拍')) return 'バイタル測定・体調確認用';
+  if (t.includes('服薬') || t.includes('内服') || t.includes('薬')) return '服薬確認・薬管理用';
+  if (t.includes('時間内に朝食') || t.includes('起床')) return '朝の様子・朝食受け取り用';
+  if (cat === '日中支援Ⅰ') return '日中支援Ⅰを算定する日の記録用';
+  if (cat === '日中支援Ⅱ') return '日中支援Ⅱを算定する日の記録用';
+  if (cat === '朝の様子') return '朝の確認・朝食・起床状況用';
+  if (cat === '通所・外出') return '通所、欠席、外出予定の確認用';
+  if (cat === '清潔・掃除') return '清潔保持、入浴、掃除支援用';
+  if (cat === '受診・訪問看護') return '受診同行、訪問看護、医師報告用';
+  if (cat === '金銭・買い物') return '金銭管理、買い物同行用';
+  return '必要な利用者に合わせて編集して使用';
+}
+
 function renderTemplateTabs(){
   const cats = Object.keys(TEMPLATE_DATA);
   templateTabs.innerHTML = cats.map(cat => '<button class="template-tab' + (cat === activeTemplateCategory ? ' active' : '') + '" type="button" data-cat="' + escapeHtml(cat) + '">' + escapeHtml(cat) + '</button>').join('');
   Array.from(templateTabs.querySelectorAll('button')).forEach(btn => {
     btn.addEventListener('click', () => {
       activeTemplateCategory = btn.dataset.cat || cats[0] || '';
+      clearTemplateEditor('');
       renderTemplateTabs();
       renderTemplateList();
     });
@@ -422,34 +596,97 @@ function renderTemplateTabs(){
 
 function renderTemplateList(){
   const items = TEMPLATE_DATA[activeTemplateCategory] || [];
-  templateList.innerHTML = items.map((text, idx) => {
+  if (!items.length) {
+    templateList.innerHTML = '<div class="template-card"><div class="template-text">この分類には定型文がありません。下の入力欄から追加できます。</div></div>';
+    return;
+  }
+  templateList.innerHTML = items.map((item, idx) => {
+    const text = getTemplateText(item);
     const safe = escapeHtml(text);
+    const note = getTemplateSavedNote(item) || getTemplateNote(activeTemplateCategory, text);
+    const noteHtml = note ? '<div class="template-note">メモ：' + escapeHtml(note) + '</div>' : '';
     return '<div class="template-card">' +
       '<div class="template-text">' + safe + '</div>' +
-      '<div class="mini-btns">' +
+      noteHtml +
+      '<div class="template-card-actions">' +
       '<button class="mini-btn primary-lite" type="button" data-action="insert" data-idx="' + idx + '">本文へ入れる</button>' +
       '<button class="mini-btn" type="button" data-action="copy" data-idx="' + idx + '">コピー</button>' +
+      '<button class="mini-btn green-lite" type="button" data-action="edit" data-idx="' + idx + '">✏ 編集</button>' +
+      '<button class="mini-btn danger-lite" type="button" data-action="delete" data-idx="' + idx + '">削除</button>' +
       '</div></div>';
   }).join('');
   Array.from(templateList.querySelectorAll('button')).forEach(btn => {
     btn.addEventListener('click', async () => {
       const idx = Number(btn.dataset.idx || -1);
-      const text = items[idx];
+      const item = items[idx];
+      const text = getTemplateText(item);
       if (!text) return;
       if (btn.dataset.action === 'insert') {
         appendToMemo(text);
         sendStatus.textContent = '定型文を本文へ入れました。';
-      } else {
+      } else if (btn.dataset.action === 'copy') {
         await copyTemplateText(text);
+      } else if (btn.dataset.action === 'edit') {
+        templateEditText.value = text;
+        if (templateEditNote) templateEditNote.value = getTemplateSavedNote(item) || getTemplateNote(activeTemplateCategory, text);
+        setTemplateEditMode(idx);
+        templateEditText.focus();
+        templateEditStatus.textContent = '編集中です。本文とメモを修正して「定型文を修正保存」を押してください。';
+      } else if (btn.dataset.action === 'delete') {
+        const ok = confirm('この定型文を削除しますか？\n\n' + text);
+        if (!ok) return;
+        TEMPLATE_DATA[activeTemplateCategory].splice(idx, 1);
+        saveTemplateData();
+        clearTemplateEditor('定型文を削除しました。');
+        renderTemplateList();
       }
     });
   });
 }
 
-function initTemplates(){
-  if (!templateTabs || !templateList) return;
+function saveTemplateFromEditor(){
+  const text = normalizeText(templateEditText && templateEditText.value);
+  const note = normalizeText(templateEditNote && templateEditNote.value);
+  if (!text) {
+    templateEditStatus.textContent = '定型文の本文を入力してください。';
+    if (templateEditText) templateEditText.focus();
+    return;
+  }
+  if (!TEMPLATE_DATA[activeTemplateCategory]) TEMPLATE_DATA[activeTemplateCategory] = [];
+  if (editingTemplateIndex >= 0) {
+    TEMPLATE_DATA[activeTemplateCategory][editingTemplateIndex] = makeTemplateItem(text, note);
+    saveTemplateData();
+    clearTemplateEditor('定型文を修正保存しました。');
+  } else {
+    TEMPLATE_DATA[activeTemplateCategory].push(makeTemplateItem(text, note));
+    saveTemplateData();
+    clearTemplateEditor('定型文を追加しました。');
+  }
   renderTemplateTabs();
   renderTemplateList();
+}
+
+function resetTemplatesToDefault(){
+  const ok = confirm('定型文を初期状態に戻しますか？\n\n追加・編集した定型文はこの端末から消えます。');
+  if (!ok) return;
+  TEMPLATE_DATA = cloneTemplateData(DEFAULT_TEMPLATE_DATA);
+  saveTemplateData();
+  activeTemplateCategory = Object.keys(TEMPLATE_DATA)[0] || '';
+  clearTemplateEditor('定型文を初期状態に戻しました。');
+  renderTemplateTabs();
+  renderTemplateList();
+}
+
+function initTemplates(){
+  if (!templateTabs || !templateList) return;
+  LEGACY_TEMPLATE_CATEGORY_NAMES.forEach((cat) => { if (TEMPLATE_DATA[cat]) delete TEMPLATE_DATA[cat]; });
+  if (!TEMPLATE_DATA[activeTemplateCategory]) activeTemplateCategory = Object.keys(TEMPLATE_DATA)[0] || '';
+  saveTemplateData();
+  renderTemplateTabs();
+  renderTemplateList();
+  if (templateSaveBtn) templateSaveBtn.addEventListener('click', saveTemplateFromEditor);
+  if (templateCancelBtn) templateCancelBtn.addEventListener('click', () => clearTemplateEditor('定型文の編集をやめました。'));
+  if (templateResetBtn) templateResetBtn.addEventListener('click', resetTemplatesToDefault);
 }
 
 
