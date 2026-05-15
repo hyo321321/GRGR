@@ -180,7 +180,55 @@ async function fetchJson(url){const res=await fetch(url,{cache:'no-store'});cons
 async function postJson(payload){const res=await fetch(WEB_APP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),cache:'no-store'});const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(e){data={ok:false,rawText:text}} if(!res.ok||data.ok===false)throw new Error(data.message||data.error||data.rawText||('HTTP '+res.status));return data}
 async function loadShared(silent){if(!silent)showStatus('共有読込中です...');try{const data=await fetchJson(WEB_APP_URL+'?action=getSharedNotice&noticeKey='+encodeURIComponent(NOTICE_KEY));const text=String(data.text||'').trim(); if(!text){if(!silent)showStatus('共有データはまだありません。');return} const parsed=JSON.parse(text); appointments=normalizeAppointments(parsed.appointments||parsed); saveLocal(); renderAll(); if(!silent)showStatus('共有データを読み込みました。')}catch(err){if(!silent)showStatus('共有読込に失敗しました。\n'+(err&&err.message?err.message:err))}}
 async function saveShared(){showStatus('共有保存中です...');$('saveShareBtn').disabled=true;try{await postJson({action:'saveSharedNotice',noticeKey:NOTICE_KEY,text:JSON.stringify({appointments:normalizeAppointments(appointments),updatedAt:new Date().toISOString()})});showStatus('共有保存しました。他の端末にも反映できます。')}catch(err){showStatus('共有保存に失敗しました。\n'+(err&&err.message?err.message:err))}finally{$('saveShareBtn').disabled=false}}
-function addAppointment(){const date=$('aDate').value||todayYmd();const resident=$('aResident').value;const type=$('aType').value;const item={id:makeId(),date,time:$('aTime').value,resident,type,place:$('aPlace').value.trim(),escort:$('aEscort').value,prescriptionDays:normalizePrescriptionDays($('aPrescriptionDays').value),memo:normalizeText($('aMemo').value),done:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; if(!item.date){showStatus('日付を入力してください。');return} if(!item.resident){showStatus('利用者を選んでください。');return} if(!item.place&&!item.memo&&!item.prescriptionDays){if(!confirm('病院名・内容が空ですが追加しますか？'))return} appointments.push(item);appointments=normalizeAppointments(appointments);saveLocal();clearInput(false);renderAll();showStatus('予定を追加しました。全員に反映する場合は「💾 共有保存」を押してください。')}
+function addAppointment(){
+  const date=$('aDate').value||todayYmd();
+  const resident=$('aResident').value;
+  const type=$('aType').value;
+  const item={
+    id:makeId(),
+    date,
+    time:$('aTime').value,
+    resident,
+    type,
+    place:$('aPlace').value.trim(),
+    escort:$('aEscort').value,
+    prescriptionDays:normalizePrescriptionDays($('aPrescriptionDays').value),
+    memo:normalizeText($('aMemo').value),
+    done:false,
+    createdAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+  if(!item.date){showStatus('日付を入力してください。');return}
+  if(!item.resident){showStatus('利用者を選んでください。');return}
+
+  const med=item.prescriptionDays?medicationInfoFrom(item.date,item.prescriptionDays):null;
+  const confirmLines=[
+    'この内容で予定を追加しますか？',
+    '',
+    '日付：'+formatDate(item.date),
+    '時間：'+(item.time||'未入力'),
+    '利用者：'+item.resident,
+    '種別：'+item.type,
+    '病院名：'+(item.place||'未入力'),
+    '同行：'+(item.escort||'未定')
+  ];
+  if(item.prescriptionDays){
+    confirmLines.push('処方日数：'+item.prescriptionDays+'日分');
+    if(med) confirmLines.push('次回：'+formatYmdSlash(med.visitFrom)+'〜'+formatYmdSlash(med.visitTo)+'ごろ');
+  }
+  if(item.memo) confirmLines.push('メモ：'+item.memo);
+  if(!item.place&&!item.memo&&!item.prescriptionDays){
+    confirmLines.push('', '※病院名・内容が空です。');
+  }
+  if(!confirm(confirmLines.join('\n'))) return;
+
+  appointments.push(item);
+  appointments=normalizeAppointments(appointments);
+  saveLocal();
+  clearInput(false);
+  renderAll();
+  showStatus('予定を追加しました。全員に反映する場合は「💾 共有保存」を押してください。')
+}
 function clearInput(clearDate){if(clearDate)$('aDate').value=todayYmd();$('aTime').value='';$('aPlace').value='';$('aEscort').value='未定';$('aMemo').value='';$('aPrescriptionDays').value='';updateMedicationPreview('a');$('aType').value='受診'}
 function statusClass(a){const t=todayYmd(); if(a.done||a.date<t)return 'done'; if(a.date===t)return 'today'; return 'pending'}
 function statusPill(a){const t=todayYmd(); if(a.done||a.date<t)return '<span class="pill done">受診済み</span>'; if(a.date===t)return '<span class="pill today">今日</span> <span class="pill pending">未受診</span>'; return '<span class="pill pending">未受診</span>'}
