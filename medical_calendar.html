@@ -101,9 +101,9 @@
       </div>
       <div class="grid2">
         <div><label>処方日数（任意）</label><input id="aPrescriptionDays" type="number" min="0" step="1" inputmode="numeric" placeholder="例：35"></div>
-        <div><label>薬切れ・受診目安</label><input id="aMedicationPreview" type="text" placeholder="処方日数を入れると自動表示" readonly></div>
+        <div><label>薬切れ・次回目安</label><input id="aMedicationPreview" type="text" placeholder="処方日数を入れると自動表示" readonly></div>
       </div>
-      <div class="hint" style="margin-top:4px;">「薬がなくなりそうなタイミングで来てください」の時は、処方日数だけ入れると薬切れ日と受診目安を自動表示します。</div>
+      <div class="hint" style="margin-top:4px;">「薬がなくなりそうなタイミングで来てください」の時は、処方日数だけ入れると薬切れ日と次回目安を自動表示します。</div>
       <label>内容・メモ</label>
       <textarea id="aMemo" placeholder="例：薬変更確認、血圧手帳持参、次回予約など"></textarea>
       <div class="btn-row">
@@ -131,7 +131,7 @@
       </div>
       <div class="grid2">
         <div><label>処方日数（任意）</label><input id="ePrescriptionDays" type="number" min="0" step="1" inputmode="numeric" placeholder="例：35"></div>
-        <div><label>薬切れ・受診目安</label><input id="eMedicationPreview" type="text" readonly></div>
+        <div><label>薬切れ・次回目安</label><input id="eMedicationPreview" type="text" readonly></div>
       </div>
       <label>内容・メモ</label><textarea id="eMemo"></textarea>
       <div class="btn-row">
@@ -165,7 +165,7 @@ function addDaysYmd(dateStr, days){const parts=String(dateStr||'').split('-').ma
 function formatYmdSlash(dateStr){const p=String(dateStr||'').split('-');return p.length===3?`${Number(p[1])}/${Number(p[2])}`:''}
 function normalizePrescriptionDays(v){const n=parseInt(String(v||'').trim(),10);return Number.isFinite(n)&&n>0?n:''}
 function medicationInfoFrom(dateStr, days){const d=normalizePrescriptionDays(days);if(!dateStr||!d)return null;const end=addDaysYmd(dateStr,d);const from=addDaysYmd(end,-7);const to=addDaysYmd(end,-1);return {days:d,endDate:end,visitFrom:from,visitTo:to}}
-function medicationPreviewText(dateStr, days){const info=medicationInfoFrom(dateStr,days);if(!info)return '';return `処方${info.days}日分 ／ 薬切れ目安 ${formatYmdSlash(info.endDate)} ／ 受診目安 ${formatYmdSlash(info.visitFrom)}〜${formatYmdSlash(info.visitTo)}`}
+function medicationPreviewText(dateStr, days){const info=medicationInfoFrom(dateStr,days);if(!info)return '';return `処方${info.days}日分 ／ 薬切れ目安 ${formatYmdSlash(info.endDate)} ／ 次回 ${formatYmdSlash(info.visitFrom)}〜${formatYmdSlash(info.visitTo)}`}
 function updateMedicationPreview(prefix){const dateEl=$(prefix+'Date');const daysEl=$(prefix+'PrescriptionDays');const previewEl=$(prefix+'MedicationPreview');if(!dateEl||!daysEl||!previewEl)return;previewEl.value=medicationPreviewText(dateEl.value,daysEl.value)}
 function unlockApp(){ $('authScreen').style.display='none'; $('appRoot').classList.remove('app-hidden') }
 function tryUnlock(){const pw=String($('sitePassword').value||'').trim(); if(pw!==SITE_PASSWORD){$('authError').textContent='パスワードが違います。';$('sitePassword').value='';$('sitePassword').focus();return} sessionStorage.setItem(AUTH_KEY,'1');$('authError').textContent='';unlockApp()}
@@ -185,7 +185,7 @@ function clearInput(clearDate){if(clearDate)$('aDate').value=todayYmd();$('aTime
 function statusClass(a){const t=todayYmd(); if(a.done||a.date<t)return 'done'; if(a.date===t)return 'today'; return ''}
 function statusPill(a){if(a.done||a.date<todayYmd())return '<span class="pill done">受診済み</span>'; if(a.date===todayYmd())return '<span class="pill today">今日</span>'; return ''}
 function formatDate(date){const p=String(date||'').split('-').map(Number); if(p.length!==3)return date||''; const w=['日','月','火','水','木','金','土'][new Date(p[0],p[1]-1,p[2]).getDay()]; return `${p[0]}/${String(p[1]).padStart(2,'0')}/${String(p[2]).padStart(2,'0')}（${w}）`}
-function apptHtml(a){const time=a.time?escapeHtml(a.time):'時間未定';const cls=statusClass(a);const med=medicationInfoFrom(a.date,a.prescriptionDays);const medHtml=med?`<div class="med-info"><b>薬の目安</b>：処方${escapeHtml(med.days)}日分<br>薬切れ目安：${escapeHtml(formatDate(med.endDate))}<br>受診おすすめ：${escapeHtml(formatYmdSlash(med.visitFrom))}〜${escapeHtml(formatYmdSlash(med.visitTo))}ごろ<div class="med-small">※薬がなくなりそうなタイミングで受診する時の目安です。</div></div>`:'';return `<div class="appt ${cls}"><div class="appt-head"><div><div class="appt-title">${statusPill(a)} ${escapeHtml(formatDate(a.date))} ${time}　${escapeHtml(a.resident)}</div><div class="appt-meta">${escapeHtml(a.type)} ／ ${escapeHtml(a.place||'場所未入力')} ／ ${escapeHtml(a.escort||'未定')}</div></div></div>${medHtml}${a.memo?`<div class="appt-memo">${escapeHtml(a.memo)}</div>`:''}</div>`}
+function apptHtml(a){const time=a.time?escapeHtml(a.time):'時間未定';const cls=statusClass(a);const med=medicationInfoFrom(a.date,a.prescriptionDays);const medHtml=med?`<div class="med-info"><b>薬の目安</b>：処方${escapeHtml(med.days)}日分<br>薬切れ目安：${escapeHtml(formatDate(med.endDate))}<br>次回：${escapeHtml(formatYmdSlash(med.visitFrom))}〜${escapeHtml(formatYmdSlash(med.visitTo))}ごろ<div class="med-small">※薬がなくなりそうなタイミングで次回受診する時の目安です。</div></div>`:'';return `<div class="appt ${cls}"><div class="appt-head"><div><div class="appt-title">${statusPill(a)} ${escapeHtml(formatDate(a.date))} ${time}　${escapeHtml(a.resident)}</div><div class="appt-meta">${escapeHtml(a.type)} ／ ${escapeHtml(a.place||'場所未入力')} ／ ${escapeHtml(a.escort||'未定')}</div></div></div>${medHtml}${a.memo?`<div class="appt-memo">${escapeHtml(a.memo)}</div>`:''}</div>`}
 function filteredAppointments(){const mode=$('filterMode').value;const resident=$('filterResident').value;const q=String($('searchText').value||'').trim().toLowerCase();const today=todayYmd();return normalizeAppointments(appointments).filter(a=>{if(resident&&a.resident!==resident)return false; if(mode==='future'&&a.date<today&&!a.done)return false; if(mode==='future'&&a.done)return false; if(mode==='month'&&monthYmd(a.date)!==monthCursor)return false; if(mode==='done'&&!(a.done||a.date<today))return false; if(q){const hay=[a.date,a.time,a.resident,a.type,a.place,a.escort,a.prescriptionDays,a.memo].join('\n').toLowerCase(); if(!hay.includes(q))return false} return true})}
 function renderList(){const list=filteredAppointments();$('countLabel').textContent=list.length+'件';$('apptList').innerHTML=list.length?list.map(apptHtml).join(''):'<div class="hint">表示する予定はありません。</div>'; bindListButtons()}
 function bindListButtons(){document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openEdit(b.dataset.edit));document.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>toggleDone(b.dataset.done));document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteAppointment(b.dataset.del))}
