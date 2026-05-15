@@ -814,6 +814,8 @@
 </select>
 <label style="margin:0; font-size:12px;">血圧が高い日だけ</label>
 <input id="highOnlyToggle" type="checkbox" style="width:auto;">
+<label style="margin:0; font-size:12px;">体重＋1kg以上の日だけ</label>
+<input id="weightUp1kgToggle" type="checkbox" style="width:auto;">
 </div>
 <input id="search" placeholder="検索（メモ/数値）" style="width: 180px;" type="text"/>
 </div>
@@ -1985,6 +1987,13 @@
       return isAutoHighBp(v.bpSys, v.bpDia);
     }
 
+    function matchesWeightPlus1kg(v, diffMap) {
+      const weightPlusOnly = $('weightUp1kgToggle') ? $('weightUp1kgToggle').checked : false;
+      if (!weightPlusOnly) return true;
+      const diff = getWeightDiffForRecord(v, diffMap);
+      return diff != null && diff >= 1;
+    }
+
     function renderSummaryTable(listEl, filtered, mode) {
       const groups = new Map();
       filtered.forEach(v => {
@@ -2188,6 +2197,7 @@
       const summaryMode = $('summaryMode') ? $('summaryMode').value : 'list';
       const weekdayFilter = $('weekdayFilter') ? $('weekdayFilter').value : 'all';
       const monthFilter = $('monthFilter') ? $('monthFilter').value : 'all';
+      const weightDiffMapForFilter = buildResidentDailyWeightDiffMap(all);
 
       const filtered = all
         .slice()
@@ -2198,6 +2208,7 @@
           if (weekdayFilter !== 'all' && getWeekdayFromISO(v) !== weekdayFilter) return false;
           if (monthFilter !== 'all' && monthKeyFromISO(v) !== monthFilter) return false;
           if (!matchesHighThresholds(v)) return false;
+          if (!matchesWeightPlus1kg(v, weightDiffMapForFilter)) return false;
           if (q) {
             const hay = [
               v.resident, v.recorder, v.memo,
@@ -2212,10 +2223,15 @@
       selectedVitalIds = new Set(Array.from(selectedVitalIds).filter(id => visibleIds.includes(id)));
 
       const highOnlyOn = $('highOnlyToggle') && $('highOnlyToggle').checked;
+      const weightPlusOnlyOn = $('weightUp1kgToggle') && $('weightUp1kgToggle').checked;
+      const filterNotes = [];
+      if (highOnlyOn) filterNotes.push('血圧高め');
+      if (weightPlusOnlyOn) filterNotes.push('体重＋1kg以上');
+      const filterNoteText = filterNotes.length ? '（' + filterNotes.join('・') + '抽出）' : '';
       const listRangeText = getListMonthRangeLabel();
       $('countLabel').textContent = summaryMode === 'list'
-        ? `${filtered.length}件${listRangeText ? ' / ' + listRangeText : ''}${highOnlyOn ? '（高い日抽出）' : ''}`
-        : `${filtered.length}件を集計${listRangeText ? ' / ' + listRangeText : ''}${highOnlyOn ? '（高い日抽出）' : ''}`;
+        ? `${filtered.length}件${listRangeText ? ' / ' + listRangeText : ''}${filterNoteText}`
+        : `${filtered.length}件を集計${listRangeText ? ' / ' + listRangeText : ''}${filterNoteText}`;
       listEl.innerHTML = '';
 
       renderCharts();
@@ -2236,7 +2252,7 @@
           <span class="avg-item">体重 ${avgWeight != null ? `${avgWeight}kg` : '―'}</span>
           <span class="avg-item">脈拍 ${avgPulse != null ? avgPulse : '―'}</span>
         </div>
-        <div class="avg-legend">体重：前日比で増加は赤、減少は青 ／ 血圧：上135以上・下85以上は赤</div>
+        <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上135以上・下85以上は赤</div>
       `;
       listEl.appendChild(avgBox);
 
@@ -2858,6 +2874,7 @@
       if ($('printMonthFrom')) $('printMonthFrom').onchange = () => { applyPrintRangeVisibility(); renderCharts(); };
       if ($('printMonthTo')) $('printMonthTo').onchange = () => { applyPrintRangeVisibility(); renderCharts(); };
       if ($('highOnlyToggle')) $('highOnlyToggle').onchange = renderList;
+      if ($('weightUp1kgToggle')) $('weightUp1kgToggle').onchange = renderList;
       $('search').oninput = renderList;
 
       $('syncRemoteBtn').onclick = async () => { try { await syncRemoteVitals(); renderList(); } catch(e){ console.warn(e); setRemoteStatus('共有読込に失敗しました'); toast('共有読込に失敗しました'); } };
