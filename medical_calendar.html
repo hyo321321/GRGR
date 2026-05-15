@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>受診カレンダー</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--primary:#2563eb;--green:#16a34a;--orange:#ea580c;--red:#dc2626;--ghost:#64748b;--blueBg:#eff6ff;--redBg:#fff1f2;--greenBg:#ecfdf5;--orangeBg:#fff7ed}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px}
+  .topbar{position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);z-index:10}
+  .topbar-inner{max-width:980px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .title{font-size:21px;font-weight:900}.sub{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
+  a{color:#2563eb;text-decoration:none;font-weight:800}.wrap{max-width:980px;margin:12px auto 28px;padding:0 10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(2,6,23,.04)}
+  .card-title{font-size:18px;font-weight:900;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  label{display:block;font-size:13px;color:#475569;font-weight:800;margin:8px 0 4px}
+  input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}textarea{min-height:82px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btn{border:0;border-radius:12px;padding:10px 12px;color:#fff;font-weight:900;cursor:pointer}.primary{background:var(--primary)}.green{background:var(--green)}.orange{background:var(--orange)}.red{background:var(--red)}.ghost{background:var(--ghost)}.light{background:#fff;color:#111827;border:1px solid #cfd5df}.btn:disabled{opacity:.6;cursor:not-allowed}
+  .status{white-space:pre-wrap;font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}.hint{font-size:12px;color:var(--muted);line-height:1.55}.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:900;border:1px solid var(--line);background:#f8fafc;color:#334155}.pill.done{background:#dcfce7;color:#166534;border-color:#86efac}.pill.today{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}.pill.overdue{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+  .tools{display:flex;align-items:end;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}.tools-left,.tools-right{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.tools select,.tools input{width:auto;min-width:130px}
+  .appt-list{display:grid;gap:8px}.appt{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px}.appt.done{background:#f8fafc;opacity:.86}.appt.overdue{border-color:#fecaca;background:#fff7f7}.appt.today{border-color:#bfdbfe;background:#eff6ff}.appt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}.appt-title{font-weight:900;font-size:16px}.appt-meta{font-size:13px;color:#475569;line-height:1.6;margin-top:4px}.appt-memo{white-space:pre-wrap;margin-top:8px;line-height:1.6;font-size:14px}.med-info{margin-top:8px;padding:8px 10px;border:1px solid #bbf7d0;background:#ecfdf5;border-radius:12px;color:#14532d;font-size:13px;line-height:1.55}.med-info b{color:#166534}.med-small{font-size:12px;color:#166534;margin-top:2px}.appt-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.mini{padding:7px 9px;border-radius:10px;font-size:12px}.mini.light{color:#111827}.mini.doneBtn{background:#ecfdf5;color:#047857;border:1px solid #bbf7d0}.mini.undoBtn{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}.mini.deleteBtn{background:#fff1f2;color:#be123c;border:1px solid #fecaca}
+  .calendar-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.calendar-nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.calendar-title{font-size:16px;font-weight:900}.weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.weekdays div{text-align:center;font-size:12px;color:var(--muted);font-weight:800;padding:4px 0}.day{min-height:96px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px;overflow:visible}.day.muted{background:#f8fafc;color:#94a3b8}.day.today{outline:2px solid #2563eb}.day.sun,.day.holiday{background:#fff1f2}.day.sat{background:#eff6ff}.day-num{font-weight:900;font-size:13px}.day-events{display:grid;gap:3px;margin-top:4px}.day-event{font-size:10px;border-radius:6px;padding:3px 4px;line-height:1.25;background:#e0f2fe;color:#075985;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word;overflow-wrap:anywhere;min-height:2.4em}.day-event.done{text-decoration:line-through;opacity:.65;background:#dcfce7;color:#166534}.holiday-name{font-size:9px;color:#be123c;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:14px;z-index:30}.modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;border:1px solid var(--line);box-shadow:0 18px 55px rgba(2,6,23,.25);padding:14px}.modal-bg.show{display:flex}
+  .auth-screen{position:fixed;inset:0;background:rgba(246,247,251,.98);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999}.auth-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)}.auth-title{font-size:20px;font-weight:900;margin-bottom:8px}.auth-error{color:#dc2626;font-size:13px;margin-top:8px;min-height:1.3em}.app-hidden{display:none}
+  @media(max-width:720px){.grid2,.grid3,.grid4{grid-template-columns:1fr}.tools select,.tools input{width:100%;min-width:0}.tools-left,.tools-right{width:100%}.day{min-height:92px;padding:4px}.day-event{font-size:9px;line-height:1.25;min-height:2.4em}.topbar-inner{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-title">パスワード入力</div>
+    <div class="hint">正しいパスワードを入力すると、受診カレンダーを開けます。</div>
+    <label for="sitePassword">パスワード</label>
+    <input id="sitePassword" type="password" placeholder="パスワードを入力">
+    <button id="unlockBtn" class="btn primary" type="button" style="width:100%;margin-top:12px;">開く</button>
+    <div id="authError" class="auth-error"></div>
+  </div>
+</div>
+<div id="appRoot" class="app-hidden">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="title">🏥 受診カレンダー</div>
+        <div class="sub">受診予定・訪問看護・次回予約を共有して確認できます。</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
+        <button id="reloadBtn" class="btn light" type="button">☁ 共有読込</button>
+        <button id="saveShareBtn" class="btn green" type="button">💾 共有保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="card-title"><span>予定を追加</span><span class="hint">保存後、共有保存すると他端末にも反映されます。</span></div>
+      <div class="grid4">
+        <div><label>日付</label><input id="aDate" type="date"></div>
+        <div><label>時間</label><input id="aTime" type="time"></div>
+        <div><label>利用者</label><select id="aResident"></select></div>
+        <div><label>種別</label><select id="aType"><option>受診</option><option>訪問看護</option><option>薬受け取り</option><option>検査</option><option>その他</option></select></div>
+      </div>
+      <div class="grid2">
+        <div><label>病院名・場所</label><input id="aPlace" placeholder="例：小池神経科 / よしだ泌尿器科"></div>
+        <div><label>同行</label><select id="aEscort"><option value="未定">未定</option><option value="同行あり">同行あり</option><option value="同行なし">同行なし</option><option value="訪問">訪問</option></select></div>
+      </div>
+      <div class="grid2">
+        <div><label>処方日数（任意）</label><input id="aPrescriptionDays" type="number" min="0" step="1" inputmode="numeric" placeholder="例：35"></div>
+        <div><label>薬切れ・受診目安</label><input id="aMedicationPreview" type="text" placeholder="処方日数を入れると自動表示" readonly></div>
+      </div>
+      <div class="hint" style="margin-top:4px;">「薬がなくなりそうなタイミングで来てください」の時は、処方日数だけ入れると薬切れ日と受診目安を自動表示します。</div>
+      <label>内容・メモ</label>
+      <textarea id="aMemo" placeholder="例：薬変更確認、血圧手帳持参、次回予約など"></textarea>
+      <div class="btn-row">
+        <button id="addBtn" class="btn primary" type="button">＋ 予定を追加</button>
+        <button id="clearInputBtn" class="btn light" type="button">入力クリア</button>
+      </div>
+      <div id="mainStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>今後の予定一覧</span><span id="countLabel" class="hint"></span></div>
+      <div class="tools">
+        <div class="tools-left">
+          <div><label>表示</label><select id="filterMode"><option value="future">今日以降</option><option value="month">表示月</option><option value="all">全期間</option><option value="done">完了のみ</option></select></div>
+          <div><label>利用者</label><select id="filterResident"></select></div>
+          <div><label>検索</label><input id="searchText" type="text" placeholder="病院名・メモなど"></div>
+        </div>
+        <div class="tools-right">
+          <button id="clearDoneBtn" class="btn light" type="button">表示を更新</button>
+        </div>
+      </div>
+      <div id="apptList" class="appt-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="calendar-head">
+        <div class="calendar-title" id="calendarTitle"></div>
+        <div class="calendar-nav">
+          <button id="prevMonthBtn" class="btn light mini" type="button">前の月</button>
+          <button id="todayMonthBtn" class="btn light mini" type="button">今月</button>
+          <button id="nextMonthBtn" class="btn light mini" type="button">次の月</button>
+        </div>
+      </div>
+      <div class="hint" style="margin-bottom:8px;">カレンダー内の予定を押すと内容を確認・編集できます。土曜は青、日曜・祝日は赤で表示します。</div>
+      <div class="weekdays"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </div>
+  </div>
+
+  <div id="modalBg" class="modal-bg">
+    <div class="modal">
+      <div class="card-title"><span>予定の編集</span><button id="closeModalBtn" class="btn light mini" type="button">閉じる</button></div>
+      <input id="eId" type="hidden">
+      <div class="grid4">
+        <div><label>日付</label><input id="eDate" type="date"></div>
+        <div><label>時間</label><input id="eTime" type="time"></div>
+        <div><label>利用者</label><select id="eResident"></select></div>
+        <div><label>種別</label><select id="eType"><option>受診</option><option>訪問看護</option><option>薬受け取り</option><option>検査</option><option>その他</option></select></div>
+      </div>
+      <div class="grid2">
+        <div><label>病院名・場所</label><input id="ePlace"></div>
+        <div><label>同行</label><select id="eEscort"><option value="未定">未定</option><option value="同行あり">同行あり</option><option value="同行なし">同行なし</option><option value="訪問">訪問</option></select></div>
+      </div>
+      <div class="grid2">
+        <div><label>処方日数（任意）</label><input id="ePrescriptionDays" type="number" min="0" step="1" inputmode="numeric" placeholder="例：35"></div>
+        <div><label>薬切れ・受診目安</label><input id="eMedicationPreview" type="text" readonly></div>
+      </div>
+      <label>内容・メモ</label><textarea id="eMemo"></textarea>
+      <div class="btn-row">
+        <button id="saveEditBtn" class="btn primary" type="button">💾 更新</button>
+        <button id="toggleDoneBtn" class="btn orange" type="button">完了にする</button>
+        <button id="deleteBtn" class="btn red" type="button">削除</button>
+      </div>
+      <div class="hint" style="margin-top:8px;">編集後は必要に応じて「💾 共有保存」を押すと他端末にも反映されます。</div>
+    </div>
+  </div>
+</div>
+<script>
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
+const SITE_PASSWORD = '1122';
+const AUTH_KEY = 'easy_page_auth_ok';
+const NOTICE_KEY = 'medical_calendar_v1';
+const LOCAL_KEY = 'medical_calendar_local_v1';
+const RESIDENTS_KEY = 'group_home_residents_v1';
+const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
+const $ = id => document.getElementById(id);
+let appointments = [];
+let monthCursor = '';
+function todayYmd(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function monthYmd(s){return String(s||todayYmd()).slice(0,7)}
+function escapeHtml(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function normalizeText(t){return String(t||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n{3,}/g,'\n\n').trim()}
+function makeId(){try{if(crypto&&crypto.randomUUID)return crypto.randomUUID()}catch(e){} return 'med-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)}
+function showStatus(msg){$('mainStatus').textContent=msg||''}
+function pad2(n){return String(n).padStart(2,'0')}
+function addDaysYmd(dateStr, days){const parts=String(dateStr||'').split('-').map(Number);if(parts.length!==3||parts.some(n=>!Number.isFinite(n)))return '';const d=new Date(parts[0],parts[1]-1,parts[2]);d.setDate(d.getDate()+Number(days||0));return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())}
+function formatYmdSlash(dateStr){const p=String(dateStr||'').split('-');return p.length===3?`${Number(p[1])}/${Number(p[2])}`:''}
+function normalizePrescriptionDays(v){const n=parseInt(String(v||'').trim(),10);return Number.isFinite(n)&&n>0?n:''}
+function medicationInfoFrom(dateStr, days){const d=normalizePrescriptionDays(days);if(!dateStr||!d)return null;const end=addDaysYmd(dateStr,d);const from=addDaysYmd(end,-7);const to=addDaysYmd(end,-1);return {days:d,endDate:end,visitFrom:from,visitTo:to}}
+function medicationPreviewText(dateStr, days){const info=medicationInfoFrom(dateStr,days);if(!info)return '';return `処方${info.days}日分 ／ 薬切れ目安 ${formatYmdSlash(info.endDate)} ／ 受診目安 ${formatYmdSlash(info.visitFrom)}〜${formatYmdSlash(info.visitTo)}`}
+function updateMedicationPreview(prefix){const dateEl=$(prefix+'Date');const daysEl=$(prefix+'PrescriptionDays');const previewEl=$(prefix+'MedicationPreview');if(!dateEl||!daysEl||!previewEl)return;previewEl.value=medicationPreviewText(dateEl.value,daysEl.value)}
+function unlockApp(){ $('authScreen').style.display='none'; $('appRoot').classList.remove('app-hidden') }
+function tryUnlock(){const pw=String($('sitePassword').value||'').trim(); if(pw!==SITE_PASSWORD){$('authError').textContent='パスワードが違います。';$('sitePassword').value='';$('sitePassword').focus();return} sessionStorage.setItem(AUTH_KEY,'1');$('authError').textContent='';unlockApp()}
+function initAuth(){if(sessionStorage.getItem(AUTH_KEY)==='1'){unlockApp();return} $('authScreen').style.display='flex';$('appRoot').classList.add('app-hidden')}
+function loadJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(e){return fallback}}
+function saveLocal(){localStorage.setItem(LOCAL_KEY,JSON.stringify(appointments))}
+function getResidents(){const arr=loadJson(RESIDENTS_KEY,DEFAULT_RESIDENTS); return Array.isArray(arr)&&arr.length?arr:DEFAULT_RESIDENTS}
+function fillResidentSelect(sel, allowAll){sel.innerHTML=''; if(allowAll){const o=document.createElement('option');o.value='';o.textContent='全員';sel.appendChild(o)} getResidents().forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o)})}
+function normalizeAppointments(list){const out=[];(Array.isArray(list)?list:[]).forEach(x=>{if(!x||typeof x!=='object')return; const date=String(x.date||'').trim(); const resident=String(x.resident||'').trim(); if(!date||!resident)return; out.push({id:String(x.id||'').trim()||makeId(),date,time:String(x.time||'').trim(),resident,type:String(x.type||'受診').trim()||'受診',place:String(x.place||'').trim(),escort:String(x.escort||'未定').trim()||'未定',prescriptionDays:normalizePrescriptionDays(x.prescriptionDays||x.prescription_days||''),memo:normalizeText(x.memo||''),done:!!x.done,createdAt:String(x.createdAt||new Date().toISOString()),updatedAt:String(x.updatedAt||'')})}); return out.sort((a,b)=>(a.date+' '+(a.time||'99:99')).localeCompare(b.date+' '+(b.time||'99:99')))}
+function loadLocal(){appointments=normalizeAppointments(loadJson(LOCAL_KEY,[]));}
+async function fetchJson(url){const res=await fetch(url,{cache:'no-store'});const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(e){data={ok:false,rawText:text}} if(!res.ok||data.ok===false)throw new Error(data.message||data.error||data.rawText||('HTTP '+res.status));return data}
+async function postJson(payload){const res=await fetch(WEB_APP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),cache:'no-store'});const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(e){data={ok:false,rawText:text}} if(!res.ok||data.ok===false)throw new Error(data.message||data.error||data.rawText||('HTTP '+res.status));return data}
+async function loadShared(silent){if(!silent)showStatus('共有読込中です...');try{const data=await fetchJson(WEB_APP_URL+'?action=getSharedNotice&noticeKey='+encodeURIComponent(NOTICE_KEY));const text=String(data.text||'').trim(); if(!text){if(!silent)showStatus('共有データはまだありません。');return} const parsed=JSON.parse(text); appointments=normalizeAppointments(parsed.appointments||parsed); saveLocal(); renderAll(); if(!silent)showStatus('共有データを読み込みました。')}catch(err){if(!silent)showStatus('共有読込に失敗しました。\n'+(err&&err.message?err.message:err))}}
+async function saveShared(){showStatus('共有保存中です...');$('saveShareBtn').disabled=true;try{await postJson({action:'saveSharedNotice',noticeKey:NOTICE_KEY,text:JSON.stringify({appointments:normalizeAppointments(appointments),updatedAt:new Date().toISOString()})});showStatus('共有保存しました。他の端末にも反映できます。')}catch(err){showStatus('共有保存に失敗しました。\n'+(err&&err.message?err.message:err))}finally{$('saveShareBtn').disabled=false}}
+function addAppointment(){const date=$('aDate').value||todayYmd();const resident=$('aResident').value;const type=$('aType').value;const item={id:makeId(),date,time:$('aTime').value,resident,type,place:$('aPlace').value.trim(),escort:$('aEscort').value,prescriptionDays:normalizePrescriptionDays($('aPrescriptionDays').value),memo:normalizeText($('aMemo').value),done:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; if(!item.date){showStatus('日付を入力してください。');return} if(!item.resident){showStatus('利用者を選んでください。');return} if(!item.place&&!item.memo&&!item.prescriptionDays){if(!confirm('病院名・内容が空ですが追加しますか？'))return} appointments.push(item);appointments=normalizeAppointments(appointments);saveLocal();clearInput(false);renderAll();showStatus('予定を追加しました。全員に反映する場合は「💾 共有保存」を押してください。')}
+function clearInput(clearDate){if(clearDate)$('aDate').value=todayYmd();$('aTime').value='';$('aPlace').value='';$('aEscort').value='未定';$('aMemo').value='';$('aPrescriptionDays').value='';updateMedicationPreview('a');$('aType').value='受診'}
+function statusClass(a){const t=todayYmd(); if(a.done)return 'done'; if(a.date<t)return 'overdue'; if(a.date===t)return 'today'; return ''}
+function statusPill(a){if(a.done)return '<span class="pill done">完了</span>'; if(a.date<todayYmd())return '<span class="pill overdue">期限過ぎ</span>'; if(a.date===todayYmd())return '<span class="pill today">今日</span>'; return ''}
+function formatDate(date){const p=String(date||'').split('-').map(Number); if(p.length!==3)return date||''; const w=['日','月','火','水','木','金','土'][new Date(p[0],p[1]-1,p[2]).getDay()]; return `${p[0]}/${String(p[1]).padStart(2,'0')}/${String(p[2]).padStart(2,'0')}（${w}）`}
+function apptHtml(a){const time=a.time?escapeHtml(a.time):'時間未定';const cls=statusClass(a);const med=medicationInfoFrom(a.date,a.prescriptionDays);const medHtml=med?`<div class="med-info"><b>薬の目安</b>：処方${escapeHtml(med.days)}日分<br>薬切れ目安：${escapeHtml(formatDate(med.endDate))}<br>受診おすすめ：${escapeHtml(formatYmdSlash(med.visitFrom))}〜${escapeHtml(formatYmdSlash(med.visitTo))}ごろ<div class="med-small">※薬がなくなりそうなタイミングで受診する時の目安です。</div></div>`:'';return `<div class="appt ${cls}"><div class="appt-head"><div><div class="appt-title">${statusPill(a)} ${escapeHtml(formatDate(a.date))} ${time}　${escapeHtml(a.resident)}</div><div class="appt-meta">${escapeHtml(a.type)} ／ ${escapeHtml(a.place||'場所未入力')} ／ ${escapeHtml(a.escort||'未定')}</div></div></div>${medHtml}${a.memo?`<div class="appt-memo">${escapeHtml(a.memo)}</div>`:''}<div class="appt-actions"><button class="btn mini light" type="button" data-edit="${escapeHtml(a.id)}">編集</button><button class="btn mini ${a.done?'undoBtn':'doneBtn'}" type="button" data-done="${escapeHtml(a.id)}">${a.done?'未完了に戻す':'完了'}</button><button class="btn mini deleteBtn" type="button" data-del="${escapeHtml(a.id)}">削除</button></div></div>`}
+function filteredAppointments(){const mode=$('filterMode').value;const resident=$('filterResident').value;const q=String($('searchText').value||'').trim().toLowerCase();const today=todayYmd();return normalizeAppointments(appointments).filter(a=>{if(resident&&a.resident!==resident)return false; if(mode==='future'&&a.date<today&&!a.done)return false; if(mode==='future'&&a.done)return false; if(mode==='month'&&monthYmd(a.date)!==monthCursor)return false; if(mode==='done'&&!a.done)return false; if(q){const hay=[a.date,a.time,a.resident,a.type,a.place,a.escort,a.prescriptionDays,a.memo].join('\n').toLowerCase(); if(!hay.includes(q))return false} return true})}
+function renderList(){const list=filteredAppointments();$('countLabel').textContent=list.length+'件';$('apptList').innerHTML=list.length?list.map(apptHtml).join(''):'<div class="hint">表示する予定はありません。</div>'; bindListButtons()}
+function bindListButtons(){document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openEdit(b.dataset.edit));document.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>toggleDone(b.dataset.done));document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteAppointment(b.dataset.del))}
+function openEdit(id){const a=appointments.find(x=>x.id===id); if(!a)return; $('eId').value=a.id;$('eDate').value=a.date;$('eTime').value=a.time||'';$('eResident').value=a.resident;$('eType').value=a.type;$('ePlace').value=a.place||'';$('eEscort').value=a.escort||'未定';$('ePrescriptionDays').value=a.prescriptionDays||'';updateMedicationPreview('e');$('eMemo').value=a.memo||'';$('toggleDoneBtn').textContent=a.done?'未完了に戻す':'完了にする';$('modalBg').classList.add('show')}
+function closeModal(){$('modalBg').classList.remove('show')}
+function saveEdit(){const id=$('eId').value;const idx=appointments.findIndex(x=>x.id===id); if(idx<0)return;appointments[idx]={...appointments[idx],date:$('eDate').value,time:$('eTime').value,resident:$('eResident').value,type:$('eType').value,place:$('ePlace').value.trim(),escort:$('eEscort').value,prescriptionDays:normalizePrescriptionDays($('ePrescriptionDays').value),memo:normalizeText($('eMemo').value),updatedAt:new Date().toISOString()};appointments=normalizeAppointments(appointments);saveLocal();renderAll();closeModal();showStatus('予定を更新しました。共有する場合は「💾 共有保存」を押してください。')}
+function toggleDone(id){const a=appointments.find(x=>x.id===id); if(!a)return;a.done=!a.done;a.updatedAt=new Date().toISOString();saveLocal();renderAll();if($('modalBg').classList.contains('show'))openEdit(id);showStatus(a.done?'完了にしました。':'未完了に戻しました。')}
+function deleteAppointment(id){const a=appointments.find(x=>x.id===id); if(!a)return;if(!confirm('この予定を削除しますか？\n\n'+a.date+' '+a.resident+' '+(a.place||a.type)))return;appointments=appointments.filter(x=>x.id!==id);saveLocal();renderAll();closeModal();showStatus('削除しました。共有する場合は「💾 共有保存」を押してください。')}
+function shiftMonth(m,diff){const [y,mo]=String(m||monthYmd(todayYmd())).split('-').map(Number);const dt=new Date(y,mo-1+diff,1);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')}
+function monthLabel(m){const [y,mo]=String(m).split('-');return y+'年'+Number(mo)+'月'}
+function holidayName(date){const [y,m,d]=date.split('-').map(Number);const mmdd=String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');const fixed={'01-01':'元日','02-11':'建国記念の日','02-23':'天皇誕生日','04-29':'昭和の日','05-03':'憲法記念日','05-04':'みどりの日','05-05':'こどもの日','08-11':'山の日','11-03':'文化の日','11-23':'勤労感謝の日'};if(fixed[mmdd])return fixed[mmdd];function nthMon(month,n){let c=0;for(let day=1;day<=31;day++){const dt=new Date(y,month-1,day);if(dt.getMonth()!==month-1)break;if(dt.getDay()===1){c++;if(c===n)return day}}return 0}if(m===1&&d===nthMon(1,2))return '成人の日';if(m===7&&d===nthMon(7,3))return '海の日';if(m===9&&d===nthMon(9,3))return '敬老の日';if(m===10&&d===nthMon(10,2))return 'スポーツの日';if(m===3&&d>=19&&d<=22)return '春分の日';if(m===9&&d>=22&&d<=24)return '秋分の日';return ''}
+function renderCalendar(){const m=monthCursor||monthYmd(todayYmd());$('calendarTitle').textContent=monthLabel(m);const [year,month]=m.split('-').map(Number);const first=new Date(year,month-1,1);const firstW=first.getDay();const daysCur=new Date(year,month,0).getDate();const daysPrev=new Date(year,month-1,0).getDate();const today=todayYmd();const cells=[];for(let i=0;i<42;i++){let dayNum,cellDate,muted=false;if(i<firstW){dayNum=daysPrev-firstW+i+1;const d=new Date(year,month-2,dayNum);cellDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');muted=true}else if(i>=firstW+daysCur){dayNum=i-firstW-daysCur+1;const d=new Date(year,month,dayNum);cellDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');muted=true}else{dayNum=i-firstW+1;cellDate=year+'-'+String(month).padStart(2,'0')+'-'+String(dayNum).padStart(2,'0')}const dt=new Date(cellDate);const wd=dt.getDay();const hol=holidayName(cellDate);const cls=['day'];if(muted)cls.push('muted');if(cellDate===today)cls.push('today');if(wd===0)cls.push('sun');if(wd===6)cls.push('sat');if(hol)cls.push('holiday');const dayAppts=appointments.filter(a=>a.date===cellDate).sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));const ev=dayAppts.slice(0,3).map(a=>`<div class="day-event ${a.done?'done':''}" data-cal-edit="${escapeHtml(a.id)}" title="${escapeHtml((a.time?a.time+' ':'')+a.resident+' '+(a.place||a.type))}">${escapeHtml((a.time?a.time+' ':'')+a.resident+' '+(a.place||a.type))}</div>`).join('')+(dayAppts.length>3?`<div class="day-event">他${dayAppts.length-3}件</div>`:'');cells.push(`<div class="${cls.join(' ')}"><div class="day-num">${dayNum}</div>${hol?`<div class="holiday-name">${escapeHtml(hol)}</div>`:''}<div class="day-events">${ev}</div></div>`)}$('calendarGrid').innerHTML=cells.join('');document.querySelectorAll('[data-cal-edit]').forEach(el=>el.onclick=()=>openEdit(el.dataset.calEdit))}
+function renderAll(){renderList();renderCalendar()}
+function init(){fillResidentSelect($('aResident'),false);fillResidentSelect($('eResident'),false);fillResidentSelect($('filterResident'),true);$('aDate').value=todayYmd();monthCursor=monthYmd(todayYmd());updateMedicationPreview('a');loadLocal();renderAll();loadShared(true)}
+$('unlockBtn').addEventListener('click',tryUnlock);$('sitePassword').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});$('addBtn').addEventListener('click',addAppointment);$('clearInputBtn').addEventListener('click',()=>clearInput(true));$('reloadBtn').addEventListener('click',()=>loadShared(false));$('saveShareBtn').addEventListener('click',saveShared);$('filterMode').addEventListener('change',renderList);$('filterResident').addEventListener('change',renderList);$('searchText').addEventListener('input',renderList);$('clearDoneBtn').addEventListener('click',renderList);$('prevMonthBtn').addEventListener('click',()=>{monthCursor=shiftMonth(monthCursor,-1);renderAll()});$('todayMonthBtn').addEventListener('click',()=>{monthCursor=monthYmd(todayYmd());renderAll()});$('nextMonthBtn').addEventListener('click',()=>{monthCursor=shiftMonth(monthCursor,1);renderAll()});$('closeModalBtn').addEventListener('click',closeModal);$('modalBg').addEventListener('click',e=>{if(e.target===$('modalBg'))closeModal()});$('saveEditBtn').addEventListener('click',saveEdit);$('toggleDoneBtn').addEventListener('click',()=>toggleDone($('eId').value));$('deleteBtn').addEventListener('click',()=>deleteAppointment($('eId').value));
+initAuth();init();
+</script>
+</body>
+</html>
