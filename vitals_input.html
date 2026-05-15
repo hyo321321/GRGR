@@ -550,7 +550,8 @@
 
     try {
       await saveRemote(entry);
-      setStatus(`共有保存できました。<br>${entryText(entry)}`, 'ok');
+      clearNumbersAfterSave();
+      setStatus(`共有保存できました。入力欄の数字は空にしました。<br>${entryText(entry)}`, 'ok');
     } catch (e) {
       setStatus(`この端末には保存しましたが、共有保存に失敗しました。<br>${escapeHTML(e.message || e)}<br>通信状態を確認して、必要ならもう一度入力してください。`, 'warn');
     } finally {
@@ -558,6 +559,16 @@
     }
   }
   function clearForm() {
+    $('vWeight').value = '';
+    $('vBpSys').value = '';
+    $('vBpDia').value = '';
+    $('vPulse').value = '';
+    $('vMemo').value = '';
+    $('vWeight').focus();
+  }
+
+  function clearNumbersAfterSave() {
+    // 保存後は、日付・利用者・記録者・測定区分は残し、数値とメモだけ空にする
     $('vWeight').value = '';
     $('vBpSys').value = '';
     $('vBpDia').value = '';
