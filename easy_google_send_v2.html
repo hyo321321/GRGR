@@ -112,6 +112,10 @@
   .edit-cancel-btn{border:1px solid #86efac;background:#fff;color:#166534;border-radius:10px;padding:8px 10px;font-weight:800}
   .record-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .record-edit-btn{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:8px;padding:5px 8px;font-size:12px;line-height:1.2;font-weight:800}
+
+  .quick-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .quick-links button{padding:10px 8px;font-size:14px;border-radius:12px;line-height:1.25;min-height:52px}
+  .quick-links .orange{background:var(--orange)}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}.bulk-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -262,16 +266,12 @@
         <button id="sendBtn" class="primary" type="button">送信</button>
         <button id="allCheckBtn" class="green" type="button">この日の全員分を確認</button>
       </div>
-      <div class="btns" style="margin-top:8px;">
-        <button id="openSearchBtn" class="ghost" type="button">記録検索ページを開く</button>
-        <button id="openVitalsBtn" class="ghost" type="button">バイタルページを開く</button>
-      </div>
-      <div class="btns" style="margin-top:8px;">
+      <div class="quick-links" aria-label="関連ページを開く">
+        <button id="openSearchBtn" class="ghost" type="button">記録検索</button>
+        <button id="openVitalsBtn" class="ghost" type="button">バイタル</button>
         <button id="openResidentInfoBtn" class="ghost" type="button">緊急時情報</button>
-        <button id="openTransportBtn" class="ghost" type="button">交通費ページを開く</button>
-      </div>
-      <div class="btns" style="margin-top:8px;grid-template-columns:1fr;">
-        <button id="openMedicalCalendarBtn" class="orange" type="button">受診カレンダーを開く</button>
+        <button id="openTransportBtn" class="ghost" type="button">交通費</button>
+        <button id="openMedicalCalendarBtn" class="orange" type="button">受診カレンダー</button>
       </div>
       <div id="sendStatus" class="status"></div>
     </div>
