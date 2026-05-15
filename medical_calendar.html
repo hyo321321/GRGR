@@ -56,7 +56,39 @@
 
   <div class="wrap">
     <div class="card">
-      <div class="card-title"><span>予定を追加</span><span class="hint">保存後、共有保存すると他端末にも反映されます。</span></div>
+      <div class="calendar-head">
+        <div class="calendar-title" id="calendarTitle"></div>
+        <div class="calendar-nav">
+          <button id="prevMonthBtn" class="btn light mini" type="button">前の月</button>
+          <button id="todayMonthBtn" class="btn light mini" type="button">今月</button>
+          <button id="nextMonthBtn" class="btn light mini" type="button">次の月</button>
+        </div>
+      </div>
+      <div class="hint" style="margin-bottom:8px;">カレンダー内の予定を押すと内容を確認・編集できます。土曜は青、日曜・祝日は赤で表示します。</div>
+      <div class="weekdays"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </div>
+
+
+    <div class="card">
+      <div class="card-title"><span>今後の予定一覧</span><span id="countLabel" class="hint"></span></div>
+      <div class="tools">
+        <div class="tools-left">
+          <div><label>表示</label><select id="filterMode"><option value="future">今日以降</option><option value="month">表示月</option><option value="all">全期間</option><option value="done">完了のみ</option></select></div>
+          <div><label>利用者</label><select id="filterResident"></select></div>
+          <div><label>検索</label><input id="searchText" type="text" placeholder="病院名・メモなど"></div>
+        </div>
+        <div class="tools-right">
+          <button id="clearDoneBtn" class="btn light" type="button">表示を更新</button>
+        </div>
+      </div>
+      <div id="apptList" class="appt-list"></div>
+    </div>
+
+
+
+    <div class="card">
+      <div class="card-title"><span>予定を追加</span><span class="hint">入力欄は下に移動しました。保存後、共有保存すると他端末にも反映されます。</span></div>
       <div class="grid4">
         <div><label>日付</label><input id="aDate" type="date"></div>
         <div><label>時間</label><input id="aTime" type="time"></div>
@@ -81,34 +113,6 @@
       <div id="mainStatus" class="status"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><span>今後の予定一覧</span><span id="countLabel" class="hint"></span></div>
-      <div class="tools">
-        <div class="tools-left">
-          <div><label>表示</label><select id="filterMode"><option value="future">今日以降</option><option value="month">表示月</option><option value="all">全期間</option><option value="done">完了のみ</option></select></div>
-          <div><label>利用者</label><select id="filterResident"></select></div>
-          <div><label>検索</label><input id="searchText" type="text" placeholder="病院名・メモなど"></div>
-        </div>
-        <div class="tools-right">
-          <button id="clearDoneBtn" class="btn light" type="button">表示を更新</button>
-        </div>
-      </div>
-      <div id="apptList" class="appt-list"></div>
-    </div>
-
-    <div class="card">
-      <div class="calendar-head">
-        <div class="calendar-title" id="calendarTitle"></div>
-        <div class="calendar-nav">
-          <button id="prevMonthBtn" class="btn light mini" type="button">前の月</button>
-          <button id="todayMonthBtn" class="btn light mini" type="button">今月</button>
-          <button id="nextMonthBtn" class="btn light mini" type="button">次の月</button>
-        </div>
-      </div>
-      <div class="hint" style="margin-bottom:8px;">カレンダー内の予定を押すと内容を確認・編集できます。土曜は青、日曜・祝日は赤で表示します。</div>
-      <div class="weekdays"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
-      <div id="calendarGrid" class="calendar-grid"></div>
-    </div>
   </div>
 
   <div id="modalBg" class="modal-bg">
