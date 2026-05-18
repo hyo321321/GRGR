@@ -42,6 +42,7 @@
   .resident-block{padding:10px 0;border-bottom:1px solid var(--line)}
   .resident-block:last-child{border-bottom:0}
   .resident-title{color:#dc2626;font-weight:800;margin:0 0 8px;font-size:17px}
+  .resident-title.daily-report-title{color:#7c3aed}
   .resident-text{white-space:pre-wrap;line-height:1.7}
   .template-wrap{border:1px solid #dbe4f0;background:#f8fbff;border-radius:12px;padding:10px 12px;margin:10px 0}
   .template-head{font-size:14px;color:#475569;margin-top:6px;line-height:1.6}
@@ -1463,9 +1464,13 @@ async function checkAllMainRecords(){
       } else {
         body = '取得失敗: ' + escapeHtml(item.error);
       }
+      const titleClass = String(item.user || '').trim() === '業務日報'
+        ? 'resident-title daily-report-title'
+        : 'resident-title';
+
       blocks.push(
         '<div class="resident-block">' +
-        '<div class="resident-title">【' + escapeHtml(item.user) + '】</div>' +
+        '<div class="' + titleClass + '">【' + escapeHtml(item.user) + '】</div>' +
         '<div class="resident-text">' + body + '</div>' +
         actions +
         '</div>'
