@@ -748,12 +748,6 @@
 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 <a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
 <a class="btn btn-primary" href="vitals_input.html" style="color:#fff; text-decoration:none;">📱 入力専用ページ</a>
-<button class="btn btn-ghost" id="printBtn">🖨 印刷</button>
-<button class="btn btn-ghost" id="pdfBtn">📄 PDFにする</button>
-<label style="font-size:12px;">印刷月</label>
-<select id="printMonthFrom" style="width:auto; min-width:110px;"><option value="all">開始月</option></select>
-<span style="font-size:12px; color:#475569;">〜</span>
-<select id="printMonthTo" style="width:auto; min-width:110px;"><option value="all">終了月</option></select>
 <button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
 <button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
 <button class="btn btn-ghost" id="bulkImportBtn">📥 まとめて取込</button>
@@ -853,6 +847,8 @@
 <select id="listMonthTo"><option value="all">終了月</option></select>
 <button class="btn btn-ghost" id="clearListMonthBtn" type="button" style="padding:8px 10px;font-size:12px;">解除</button>
 </div>
+<button class="btn btn-primary" id="printBtn" type="button" style="padding:8px 10px;font-size:12px;">🖨 この一覧を印刷</button>
+<button class="btn btn-ghost" id="pdfBtn" type="button" style="padding:8px 10px;font-size:12px;">📄 この一覧をPDF</button>
 <select id="summaryMode" style="width:auto">
 <option value="list">通常一覧</option>
 <option value="weekday">曜日別</option>
@@ -2146,7 +2142,6 @@
             if (!inListMonthRange(v)) return false;
           } else if (!recordMatchesCurrentRange(v)) return false;
           if (resident && resident !== '__all__' && v.resident !== resident) return false;
-          if (!inPrintMonthRange(v)) return false;
           return true;
         });
     }
@@ -2174,17 +2169,7 @@
       const rg = $('chartRangeLabel');
       if (cr) cr.textContent = residentLabel;
       if (rg) {
-        const fromSel = $('printMonthFrom');
-        const toSel = $('printMonthTo');
-        const from = fromSel ? fromSel.value : 'all';
-        const to = toSel ? toSel.value : 'all';
-        if (from !== 'all' || to !== 'all') {
-          const fromTxt = from === 'all' ? '最初' : monthLabelFromKey(from);
-          const toTxt = to === 'all' ? '最後' : monthLabelFromKey(to);
-          rg.textContent = `${rangeLabel} / ${fromTxt}〜${toTxt}`;
-        } else {
-          rg.textContent = rangeLabel;
-        }
+        rg.textContent = rangeLabel;
       }
       // summary (最新)
       const sumEl = $('chartsSummary');
@@ -2372,18 +2357,7 @@
     }
 
     function populatePrintMonthFilters(records) {
-      const fromSel = $('printMonthFrom');
-      const toSel = $('printMonthTo');
-      if (!fromSel || !toSel) return;
-      const currentFrom = fromSel.value || 'all';
-      const currentTo = toSel.value || 'all';
-      const months = getAllMonthKeys(records);
-      const options = '<option value="all">開始月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
-      const toOptions = '<option value="all">終了月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
-      fromSel.innerHTML = options;
-      toSel.innerHTML = toOptions;
-      fromSel.value = months.includes(currentFrom) ? currentFrom : 'all';
-      toSel.value = months.includes(currentTo) ? currentTo : 'all';
+      // 旧「印刷月」は廃止。印刷/PDFは現在の一覧表示をそのまま使う。
     }
 
 
@@ -2443,46 +2417,19 @@
     }
 
     function inPrintMonthRange(recordOrIso) {
-      const fromSel = $('printMonthFrom');
-      const toSel = $('printMonthTo');
-      if (!fromSel || !toSel) return true;
-      const from = fromSel.value || 'all';
-      const to = toSel.value || 'all';
-      if (from === 'all' && to === 'all') return true;
-      const key = monthKeyFromISO(recordOrIso);
-      if (!key) return false;
-      if (from !== 'all' && key < from) return false;
-      if (to !== 'all' && key > to) return false;
       return true;
     }
 
     function applyPrintRangeVisibility() {
-      const fromSel = $('printMonthFrom');
-      const toSel = $('printMonthTo');
-      const from = fromSel ? fromSel.value : 'all';
-      const to = toSel ? toSel.value : 'all';
-
-      document.querySelectorAll('[data-month-key]').forEach(el => {
-        const key = el.getAttribute('data-month-key') || '';
-        let show = true;
-        if (from !== 'all' && key < from) show = false;
-        if (to !== 'all' && key > to) show = false;
-        el.style.display = show ? '' : 'none';
-      });
-
       const note = $('printRangeNote');
       if (note) {
-        if (from === 'all' && to === 'all') {
-          note.textContent = '';
-        } else {
-          const fromTxt = from === 'all' ? '最初' : monthLabelFromKey(from);
-          const toTxt = to === 'all' ? '最後' : monthLabelFromKey(to);
-          note.textContent = `印刷範囲：${fromTxt}〜${toTxt}`;
-        }
+        const label = getRangeLabel();
+        note.textContent = `印刷対象：現在一覧に表示されている内容（${label}）`;
       }
     }
 
     function printWithMonthRange() {
+      // 「印刷月」は使わず、一覧期間・表示条件で現在表示されている一覧をそのまま印刷する。
       prepareVitalPrintLayout();
       setTimeout(() => {
         window.print();
@@ -3199,8 +3146,6 @@
       if ($('summaryMode')) $('summaryMode').onchange = renderList;
       if ($('weekdayFilter')) $('weekdayFilter').onchange = renderList;
       if ($('monthFilter')) $('monthFilter').onchange = renderList;
-      if ($('printMonthFrom')) $('printMonthFrom').onchange = () => { applyPrintRangeVisibility(); renderCharts(); };
-      if ($('printMonthTo')) $('printMonthTo').onchange = () => { applyPrintRangeVisibility(); renderCharts(); };
       if ($('highOnlyToggle')) $('highOnlyToggle').onchange = renderList;
       if ($('weightUp1kgToggle')) $('weightUp1kgToggle').onchange = renderList;
       if ($('pulseAbnormalToggle')) $('pulseAbnormalToggle').onchange = renderList;
