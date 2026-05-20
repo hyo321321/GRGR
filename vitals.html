@@ -1731,27 +1731,114 @@
       return text;
     }
 
+    function getFirstNonEmptyString(obj, keys) {
+      for (const key of keys) {
+        if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== '') {
+          return String(obj[key]).trim();
+        }
+      }
+      return '';
+    }
+
+    function extractMainRecordFromResponse(json) {
+      if (!json || typeof json !== 'object') return null;
+      const candidates = [];
+      if (json.record && typeof json.record === 'object') candidates.push(json.record);
+      if (json.mainRecord && typeof json.mainRecord === 'object') candidates.push(json.mainRecord);
+      if (json.data && typeof json.data === 'object') candidates.push(json.data);
+      if (Array.isArray(json.records) && json.records.length) candidates.push(json.records[0]);
+      candidates.push(json);
+
+      for (const rec of candidates) {
+        if (!rec || typeof rec !== 'object') continue;
+        const text = getFirstNonEmptyString(rec, ['text', 'body', 'content', 'recordText', 'mainText']);
+        const id = getFirstNonEmptyString(rec, ['id', '_id', '_serverId', 'serverId', 'recordId']);
+        const date = getFirstNonEmptyString(rec, ['date', 'dateKey']);
+        const user = getFirstNonEmptyString(rec, ['user', 'resident', 'name']);
+        const staff = getFirstNonEmptyString(rec, ['staff', 'recorder']);
+        const status = getFirstNonEmptyString(rec, ['status']);
+        const tags = getFirstNonEmptyString(rec, ['tags']);
+        if (text || id || (date && user)) return { raw: rec, id, date, user, staff, status, tags, text };
+      }
+      return null;
+    }
+
+    async function fetchExistingMainRecordForVital(entry) {
+      const date = getVitalRecordDateKey(entry) || entry.date || '';
+      const user = entry.resident || '';
+      if (!hasRemoteEnabled() || !date || !user) return null;
+
+      const queryList = [
+        { action: 'getMainRecord', date, user },
+        { action: 'getMainRecord', date, resident: user },
+        { action: 'getRecords', date, user },
+      ];
+
+      for (const params of queryList) {
+        try {
+          const json = await remoteGet(params);
+          const rec = extractMainRecordFromResponse(json);
+          if (rec && (rec.text || rec.id)) return rec;
+        } catch (e) {
+          console.warn('fetchExistingMainRecordForVital failed', params, e);
+        }
+      }
+      return null;
+    }
+
+    function mergeTagText(a, b) {
+      const out = [];
+      String(a || '').split(/\s+/).forEach(x => { if (x && !out.includes(x)) out.push(x); });
+      String(b || '').split(/\s+/).forEach(x => { if (x && !out.includes(x)) out.push(x); });
+      return out.join(' ');
+    }
+
+    function appendTextOnce(baseText, addText) {
+      const base = String(baseText || '').trim();
+      const add = String(addText || '').trim();
+      if (!add) return base;
+      if (!base) return add;
+      if (base.includes(add)) return base;
+      return base + '\n\n' + add;
+    }
+
     async function appendHighVitalToMainRecord(entry, reasons) {
       if (!hasRemoteEnabled() || !shouldAutoAppendMainRecord(reasons)) return { ok:false, skipped:true };
       const sent = loadAutoMainSentMap();
       if (entry.id && sent[entry.id]) return { ok:false, skipped:true, duplicated:true };
 
+      const existing = await fetchExistingMainRecordForVital(entry);
+      if (!existing || (!existing.text && !existing.id)) {
+        throw new Error('個人記録が見つからないため、安全のため自動追記を止めました');
+      }
+
       const tags = ['#バイタル'];
       if (reasons.bpHigh) tags.push('#血圧高め');
       if (reasons.weightUp1kg) tags.push('#体重増加');
+
+      const addText = buildHighVitalMainRecordText(entry, reasons);
+      const mergedText = appendTextOnce(existing.text, addText);
+      if (existing.text && mergedText === String(existing.text).trim()) {
+        if (entry.id) {
+          sent[entry.id] = new Date().toISOString();
+          saveAutoMainSentMap(sent);
+        }
+        return { ok:true, skipped:true, duplicated:true };
+      }
 
       const payload = {
         action: 'saveMainRecord',
         date: getVitalRecordDateKey(entry) || entry.date || '',
         user: entry.resident || '',
-        staff: entry.recorder || '',
-        text: buildHighVitalMainRecordText(entry, reasons),
-        status: '未完成',
-        tags: tags.join(' '),
-        appendMode: 'append',
+        staff: entry.recorder || existing.staff || '',
+        text: mergedText,
+        status: existing.status || '未完成',
+        tags: mergeTagText(existing.tags, tags.join(' ')),
         source: 'vitals_auto_high',
         raw: JSON.stringify({
-          source: 'vitals_auto_high',
+          source: 'vitals_auto_high_safe_append',
+          mode: 'append_to_existing_main_record',
+          existingId: existing.id || '',
           vitalId: entry.id || '',
           reasons,
           entry: {
@@ -1767,6 +1854,12 @@
           }
         })
       };
+
+      if (existing.id) {
+        payload.id = existing.id;
+        payload._serverId = existing.id;
+        payload.recordId = existing.id;
+      }
 
       const res = await remotePost(payload);
       if (entry.id) {
