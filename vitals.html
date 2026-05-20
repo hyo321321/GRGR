@@ -530,6 +530,22 @@
       color: #dc2626;
       font-weight: 800;
     }
+    .pulse-high {
+      color: #dc2626;
+      font-weight: 800;
+      background: #fee2e2;
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .pulse-low {
+      color: #2563eb;
+      font-weight: 800;
+      background: #dbeafe;
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+    }
     .manual-flag-btn {
       border: 1px solid #fca5a5;
       background: #fff5f5;
@@ -1625,6 +1641,24 @@
       return `${sysHtml}/${diaHtml}`;
     }
 
+    function formatPulseHtml(pulse, forceRed) {
+      const raw = String(pulse ?? '').trim();
+      if (!raw) return '―';
+
+      const num = parseNumOrNull(pulse);
+      let cls = '';
+      if (forceRed || (num != null && num >= 100)) {
+        cls = 'pulse-high';
+      } else if (num != null && num <= 40) {
+        cls = 'pulse-low';
+      }
+
+      return cls
+        ? `<span class="${cls}">${escapeHTML(raw)}</span>`
+        : escapeHTML(raw);
+    }
+
+
     function buildResidentDailyWeightDiffMap(records) {
       const byResident = new Map();
       const list = (Array.isArray(records) ? records : [])
@@ -2252,7 +2286,7 @@
           <span class="avg-item">体重 ${avgWeight != null ? `${avgWeight}kg` : '―'}</span>
           <span class="avg-item">脈拍 ${avgPulse != null ? avgPulse : '―'}</span>
         </div>
-        <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上135以上・下85以上は赤</div>
+        <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上135以上・下85以上は赤 ／ 脈拍：<span class="pulse-high">100以上は赤</span>、<span class="pulse-low">40以下は青</span></div>
       `;
       listEl.appendChild(avgBox);
 
@@ -2326,7 +2360,7 @@
           <td>${escapeHTML(v.resident || '')}</td>
           <td class="${weightFlag ? 'manual-flag' : ''}">${formatWeightWithDiffHtml(v.weight, weightDiff)}</td>
           <td>${formatBpHtml(v.bpSys, v.bpDia, bpFlag)}</td>
-          <td class="${pulseFlag ? 'manual-flag' : ''}">${escapeHTML(String(v.pulse || '').trim() ? String(v.pulse) : '―')}</td>
+          <td>${formatPulseHtml(v.pulse, pulseFlag)}</td>
           <td>${escapeHTML(v.recorder || '')}</td>
           <td class="memo-cell">${escapeHTML(memo || '―')}</td>
           <td></td>
