@@ -736,6 +736,45 @@
       }
     }
 
+
+    /* 印刷専用：全月の平均値 */
+    .print-only-monthly-avg {
+      display: none;
+    }
+    .print-monthly-title {
+      font-weight: 900;
+      margin: 0 0 6px;
+      font-size: 13px;
+    }
+    .print-monthly-note {
+      font-size: 11px;
+      color: #475569;
+      margin: 0 0 6px;
+      line-height: 1.5;
+    }
+    @media print {
+      .print-only-monthly-avg {
+        display: block !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        margin: 0 0 4mm !important;
+        padding: 0 0 3mm !important;
+      }
+      .print-only-monthly-avg .table-wrap {
+        overflow: visible !important;
+        border: 0 !important;
+      }
+      .print-only-monthly-avg .vitals-table {
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 10px !important;
+      }
+      .print-only-monthly-avg th,
+      .print-only-monthly-avg td {
+        padding: 3px 5px !important;
+      }
+    }
+
 </style>
 </head>
 <body>
@@ -2437,6 +2476,75 @@
     }
 
 
+    function createPrintAllMonthAverageBox(allRecords) {
+      const box = document.createElement('div');
+      box.className = 'print-only-monthly-avg';
+
+      const resident = $('filterResident') ? $('filterResident').value : '__all__';
+      const target = (Array.isArray(allRecords) ? allRecords : [])
+        .slice()
+        .sort(compareVitalsAsc)
+        .filter(v => {
+          if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          return !!monthKeyFromISO(v);
+        });
+
+      const residentLabel = (resident && resident !== '__all__') ? resident : '全員';
+      if (!target.length) {
+        box.innerHTML = `
+          <div class="print-monthly-title">月別平均（全期間）</div>
+          <div class="print-monthly-note">対象：${escapeHTML(residentLabel)} ／ 月別平均を出せるデータがありません。</div>
+        `;
+        return box;
+      }
+
+      const groups = new Map();
+      target.forEach(v => {
+        const key = monthKeyFromISO(v);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(v);
+      });
+
+      const keys = Array.from(groups.keys()).sort();
+      const rowsHtml = keys.map(key => {
+        const rows = groups.get(key) || [];
+        const avgWeight = averageOf(rows.map(v => v.weight), 1);
+        const avgSys = averageOf(rows.map(v => v.bpSys), 1);
+        const avgDia = averageOf(rows.map(v => v.bpDia), 1);
+        const avgPulse = averageOf(rows.map(v => v.pulse), 1);
+        return `
+          <tr>
+            <td>${escapeHTML(monthLabelFromKey(key))}</td>
+            <td>${rows.length}</td>
+            <td>${avgWeight != null ? avgWeight + 'kg' : '―'}</td>
+            <td>${avgSys != null || avgDia != null ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―'}</td>
+            <td>${avgPulse != null ? avgPulse : '―'}</td>
+          </tr>
+        `;
+      }).join('');
+
+      box.innerHTML = `
+        <div class="print-monthly-title">月別平均（全期間）</div>
+        <div class="print-monthly-note">対象：${escapeHTML(residentLabel)} ／ 一覧期間に関係なく、保存されている全月の平均を印刷に入れます。</div>
+        <div class="table-wrap">
+          <table class="vitals-table">
+            <thead>
+              <tr>
+                <th>月</th>
+                <th>件数</th>
+                <th>平均体重</th>
+                <th>平均血圧</th>
+                <th>平均脈拍</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
+      return box;
+    }
+
+
     function renderList() {
       const listEl = $('list');
       const all = loadVitals();
@@ -2513,6 +2621,7 @@
         <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上135以上・下85以上は赤 ／ 脈拍：<span class="pulse-high">100以上は赤</span>、<span class="pulse-low">40以下は青</span></div>
       `;
       listEl.appendChild(avgBox);
+      listEl.appendChild(createPrintAllMonthAverageBox(all));
 
       if (summaryMode === 'weekday' || summaryMode === 'month_summary') {
         renderSummaryTable(listEl, filtered, summaryMode === 'weekday' ? 'weekday' : 'month');
