@@ -728,7 +728,7 @@
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
-<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。</div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧が高い日（上135以上・下85以上）または体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動追記します。</div>
 <div class="input-grid-4">
 <div class="field-compact">
 <label>日付</label>
@@ -784,6 +784,7 @@
 </div>
 <div class="hint" style="margin-top:6px;">
           ・保存すると右の一覧に出ます（新しい順）。<br/>
+          ・血圧高め（上135以上・下85以上）または体重＋1kg以上の日は、かんたんページの個人記録へ自動追記します。<br/>
           ・時刻欄はなく、朝・昼・夕で保存されます。実際の測定時刻はメモへ入力してください。<br/>
           ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
 </div>
@@ -903,6 +904,10 @@
     const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
     const DEFAULT_RECORDERS = ['太田'];
     const VITALS_MANUAL_FLAGS_KEY = 'group_home_vitals_manual_flags_v1';
+    const VITALS_AUTO_MAIN_SENT_KEY = 'group_home_vitals_auto_main_sent_v1';
+    const AUTO_BP_SYS_HIGH = 135;
+    const AUTO_BP_DIA_HIGH = 85;
+    const AUTO_WEIGHT_UP_KG = 1.0;
 
     const $ = (id) => document.getElementById(id);
 
@@ -1618,7 +1623,7 @@
     function isAutoHighBp(bpSys, bpDia) {
       const sys = parseNumOrNull(bpSys);
       const dia = parseNumOrNull(bpDia);
-      return (sys != null && sys >= 135) || (dia != null && dia >= 85);
+      return (sys != null && sys >= AUTO_BP_SYS_HIGH) || (dia != null && dia >= AUTO_BP_DIA_HIGH);
     }
 
     function formatBpHtml(bpSys, bpDia, forceRed) {
@@ -1628,8 +1633,8 @@
 
       const sysNum = parseNumOrNull(bpSys);
       const diaNum = parseNumOrNull(bpDia);
-      const sysHigh = forceRed || (sysNum != null && sysNum >= 135);
-      const diaHigh = forceRed || (diaNum != null && diaNum >= 85);
+      const sysHigh = forceRed || (sysNum != null && sysNum >= AUTO_BP_SYS_HIGH);
+      const diaHigh = forceRed || (diaNum != null && diaNum >= AUTO_BP_DIA_HIGH);
 
       const sysHtml = sysRaw
         ? `<span class="${sysHigh ? 'manual-flag' : ''}">${escapeHTML(sysRaw)}</span>`
@@ -1658,6 +1663,118 @@
         : escapeHTML(raw);
     }
 
+
+
+    function loadAutoMainSentMap() {
+      const v = loadJSON(VITALS_AUTO_MAIN_SENT_KEY, {});
+      return v && typeof v === 'object' ? v : {};
+    }
+
+    function saveAutoMainSentMap(map) {
+      saveJSON(VITALS_AUTO_MAIN_SENT_KEY, map || {});
+    }
+
+    function findPreviousWeightRecord(entry, records) {
+      const entryWeight = parseNumOrNull(entry && entry.weight);
+      if (entryWeight == null || !entry || !entry.resident) return null;
+      const entrySort = getVitalSortNumber(entry);
+      return (Array.isArray(records) ? records : [])
+        .map(normalizeVitalRecordObject)
+        .filter(Boolean)
+        .filter(v => v.id !== entry.id && v.resident === entry.resident && parseNumOrNull(v.weight) != null && getVitalSortNumber(v) < entrySort)
+        .sort(compareVitalsDesc)[0] || null;
+    }
+
+    function getAutoMainReasons(entry, previousRecords) {
+      const bpHigh = isAutoHighBp(entry.bpSys, entry.bpDia);
+      const currentWeight = parseNumOrNull(entry.weight);
+      const prev = findPreviousWeightRecord(entry, previousRecords);
+      const prevWeight = prev ? parseNumOrNull(prev.weight) : null;
+      const weightDiff = (currentWeight != null && prevWeight != null) ? Number((currentWeight - prevWeight).toFixed(1)) : null;
+      const weightUp1kg = weightDiff != null && weightDiff >= AUTO_WEIGHT_UP_KG;
+      return { bpHigh, weightUp1kg, weightDiff, previousWeight: prevWeight, previousDate: prev ? getVitalRecordDateKey(prev) : '' };
+    }
+
+    function shouldAutoAppendMainRecord(reasons) {
+      return !!(reasons && (reasons.bpHigh || reasons.weightUp1kg));
+    }
+
+    function formatSignedKg(n) {
+      if (n == null || !Number.isFinite(Number(n))) return '';
+      const num = Number(n);
+      return (num > 0 ? '+' : '') + num.toFixed(1) + 'kg';
+    }
+
+    function buildHighVitalMainRecordText(entry, reasons) {
+      const parts = [];
+      const weight = String(entry.weight ?? '').trim();
+      const bpSys = String(entry.bpSys ?? '').trim();
+      const bpDia = String(entry.bpDia ?? '').trim();
+      const pulse = String(entry.pulse ?? '').trim();
+      const memo = String(entry.memo || '').trim();
+
+      if (weight) {
+        const diffText = reasons && reasons.weightDiff != null ? `（前回比${formatSignedKg(reasons.weightDiff)}）` : '';
+        parts.push(`体重${weight}kg${diffText}`);
+      }
+      if (bpSys || bpDia) parts.push(`血圧${bpSys || '―'}/${bpDia || '―'}`);
+      if (pulse) parts.push(`脈拍${pulse}`);
+
+      const reasonLines = [];
+      if (reasons && reasons.bpHigh) reasonLines.push('血圧が高めであった');
+      if (reasons && reasons.weightUp1kg) reasonLines.push(`体重が前回より${formatSignedKg(reasons.weightDiff)}増加していた`);
+
+      let text = `バイタル測定を実施。${parts.length ? parts.join('、') : '数値未入力'}。`;
+      if (reasonLines.length) text += `${reasonLines.join('。')}ため、様子観察を行う。`;
+      if (memo) text += `
+メモ：${memo}`;
+      return text;
+    }
+
+    async function appendHighVitalToMainRecord(entry, reasons) {
+      if (!hasRemoteEnabled() || !shouldAutoAppendMainRecord(reasons)) return { ok:false, skipped:true };
+      const sent = loadAutoMainSentMap();
+      if (entry.id && sent[entry.id]) return { ok:false, skipped:true, duplicated:true };
+
+      const tags = ['#バイタル'];
+      if (reasons.bpHigh) tags.push('#血圧高め');
+      if (reasons.weightUp1kg) tags.push('#体重増加');
+
+      const payload = {
+        action: 'saveMainRecord',
+        date: getVitalRecordDateKey(entry) || entry.date || '',
+        user: entry.resident || '',
+        staff: entry.recorder || '',
+        text: buildHighVitalMainRecordText(entry, reasons),
+        status: '未完成',
+        tags: tags.join(' '),
+        appendMode: 'append',
+        source: 'vitals_auto_high',
+        raw: JSON.stringify({
+          source: 'vitals_auto_high',
+          vitalId: entry.id || '',
+          reasons,
+          entry: {
+            date: getVitalRecordDateKey(entry) || entry.date || '',
+            time: getVitalRecordTime(entry) || '',
+            resident: entry.resident || '',
+            recorder: entry.recorder || '',
+            weight: entry.weight || '',
+            bpSys: entry.bpSys || '',
+            bpDia: entry.bpDia || '',
+            pulse: entry.pulse || '',
+            memo: entry.memo || ''
+          }
+        })
+      };
+
+      const res = await remotePost(payload);
+      if (entry.id) {
+        sent[entry.id] = new Date().toISOString();
+        saveAutoMainSentMap(sent);
+      }
+      return res;
+    }
 
     function buildResidentDailyWeightDiffMap(records) {
       const byResident = new Map();
@@ -2614,7 +2731,10 @@
           _localJustSaved: true
         });
 
-        const all = mergeVitalsById(loadVitals(), [entry]);
+        const beforeVitals = loadVitals();
+        const autoMainReasons = getAutoMainReasons(entry, beforeVitals);
+        const shouldAutoMain = shouldAutoAppendMainRecord(autoMainReasons);
+        const all = mergeVitalsById(beforeVitals, [entry]);
         saveVitals(all);
         rememberJustSaved(d);
 
@@ -2632,14 +2752,28 @@
         if (hasRemoteEnabled()) {
           try {
             await saveVitalRemote(entry);
-            setRemoteStatus('共有接続OK：保存しました');
-            $('quickStatus').textContent = '保存しました（共有OK）';
+            if (shouldAutoMain) {
+              try {
+                await appendHighVitalToMainRecord(entry, autoMainReasons);
+                setRemoteStatus('共有接続OK：保存＋個人記録へ自動追記しました');
+                $('quickStatus').textContent = '保存しました（個人記録へ自動追記済み）';
+                toast('保存＋個人記録へ追記しました');
+              } catch (e) {
+                console.warn('appendHighVitalToMainRecord failed', e);
+                setRemoteStatus('バイタル保存OK。個人記録への自動追記に失敗しました');
+                $('quickStatus').textContent = '保存しました（個人記録追記は失敗）';
+                toast('保存しました（個人記録追記失敗）');
+              }
+            } else {
+              setRemoteStatus('共有接続OK：保存しました（自動追記なし）');
+              $('quickStatus').textContent = '保存しました（共有OK・自動追記なし）';
+            }
 
             // 共有側の反映をあとから確認。ローカル表示は残したまま統合する。
             syncRemoteVitals({ silent: true }).then(() => {
               renderList();
               try { renderCharts(); } catch (e) {}
-              setRemoteStatus('共有接続OK：保存後に再読込しました');
+              setRemoteStatus(shouldAutoMain ? '共有接続OK：保存後に再読込しました（個人記録へ追記済み）' : '共有接続OK：保存後に再読込しました');
             }).catch(e => {
               console.warn('post save sync failed', e);
               setRemoteStatus('共有保存OK。再読込は手動でも確認できます');
