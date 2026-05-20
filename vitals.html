@@ -728,7 +728,7 @@
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
-<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧が高い日（上135以上・下85以上）または体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動追記します。</div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧が高い日（上135以上・下85以上）、脈拍が100以上または40以下、体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動追記します。</div>
 <div class="input-grid-4">
 <div class="field-compact">
 <label>日付</label>
@@ -784,7 +784,7 @@
 </div>
 <div class="hint" style="margin-top:6px;">
           ・保存すると右の一覧に出ます（新しい順）。<br/>
-          ・血圧高め（上135以上・下85以上）または体重＋1kg以上の日は、かんたんページの個人記録へ自動追記します。<br/>
+          ・血圧高め（上135以上・下85以上）、脈拍100以上・40以下、または体重＋1kg以上の日は、かんたんページの個人記録へ自動追記します。<br/>
           ・時刻欄はなく、朝・昼・夕で保存されます。実際の測定時刻はメモへ入力してください。<br/>
           ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
 </div>
@@ -908,6 +908,8 @@
     const AUTO_BP_SYS_HIGH = 135;
     const AUTO_BP_DIA_HIGH = 85;
     const AUTO_WEIGHT_UP_KG = 1.0;
+    const AUTO_PULSE_HIGH = 100;
+    const AUTO_PULSE_LOW = 40;
 
     const $ = (id) => document.getElementById(id);
 
@@ -1652,9 +1654,9 @@
 
       const num = parseNumOrNull(pulse);
       let cls = '';
-      if (forceRed || (num != null && num >= 100)) {
+      if (forceRed || (num != null && num >= AUTO_PULSE_HIGH)) {
         cls = 'pulse-high';
-      } else if (num != null && num <= 40) {
+      } else if (num != null && num <= AUTO_PULSE_LOW) {
         cls = 'pulse-low';
       }
 
@@ -1687,16 +1689,19 @@
 
     function getAutoMainReasons(entry, previousRecords) {
       const bpHigh = isAutoHighBp(entry.bpSys, entry.bpDia);
+      const pulseNum = parseNumOrNull(entry.pulse);
+      const pulseHigh = pulseNum != null && pulseNum >= AUTO_PULSE_HIGH;
+      const pulseLow = pulseNum != null && pulseNum <= AUTO_PULSE_LOW;
       const currentWeight = parseNumOrNull(entry.weight);
       const prev = findPreviousWeightRecord(entry, previousRecords);
       const prevWeight = prev ? parseNumOrNull(prev.weight) : null;
       const weightDiff = (currentWeight != null && prevWeight != null) ? Number((currentWeight - prevWeight).toFixed(1)) : null;
       const weightUp1kg = weightDiff != null && weightDiff >= AUTO_WEIGHT_UP_KG;
-      return { bpHigh, weightUp1kg, weightDiff, previousWeight: prevWeight, previousDate: prev ? getVitalRecordDateKey(prev) : '' };
+      return { bpHigh, pulseHigh, pulseLow, pulseNum, weightUp1kg, weightDiff, previousWeight: prevWeight, previousDate: prev ? getVitalRecordDateKey(prev) : '' };
     }
 
     function shouldAutoAppendMainRecord(reasons) {
-      return !!(reasons && (reasons.bpHigh || reasons.weightUp1kg));
+      return !!(reasons && (reasons.bpHigh || reasons.pulseHigh || reasons.pulseLow || reasons.weightUp1kg));
     }
 
     function formatSignedKg(n) {
@@ -1722,6 +1727,8 @@
 
       const reasonLines = [];
       if (reasons && reasons.bpHigh) reasonLines.push('血圧が高めであった');
+      if (reasons && reasons.pulseHigh) reasonLines.push('脈拍が100以上であった');
+      if (reasons && reasons.pulseLow) reasonLines.push('脈拍が40以下であった');
       if (reasons && reasons.weightUp1kg) reasonLines.push(`体重が前回より${formatSignedKg(reasons.weightDiff)}増加していた`);
 
       let text = `バイタル測定を実施。${parts.length ? parts.join('、') : '数値未入力'}。`;
@@ -1814,6 +1821,7 @@
 
       const tags = ['#バイタル'];
       if (reasons.bpHigh) tags.push('#血圧高め');
+      if (reasons.pulseHigh || reasons.pulseLow) tags.push('#脈拍注意');
       if (reasons.weightUp1kg) tags.push('#体重増加');
 
       const addText = buildHighVitalMainRecordText(entry, reasons);
@@ -1834,9 +1842,9 @@
         text: mergedText,
         status: existing.status || '未完成',
         tags: mergeTagText(existing.tags, tags.join(' ')),
-        source: 'vitals_auto_high',
+        source: 'vitals_auto_alert',
         raw: JSON.stringify({
-          source: 'vitals_auto_high_safe_append',
+          source: 'vitals_auto_alert_safe_append',
           mode: 'append_to_existing_main_record',
           existingId: existing.id || '',
           vitalId: entry.id || '',
