@@ -400,21 +400,41 @@ function escapeHtml(str){
 function colorizeVitalText(text){
   let s = escapeHtml(String(text || ''));
 
-  const toHalfNumber = (v) => String(v || '').replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).replace('．', '.');
+  // 携帯でも確実に色が出るように、classだけでなく inline style も直接付ける
+  const redOpen = '<span class="vital-red" style="color:#dc2626 !important;font-weight:900;background:#fee2e2;padding:1px 5px;border-radius:6px;">';
+  const blueOpen = '<span class="vital-blue" style="color:#2563eb !important;font-weight:900;background:#dbeafe;padding:1px 5px;border-radius:6px;">';
+  const close = '</span>';
+
+  const toHalfNumber = (v) => String(v || '')
+    .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/[．]/g, '.')
+    .replace(/[＋]/g, '+')
+    .replace(/[－−]/g, '-');
 
   // 体重：前日比・前回比の「数字だけ」色付け
-  s = s.replace(/(前日比|前回比)([＋+][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*kg)/g, '$1<span class="vital-red">$2</span>');
-  s = s.replace(/(前日比|前回比)([-−－][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*kg)/g, '$1<span class="vital-blue">$2</span>');
-  s = s.replace(/(体重が(?:前日|前回)より)([＋+][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*kg)(増加していた)/g, '$1<span class="vital-red">$2</span>$3');
-  s = s.replace(/(体重が(?:前日|前回)より)([-−－][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*kg)(減少していた)/g, '$1<span class="vital-blue">$2</span>$3');
+  // 例：前回比+1.2kg / 前回比＋1.2kg → +1.2kgだけ赤
+  s = s.replace(/(前日比|前回比)(\s*)([＋+][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*(?:kg|キロ)?)/g, function(match, label, space, num){
+    return label + space + redOpen + num + close;
+  });
+  s = s.replace(/(前日比|前回比)(\s*)([-−－][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*(?:kg|キロ)?)/g, function(match, label, space, num){
+    return label + space + blueOpen + num + close;
+  });
+
+  // 文章内の体重増減も数字だけ
+  s = s.replace(/(体重が(?:前日|前回)より)(\s*)([＋+][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*(?:kg|キロ)?)(\s*増加していた)/g, function(match, a, sp, num, b){
+    return a + sp + redOpen + num + close + b;
+  });
+  s = s.replace(/(体重が(?:前日|前回)より)(\s*)([-−－][0-9０-９]+(?:[\.．][0-9０-９]+)?\s*(?:kg|キロ)?)(\s*減少していた)/g, function(match, a, sp, num, b){
+    return a + sp + blueOpen + num + close + b;
+  });
 
   // 血圧：上135以上・下85以上の「該当する数字だけ」赤
   // 例：血圧145/78 → 145だけ赤、血圧128/88 → 88だけ赤、血圧145/88 → 両方赤
   s = s.replace(/(血圧[:：]?\s*)([0-9０-９]{2,3})(\s*[\/／]\s*)([0-9０-９]{2,3})/g, function(match, label, sys, sep, dia){
     const sysN = Number(toHalfNumber(sys));
     const diaN = Number(toHalfNumber(dia));
-    const sysHtml = sysN >= 135 ? '<span class="vital-red">' + sys + '</span>' : sys;
-    const diaHtml = diaN >= 85 ? '<span class="vital-red">' + dia + '</span>' : dia;
+    const sysHtml = sysN >= 135 ? redOpen + sys + close : sys;
+    const diaHtml = diaN >= 85 ? redOpen + dia + close : dia;
     return label + sysHtml + sep + diaHtml;
   });
 
@@ -422,15 +442,14 @@ function colorizeVitalText(text){
   // 例：脈拍104 → 104だけ赤、脈拍38 → 38だけ青
   s = s.replace(/(脈拍[:：]?\s*)([0-9０-９]{1,3})/g, function(match, label, pulse){
     const n = Number(toHalfNumber(pulse));
-    if (n >= 100) return label + '<span class="vital-red">' + pulse + '</span>';
-    if (n <= 40) return label + '<span class="vital-blue">' + pulse + '</span>';
+    if (n >= 100) return label + redOpen + pulse + close;
+    if (n <= 40) return label + blueOpen + pulse + close;
     return match;
   });
 
-  // 説明文に出る基準値も、文字全体ではなく数字だけ色付け
-  s = s.replace(/(血圧が高めであった)/g, '$1');
-  s = s.replace(/(脈拍が)(100)(以上であった|以上)/g, '$1<span class="vital-red">$2</span>$3');
-  s = s.replace(/(脈拍が)(40)(以下であった|以下)/g, '$1<span class="vital-blue">$2</span>$3');
+  // 説明文に出る基準値も数字だけ
+  s = s.replace(/(脈拍が)(100)(以上であった|以上)/g, '$1' + redOpen + '$2' + close + '$3');
+  s = s.replace(/(脈拍が)(40)(以下であった|以下)/g, '$1' + blueOpen + '$2' + close + '$3');
 
   return s;
 }
