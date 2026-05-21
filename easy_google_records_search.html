@@ -334,9 +334,76 @@ function initSearchKeywords(){
   loadSharedKeywords({silent:true});
 }
 function inDateRange(date, from, to){ if (from && date < from) return false; if (to && date > to) return false; return true; }
+
+function normalizeRecordDateValue(rec){
+  return String((rec && (rec.date || rec.dateKey)) || '').trim().slice(0,10);
+}
+function normalizeRecordUserValue(rec){
+  return String((rec && (rec.user || rec.resident || rec.name)) || '').trim();
+}
+function normalizeRecordStaffValue(rec){
+  return String((rec && (rec.staff || rec.recorder)) || '').trim();
+}
+function isDeletedRecord(rec){
+  if (!rec || typeof rec !== 'object') return false;
+  const values = [
+    rec.deleted,
+    rec.delete,
+    rec.isDeleted,
+    rec.removed,
+    rec.trash,
+    rec.status
+  ].map(v => String(v ?? '').trim().toLowerCase());
+  return values.some(v => v === '1' || v === 'true' || v === 'yes' || v === 'deleted' || v === '削除' || v === '削除済み');
+}
+function getRecordUpdatedTime(rec){
+  if (!rec || typeof rec !== 'object') return 0;
+  const candidates = [rec.updated_at, rec.updatedAt, rec.modified_at, rec.modifiedAt, rec.created_at, rec.createdAt, rec.timestamp, rec.time];
+  for (const raw of candidates) {
+    const s = String(raw ?? '').trim();
+    if (!s) continue;
+    const t = new Date(s).getTime();
+    if (Number.isFinite(t)) return t;
+  }
+  return 0;
+}
+function getRecordUniqueKey(rec){
+  const date = normalizeRecordDateValue(rec);
+  const user = normalizeRecordUserValue(rec);
+  if (date || user) return date + '___' + user;
+  return String((rec && (rec.id || rec._id || rec.recordId || rec.serverId)) || Math.random()).trim();
+}
+function cleanRecordsBeforeSearch(records){
+  const list = Array.isArray(records) ? records : [];
+  const latestMap = new Map();
+
+  list.forEach((rec, idx) => {
+    if (!rec || typeof rec !== 'object') return;
+    const key = getRecordUniqueKey(rec);
+    const current = latestMap.get(key);
+    if (!current) {
+      latestMap.set(key, { rec, idx });
+      return;
+    }
+    const nextTime = getRecordUpdatedTime(rec);
+    const curTime = getRecordUpdatedTime(current.rec);
+    if (nextTime > curTime || (nextTime === curTime && idx > current.idx)) {
+      latestMap.set(key, { rec, idx });
+    }
+  });
+
+  return Array.from(latestMap.values())
+    .map(x => x.rec)
+    .filter(rec => !isDeletedRecord(rec));
+}
 function matchesKeyword(rec, kw){
   if (!kw) return true;
-  const hay = [rec.date, rec.user, rec.staff, normalizeText(rec.text), JSON.stringify(rec.raw || {})].join('\n').toLowerCase();
+  const hay = [
+    normalizeRecordDateValue(rec),
+    normalizeRecordUserValue(rec),
+    normalizeRecordStaffValue(rec),
+    normalizeText(rec.text || rec.body || rec.content || '')
+  ].join('\n').toLowerCase();
   return hay.includes(kw.toLowerCase());
 }
 function renderResults(records){
@@ -368,11 +435,18 @@ async function searchRecords(){
   searchStatus.textContent = '検索中です...';
   try {
     const data = await fetchJson(WEB_APP_URL + '?action=getRecords');
-    let records = Array.isArray(data.records) ? data.records.slice() : [];
-    records = records.filter(rec => (!user || String(rec.user || '').trim() === user) && inDateRange(String(rec.date || ''), from, to) && matchesKeyword(rec, kw));
-    records.sort((a,b) => (String(b.date || '') + ' ' + String(b.updatedAt || '')).localeCompare(String(a.date || '') + ' ' + String(a.updatedAt || '')));
+    const allRecords = Array.isArray(data.records) ? data.records.slice() : [];
+    let records = cleanRecordsBeforeSearch(allRecords);
+    records = records.filter(rec => (!user || normalizeRecordUserValue(rec) === user) && inDateRange(normalizeRecordDateValue(rec), from, to) && matchesKeyword(rec, kw));
+    records.sort((a,b) => {
+      const bd = normalizeRecordDateValue(b);
+      const ad = normalizeRecordDateValue(a);
+      if (bd !== ad) return bd.localeCompare(ad);
+      return getRecordUpdatedTime(b) - getRecordUpdatedTime(a);
+    });
     renderResults(records);
-    searchStatus.textContent = records.length + '件見つかりました。';
+    const hiddenCount = Math.max(0, allRecords.length - cleanRecordsBeforeSearch(allRecords).length);
+    searchStatus.textContent = records.length + '件見つかりました。' + (hiddenCount ? '\n削除済み・古い重複記録 ' + hiddenCount + '件は表示しません。' : '');
   } catch(err){
     results.innerHTML = '';
     searchStatus.textContent = '検索に失敗しました。\n' + (err && err.message ? err.message : err);
