@@ -47,8 +47,8 @@
 
 
   /* バイタル異常の色付け（個人記録の確認表示だけ） */
-  .vital-red{color:#dc2626;font-weight:900;background:#fee2e2;padding:1px 5px;border-radius:6px}
-  .vital-blue{color:#2563eb;font-weight:900;background:#dbeafe;padding:1px 5px;border-radius:6px}
+  .vital-red{color:#dc2626;font-weight:400;background:#fee2e2;padding:1px 5px;border-radius:6px}
+  .vital-blue{color:#2563eb;font-weight:400;background:#dbeafe;padding:1px 5px;border-radius:6px}
   .template-wrap{border:1px solid #dbe4f0;background:#f8fbff;border-radius:12px;padding:10px 12px;margin:10px 0}
   .template-head{font-size:14px;color:#475569;margin-top:6px;line-height:1.6}
   .template-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
@@ -401,8 +401,8 @@ function colorizeVitalText(text){
   let s = escapeHtml(String(text || ''));
 
   // 携帯でも確実に色が出るように、classだけでなく inline style も直接付ける
-  const redOpen = '<span class="vital-red" style="color:#dc2626 !important;font-weight:900;background:#fee2e2;padding:1px 5px;border-radius:6px;">';
-  const blueOpen = '<span class="vital-blue" style="color:#2563eb !important;font-weight:900;background:#dbeafe;padding:1px 5px;border-radius:6px;">';
+  const redOpen = '<span class="vital-red" style="color:#dc2626 !important;font-weight:400;background:#fee2e2;padding:1px 5px;border-radius:6px;">';
+  const blueOpen = '<span class="vital-blue" style="color:#2563eb !important;font-weight:400;background:#dbeafe;padding:1px 5px;border-radius:6px;">';
   const close = '</span>';
 
   const toHalfNumber = (v) => String(v || '')
