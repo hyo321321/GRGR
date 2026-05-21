@@ -23,6 +23,7 @@
   .result{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:#fbfbfd}
   .resultHead{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:8px}
   .resultBody{white-space:pre-wrap;line-height:1.6}
+  .search-hit{background:#fef08a;color:#854d0e;border-radius:4px;padding:0 2px}
   .pill{display:inline-block;background:#eef2ff;color:#334155;border-radius:999px;padding:3px 8px;font-size:12px}
   .auth-screen{position:fixed;inset:0;background:rgba(246,247,251,.98);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999}
   .auth-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
@@ -406,7 +407,29 @@ function matchesKeyword(rec, kw){
   ].join('\n').toLowerCase();
   return hay.includes(kw.toLowerCase());
 }
-function renderResults(records){
+function escapeRegExp(str){
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function highlightKeywordInHtml(text, kw){
+  const cleanText = normalizeText(text || '');
+  const safeText = escapeHtml(cleanText);
+  const cleanKw = String(kw || '').trim();
+  if (!cleanKw) return safeText;
+
+  // 半角・全角スペースで区切られた複数語にも対応
+  const words = cleanKw.split(/[\s　]+/).map(x => x.trim()).filter(Boolean);
+  if (!words.length) return safeText;
+
+  let out = safeText;
+  words.forEach((word) => {
+    const safeWord = escapeHtml(word);
+    if (!safeWord) return;
+    const pattern = new RegExp(escapeRegExp(safeWord), 'gi');
+    out = out.replace(pattern, (m) => '<span class="search-hit">' + m + '</span>');
+  });
+  return out;
+}
+function renderResults(records, kw){
   if (!records.length) {
     results.innerHTML = '<div class="meta">該当する記録はありません。</div>';
     return;
@@ -414,11 +437,11 @@ function renderResults(records){
   results.innerHTML = records.map(rec => `
     <div class="result">
       <div class="resultHead">
-        <span class="pill">${escapeHtml(rec.date || '')}</span>
-        <span>${escapeHtml(rec.user || '')}</span>
-        <span>記録者 ${escapeHtml(rec.staff || '')}</span>
+        <span class="pill">${escapeHtml(normalizeRecordDateValue(rec) || rec.date || '')}</span>
+        <span>${escapeHtml(normalizeRecordUserValue(rec) || rec.user || '')}</span>
+        <span>記録者 ${escapeHtml(normalizeRecordStaffValue(rec) || rec.staff || '')}</span>
       </div>
-      <div class="resultBody">${escapeHtml(normalizeText(rec.text || ''))}</div>
+      <div class="resultBody">${highlightKeywordInHtml(rec.text || rec.body || rec.content || '', kw)}</div>
     </div>
   `).join('');
 }
@@ -444,7 +467,7 @@ async function searchRecords(){
       if (bd !== ad) return bd.localeCompare(ad);
       return getRecordUpdatedTime(b) - getRecordUpdatedTime(a);
     });
-    renderResults(records);
+    renderResults(records, kw);
     const hiddenCount = Math.max(0, allRecords.length - cleanRecordsBeforeSearch(allRecords).length);
     searchStatus.textContent = records.length + '件見つかりました。' + (hiddenCount ? '\n削除済み・古い重複記録 ' + hiddenCount + '件は表示しません。' : '');
   } catch(err){
