@@ -1,594 +1,3392 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<title>バイタル入力専用</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta charset="utf-8"/>
+<title>バイタル入力専用（体重・血圧・脈拍）</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Yu Gothic UI", sans-serif;
-    background: #f1f5f9;
-    color: #0f172a;
-    font-size: 18px;
-  }
-  .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: #ffffffee;
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid #dbe5f1;
-    padding: 12px;
-  }
-  .topbar-inner {
-    max-width: 760px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .title {
-    font-weight: 900;
-    font-size: 20px;
-    line-height: 1.25;
-  }
-  .sub {
-    font-size: 13px;
-    color: #475569;
-    margin-top: 2px;
-  }
-  a { color: #2563eb; text-decoration: none; font-weight: 800; }
-  .wrap {
-    max-width: 760px;
-    margin: 12px auto 28px;
-    padding: 0 12px;
-  }
-  .card {
-    background: #fff;
-    border: 1px solid #dbe5f1;
-    border-radius: 18px;
-    box-shadow: 0 6px 20px rgba(15, 23, 42, .06);
-    padding: 14px;
-    margin-bottom: 12px;
-  }
-  .card-title {
-    font-size: 18px;
-    font-weight: 900;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  label {
-    display: block;
-    font-size: 15px;
-    color: #334155;
-    font-weight: 800;
-    margin: 0 0 6px;
-  }
-  input, select, textarea {
-    width: 100%;
-    border: 2px solid #cbd5e1;
-    border-radius: 14px;
-    padding: 14px 12px;
-    font-size: 20px;
-    background: #fff;
-    color: #0f172a;
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, .16);
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-  }
-  .slot-group {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  .slot-btn, .btn {
-    border: 2px solid #cbd5e1;
-    background: #fff;
-    color: #0f172a;
-    border-radius: 14px;
-    padding: 14px 12px;
-    font-size: 18px;
-    font-weight: 900;
-    cursor: pointer;
-    text-align: center;
-  }
-  .slot-btn.active {
-    background: #2563eb;
-    color: #fff;
-    border-color: #2563eb;
-  }
-  .btn-primary {
-    width: 100%;
-    background: #2563eb;
-    color: #fff;
-    border-color: #2563eb;
-    font-size: 22px;
-    padding: 18px 12px;
-  }
-  .btn-sub {
-    background: #f8fafc;
-  }
-  .btn-danger {
-    background: #fee2e2;
-    border-color: #fecaca;
-    color: #991b1b;
-  }
-  .btn:disabled {
-    opacity: .65;
-    cursor: not-allowed;
-  }
-  .btn-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  .hint {
-    color: #475569;
-    font-size: 14px;
-    line-height: 1.55;
-  }
-  .status {
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    font-size: 15px;
-    font-weight: 800;
-    color: #1e3a8a;
-    line-height: 1.45;
-  }
-  .status.warn {
-    background: #fff7ed;
-    border-color: #fed7aa;
-    color: #9a3412;
-  }
-  .status.ok {
-    background: #ecfdf5;
-    border-color: #bbf7d0;
-    color: #166534;
-  }
-  .latest-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .latest-item {
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    border-radius: 14px;
-    padding: 10px;
-    font-size: 15px;
-    line-height: 1.45;
-  }
-  .latest-main {
-    font-weight: 900;
-    color: #0f172a;
-  }
-  .latest-sub {
-    color: #475569;
-    margin-top: 3px;
-  }
-  .pill {
-    display: inline-block;
-    border-radius: 999px;
-    background: #e0f2fe;
-    color: #075985;
-    padding: 2px 8px;
-    font-size: 13px;
-    font-weight: 900;
-    margin-left: 4px;
-  }
-  .red { color: #dc2626; font-weight: 900; }
-  @media (max-width: 420px) {
-    body { font-size: 17px; }
-    input, select, textarea { font-size: 19px; padding: 13px 11px; }
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    .btn-row { grid-template-columns: 1fr; }
-    .title { font-size: 19px; }
-  }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Yu Gothic UI", sans-serif;
+      background: #f6f7fb;
+      color: #0f172a;
+    }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: #ffffffcc;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 16px;
+      z-index: 10;
+    }
+    .topbar-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .title {
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #475569;
+      margin-top: 2px;
+    }
+
+    .wrap { max-width: 1400px; margin: 14px auto 24px; padding: 0 16px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .layout > * { min-width: 0; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(2,6,23,.04);
+      padding: 14px;
+    }
+    .card-title {
+      font-weight: 800;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    label { display: block; font-size: 12px; color: #475569; margin: 0 0 6px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    textarea { resize: vertical; min-height: 78px; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .btn {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn-danger { background: #ef4444; color: #fff; border-color: #ef4444; }
+    .btn-ghost { background: #fff; color: #0f172a; }
+    .btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .hint { font-size: 12px; color: #475569; line-height: 1.45; }
+
+    .input-card {
+      padding: 10px;
+    }
+    .input-card .card-title {
+      margin-bottom: 8px;
+    }
+    .input-card .hint {
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .input-card label {
+      font-size: 10px;
+      margin: 0 0 3px;
+    }
+    .input-card input,
+    .input-card select,
+    .input-card textarea {
+      padding: 6px 7px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    .input-grid-4 {
+      display: grid;
+      grid-template-columns: 0.95fr 0.85fr 1.3fr 1fr 0.8fr 0.8fr 0.8fr 0.8fr;
+      gap: 6px;
+      align-items: end;
+    }
+    .input-grid-2 {
+      display: grid;
+      grid-template-columns: 1.25fr auto;
+      gap: 6px;
+      align-items: end;
+      margin-top: 6px;
+    }
+    .input-card .btn-row {
+      gap: 5px;
+      margin-top: 6px;
+      flex-wrap: nowrap;
+    }
+    .input-card .btn {
+      padding: 7px 9px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .input-card .field-compact {
+      min-width: 0;
+    }
+    .input-card #vMemo {
+      min-width: 0;
+    }
+
+    .slot-group {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .slot-btn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #0f172a;
+      border-radius: 8px;
+      padding: 8px 6px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .slot-btn.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+    .slot-hint {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+    @media (max-width: 1100px) {
+      .input-grid-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 900px) {
+      .input-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .input-grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .input-card .btn-row {
+        flex-wrap: wrap;
+      }
+    }
+
+    .tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+
+    .list-month-range {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 6px 8px;
+      border: 1px solid #dbe5f1;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .list-month-range label {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+    }
+    .list-month-range select {
+      width: auto;
+      min-width: 108px;
+      padding: 8px 9px;
+      font-size: 12px;
+    }
+    .list-month-range .range-sep {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 800;
+    }
+
+
+    .filter-checks {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 6px 8px;
+      border: 1px solid #dbe5f1;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .filter-check-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin: 0;
+      padding: 4px 6px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .filter-check-label input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: #2563eb;
+    }
+    @media (max-width: 700px) {
+      .filter-checks {
+        width: 100%;
+      }
+      .filter-check-label {
+        flex: 1 1 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+    .item-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .item-title { font-weight: 800; }
+    .item-meta { font-size: 12px; color: #475569; }
+    .item-body { margin-top: 6px; font-size: 13px; line-height: 1.5; }
+    .pill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      color: #334155;
+      background: #f8fafc;
+      margin-right: 6px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+      z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 60;
+    }
+    .modal {
+      width: min(720px, 100%);
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 18px 55px rgba(2,6,23,.25);
+      padding: 14px;
+    }
+
+    
+    /* 追加：グラフを大きく・縦に並べる */
+    #chartsCard { margin-bottom: 12px; }
+    .charts-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 1200px) { canvas.chart { height: 340px; } }
+.chart-wrap {
+      margin: 10px 0 0;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .chart-title {
+      font-weight: 900;
+      font-size: 13px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .chart-sub {
+      font-size: 12px;
+      color: #475569;
+      font-weight: 700;
+    }
+    canvas.chart {
+      width: 100%;
+      height: 300px;
+      display: block;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    .legend {
+      margin-top: 8px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+    .legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+
+    
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .vitals-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+      font-size: 13px;
+    }
+    .vitals-table th,
+    .vitals-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    .vitals-table th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 1;
+      font-size: 12px;
+      color: #475569;
+    }
+    .vitals-table td.memo-cell {
+      white-space: normal;
+      min-width: 180px;
+    }
+    .table-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .table-empty {
+      padding: 14px;
+      font-size: 13px;
+      color: #475569;
+    }
+    .select-col {
+      width: 42px;
+      text-align: center !important;
+    }
+    .row-check,
+    .check-all {
+      width: 16px;
+      height: 16px;
+      accent-color: #2563eb;
+      cursor: pointer;
+    }
+    .bulk-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 10px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .bulk-actions .left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #475569;
+    }
+    .bulk-actions .left strong {
+      color: #0f172a;
+    }
+    .bulk-actions .btn {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+
+    .tools input[type="text"] {
+      max-width: 220px;
+    }
+    .table-actions {
+      gap: 4px;
+    }
+    .table-actions .btn,
+    .manual-flag-btn {
+      padding: 4px 6px;
+      font-size: 10px;
+    }
+    .vitals-table td:nth-child(1),
+    .vitals-table th:nth-child(1) {
+      min-width: 120px;
+    }
+    .vitals-table td:nth-child(2),
+    .vitals-table th:nth-child(2),
+    .vitals-table td:nth-child(6),
+    .vitals-table th:nth-child(6) {
+      min-width: 74px;
+    }
+    .vitals-table td:nth-child(7),
+    .vitals-table th:nth-child(7) {
+      min-width: 120px;
+    }
+
+    @media print {
+      body { background:#fff; }
+      .topbar, .toast, .modal-backdrop { display:none !important; }
+      .layout { grid-template-columns: 1fr !important; }
+      .layout > .card:first-child { display:none !important; }
+      .wrap { max-width:none; margin:0; padding:0; }
+      .card { box-shadow:none; border:0; padding:0; margin:0 0 14px; }
+      .table-wrap { overflow: visible; border:0; }
+      .vitals-table { min-width:0; font-size:11px; }
+      .vitals-table th, .vitals-table td { padding:4px 6px; }
+      .table-actions, .bulk-actions, .select-col { display:none !important; }
+      canvas.chart { height:220px !important; }
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  
+
+    .avg-box {
+      margin: 0 0 10px;
+      padding: 10px 12px;
+      border: 1px solid #dbe5f1;
+      border-radius: 12px;
+      background: #f8fafc;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .avg-title {
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .avg-items {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .avg-item {
+      white-space: nowrap;
+    }
+    .avg-legend {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.6;
+    }
+    .manual-flag {
+      color: #dc2626;
+      font-weight: 800;
+    }
+    .pulse-high {
+      color: #dc2626;
+      font-weight: 800;
+      background: #fee2e2;
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .pulse-low {
+      color: #2563eb;
+      font-weight: 800;
+      background: #dbeafe;
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .manual-flag-btn {
+      border: 1px solid #fca5a5;
+      background: #fff5f5;
+      color: #b91c1c;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .manual-flag-btn.is-on {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+    }
+    .weight-diff {
+      margin-left: 4px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .weight-diff-plus {
+      color: #dc2626 !important;
+    }
+    .weight-diff-minus {
+      color: #2563eb !important;
+    }
+    .weight-diff-zero {
+      color: #475569 !important;
+    }
+    @media print {
+      .avg-box {
+        border: 0;
+        padding: 0 0 6px;
+        margin: 0 0 8px;
+        background: transparent;
+      }
+      .manual-flag-btn {
+        display: none !important;
+      }
+    }
+
+
+    /* 印刷調整：一覧の途中でグラフ見出しだけが残らないよう、グラフは次ページ開始 */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 8mm;
+      }
+
+      body {
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* 入力欄・操作ボタンは印刷しない */
+      .topbar,
+      .toast,
+      .modal-backdrop,
+      .layout > .card:first-child,
+      .table-actions,
+      .bulk-actions,
+      .select-col,
+      .manual-flag-btn {
+        display: none !important;
+      }
+
+      .wrap {
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .card {
+        box-shadow: none !important;
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 0 6mm !important;
+      }
+
+      .table-wrap {
+        overflow: visible !important;
+        border: 0 !important;
+      }
+
+      .vitals-table {
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 10.5px !important;
+      }
+
+      .vitals-table th,
+      .vitals-table td {
+        padding: 3px 5px !important;
+      }
+
+      /* ここが大事：グラフ全体を次ページから開始 */
+      #chartsCard {
+        break-before: page !important;
+        page-break-before: always !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        margin-top: 0 !important;
+      }
+
+      #chartsCard .card-title {
+        margin: 0 0 4mm !important;
+        padding: 0 !important;
+        font-size: 14px !important;
+      }
+
+      .charts-grid {
+        display: block !important;
+        gap: 0 !important;
+      }
+
+      .chart-wrap {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        margin: 0 0 5mm !important;
+        padding: 4mm !important;
+        border: 1px solid #e5e7eb !important;
+        background: #fff !important;
+      }
+
+      .chart-title {
+        margin-bottom: 2mm !important;
+        font-size: 12px !important;
+      }
+
+      canvas.chart {
+        width: 100% !important;
+        height: 88mm !important;
+        max-height: 88mm !important;
+        border: 1px solid #e5e7eb !important;
+      }
+
+      .legend {
+        margin-top: 2mm !important;
+        font-size: 10px !important;
+      }
+
+      .hint {
+        font-size: 10px !important;
+      }
+    }
+
+
+    /* 印刷専用：全月の平均値 */
+    .print-only-monthly-avg {
+      display: none;
+    }
+    .print-monthly-title {
+      font-weight: 900;
+      margin: 0 0 6px;
+      font-size: 13px;
+    }
+    .print-monthly-note {
+      font-size: 11px;
+      color: #475569;
+      margin: 0 0 6px;
+      line-height: 1.5;
+    }
+    @media print {
+      .print-only-monthly-avg {
+        display: block !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        margin: 0 0 4mm !important;
+        padding: 0 0 3mm !important;
+      }
+      .print-only-monthly-avg .table-wrap {
+        overflow: visible !important;
+        border: 0 !important;
+      }
+      .print-only-monthly-avg .vitals-table {
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 10px !important;
+      }
+      .print-only-monthly-avg th,
+      .print-only-monthly-avg td {
+        padding: 3px 5px !important;
+      }
+    }
+
+
+
+    /* 入力専用ページ用：入力欄だけ表示し、同じ保存処理で個人記録へ自動追記する */
+    body.input-only .layout > .card:not(.input-card),
+    body.input-only #chartsCard {
+      display: none !important;
+    }
+    body.input-only .wrap {
+      max-width: 760px !important;
+    }
+    body.input-only #syncRemoteBtn,
+    body.input-only #exportCsvBtn,
+    body.input-only #bulkImportBtn,
+    body.input-only #backupVitalsBtn,
+    body.input-only #restoreVitalsBtn {
+      display: none !important;
+    }
+    body.input-only .input-card {
+      padding: 16px !important;
+    }
+    body.input-only .input-card label {
+      font-size: 13px !important;
+      font-weight: 800;
+      color: #334155;
+    }
+    body.input-only .input-card input,
+    body.input-only .input-card select {
+      padding: 13px 12px !important;
+      font-size: 16px !important;
+      border-radius: 12px !important;
+    }
+    body.input-only .input-card .btn {
+      padding: 14px 16px !important;
+      font-size: 15px !important;
+      border-radius: 12px !important;
+    }
+    body.input-only .input-grid-4,
+    body.input-only .input-grid-2 {
+      grid-template-columns: 1fr !important;
+      gap: 10px !important;
+    }
+    @media (min-width: 760px) {
+      body.input-only .input-grid-4 {
+        grid-template-columns: 1fr 1fr !important;
+      }
+      body.input-only .input-grid-2 {
+        grid-template-columns: 1fr auto !important;
+      }
+    }
+
 </style>
 </head>
-<body>
+<body class="input-only">
 <div class="topbar">
-  <div class="topbar-inner">
-    <div>
-      <div class="title">📱 バイタル入力専用</div>
-      <div class="sub">大きい画面表示でも入力しやすい簡易ページ</div>
-    </div>
-    <a href="vitals.html">一覧へ戻る</a>
-  </div>
+<div class="topbar-inner">
+<div>
+<div class="title">📱 バイタル入力専用（体重・血圧・脈拍）</div>
+<div class="subtitle">※入力だけに絞ったページです。異常値はかんたんページの個人記録へ自動追記します。</div>
 </div>
-
-<div class="wrap">
-  <div class="card">
-    <div class="card-title">
-      <span>入力</span>
-      <span class="hint" id="weekdayText"></span>
-    </div>
-
-    <div class="grid">
-      <div>
-        <label>日付</label>
-        <input id="vDate" type="date" />
-      </div>
-
-      <div>
-        <label>測定区分</label>
-        <div class="slot-group" id="slotGroup">
-          <button type="button" class="slot-btn active" data-slot="morning">朝</button>
-          <button type="button" class="slot-btn" data-slot="noon">昼</button>
-          <button type="button" class="slot-btn" data-slot="evening">夕</button>
-        </div>
-        <div class="hint" style="margin-top:6px;">時刻は内部で 朝08:00・昼12:00・夕18:00 として保存します。</div>
-      </div>
-
-      <div class="grid-2">
-        <div>
-          <label>利用者</label>
-          <select id="vResident"></select>
-        </div>
-        <div>
-          <label>記録者</label>
-          <input id="vRecorder" list="recorderList" placeholder="例）太田" />
-          <datalist id="recorderList"></datalist>
-        </div>
-      </div>
-
-      <div class="grid-3">
-        <div>
-          <label>体重 kg</label>
-          <input id="vWeight" type="number" step="0.1" inputmode="decimal" placeholder="60.9" />
-        </div>
-        <div>
-          <label>血圧 上</label>
-          <input id="vBpSys" type="number" step="1" inputmode="numeric" placeholder="126" />
-        </div>
-        <div>
-          <label>血圧 下</label>
-          <input id="vBpDia" type="number" step="1" inputmode="numeric" placeholder="59" />
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div>
-          <label>脈拍</label>
-          <input id="vPulse" type="number" step="1" inputmode="numeric" placeholder="65" />
-        </div>
-        <div>
-          <label>メモ 任意</label>
-          <input id="vMemo" type="text" placeholder="例）朝食前、再測定など" />
-        </div>
-      </div>
-
-      <button class="btn btn-primary" id="saveBtn" type="button">💾 共有へ保存</button>
-      <div class="btn-row">
-        <button class="btn btn-sub" id="checkTodayBtn" type="button">🔍 今日の記録を確認</button>
-        <button class="btn btn-sub" id="clearBtn" type="button">🧹 入力クリア</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">状態</div>
-    <div class="status" id="status">入力して保存してください。</div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">
-      <span>この端末で最近保存した記録</span>
-      <button class="btn btn-sub" id="reloadLocalBtn" type="button" style="font-size:14px; padding:8px 10px;">更新</button>
-    </div>
-    <div class="latest-list" id="latestList"></div>
-  </div>
+<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+<a href="easy_google_send_v2.html">← かんたんページへ戻る</a>
+<a class="btn btn-primary" href="vitals.html" style="color:#fff; text-decoration:none;">📊 通常バイタルページ</a>
+<button class="btn btn-ghost" id="syncRemoteBtn">☁ 共有読込</button>
+<button class="btn btn-ghost" id="exportCsvBtn">⬇ CSV</button>
+<button class="btn btn-ghost" id="bulkImportBtn">📥 まとめて取込</button>
+<input accept=".json,.csv,application/json,text/csv" id="bulkImportFile" style="display:none" type="file"/>
+<button class="btn btn-ghost" id="backupVitalsBtn">🧷 バックアップ</button>
+<button class="btn btn-ghost" id="restoreVitalsBtn">♻ 復元</button>
+<input accept=".json,application/json" id="restoreVitalsFile" style="display:none" type="file"/>
 </div>
-
+</div>
+</div>
+<div class="wrap"><div class="layout">
+<div class="card input-card">
+<div class="card-title">
+<span>入力</span>
+<span class="hint" id="quickStatus"></span>
+</div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧が高い日（上135以上・下85以上）、脈拍が100以上または40以下、体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動追記します。</div>
+<div class="input-grid-4">
+<div class="field-compact">
+<label>日付</label>
+<input id="vDate" type="date"/>
+<div class="weekday-text" id="vWeekday"></div>
+</div>
+<div class="field-compact">
+<label>測定区分</label>
+<div class="slot-group" id="vSlotGroup">
+<button class="slot-btn active" data-slot="morning" type="button">朝</button>
+<button class="slot-btn" data-slot="noon" type="button">昼</button>
+<button class="slot-btn" data-slot="evening" type="button">夕</button>
+</div>
+<div class="slot-hint">実際の測定時刻はメモに入力してください。</div>
+</div>
+<div class="field-compact">
+<label>利用者</label>
+<select id="vResident"></select>
+</div>
+<div class="field-compact">
+<label>記録者</label>
+<select id="vRecorder"></select>
+</div>
+<div class="field-compact">
+<label>体重（kg）</label>
+<input id="vWeight" inputmode="decimal" placeholder="例）58.4" step="0.1" type="number"/>
+</div>
+<div class="field-compact">
+<label>血圧（上）</label>
+<input id="vBpSys" inputmode="numeric" placeholder="例）128" step="1" type="number"/>
+</div>
+<div class="field-compact">
+<label>血圧（下）</label>
+<input id="vBpDia" inputmode="numeric" placeholder="例）78" step="1" type="number"/>
+</div>
+<div class="field-compact">
+<label>脈拍（回/分）</label>
+<input id="vPulse" inputmode="numeric" placeholder="例）72" step="1" type="number"/>
+</div>
+</div>
+<div class="input-grid-2">
+<div class="field-compact">
+<label>メモ（任意）</label>
+<input id="vMemo" placeholder="例）14:20 測定、受診後に再測定" type="text"/>
+</div>
+<div>
+<div class="btn-row">
+<button class="btn btn-primary" id="saveVitalBtn">💾 保存</button>
+<button class="btn" id="clearBtn">🧹 クリア</button>
+<button class="btn" id="copyBtn">📋 コピー</button>
+</div>
+</div>
+</div>
+<div class="hint" style="margin-top:6px;">
+          ・保存すると右の一覧に出ます（新しい順）。<br/>
+          ・血圧高め（上135以上・下85以上）、脈拍100以上・40以下、または体重＋1kg以上の日は、かんたんページの個人記録へ自動追記します。<br/>
+          ・時刻欄はなく、朝・昼・夕で保存されます。実際の測定時刻はメモへ入力してください。<br/>
+          ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
+</div>
+</div>
+<div class="card">
+<div class="card-title">
+<span>一覧</span>
+<span class="hint" id="countLabel"></span>
+</div>
+<div class="tools">
+<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+<label style="margin:0">表示：</label>
+<select id="filterResident" style="width:auto; min-width: 180px;"></select>
+<select id="filterRange" style="width:auto">
+<option selected="" value="today">今日</option>
+<option value="week">直近7日</option>
+<option value="month">今月</option>
+<option value="all">全期間</option>
+</select>
+<div class="list-month-range">
+<label>一覧期間</label>
+<select id="listMonthFrom"><option value="all">開始月</option></select>
+<span class="range-sep">〜</span>
+<select id="listMonthTo"><option value="all">終了月</option></select>
+<button class="btn btn-ghost" id="clearListMonthBtn" type="button" style="padding:8px 10px;font-size:12px;">解除</button>
+</div>
+<button class="btn btn-primary" id="printBtn" type="button" style="padding:8px 10px;font-size:12px;">🖨 この一覧を印刷</button>
+<button class="btn btn-ghost" id="pdfBtn" type="button" style="padding:8px 10px;font-size:12px;">📄 この一覧をPDF</button>
+<select id="summaryMode" style="width:auto">
+<option value="list">通常一覧</option>
+<option value="weekday">曜日別</option>
+<option value="month_summary">月別</option>
+</select>
+<select id="weekdayFilter" style="width:auto">
+<option value="all">全曜日</option>
+<option value="1">月</option>
+<option value="2">火</option>
+<option value="3">水</option>
+<option value="4">木</option>
+<option value="5">金</option>
+<option value="6">土</option>
+<option value="0">日</option>
+</select>
+<select id="monthFilter" style="width:auto; min-width:120px;">
+<option value="all">全月</option>
+</select>
+<div class="filter-checks">
+<label class="filter-check-label"><input id="highOnlyToggle" type="checkbox">血圧が高い日だけ</label>
+<label class="filter-check-label"><input id="weightUp1kgToggle" type="checkbox">体重＋1kg以上の日だけ</label>
+<label class="filter-check-label"><input id="pulseAbnormalToggle" type="checkbox">脈拍が高い・低い日だけ</label>
+</div>
+</div>
+<input id="search" placeholder="検索（メモ/数値）" style="width: 180px;" type="text"/>
+</div>
+<div class="hint" id="printRangeNote" style="margin-bottom:6px;"></div><div class="table-wrap"><div class="list" id="list"></div></div>
+</div>
+</div>
+</div>
+<div class="wrap"><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
+<div class="chart-title">
+<span>体重（kg）</span>
+<span class="chart-sub" id="chartResidentLabel"></span>
+</div>
+<canvas class="chart" id="chartWeight"></canvas>
+<div class="hint" id="chartWeightHint" style="margin-top:6px"></div>
+</div><div class="chart-wrap" id="chartsWrap2">
+<div class="chart-title"><span>血圧・脈拍</span><span class="chart-sub" id="chartRangeLabel"></span></div>
+<canvas class="chart" id="chartVitals"></canvas>
+<div class="legend">
+<span><i style="background:#ef4444"></i>血圧（上）</span>
+<span><i style="background:#f59e0b"></i>血圧（下）</span>
+<span><i style="background:#10b981"></i>脈拍</span>
+</div>
+<div class="hint" id="chartVitalsHint" style="margin-top:6px"></div>
+</div></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="modalBg">
+<div class="modal">
+<div class="card-title"><span>編集</span><button class="btn" id="closeModalBtn">✕</button></div>
+<div class="grid">
+<div><label>日付</label><input id="eDate" type="date"/><div class="weekday-text" id="eWeekday"></div></div>
+<div>
+<label>測定区分</label>
+<div class="slot-group" id="eSlotGroup">
+<button class="slot-btn active" data-slot="morning" type="button">朝</button>
+<button class="slot-btn" data-slot="noon" type="button">昼</button>
+<button class="slot-btn" data-slot="evening" type="button">夕</button>
+</div>
+<div class="slot-hint">実際の測定時刻はメモへ入力してください。</div>
+</div>
+</div>
+<div class="grid" style="margin-top:10px;">
+<div><label>利用者</label><select id="eResident"></select></div>
+<div><label>記録者</label><select id="eRecorder"></select></div>
+</div>
+<div class="grid-3" style="margin-top:10px;">
+<div><label>体重（kg）</label><input id="eWeight" step="0.1" type="number"/></div>
+<div><label>血圧（上）</label><input id="eBpSys" step="1" type="number"/></div>
+<div><label>血圧（下）</label><input id="eBpDia" step="1" type="number"/></div>
+</div>
+<div class="grid" style="margin-top:10px;">
+<div><label>脈拍（回/分）</label><input id="ePulse" step="1" type="number"/></div>
+<div><label>メモ（任意）</label><input id="eMemo" type="text"/></div>
+</div>
+<div class="btn-row">
+<button class="btn btn-primary" id="saveEditBtn">💾 更新</button>
+<button class="btn btn-danger" id="deleteEditBtn">🗑 削除</button>
+</div>
+</div>
+</div>
 <script>
-  const RESIDENTS_KEY = "group_home_residents_v1";
-  const RECORDERS_KEY = "group_home_recorders_v1";
-  const VITALS_KEY = "group_home_vitals_v1";
-  const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
-  const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
-  const DEFAULT_RECORDERS = ['太田'];
-  const SLOT_TIME_MAP = { morning: '08:00', noon: '12:00', evening: '18:00' };
-  const SLOT_LABEL_MAP = { morning: '朝', noon: '昼', evening: '夕' };
-  const WEEKDAY_LABELS = ['日','月','火','水','木','金','土'];
-  const $ = id => document.getElementById(id);
+    // 共有キー（本体アプリと合わせる）
+    const RESIDENTS_KEY = "group_home_residents_v1";
+    const RECORDERS_KEY = "group_home_recorders_v1";
+    const VITALS_KEY    = "group_home_vitals_v1";
+    const GOOGLE_SHARE_URL_KEY = "group_home_google_share_url";
+    const GOOGLE_SHARE_URL = 'https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
 
-  let selectedSlot = 'morning';
-  let saving = false;
-  let lastSaveFingerprint = '';
-  let lastSaveAt = 0;
+    const DEFAULT_RESIDENTS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
+    const DEFAULT_RECORDERS = ['太田'];
+    const VITALS_MANUAL_FLAGS_KEY = 'group_home_vitals_manual_flags_v1';
+    const VITALS_AUTO_MAIN_SENT_KEY = 'group_home_vitals_auto_main_sent_v1';
+    const AUTO_BP_SYS_HIGH = 135;
+    const AUTO_BP_DIA_HIGH = 85;
+    const AUTO_WEIGHT_UP_KG = 1.0;
+    const AUTO_PULSE_HIGH = 100;
+    const AUTO_PULSE_LOW = 40;
 
-  function pad2(n) { return String(n).padStart(2, '0'); }
-  function todayStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  }
-  function escapeHTML(s) {
-    return String(s ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
-  }
-  function loadJSON(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      const parsed = JSON.parse(raw);
-      return parsed ?? fallback;
-    } catch(e) { return fallback; }
-  }
-  function saveJSON(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-  function loadVitals() {
-    const v = loadJSON(VITALS_KEY, []);
-    return Array.isArray(v) ? v : [];
-  }
-  function saveVitals(list) { saveJSON(VITALS_KEY, Array.isArray(list) ? list : []); }
+    const $ = (id) => document.getElementById(id);
 
-  function dateKeyFromAny(value) {
-    if (!value) return '';
-    if (value instanceof Date) {
-      return `${value.getFullYear()}-${pad2(value.getMonth()+1)}-${pad2(value.getDate())}`;
-    }
-    const s = String(value).trim();
-    const m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-    if (m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
-    const d = new Date(s);
-    if (!isNaN(d.getTime())) return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-    return '';
-  }
-  function timeFromSlot(slot) { return SLOT_TIME_MAP[slot] || SLOT_TIME_MAP.morning; }
-  function labelFromSlot(slot) { return SLOT_LABEL_MAP[slot] || '朝'; }
-  function buildMeasuredAt(dateStr, timeStr) {
-    const [y, m, d] = String(dateStr).split('-').map(Number);
-    const [h, mi] = String(timeStr).split(':').map(Number);
-    return new Date(y, m - 1, d, h, mi, 0, 0).toISOString();
-  }
-  function formatDateJP(dateKey) {
-    const [y,m,d] = String(dateKey || '').split('-').map(Number);
-    if (!y || !m || !d) return '';
-    const wd = WEEKDAY_LABELS[new Date(y, m - 1, d).getDay()] || '';
-    return `${y}/${pad2(m)}/${pad2(d)}（${wd}）`;
-  }
-  function updateWeekday() {
-    const date = $('vDate').value;
-    const [y,m,d] = String(date || '').split('-').map(Number);
-    if (!y || !m || !d) { $('weekdayText').textContent = ''; return; }
-    const wd = WEEKDAY_LABELS[new Date(y, m - 1, d).getDay()] || '';
-    $('weekdayText').textContent = `${wd}曜日`;
-  }
-  function setStatus(msg, type) {
-    const el = $('status');
-    el.className = 'status' + (type ? ` ${type}` : '');
-    el.innerHTML = msg;
-  }
-  function setSaving(flag) {
-    saving = !!flag;
-    $('saveBtn').disabled = saving;
-    $('saveBtn').textContent = saving ? '保存中…' : '💾 共有へ保存';
-  }
-  function initSelects() {
-    const residents = loadJSON(RESIDENTS_KEY, DEFAULT_RESIDENTS);
-    const recorders = loadJSON(RECORDERS_KEY, DEFAULT_RECORDERS);
-    $('vResident').innerHTML = (Array.isArray(residents) && residents.length ? residents : DEFAULT_RESIDENTS)
-      .map(name => `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`).join('');
-    const recorderList = Array.isArray(recorders) && recorders.length ? recorders : DEFAULT_RECORDERS;
-    $('recorderList').innerHTML = recorderList.map(name => `<option value="${escapeHTML(name)}"></option>`).join('');
-    $('vRecorder').value = recorderList[0] || '太田';
-  }
-  function bindSlots() {
-    $('slotGroup').addEventListener('click', e => {
-      const btn = e.target.closest('.slot-btn');
-      if (!btn) return;
-      selectedSlot = btn.dataset.slot || 'morning';
-      document.querySelectorAll('.slot-btn').forEach(b => b.classList.toggle('active', b === btn));
-    });
-  }
-  function makeId(entry) {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return `${entry.date}-${entry.time}-${entry.resident}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  }
-  function getFormEntry() {
-    const date = $('vDate').value || todayStr();
-    const time = timeFromSlot(selectedSlot);
-    const resident = $('vResident').value;
-    const recorder = $('vRecorder').value.trim() || '太田';
-    const entry = {
-      date,
-      time,
-      dateKey: date,
-      slot: selectedSlot,
-      resident,
-      recorder,
-      weight: $('vWeight').value.trim(),
-      bpSys: $('vBpSys').value.trim(),
-      bpDia: $('vBpDia').value.trim(),
-      pulse: $('vPulse').value.trim(),
-      memo: $('vMemo').value.trim(),
+    const toast = (msg) => {
+      const el = $('toast');
+      el.textContent = msg || '';
+      el.classList.add('show');
+      clearTimeout(window.__toastT);
+      window.__toastT = setTimeout(() => el.classList.remove('show'), 1400);
     };
-    entry.measuredAt = buildMeasuredAt(date, time);
-    entry.id = makeId(entry);
-    return entry;
-  }
-  function validateEntry(entry) {
-    if (!entry.date) return '日付を入れてください。';
-    if (!entry.resident) return '利用者を選んでください。';
-    if (!entry.recorder) return '記録者を入れてください。';
-    if (!entry.weight && !entry.bpSys && !entry.bpDia && !entry.pulse && !entry.memo) return '体重・血圧・脈拍・メモのどれかを入れてください。';
-    return '';
-  }
-  function fingerprint(entry) {
-    return [entry.date, entry.time, entry.resident, entry.recorder, entry.weight, entry.bpSys, entry.bpDia, entry.pulse, entry.memo].join('|');
-  }
-  function saveLocal(entry) {
-    const list = loadVitals().filter(v => v && v.id !== entry.id);
-    list.unshift(entry);
-    saveVitals(list);
-  }
-  async function remotePost(params) {
-    const res = await fetch(GOOGLE_SHARE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: new URLSearchParams(params).toString(),
-    });
-    const json = await res.json();
-    if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有保存に失敗しました');
-    return json;
-  }
-  async function remoteGet(params) {
-    const url = GOOGLE_SHARE_URL + '?' + new URLSearchParams(params).toString();
-    const res = await fetch(url, { cache: 'no-store' });
-    const json = await res.json();
-    if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有読込に失敗しました');
-    return json;
-  }
-  async function saveRemote(entry) {
-    return remotePost({
-      action: 'saveVitalRecord',
-      id: entry.id,
-      date: entry.date,
-      time: entry.time,
-      user: entry.resident,
-      staff: entry.recorder,
-      weight: entry.weight,
-      bpSys: entry.bpSys,
-      bpDia: entry.bpDia,
-      pulse: entry.pulse,
-      memo: entry.memo,
-      measuredAt: entry.measuredAt,
-    });
-  }
-  function entryText(entry) {
-    const bp = (entry.bpSys || entry.bpDia) ? `${entry.bpSys || '―'}/${entry.bpDia || '―'}` : '―';
-    const high = (Number(entry.bpSys) >= 135 || Number(entry.bpDia) >= 85) ? '<span class="pill red">血圧高め</span>' : '';
-    return `
-      <div class="latest-main">${formatDateJP(entry.dateKey || entry.date)} ${labelFromSlot(entry.slot)}　${escapeHTML(entry.resident)} ${high}</div>
-      <div class="latest-sub">体重 ${escapeHTML(entry.weight || '―')}kg ／ 血圧 ${escapeHTML(bp)} ／ 脈拍 ${escapeHTML(entry.pulse || '―')} ／ 記録者 ${escapeHTML(entry.recorder || '―')}</div>
-      ${entry.memo ? `<div class="latest-sub">メモ：${escapeHTML(entry.memo)}</div>` : ''}
-    `;
-  }
-  function renderLatest() {
-    const list = loadVitals().slice().sort((a,b) => new Date(b.measuredAt || 0) - new Date(a.measuredAt || 0));
-    const el = $('latestList');
-    const latest = list.slice(0, 6);
-    if (!latest.length) {
-      el.innerHTML = '<div class="hint">まだこの端末の保存記録はありません。</div>';
-      return;
+
+    const loadJSON = (key, fallback) => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        const v = JSON.parse(raw);
+        return v;
+      } catch (e) {
+        return fallback;
+      }
+    };
+    const saveJSON = (key, value) => {
+      localStorage.setItem(key, JSON.stringify(value));
+    };
+
+    let isSavingVitalNow = false;
+    let lastSaveFingerprint = '';
+    let lastSaveAt = 0;
+
+    function setSavingState(isSaving) {
+      isSavingVitalNow = !!isSaving;
+      const btn = $('saveVitalBtn');
+      if (btn) {
+        btn.disabled = !!isSaving;
+        btn.textContent = isSaving ? '保存中…' : '💾 保存';
+      }
     }
-    el.innerHTML = latest.map(v => `<div class="latest-item">${entryText(v)}</div>`).join('');
-  }
-  async function checkTodayRemote() {
-    const date = $('vDate').value || todayStr();
-    const resident = $('vResident').value;
-    setStatus('共有から確認中です…', '');
-    try {
-      const json = await remoteGet({ action: 'getVitalRecords', t: String(Date.now()) });
-      const records = Array.isArray(json.records) ? json.records : [];
-      const matches = records.filter(r => {
-        const d = dateKeyFromAny(r.date || r.dateKey || r.measuredAt);
-        const name = String(r.resident || r.user || '').trim();
-        return d === date && name === resident;
+
+    function makeVitalFingerprint(d) {
+      return [
+        String(d.date || '').trim(),
+        String(d.time || '').trim(),
+        String(d.resident || '').trim(),
+        String(d.recorder || '').trim(),
+        String(d.weight || '').trim(),
+        String(d.bpSys || '').trim(),
+        String(d.bpDia || '').trim(),
+        String(d.pulse || '').trim(),
+        String(d.memo || '').trim(),
+      ].join('||');
+    }
+
+    function shouldBlockRapidDuplicateSave(d) {
+      const fp = makeVitalFingerprint(d);
+      const now = Date.now();
+      if (fp && fp === lastSaveFingerprint && (now - lastSaveAt) < 4000) {
+        return true;
+      }
+      return false;
+    }
+
+    function rememberJustSaved(d) {
+      lastSaveFingerprint = makeVitalFingerprint(d);
+      lastSaveAt = Date.now();
+    }
+
+    function setRemoteStatus(msg) {
+      const el = $('remoteStatus');
+      if (el) el.textContent = msg || '';
+    }
+
+    function hasRemoteEnabled() {
+      return !!GOOGLE_SHARE_URL;
+    }
+
+
+    function makeSafeId(prefix = 'vital') {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+      } catch (e) {}
+      return prefix + '_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+    }
+
+    function dateKeyFromDateObject(d) {
+      if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+
+    function timeKeyFromDateObject(d) {
+      if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function normalizeVitalDate(value) {
+      if (value === null || value === undefined || value === '') return '';
+
+      if (Object.prototype.toString.call(value) === '[object Date]') {
+        return dateKeyFromDateObject(value);
+      }
+
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        // Google Sheets / Excel の日付シリアル値対策
+        const base = new Date(Date.UTC(1899, 11, 30));
+        const d = new Date(base.getTime() + value * 24 * 60 * 60 * 1000);
+        return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`;
+      }
+
+      const s = String(value || '').trim();
+      if (!s) return '';
+
+      // ISO文字列は先頭の日付ではなく、日本時間に直して日付化する
+      if (/[T]\d{1,2}:\d{2}/.test(s) || /Z$/.test(s) || /[+-]\d{2}:?\d{2}$/.test(s)) {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) return dateKeyFromDateObject(d);
+      }
+
+      // 例：2025-10-01 / 2025/10/01 / 2025-10-01-09:00-木村元子-0
+      const m1 = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      if (m1) {
+        return `${m1[1]}-${String(m1[2]).padStart(2,'0')}-${String(m1[3]).padStart(2,'0')}`;
+      }
+
+      // 例：2025年10月1日
+      const m2 = s.match(/(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日/);
+      if (m2) {
+        return `${m2[1]}-${String(m2[2]).padStart(2,'0')}-${String(m2[3]).padStart(2,'0')}`;
+      }
+
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return dateKeyFromDateObject(d);
+
+      return '';
+    }
+
+    function normalizeVitalTime(value) {
+      if (value === null || value === undefined || value === '') return '';
+
+      if (Object.prototype.toString.call(value) === '[object Date]') {
+        return timeKeyFromDateObject(value);
+      }
+
+      const s = String(value || '').trim();
+      if (!s) return '';
+
+      if (s === '朝' || s === 'morning') return '08:00';
+      if (s === '昼' || s === 'noon') return '12:00';
+      if (s === '夕' || s === 'evening') return '18:00';
+
+      const m = s.match(/(?:^|[-\sT])(\d{1,2}):(\d{2})(?::\d{2})?/);
+      if (m) return `${String(m[1]).padStart(2,'0')}:${String(m[2]).padStart(2,'0')}`;
+
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return timeKeyFromDateObject(d);
+
+      return '';
+    }
+
+    function getVitalRecordDateKey(recordOrValue) {
+      if (recordOrValue && typeof recordOrValue === 'object' && !(recordOrValue instanceof Date)) {
+        return normalizeVitalDate(
+          recordOrValue.dateKey ||
+          recordOrValue.date ||
+          recordOrValue.measuredAt ||
+          recordOrValue.id
+        );
+      }
+      return normalizeVitalDate(recordOrValue);
+    }
+
+    function getVitalRecordTime(recordOrValue) {
+      if (recordOrValue && typeof recordOrValue === 'object' && !(recordOrValue instanceof Date)) {
+        return normalizeVitalTime(
+          recordOrValue.time ||
+          recordOrValue.measuredAt ||
+          recordOrValue.id
+        ) || '08:00';
+      }
+      return normalizeVitalTime(recordOrValue) || '08:00';
+    }
+
+    function getVitalSortNumber(recordOrValue) {
+      const dateKey = getVitalRecordDateKey(recordOrValue);
+      if (!dateKey) return 0;
+      const timeKey = getVitalRecordTime(recordOrValue);
+      const [y,m,d] = dateKey.split('-').map(Number);
+      const [h,mi] = String(timeKey || '00:00').split(':').map(Number);
+      const dt = new Date(y, (m || 1) - 1, d || 1, h || 0, mi || 0, 0, 0);
+      return isNaN(dt.getTime()) ? 0 : dt.getTime();
+    }
+
+    function compareVitalsAsc(a, b) {
+      return getVitalSortNumber(a) - getVitalSortNumber(b);
+    }
+
+    function compareVitalsDesc(a, b) {
+      return getVitalSortNumber(b) - getVitalSortNumber(a);
+    }
+
+    function dateKeyAddDays(dateKey, days) {
+      const parts = String(dateKey || '').split('-').map(Number);
+      if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return '';
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      d.setDate(d.getDate() + days);
+      return dateKeyFromDateObject(d);
+    }
+
+    function recordMatchesCurrentRange(record) {
+      const mode = $('filterRange') ? $('filterRange').value : 'today';
+      const key = getVitalRecordDateKey(record);
+      if (!key) return false;
+
+      const today = nowLocalDate();
+
+      if (mode === 'today') {
+        return key === today;
+      }
+
+      if (mode === 'week') {
+        const startKey = dateKeyAddDays(today, -6);
+        return (!startKey || key >= startKey) && key <= today;
+      }
+
+      if (mode === 'month') {
+        return key.slice(0, 7) === today.slice(0, 7);
+      }
+
+      return true;
+    }
+
+    function normalizeVitalRecordObject(record) {
+      if (!record || typeof record !== 'object') return null;
+      const id = String(record.id || record._id || '').trim() || makeSafeId('vital');
+      const dateKey = getVitalRecordDateKey(record);
+      const timeKey = getVitalRecordTime(record);
+      const measuredAt = dateKey ? buildMeasuredAt(dateKey, timeKey) : String(record.measuredAt || '').trim();
+
+      return {
+        ...record,
+        id,
+        date: dateKey || String(record.date || '').trim(),
+        time: timeKey,
+        dateKey: dateKey || String(record.dateKey || '').trim(),
+        measuredAt,
+        resident: String(record.resident || record.user || '').trim(),
+        recorder: String(record.recorder || record.staff || '').trim(),
+        weight: String(record.weight ?? '').trim(),
+        bpSys: String(record.bpSys ?? record.bpHigh ?? '').trim(),
+        bpDia: String(record.bpDia ?? record.bpLow ?? '').trim(),
+        pulse: String(record.pulse ?? '').trim(),
+        memo: String(record.memo ?? '').trim()
+      };
+    }
+
+    function normalizeRemoteRecord(row) {
+      if (!row || typeof row !== 'object') return null;
+
+      const date = row.dateKey || row.date || row.vDate || row.measuredAt || row.id || '';
+      const time = row.time || row.vTime || row.measuredAt || row.id || '';
+      const base = {
+        id: String(row.id || row._id || '').trim() || makeSafeId('vital_remote'),
+        date: normalizeVitalDate(date),
+        time: normalizeVitalTime(time) || '08:00',
+        resident: String(row.resident || row.user || '').trim(),
+        recorder: String(row.recorder || row.staff || '').trim(),
+        weight: String(row.weight ?? '').trim(),
+        bpSys: String(row.bpSys ?? row.bpHigh ?? '').trim(),
+        bpDia: String(row.bpDia ?? row.bpLow ?? '').trim(),
+        pulse: String(row.pulse ?? '').trim(),
+        memo: String(row.memo ?? '').trim()
+      };
+      base.dateKey = base.date;
+      base.measuredAt = base.date ? buildMeasuredAt(base.date, base.time) : String(row.measuredAt || '').trim();
+      return base;
+    }
+
+    function mergeVitalsById(localList, remoteList) {
+      const map = new Map();
+
+      const put = (item) => {
+        const normalized = normalizeVitalRecordObject(item);
+        if (!normalized || !normalized.id) return;
+        const current = map.get(normalized.id);
+        if (!current) {
+          map.set(normalized.id, normalized);
+          return;
+        }
+
+        // 同じIDがあった場合は、updated_at / updatedAt が新しい方を優先
+        const curUpdated = new Date(current.updated_at || current.updatedAt || current.measuredAt || 0).getTime();
+        const nextUpdated = new Date(normalized.updated_at || normalized.updatedAt || normalized.measuredAt || 0).getTime();
+        if (!curUpdated || !nextUpdated || nextUpdated >= curUpdated) {
+          map.set(normalized.id, { ...current, ...normalized });
+        }
+      };
+
+      for (const item of Array.isArray(localList) ? localList : []) put(item);
+      for (const item of Array.isArray(remoteList) ? remoteList : []) put(item);
+
+      return Array.from(map.values()).sort(compareVitalsAsc);
+    }
+
+    async function remoteGet(params) {
+      const url = GOOGLE_SHARE_URL + '?' + new URLSearchParams(params).toString();
+      const res = await fetch(url, { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有読込に失敗しました');
+      return json;
+    }
+
+    async function remotePost(params) {
+      const res = await fetch(GOOGLE_SHARE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: new URLSearchParams(params).toString(),
       });
-      if (!matches.length) {
-        setStatus(`${formatDateJP(date)} ${escapeHTML(resident)} の共有記録はまだ見つかりません。保存直後の場合は少し待って再確認してください。`, 'warn');
+      const json = await res.json();
+      if (!json || !json.ok) throw new Error((json && (json.message || json.error)) || '共有保存に失敗しました');
+      return json;
+    }
+
+    async function saveVitalRemote(entry) {
+      if (!hasRemoteEnabled()) return { ok:false, skipped:true };
+
+      const dateKey = getVitalRecordDateKey(entry);
+      const timeKey = getVitalRecordTime(entry);
+
+      return remotePost({
+        action: 'saveVitalRecord',
+        id: entry.id || '',
+        date: dateKey || '',
+        time: timeKey || '08:00',
+        user: entry.resident || '',
+        staff: entry.recorder || '',
+        weight: entry.weight || '',
+        bpSys: entry.bpSys || '',
+        bpDia: entry.bpDia || '',
+        pulse: entry.pulse || '',
+        memo: entry.memo || '',
+        measuredAt: dateKey ? buildMeasuredAt(dateKey, timeKey || '08:00') : (entry.measuredAt || ''),
+      });
+    }
+
+    async function deleteVitalRemote(id) {
+      if (!hasRemoteEnabled()) return { ok:false, skipped:true };
+      return remotePost({ action: 'deleteVitalRecord', id: id || '' });
+    }
+
+    async function syncRemoteVitals(options = {}) {
+      if (!hasRemoteEnabled()) {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+        if (!options.silent) toast('共有URLが未設定です');
+        return [];
+      }
+      setRemoteStatus('共有読込中…');
+      const json = await remoteGet({ action: 'getVitalRecords' });
+      const remoteList = (Array.isArray(json.records) ? json.records : []).map(normalizeRemoteRecord).filter(Boolean);
+      const merged = mergeVitalsById(loadVitals(), remoteList);
+      saveVitals(merged);
+      setRemoteStatus(`共有接続OK：${remoteList.length}件読込`);
+      if (!options.silent) toast('共有読込しました');
+      return remoteList;
+    }
+
+    async function refreshVitalsViewNow(options = {}) {
+      try {
+        if (hasRemoteEnabled()) {
+          await syncRemoteVitals({ silent: true });
+        }
+      } catch (e) {
+        console.warn('refreshVitalsViewNow remote sync failed', e);
+      }
+      renderList();
+      try { renderCharts(); } catch (e) {}
+      if (!options.silent) {
+        const msg = options.message || '反映しました';
+        $('quickStatus').textContent = msg;
+        toast(msg);
+      }
+    }
+
+    async function migrateLocalVitalsToRemote() {
+      if (!hasRemoteEnabled()) {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+        toast('共有URLが未設定です');
         return;
       }
-      const html = matches.slice(-5).reverse().map(r => {
-        const time = String(r.time || '').trim();
-        const bp = `${r.bpSys || r.bpHigh || '―'}/${r.bpDia || r.bpLow || '―'}`;
-        return `<div style="margin-top:6px;">${escapeHTML(time || '')} 体重${escapeHTML(r.weight || '―')}kg ／ 血圧${escapeHTML(bp)} ／ 脈拍${escapeHTML(r.pulse || '―')}</div>`;
+      const localList = loadVitals().filter(v => v && v.id && v.measuredAt);
+      if (localList.length === 0) {
+        toast('送るデータがありません');
+        setRemoteStatus('送るデータがありません');
+        return;
+      }
+      const ok = confirm(`この端末の過去データ ${localList.length}件 を共有へ送ります。\n\n同じIDのものは上書きされます。続けますか？`);
+      if (!ok) return;
+
+      let success = 0;
+      let failed = 0;
+      for (let i = 0; i < localList.length; i++) {
+        const item = localList[i];
+        setRemoteStatus(`共有へ送信中… ${i + 1}/${localList.length}`);
+        try {
+          await saveVitalRemote(item);
+          success++;
+        } catch (e) {
+          console.warn('migrate remote failed', item, e);
+          failed++;
+        }
+      }
+
+      try {
+        await syncRemoteVitals({ silent:true });
+      } catch (e) {
+        console.warn('post migrate sync failed', e);
+      }
+      renderList();
+      const msg = failed ? `共有へ送信しました（成功 ${success}件 / 失敗 ${failed}件）` : `共有へ送信しました（${success}件）`;
+      setRemoteStatus(msg);
+      toast(failed ? `送信完了 成功${success}件 / 失敗${failed}件` : `送信完了 ${success}件`);
+    }
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const nowLocalDate = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    };
+    const nowLocalTime = () => {
+      const d = new Date();
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    };
+    const SLOT_TIME_MAP = {
+      morning: '08:00',
+      noon: '12:00',
+      evening: '18:00',
+    };
+    const SLOT_LABEL_MAP = {
+      morning: '朝',
+      noon: '昼',
+      evening: '夕',
+    };
+    const WEEKDAY_LABELS = ['日','月','火','水','木','金','土'];
+
+    function getWeekdayLabelFromDate(dateStr) {
+      const s = String(dateStr || '').trim();
+      if (!s) return '';
+      const parts = s.split('-').map(Number);
+      if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return '';
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      if (isNaN(d)) return '';
+      return WEEKDAY_LABELS[d.getDay()] || '';
+    }
+
+    function updateWeekdayLabel(inputId, outputId) {
+      const input = $(inputId);
+      const output = $(outputId);
+      if (!input || !output) return;
+      const w = getWeekdayLabelFromDate(input.value);
+      output.textContent = w ? `曜日：${w}` : '';
+    }
+
+    function getTimeForSlot(slot) {
+      return SLOT_TIME_MAP[slot] || SLOT_TIME_MAP.morning;
+    }
+
+    function getSlotFromTime(timeStr) {
+      const time = String(timeStr || '').trim();
+      if (time === SLOT_TIME_MAP.noon) return 'noon';
+      if (time === SLOT_TIME_MAP.evening) return 'evening';
+      return 'morning';
+    }
+
+    function getSlotLabel(slot) {
+      return SLOT_LABEL_MAP[slot] || '朝';
+    }
+
+    function setSlotSelection(groupId, slot) {
+      const group = $(groupId);
+      if (!group) return;
+      const next = SLOT_TIME_MAP[slot] ? slot : 'morning';
+      group.dataset.value = next;
+      Array.from(group.querySelectorAll('.slot-btn')).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.slot === next);
+      });
+    }
+
+    function getSelectedSlot(groupId) {
+      const group = $(groupId);
+      if (!group) return 'morning';
+      const current = String(group.dataset.value || '').trim();
+      return SLOT_TIME_MAP[current] ? current : 'morning';
+    }
+
+    function bindSlotGroup(groupId) {
+      const group = $(groupId);
+      if (!group) return;
+      group.addEventListener('click', (e) => {
+        const btn = e.target.closest('.slot-btn');
+        if (!btn) return;
+        setSlotSelection(groupId, btn.dataset.slot || 'morning');
+      });
+    }
+
+    function buildMeasuredAt(dateStr, timeStr) {
+      const dateKey = normalizeVitalDate(dateStr);
+      const timeKey = normalizeVitalTime(timeStr) || '08:00';
+      if (!dateKey) return '';
+      const [y,m,da] = dateKey.split('-').map(Number);
+      const [h,mi] = timeKey.split(':').map(Number);
+      const d = new Date(y, (m-1), da, h || 0, mi || 0, 0, 0);
+      return d.toISOString();
+    }
+
+    function formatJP(recordOrIso) {
+      const dateKey = getVitalRecordDateKey(recordOrIso);
+      const timeKey = getVitalRecordTime(recordOrIso);
+      if (!dateKey) return '日付不明';
+
+      const [y,m,da] = dateKey.split('-').map(Number);
+      const d = new Date(y, (m-1), da);
+      const weekday = WEEKDAY_LABELS[d.getDay()] || '';
+      const slot = getSlotLabel(getSlotFromTime(timeKey));
+      return `${y}/${pad2(m)}/${pad2(da)}（${weekday}） ${slot}`;
+    }
+
+    function vitalsToText(v) {
+      const parts = [];
+      const w = (v.weight ?? '');
+      const s = (v.bpSys ?? '');
+      const d = (v.bpDia ?? '');
+      const p = (v.pulse ?? '');
+      if (String(w).trim() !== '') parts.push(`体重${w}kg`);
+      if (String(s).trim() !== '' || String(d).trim() !== '') parts.push(`血圧${s || '―'}/${d || '―'}`);
+      if (String(p).trim() !== '') parts.push(`脈拍${p}`);
+      const memo = String(v.memo || '').trim();
+      const base = parts.length ? parts.join('、') : '（未入力）';
+      return memo ? `バイタル：${base}（${memo}）` : `バイタル：${base}`;
+    }
+
+    function buildResidentsSelect(selectEl, list, allowAll=false) {
+      selectEl.innerHTML = '';
+      if (allowAll) {
+        const opt = document.createElement('option');
+        opt.value = '__all__';
+        opt.textContent = '全員';
+        selectEl.appendChild(opt);
+      }
+      if (!Array.isArray(list) || list.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '（利用者が未登録です）';
+        selectEl.appendChild(opt);
+        return;
+      }
+      for (const name of list) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    function buildRecordersSelect(selectEl, list) {
+      selectEl.innerHTML = '';
+      if (!Array.isArray(list) || list.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '（記録者が未登録です）';
+        selectEl.appendChild(opt);
+        return;
+      }
+      for (const name of list) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    function loadVitals() {
+      const v = loadJSON(VITALS_KEY, []);
+      if (!Array.isArray(v)) return [];
+      return v.map(normalizeVitalRecordObject).filter(Boolean);
+    }
+    function saveVitals(list) {
+      saveJSON(VITALS_KEY, list);
+    }
+
+    function loadManualFlags() {
+      const v = loadJSON(VITALS_MANUAL_FLAGS_KEY, {});
+      return v && typeof v === 'object' ? v : {};
+    }
+
+    function saveManualFlags(map) {
+      saveJSON(VITALS_MANUAL_FLAGS_KEY, map || {});
+    }
+
+    function isManualFlagOn(id, field) {
+      const map = loadManualFlags();
+      return !!(map && map[id] && map[id][field]);
+    }
+
+    function toggleManualFlag(id, field) {
+      if (!id || !field) return;
+      const map = loadManualFlags();
+      map[id] = map[id] || {};
+      map[id][field] = !map[id][field];
+      if (!map[id][field]) delete map[id][field];
+      if (!Object.keys(map[id]).length) delete map[id];
+      saveManualFlags(map);
+      renderList();
+      setTimeout(() => {
+        syncRemoteVitals({ silent: true }).then(() => {
+          renderList();
+          try { renderCharts(); } catch (e) {}
+        }).catch(err => console.warn('initial remote sync failed', err));
+      }, 300);
+    }
+
+    function removeManualFlagsForIds(ids) {
+      const set = new Set((ids || []).filter(Boolean));
+      if (!set.size) return;
+      const map = loadManualFlags();
+      let changed = false;
+      for (const id of set) {
+        if (map[id]) {
+          delete map[id];
+          changed = true;
+        }
+      }
+      if (changed) saveManualFlags(map);
+    }
+
+    function setSelectedVital(id, checked) {
+      if (!id) return;
+      if (checked) selectedVitalIds.add(id);
+      else selectedVitalIds.delete(id);
+      renderList();
+    }
+
+    function setSelectedVisibleVitals(ids, checked) {
+      for (const id of ids) {
+        if (!id) continue;
+        if (checked) selectedVitalIds.add(id);
+        else selectedVitalIds.delete(id);
+      }
+      renderList();
+    }
+
+    async function deleteCheckedVitals(visibleIds) {
+      const ids = Array.from(selectedVitalIds).filter(id => visibleIds.includes(id));
+      if (!ids.length) {
+        toast('チェックした記録がありません');
+        return;
+      }
+      const ok = confirm(`チェックした ${ids.length}件 を削除しますか？`);
+      if (!ok) return;
+
+      saveVitals(loadVitals().filter(v => !ids.includes(v.id)));
+      removeManualFlagsForIds(ids);
+      selectedVitalIds = new Set();
+
+      let remoteFail = 0;
+      if (hasRemoteEnabled()) {
+        setRemoteStatus(`共有側を削除中… ${ids.length}件`);
+        for (const id of ids) {
+          try {
+            await deleteVitalRemote(id);
+          } catch (e) {
+            console.warn('bulk delete remote failed', id, e);
+            remoteFail++;
+          }
+        }
+        setRemoteStatus(remoteFail ? `共有削除で一部失敗（${remoteFail}件）` : '共有接続OK：まとめて削除しました');
+      }
+
+      renderList();
+      toast(remoteFail ? `削除しました（共有失敗 ${remoteFail}件）` : `削除しました（${ids.length}件）`);
+    }
+
+    function averageOf(values, digits = 1) {
+      const nums = values.map(parseNumOrNull).filter(v => v != null);
+      if (!nums.length) return null;
+      const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+      return avg.toFixed(digits);
+    }
+
+    function getFilterRange() {
+      const mode = $('filterRange') ? $('filterRange').value : 'today';
+      const today = nowLocalDate();
+      return {
+        mode,
+        today,
+        startKey: mode === 'week' ? dateKeyAddDays(today, -6) : (mode === 'month' ? today.slice(0, 7) + '-01' : ''),
+        endKey: today
+      };
+    }
+
+    function normalizeNum(v) {
+      if (v == null) return '';
+      const s = String(v).trim();
+      return s;
+    }
+
+
+    function parseNumOrNull(v) {
+      const s = String(v ?? '').trim();
+      if (!s) return null;
+      const n = Number(s);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function isAutoHighBp(bpSys, bpDia) {
+      const sys = parseNumOrNull(bpSys);
+      const dia = parseNumOrNull(bpDia);
+      return (sys != null && sys >= AUTO_BP_SYS_HIGH) || (dia != null && dia >= AUTO_BP_DIA_HIGH);
+    }
+
+    function formatBpHtml(bpSys, bpDia, forceRed) {
+      const sysRaw = String(bpSys ?? '').trim();
+      const diaRaw = String(bpDia ?? '').trim();
+      if (!sysRaw && !diaRaw) return '―';
+
+      const sysNum = parseNumOrNull(bpSys);
+      const diaNum = parseNumOrNull(bpDia);
+      const sysHigh = forceRed || (sysNum != null && sysNum >= AUTO_BP_SYS_HIGH);
+      const diaHigh = forceRed || (diaNum != null && diaNum >= AUTO_BP_DIA_HIGH);
+
+      const sysHtml = sysRaw
+        ? `<span class="${sysHigh ? 'manual-flag' : ''}">${escapeHTML(sysRaw)}</span>`
+        : '―';
+      const diaHtml = diaRaw
+        ? `<span class="${diaHigh ? 'manual-flag' : ''}">${escapeHTML(diaRaw)}</span>`
+        : '―';
+
+      return `${sysHtml}/${diaHtml}`;
+    }
+
+    function formatPulseHtml(pulse, forceRed) {
+      const raw = String(pulse ?? '').trim();
+      if (!raw) return '―';
+
+      const num = parseNumOrNull(pulse);
+      let cls = '';
+      if (forceRed || (num != null && num >= AUTO_PULSE_HIGH)) {
+        cls = 'pulse-high';
+      } else if (num != null && num <= AUTO_PULSE_LOW) {
+        cls = 'pulse-low';
+      }
+
+      return cls
+        ? `<span class="${cls}">${escapeHTML(raw)}</span>`
+        : escapeHTML(raw);
+    }
+
+
+
+    function loadAutoMainSentMap() {
+      const v = loadJSON(VITALS_AUTO_MAIN_SENT_KEY, {});
+      return v && typeof v === 'object' ? v : {};
+    }
+
+    function saveAutoMainSentMap(map) {
+      saveJSON(VITALS_AUTO_MAIN_SENT_KEY, map || {});
+    }
+
+    function findPreviousWeightRecord(entry, records) {
+      const entryWeight = parseNumOrNull(entry && entry.weight);
+      if (entryWeight == null || !entry || !entry.resident) return null;
+      const entrySort = getVitalSortNumber(entry);
+      return (Array.isArray(records) ? records : [])
+        .map(normalizeVitalRecordObject)
+        .filter(Boolean)
+        .filter(v => v.id !== entry.id && v.resident === entry.resident && parseNumOrNull(v.weight) != null && getVitalSortNumber(v) < entrySort)
+        .sort(compareVitalsDesc)[0] || null;
+    }
+
+    function getAutoMainReasons(entry, previousRecords) {
+      const bpHigh = isAutoHighBp(entry.bpSys, entry.bpDia);
+      const pulseNum = parseNumOrNull(entry.pulse);
+      const pulseHigh = pulseNum != null && pulseNum >= AUTO_PULSE_HIGH;
+      const pulseLow = pulseNum != null && pulseNum <= AUTO_PULSE_LOW;
+      const currentWeight = parseNumOrNull(entry.weight);
+      const prev = findPreviousWeightRecord(entry, previousRecords);
+      const prevWeight = prev ? parseNumOrNull(prev.weight) : null;
+      const weightDiff = (currentWeight != null && prevWeight != null) ? Number((currentWeight - prevWeight).toFixed(1)) : null;
+      const weightUp1kg = weightDiff != null && weightDiff >= AUTO_WEIGHT_UP_KG;
+      return { bpHigh, pulseHigh, pulseLow, pulseNum, weightUp1kg, weightDiff, previousWeight: prevWeight, previousDate: prev ? getVitalRecordDateKey(prev) : '' };
+    }
+
+    function shouldAutoAppendMainRecord(reasons) {
+      return !!(reasons && (reasons.bpHigh || reasons.pulseHigh || reasons.pulseLow || reasons.weightUp1kg));
+    }
+
+    function formatSignedKg(n) {
+      if (n == null || !Number.isFinite(Number(n))) return '';
+      const num = Number(n);
+      return (num > 0 ? '+' : '') + num.toFixed(1) + 'kg';
+    }
+
+    function buildHighVitalMainRecordText(entry, reasons) {
+      const parts = [];
+      const weight = String(entry.weight ?? '').trim();
+      const bpSys = String(entry.bpSys ?? '').trim();
+      const bpDia = String(entry.bpDia ?? '').trim();
+      const pulse = String(entry.pulse ?? '').trim();
+      const memo = String(entry.memo || '').trim();
+
+      if (weight) {
+        const diffText = reasons && reasons.weightDiff != null ? `（前回比${formatSignedKg(reasons.weightDiff)}）` : '';
+        parts.push(`体重${weight}kg${diffText}`);
+      }
+      if (bpSys || bpDia) parts.push(`血圧${bpSys || '―'}/${bpDia || '―'}`);
+      if (pulse) parts.push(`脈拍${pulse}`);
+
+      const reasonLines = [];
+      if (reasons && reasons.bpHigh) reasonLines.push('血圧が高めであった');
+      if (reasons && reasons.pulseHigh) reasonLines.push('脈拍が100以上であった');
+      if (reasons && reasons.pulseLow) reasonLines.push('脈拍が40以下であった');
+      if (reasons && reasons.weightUp1kg) reasonLines.push(`体重が前回より${formatSignedKg(reasons.weightDiff)}増加していた`);
+
+      let text = `バイタル測定を実施。${parts.length ? parts.join('、') : '数値未入力'}。`;
+      if (reasonLines.length) text += `${reasonLines.join('。')}ため、様子観察を行う。`;
+      if (memo) text += `
+メモ：${memo}`;
+      return text;
+    }
+
+    function getFirstNonEmptyString(obj, keys) {
+      for (const key of keys) {
+        if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== '') {
+          return String(obj[key]).trim();
+        }
+      }
+      return '';
+    }
+
+    function extractMainRecordFromResponse(json) {
+      if (!json || typeof json !== 'object') return null;
+      const candidates = [];
+      if (json.record && typeof json.record === 'object') candidates.push(json.record);
+      if (json.mainRecord && typeof json.mainRecord === 'object') candidates.push(json.mainRecord);
+      if (json.data && typeof json.data === 'object') candidates.push(json.data);
+      if (Array.isArray(json.records) && json.records.length) candidates.push(json.records[0]);
+      candidates.push(json);
+
+      for (const rec of candidates) {
+        if (!rec || typeof rec !== 'object') continue;
+        const text = getFirstNonEmptyString(rec, ['text', 'body', 'content', 'recordText', 'mainText']);
+        const id = getFirstNonEmptyString(rec, ['id', '_id', '_serverId', 'serverId', 'recordId']);
+        const date = getFirstNonEmptyString(rec, ['date', 'dateKey']);
+        const user = getFirstNonEmptyString(rec, ['user', 'resident', 'name']);
+        const staff = getFirstNonEmptyString(rec, ['staff', 'recorder']);
+        const status = getFirstNonEmptyString(rec, ['status']);
+        const tags = getFirstNonEmptyString(rec, ['tags']);
+        if (text || id || (date && user)) return { raw: rec, id, date, user, staff, status, tags, text };
+      }
+      return null;
+    }
+
+    async function fetchExistingMainRecordForVital(entry) {
+      const date = getVitalRecordDateKey(entry) || entry.date || '';
+      const user = entry.resident || '';
+      if (!hasRemoteEnabled() || !date || !user) return null;
+
+      const queryList = [
+        { action: 'getMainRecord', date, user },
+        { action: 'getMainRecord', date, resident: user },
+        { action: 'getRecords', date, user },
+      ];
+
+      for (const params of queryList) {
+        try {
+          const json = await remoteGet(params);
+          const rec = extractMainRecordFromResponse(json);
+          if (rec && (rec.text || rec.id)) return rec;
+        } catch (e) {
+          console.warn('fetchExistingMainRecordForVital failed', params, e);
+        }
+      }
+      return null;
+    }
+
+    function mergeTagText(a, b) {
+      const out = [];
+      String(a || '').split(/\s+/).forEach(x => { if (x && !out.includes(x)) out.push(x); });
+      String(b || '').split(/\s+/).forEach(x => { if (x && !out.includes(x)) out.push(x); });
+      return out.join(' ');
+    }
+
+    function appendTextOnce(baseText, addText) {
+      const base = String(baseText || '').trim();
+      const add = String(addText || '').trim();
+      if (!add) return base;
+      if (!base) return add;
+      if (base.includes(add)) return base;
+      return base + '\n\n' + add;
+    }
+
+    async function appendHighVitalToMainRecord(entry, reasons) {
+      if (!hasRemoteEnabled() || !shouldAutoAppendMainRecord(reasons)) return { ok:false, skipped:true };
+      const sent = loadAutoMainSentMap();
+      if (entry.id && sent[entry.id]) return { ok:false, skipped:true, duplicated:true };
+
+      const existing = await fetchExistingMainRecordForVital(entry);
+      if (!existing || (!existing.text && !existing.id)) {
+        throw new Error('個人記録が見つからないため、安全のため自動追記を止めました');
+      }
+
+      const tags = ['#バイタル'];
+      if (reasons.bpHigh) tags.push('#血圧高め');
+      if (reasons.pulseHigh || reasons.pulseLow) tags.push('#脈拍注意');
+      if (reasons.weightUp1kg) tags.push('#体重増加');
+
+      const addText = buildHighVitalMainRecordText(entry, reasons);
+      const mergedText = appendTextOnce(existing.text, addText);
+      if (existing.text && mergedText === String(existing.text).trim()) {
+        if (entry.id) {
+          sent[entry.id] = new Date().toISOString();
+          saveAutoMainSentMap(sent);
+        }
+        return { ok:true, skipped:true, duplicated:true };
+      }
+
+      const payload = {
+        action: 'saveMainRecord',
+        date: getVitalRecordDateKey(entry) || entry.date || '',
+        user: entry.resident || '',
+        staff: entry.recorder || existing.staff || '',
+        text: mergedText,
+        status: existing.status || '未完成',
+        tags: mergeTagText(existing.tags, tags.join(' ')),
+        source: 'vitals_auto_alert',
+        raw: JSON.stringify({
+          source: 'vitals_auto_alert_safe_append',
+          mode: 'append_to_existing_main_record',
+          existingId: existing.id || '',
+          vitalId: entry.id || '',
+          reasons,
+          entry: {
+            date: getVitalRecordDateKey(entry) || entry.date || '',
+            time: getVitalRecordTime(entry) || '',
+            resident: entry.resident || '',
+            recorder: entry.recorder || '',
+            weight: entry.weight || '',
+            bpSys: entry.bpSys || '',
+            bpDia: entry.bpDia || '',
+            pulse: entry.pulse || '',
+            memo: entry.memo || ''
+          }
+        })
+      };
+
+      if (existing.id) {
+        payload.id = existing.id;
+        payload._serverId = existing.id;
+        payload.recordId = existing.id;
+      }
+
+      const res = await remotePost(payload);
+      if (entry.id) {
+        sent[entry.id] = new Date().toISOString();
+        saveAutoMainSentMap(sent);
+      }
+      return res;
+    }
+
+    function buildResidentDailyWeightDiffMap(records) {
+      const byResident = new Map();
+      const list = (Array.isArray(records) ? records : [])
+        .slice()
+.sort(compareVitalsAsc);
+
+      for (const v of list) {
+        if (!v || !v.resident || !v.measuredAt) continue;
+        const weight = parseNumOrNull(v.weight);
+        if (weight == null) continue;
+        const day = dayKeyFromISO(v);
+        if (!byResident.has(v.resident)) byResident.set(v.resident, new Map());
+        byResident.get(v.resident).set(day, weight); // latest of the day wins because ASC loop
+      }
+
+      const diffMap = {};
+      for (const [resident, dayMap] of byResident.entries()) {
+        const days = Array.from(dayMap.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+        let prevWeight = null;
+        diffMap[resident] = {};
+        for (const [day, weight] of days) {
+          diffMap[resident][day] = prevWeight == null ? null : Number((weight - prevWeight).toFixed(1));
+          prevWeight = weight;
+        }
+      }
+      return diffMap;
+    }
+
+    function getWeightDiffForRecord(record, diffMap) {
+      if (!record || !record.resident || !record.measuredAt) return null;
+      const day = dayKeyFromISO(record);
+      const residentMap = diffMap && diffMap[record.resident];
+      if (!residentMap || !(day in residentMap)) return null;
+      return residentMap[day];
+    }
+
+    function formatWeightWithDiffHtml(weight, diff) {
+      const n = parseNumOrNull(weight);
+      if (n == null) return '―';
+      const base = escapeHTML(`${String(weight).trim()}kg`);
+      if (diff == null) return base;
+      const sign = diff > 0 ? '+' : '';
+      const cls = diff > 0 ? 'weight-diff-plus' : (diff < 0 ? 'weight-diff-minus' : 'weight-diff-zero');
+      return `${base}<span class="weight-diff ${cls}">(${sign}${diff.toFixed(1)})</span>`;
+    }
+
+    function dayKeyFromISO(recordOrIso) {
+      return getVitalRecordDateKey(recordOrIso);
+    }
+
+    function shortLabelFromISO(recordOrIso) {
+      const key = getVitalRecordDateKey(recordOrIso);
+      if (!key) return '';
+      const parts = key.split('-');
+      return `${parts[1]}/${parts[2]}`;
+    }
+
+    function groupByDayLastMetrics(records) {
+      // 同じ日の複数記録は、その日の最後の値をグラフへ使う
+      const map = new Map();
+      for (const v of (records || []).slice().sort(compareVitalsAsc)) {
+        const k = dayKeyFromISO(v);
+        if (!k) continue;
+
+        const sortNo = getVitalSortNumber(v);
+        let cur = map.get(k);
+        if (!cur) {
+          cur = { day: k, label: shortLabelFromISO(v), lastSort: sortNo, weight: null, bpSys: null, bpDia: null, pulse: null };
+          map.set(k, cur);
+        }
+
+        if (sortNo >= (cur.lastSort || 0)) {
+          cur.lastSort = sortNo;
+          cur.label = shortLabelFromISO(v);
+        }
+
+        const w = parseNumOrNull(v.weight);
+        const s = parseNumOrNull(v.bpSys);
+        const d = parseNumOrNull(v.bpDia);
+        const p = parseNumOrNull(v.pulse);
+        if (w != null) cur.weight = w;
+        if (s != null) cur.bpSys = s;
+        if (d != null) cur.bpDia = d;
+        if (p != null) cur.pulse = p;
+      }
+      return Array.from(map.values()).sort((a,b) => a.day.localeCompare(b.day));
+    }
+
+    function sizeCanvasToCSS(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      return { cssW: rect.width, cssH: rect.height, dpr };
+    }
+
+    function drawLineChart(canvas, labels, series, opts) {
+      const ctx = canvas.getContext('2d');
+      const { cssW, cssH, dpr } = sizeCanvasToCSS(canvas);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.clearRect(0,0,cssW,cssH);
+
+      const padL = 46, padR = 10, padT = 10, padB = 30;
+      const innerW = Math.max(10, cssW - padL - padR);
+      const innerH = Math.max(10, cssH - padT - padB);
+
+      // collect y values
+      const ys = [];
+      for (const s of series) {
+        for (const y of s.y) if (y != null) ys.push(y);
+      }
+      if (labels.length < 1 || ys.length === 0) {
+        // empty
+        ctx.fillStyle = '#475569';
+        ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Noto Sans JP, Yu Gothic UI, sans-serif';
+        ctx.fillText('データがありません（期間/利用者を切り替えてください）', 12, 22);
+        return;
+      }
+
+      let yMin = Math.min(...ys);
+      let yMax = Math.max(...ys);
+      if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) return;
+      if (yMin === yMax) {
+        yMin -= 1;
+        yMax += 1;
+      } else {
+        const pad = (yMax - yMin) * 0.08;
+        yMin -= pad;
+        yMax += pad;
+      }
+
+      const xCount = labels.length;
+      const xAt = (i) => padL + (xCount === 1 ? 0 : (i * innerW / (xCount - 1)));
+      const yAt = (v) => padT + (yMax - v) * innerH / (yMax - yMin);
+
+      // grid
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      const gridN = 4;
+      for (let g=0; g<=gridN; g++) {
+        const y = padT + innerH * (g / gridN);
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(padL + innerW, y);
+        ctx.stroke();
+      }
+
+      // y labels
+      ctx.fillStyle = '#475569';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Noto Sans JP, Yu Gothic UI, sans-serif';
+      for (let g=0; g<=gridN; g++) {
+        const v = yMax - (yMax - yMin) * (g / gridN);
+        const y = padT + innerH * (g / gridN);
+        ctx.fillText((opts && opts.yFmt ? opts.yFmt(v) : String(Math.round(v))), 6, y + 4);
+      }
+
+      // x labels (few ticks)
+      const ticks = []
+      if (xCount <= 6) {
+        for (let i=0;i<xCount;i++) ticks.push(i);
+      } else {
+        ticks.push(0);
+        ticks.push(Math.floor((xCount-1)*0.25));
+        ticks.push(Math.floor((xCount-1)*0.5));
+        ticks.push(Math.floor((xCount-1)*0.75));
+        ticks.push(xCount-1);
+      }
+      const uniqTicks = Array.from(new Set(ticks)).sort((a,b)=>a-b);
+      for (const i of uniqTicks) {
+        const x = xAt(i);
+        const txt = labels[i] || '';
+        ctx.fillText(txt, Math.min(cssW-28, Math.max(0, x-12)), padT + innerH + 22);
+      }
+
+      // series lines
+      for (const s of series) {
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        for (let i=0;i<xCount;i++) {
+          const yv = s.y[i];
+          if (yv == null) {
+            started = false;
+            continue;
+          }
+          const x = xAt(i);
+          const y = yAt(yv);
+          if (!started) {
+            ctx.moveTo(x,y);
+            started = true;
+          } else {
+            ctx.lineTo(x,y);
+          }
+        }
+        ctx.stroke();
+
+        // points
+        ctx.fillStyle = s.color;
+        for (let i=0;i<xCount;i++) {
+          const yv = s.y[i];
+          if (yv == null) continue;
+          const x = xAt(i);
+          const y = yAt(yv);
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function getFilteredForChart() {
+      const all = loadVitals();
+      const resident = $('filterResident').value;
+      return all
+        .slice()
+        .sort(compareVitalsAsc)
+        .filter(v => {
+          if (hasListMonthRange()) {
+            if (!inListMonthRange(v)) return false;
+          } else if (!recordMatchesCurrentRange(v)) return false;
+          if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          return true;
+        });
+    }
+
+    function getRangeLabel() {
+      const listRange = getListMonthRangeLabel();
+      if (listRange) return `一覧期間 ${listRange}`;
+      const mode = $('filterRange').value;
+      if (mode === 'today') return '今日';
+      if (mode === 'week') return '直近7日';
+      if (mode === 'month') return '今月';
+      return '全期間';
+    }
+
+    function renderCharts() {
+      const records = getFilteredForChart();
+      const days = groupByDayLastMetrics(records);
+      const labels = days.map(d => d.label);
+
+      const resident = $('filterResident').value;
+      const residentLabel = (resident && resident !== '__all__') ? resident : '（全員）';
+      const rangeLabel = getRangeLabel();
+
+      const cr = $('chartResidentLabel');
+      const rg = $('chartRangeLabel');
+      if (cr) cr.textContent = residentLabel;
+      if (rg) {
+        rg.textContent = rangeLabel;
+      }
+      // summary (最新)
+      const sumEl = $('chartsSummary');
+      if (sumEl) {
+        const last = [...days].reverse().find(d =>
+          d.weight != null || d.bpSys != null || d.bpDia != null || d.pulse != null
+        );
+        if (!last) {
+          sumEl.textContent = '';
+        } else {
+          const parts = [];
+          if (last.bpSys != null || last.bpDia != null) {
+            parts.push(`血圧 ${formatBpHtml(last.bpSys, last.bpDia, false)}`);
+          }
+          if (last.pulse != null) parts.push(`脈拍 ${last.pulse}`);
+          if (last.weight != null) {
+            let weightPart = `体重 ${last.weight}`;
+            if (resident && resident !== '__all__') {
+              const residentWeightDiffMap = buildResidentDailyWeightDiffMap(records);
+              const latestDiff = residentWeightDiffMap[resident] ? residentWeightDiffMap[resident][last.day] : null;
+              if (latestDiff != null) {
+                const sign = latestDiff > 0 ? '+' : '';
+                const cls = latestDiff > 0 ? 'weight-diff-plus' : (latestDiff < 0 ? 'weight-diff-minus' : 'weight-diff-zero');
+                weightPart += ` <span class="weight-diff ${cls}">(${sign}${latestDiff.toFixed(1)})</span>`;
+              }
+            }
+            parts.push(weightPart);
+          }
+          sumEl.innerHTML = `最新：${last.label}  ${parts.join(' / ')}`;
+        }
+      }
+
+
+      const weightY = days.map(d => d.weight);
+      const bpSysY = days.map(d => d.bpSys);
+      const bpDiaY = days.map(d => d.bpDia);
+      const pulseY = days.map(d => d.pulse);
+
+      // weight chart
+      const wHint = $('chartWeightHint');
+      const vHint = $('chartVitalsHint');
+      if (resident === '__all__') {
+        if (wHint) wHint.textContent = '※全員表示だと混在します。利用者で絞ると見やすいです。';
+      } else {
+        if (wHint) wHint.textContent = '';
+      }
+
+      drawLineChart($('chartWeight'), labels, [
+        { name: '体重', color: '#2563eb', y: weightY }
+      ], { yFmt: (v) => (Math.round(v*10)/10).toString() });
+
+      // vitals chart
+      if (vHint) vHint.textContent = '';
+      drawLineChart($('chartVitals'), labels, [
+        { name: '血圧（上）', color: '#ef4444', y: bpSysY },
+        { name: '血圧（下）', color: '#f59e0b', y: bpDiaY },
+        { name: '脈拍', color: '#10b981', y: pulseY },
+      ], { yFmt: (v) => String(Math.round(v)) });
+    }
+
+
+    function monthKeyFromISO(recordOrIso) {
+      const key = getVitalRecordDateKey(recordOrIso);
+      return key ? key.slice(0, 7) : '';
+    }
+
+    function monthLabelFromKey(key) {
+      const [y, m] = String(key || '').split('-');
+      return y && m ? `${y}/${m}` : String(key || '');
+    }
+
+    function getWeekdayFromISO(recordOrIso) {
+      const key = getVitalRecordDateKey(recordOrIso);
+      if (!key) return '';
+      const [y,m,d] = key.split('-').map(Number);
+      return String(new Date(y, m - 1, d).getDay());
+    }
+
+    function getWeekdayLabel(weekday) {
+      return ({'0':'日','1':'月','2':'火','3':'水','4':'木','5':'金','6':'土'})[String(weekday)] || '';
+    }
+
+    function populateMonthFilter(records) {
+      const sel = $('monthFilter');
+      if (!sel) return;
+      const current = sel.value || 'all';
+      const months = Array.from(new Set((records || []).map(v => monthKeyFromISO(v)).filter(Boolean))).sort();
+      sel.innerHTML = '<option value="all">全月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      sel.value = months.includes(current) ? current : 'all';
+    }
+
+    function matchesHighThresholds(v) {
+      const highOnly = $('highOnlyToggle') ? $('highOnlyToggle').checked : false;
+      if (!highOnly) return true;
+      return isAutoHighBp(v.bpSys, v.bpDia);
+    }
+
+    function isPulseAbnormal(v) {
+      const pulseNum = parseNumOrNull(v && v.pulse);
+      return pulseNum != null && (pulseNum >= AUTO_PULSE_HIGH || pulseNum <= AUTO_PULSE_LOW);
+    }
+
+    function matchesPulseAbnormal(v) {
+      const pulseOnly = $('pulseAbnormalToggle') ? $('pulseAbnormalToggle').checked : false;
+      if (!pulseOnly) return true;
+      return isPulseAbnormal(v);
+    }
+
+    function matchesWeightPlus1kg(v, diffMap) {
+      const weightPlusOnly = $('weightUp1kgToggle') ? $('weightUp1kgToggle').checked : false;
+      if (!weightPlusOnly) return true;
+      const diff = getWeightDiffForRecord(v, diffMap);
+      return diff != null && diff >= 1;
+    }
+
+    function renderSummaryTable(listEl, filtered, mode) {
+      const groups = new Map();
+      filtered.forEach(v => {
+        const key = mode === 'weekday' ? getWeekdayFromISO(v) : monthKeyFromISO(v);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(v);
+      });
+
+      const keys = Array.from(groups.keys()).sort((a, b) => {
+        if (mode === 'weekday') {
+          const order = ['1','2','3','4','5','6','0'];
+          return order.indexOf(String(a)) - order.indexOf(String(b));
+        }
+        return String(a).localeCompare(String(b));
+      });
+
+      if (!keys.length) {
+        const empty = document.createElement('div');
+        empty.className = 'table-empty';
+        empty.textContent = 'データがありません。';
+        listEl.appendChild(empty);
+        return;
+      }
+
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      const table = document.createElement('table');
+      table.className = 'vitals-table';
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>${mode === 'weekday' ? '曜日' : '月'}</th>
+            <th>件数</th>
+            <th>平均体重</th>
+            <th>平均血圧</th>
+            <th>平均脈拍</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+
+      keys.forEach(key => {
+        const rows = groups.get(key) || [];
+        const avgWeight = averageOf(rows.map(v => v.weight), 1);
+        const avgSys = averageOf(rows.map(v => v.bpSys), 1);
+        const avgDia = averageOf(rows.map(v => v.bpDia), 1);
+        const avgPulse = averageOf(rows.map(v => v.pulse), 1);
+
+        const tr = document.createElement('tr');
+        if (mode !== 'weekday') tr.setAttribute('data-month-key', String(key));
+        tr.innerHTML = `
+          <td>${escapeHTML(mode === 'weekday' ? (getWeekdayLabel(key) + '曜日') : monthLabelFromKey(key))}</td>
+          <td>${rows.length}</td>
+          <td>${avgWeight != null ? avgWeight + 'kg' : '―'}</td>
+          <td>${avgSys != null || avgDia != null ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―'}</td>
+          <td>${avgPulse != null ? avgPulse : '―'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      wrap.appendChild(table);
+      listEl.appendChild(wrap);
+    }
+
+
+
+    function getAllMonthKeys(records) {
+      return Array.from(new Set((records || []).map(v => monthKeyFromISO(v)).filter(Boolean))).sort();
+    }
+
+    function populatePrintMonthFilters(records) {
+      // 旧「印刷月」は廃止。印刷/PDFは現在の一覧表示をそのまま使う。
+    }
+
+
+
+    function populateListMonthFilters(records) {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return;
+      const currentFrom = fromSel.value || 'all';
+      const currentTo = toSel.value || 'all';
+      const months = getAllMonthKeys(records);
+      const fromOptions = '<option value="all">開始月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      const toOptions = '<option value="all">終了月</option>' + months.map(m => `<option value="${m}">${monthLabelFromKey(m)}</option>`).join('');
+      fromSel.innerHTML = fromOptions;
+      toSel.innerHTML = toOptions;
+      fromSel.value = months.includes(currentFrom) ? currentFrom : 'all';
+      toSel.value = months.includes(currentTo) ? currentTo : 'all';
+    }
+
+    function hasListMonthRange() {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return false;
+      return (fromSel.value || 'all') !== 'all' || (toSel.value || 'all') !== 'all';
+    }
+
+    function inListMonthRange(recordOrIso) {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return true;
+      const from = fromSel.value || 'all';
+      const to = toSel.value || 'all';
+      if (from === 'all' && to === 'all') return true;
+      const key = monthKeyFromISO(recordOrIso);
+      if (!key) return false;
+      if (from !== 'all' && key < from) return false;
+      if (to !== 'all' && key > to) return false;
+      return true;
+    }
+
+    function getListMonthRangeLabel() {
+      const fromSel = $('listMonthFrom');
+      const toSel = $('listMonthTo');
+      if (!fromSel || !toSel) return '';
+      const from = fromSel.value || 'all';
+      const to = toSel.value || 'all';
+      if (from === 'all' && to === 'all') return '';
+      const fromTxt = from === 'all' ? '最初' : monthLabelFromKey(from);
+      const toTxt = to === 'all' ? '最後' : monthLabelFromKey(to);
+      return `${fromTxt}〜${toTxt}`;
+    }
+
+    function clearListMonthRange() {
+      if ($('listMonthFrom')) $('listMonthFrom').value = 'all';
+      if ($('listMonthTo')) $('listMonthTo').value = 'all';
+      renderList();
+    }
+
+    function inPrintMonthRange(recordOrIso) {
+      return true;
+    }
+
+    function applyPrintRangeVisibility() {
+      const note = $('printRangeNote');
+      if (note) {
+        const label = getRangeLabel();
+        note.textContent = `印刷対象：現在一覧に表示されている内容（${label}）`;
+      }
+    }
+
+    function printWithMonthRange() {
+      // 「印刷月」は使わず、一覧期間・表示条件で現在表示されている一覧をそのまま印刷する。
+      prepareVitalPrintLayout();
+      setTimeout(() => {
+        window.print();
+      }, 120);
+    }
+
+
+    function createPrintAllMonthAverageBox(allRecords) {
+      const box = document.createElement('div');
+      box.className = 'print-only-monthly-avg';
+
+      const resident = $('filterResident') ? $('filterResident').value : '__all__';
+      const target = (Array.isArray(allRecords) ? allRecords : [])
+        .slice()
+        .sort(compareVitalsAsc)
+        .filter(v => {
+          if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          return !!monthKeyFromISO(v);
+        });
+
+      const residentLabel = (resident && resident !== '__all__') ? resident : '全員';
+      if (!target.length) {
+        box.innerHTML = `
+          <div class="print-monthly-title">月別平均（全期間）</div>
+          <div class="print-monthly-note">対象：${escapeHTML(residentLabel)} ／ 月別平均を出せるデータがありません。</div>
+        `;
+        return box;
+      }
+
+      const groups = new Map();
+      target.forEach(v => {
+        const key = monthKeyFromISO(v);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(v);
+      });
+
+      const keys = Array.from(groups.keys()).sort();
+      const rowsHtml = keys.map(key => {
+        const rows = groups.get(key) || [];
+        const avgWeight = averageOf(rows.map(v => v.weight), 1);
+        const avgSys = averageOf(rows.map(v => v.bpSys), 1);
+        const avgDia = averageOf(rows.map(v => v.bpDia), 1);
+        const avgPulse = averageOf(rows.map(v => v.pulse), 1);
+        return `
+          <tr>
+            <td>${escapeHTML(monthLabelFromKey(key))}</td>
+            <td>${rows.length}</td>
+            <td>${avgWeight != null ? avgWeight + 'kg' : '―'}</td>
+            <td>${avgSys != null || avgDia != null ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―'}</td>
+            <td>${avgPulse != null ? avgPulse : '―'}</td>
+          </tr>
+        `;
       }).join('');
-      setStatus(`共有で確認できました。${formatDateJP(date)} ${escapeHTML(resident)}：${matches.length}件${html}`, 'ok');
-    } catch (e) {
-      setStatus(`共有確認に失敗しました：${escapeHTML(e.message || e)}`, 'warn');
+
+      box.innerHTML = `
+        <div class="print-monthly-title">月別平均（全期間）</div>
+        <div class="print-monthly-note">対象：${escapeHTML(residentLabel)} ／ 一覧期間に関係なく、保存されている全月の平均を印刷に入れます。</div>
+        <div class="table-wrap">
+          <table class="vitals-table">
+            <thead>
+              <tr>
+                <th>月</th>
+                <th>件数</th>
+                <th>平均体重</th>
+                <th>平均血圧</th>
+                <th>平均脈拍</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
+      return box;
     }
-  }
-  async function saveEntry() {
-    if (saving) return;
-    const entry = getFormEntry();
-    const err = validateEntry(entry);
-    if (err) { setStatus(err, 'warn'); return; }
 
-    const fp = fingerprint(entry);
-    const now = Date.now();
-    if (fp === lastSaveFingerprint && now - lastSaveAt < 5000) {
-      setStatus('同じ内容を続けて保存しようとしています。少し待ってから保存してください。', 'warn');
-      return;
+
+    function renderList() {
+      const listEl = $('list');
+      const all = loadVitals();
+      populateMonthFilter(all);
+      populatePrintMonthFilters(all);
+      populateListMonthFilters(all);
+
+      const resident = $('filterResident').value;
+      const q = String($('search').value || '').trim().toLowerCase();
+      getFilterRange();
+      const summaryMode = $('summaryMode') ? $('summaryMode').value : 'list';
+      const weekdayFilter = $('weekdayFilter') ? $('weekdayFilter').value : 'all';
+      const monthFilter = $('monthFilter') ? $('monthFilter').value : 'all';
+      const weightDiffMapForFilter = buildResidentDailyWeightDiffMap(all);
+
+      const filtered = all
+        .slice()
+.sort(compareVitalsAsc)
+        .filter(v => {
+          if (hasListMonthRange()) {
+            if (!inListMonthRange(v)) return false;
+          } else if (!recordMatchesCurrentRange(v)) return false;
+          if (resident && resident !== '__all__' && v.resident !== resident) return false;
+          if (weekdayFilter !== 'all' && getWeekdayFromISO(v) !== weekdayFilter) return false;
+          if (monthFilter !== 'all' && monthKeyFromISO(v) !== monthFilter) return false;
+          if (!matchesHighThresholds(v)) return false;
+          if (!matchesPulseAbnormal(v)) return false;
+          if (!matchesWeightPlus1kg(v, weightDiffMapForFilter)) return false;
+          if (q) {
+            const hay = [
+              v.resident, v.recorder, v.memo,
+              normalizeNum(v.weight), normalizeNum(v.bpSys), normalizeNum(v.bpDia), normalizeNum(v.pulse)
+            ].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+
+      const visibleIds = filtered.map(v => v.id).filter(Boolean);
+      selectedVitalIds = new Set(Array.from(selectedVitalIds).filter(id => visibleIds.includes(id)));
+
+      const highOnlyOn = $('highOnlyToggle') && $('highOnlyToggle').checked;
+      const weightPlusOnlyOn = $('weightUp1kgToggle') && $('weightUp1kgToggle').checked;
+      const pulseOnlyOn = $('pulseAbnormalToggle') && $('pulseAbnormalToggle').checked;
+      const filterNotes = [];
+      if (highOnlyOn) filterNotes.push('血圧高め');
+      if (weightPlusOnlyOn) filterNotes.push('体重＋1kg以上');
+      if (pulseOnlyOn) filterNotes.push('脈拍高低');
+      const filterNoteText = filterNotes.length ? '（' + filterNotes.join('・') + '抽出）' : '';
+      const listRangeText = getListMonthRangeLabel();
+      $('countLabel').textContent = summaryMode === 'list'
+        ? `${filtered.length}件${listRangeText ? ' / ' + listRangeText : ''}${filterNoteText}`
+        : `${filtered.length}件を集計${listRangeText ? ' / ' + listRangeText : ''}${filterNoteText}`;
+      listEl.innerHTML = '';
+
+      renderCharts();
+
+      const weightDiffMap = buildResidentDailyWeightDiffMap(all);
+
+      const avgSys = averageOf(filtered.map(v => v.bpSys), 1);
+      const avgDia = averageOf(filtered.map(v => v.bpDia), 1);
+      const avgWeight = averageOf(filtered.map(v => v.weight), 1);
+      const avgPulse = averageOf(filtered.map(v => v.pulse), 1);
+
+      const avgBox = document.createElement('div');
+      avgBox.className = 'avg-box';
+      avgBox.innerHTML = `
+        <div class="avg-title">平均${getListMonthRangeLabel() ? `（一覧期間：${getListMonthRangeLabel()}）` : ``}</div>
+        <div class="avg-items">
+          <span class="avg-item">血圧 ${avgSys != null || avgDia != null ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―'}</span>
+          <span class="avg-item">体重 ${avgWeight != null ? `${avgWeight}kg` : '―'}</span>
+          <span class="avg-item">脈拍 ${avgPulse != null ? avgPulse : '―'}</span>
+        </div>
+        <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上135以上・下85以上は赤 ／ 脈拍：<span class="pulse-high">100以上は赤</span>、<span class="pulse-low">40以下は青</span></div>
+      `;
+      listEl.appendChild(avgBox);
+      listEl.appendChild(createPrintAllMonthAverageBox(all));
+
+      if (summaryMode === 'weekday' || summaryMode === 'month_summary') {
+        renderSummaryTable(listEl, filtered, summaryMode === 'weekday' ? 'weekday' : 'month');
+        applyPrintRangeVisibility();
+        return;
+      }
+
+      const bulkBar = document.createElement('div');
+      bulkBar.className = 'bulk-actions';
+      bulkBar.innerHTML = `
+        <div class="left">
+          <strong>まとめて削除</strong>
+          <span>チェックした記録を削除できます</span>
+          <span>選択中 ${selectedVitalIds.size}件</span>
+        </div>
+        <button type="button" class="btn btn-danger" ${selectedVitalIds.size ? '' : 'disabled'}>チェック削除</button>
+      `;
+      const bulkDeleteBtn = bulkBar.querySelector('button');
+      bulkDeleteBtn.onclick = () => deleteCheckedVitals(visibleIds);
+      listEl.appendChild(bulkBar);
+
+      if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'table-empty';
+        div.textContent = 'データがありません。左で入力して保存してください。';
+        listEl.appendChild(div);
+        applyPrintRangeVisibility();
+        return;
+      }
+
+      const table = document.createElement('table');
+      table.className = 'vitals-table';
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th class="select-col"><input type="checkbox" class="check-all" aria-label="全件選択"></th>
+            <th>日付</th>
+            <th>利用者</th>
+            <th>体重</th>
+            <th>血圧</th>
+            <th>脈拍</th>
+            <th>記録者</th>
+            <th>メモ</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+
+      const tbody = table.querySelector('tbody');
+      const checkAll = table.querySelector('.check-all');
+      if (checkAll) {
+        checkAll.checked = visibleIds.length > 0 && visibleIds.every(id => selectedVitalIds.has(id));
+        checkAll.indeterminate = selectedVitalIds.size > 0 && !checkAll.checked;
+        checkAll.onchange = () => setSelectedVisibleVitals(visibleIds, checkAll.checked);
+      }
+
+      for (const v of filtered) {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-month-key', monthKeyFromISO(v));
+        const memo = String(v.memo || '').trim();
+        const weightFlag = isManualFlagOn(v.id, 'weight');
+        const bpFlag = isManualFlagOn(v.id, 'bp');
+        const pulseFlag = isManualFlagOn(v.id, 'pulse');
+        const weightDiff = getWeightDiffForRecord(v, weightDiffMap);
+        tr.innerHTML = `
+          <td class="select-col"><input type="checkbox" class="row-check" ${selectedVitalIds.has(v.id) ? 'checked' : ''} aria-label="この行を選択"></td>
+          <td>${escapeHTML(formatJP(v))}</td>
+          <td>${escapeHTML(v.resident || '')}</td>
+          <td class="${weightFlag ? 'manual-flag' : ''}">${formatWeightWithDiffHtml(v.weight, weightDiff)}</td>
+          <td>${formatBpHtml(v.bpSys, v.bpDia, bpFlag)}</td>
+          <td>${formatPulseHtml(v.pulse, pulseFlag)}</td>
+          <td>${escapeHTML(v.recorder || '')}</td>
+          <td class="memo-cell">${escapeHTML(memo || '―')}</td>
+          <td></td>
+        `;
+
+        const rowCheck = tr.querySelector('.row-check');
+        if (rowCheck) rowCheck.onchange = () => setSelectedVital(v.id, rowCheck.checked);
+
+        const actionTd = tr.lastElementChild;
+        const actions = document.createElement('div');
+        actions.className = 'table-actions';
+
+        const bCopy = document.createElement('button');
+        bCopy.className = 'btn';
+        bCopy.textContent = 'コピー';
+        bCopy.onclick = () => {
+          const txt = vitalsToText(v);
+          navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(() => {
+            fallbackCopy(txt);
+            toast('コピーしました');
+          });
+        };
+
+        const bEdit = document.createElement('button');
+        bEdit.className = 'btn';
+        bEdit.textContent = '編集';
+        bEdit.onclick = () => openEdit(v.id);
+
+        const bWeightFlag = document.createElement('button');
+        bWeightFlag.className = 'manual-flag-btn' + (weightFlag ? ' is-on' : '');
+        bWeightFlag.textContent = '体重赤字';
+        bWeightFlag.onclick = () => toggleManualFlag(v.id, 'weight');
+
+        const bBpFlag = document.createElement('button');
+        bBpFlag.className = 'manual-flag-btn' + (bpFlag ? ' is-on' : '');
+        bBpFlag.textContent = '血圧赤字';
+        bBpFlag.onclick = () => toggleManualFlag(v.id, 'bp');
+
+        const bPulseFlag = document.createElement('button');
+        bPulseFlag.className = 'manual-flag-btn' + (pulseFlag ? ' is-on' : '');
+        bPulseFlag.textContent = '脈拍赤字';
+        bPulseFlag.onclick = () => toggleManualFlag(v.id, 'pulse');
+
+        actions.appendChild(bCopy);
+        actions.appendChild(bEdit);
+        actions.appendChild(bWeightFlag);
+        actions.appendChild(bBpFlag);
+        actions.appendChild(bPulseFlag);
+        actionTd.appendChild(actions);
+        tbody.appendChild(tr);
+      }
+
+      listEl.appendChild(table);
+      applyPrintRangeVisibility();
     }
-    lastSaveFingerprint = fp;
-    lastSaveAt = now;
 
-    setSaving(true);
-    saveLocal(entry);
-    renderLatest();
-    setStatus('この端末には保存しました。共有へ送信中です…', '');
-
-    try {
-      await saveRemote(entry);
-      clearNumbersAfterSave();
-      setStatus(`共有保存できました。入力欄の数字は空にしました。<br>${entryText(entry)}`, 'ok');
-    } catch (e) {
-      setStatus(`この端末には保存しましたが、共有保存に失敗しました。<br>${escapeHTML(e.message || e)}<br>通信状態を確認して、必要ならもう一度入力してください。`, 'warn');
-    } finally {
-      setSaving(false);
+    function escapeHTML(s){
+      return String(s ?? '').replace(/[&<>\"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
     }
-  }
-  function clearForm() {
-    $('vWeight').value = '';
-    $('vBpSys').value = '';
-    $('vBpDia').value = '';
-    $('vPulse').value = '';
-    $('vMemo').value = '';
-    $('vWeight').focus();
-  }
 
-  function clearNumbersAfterSave() {
-    // 保存後は、日付・利用者・記録者・測定区分は残し、数値とメモだけ空にする
-    $('vWeight').value = '';
-    $('vBpSys').value = '';
-    $('vBpDia').value = '';
-    $('vPulse').value = '';
-    $('vMemo').value = '';
-    $('vWeight').focus();
-  }
+    function fallbackCopy(text){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    initSelects();
-    bindSlots();
-    $('vDate').value = todayStr();
-    updateWeekday();
-    $('vDate').addEventListener('change', updateWeekday);
-    $('saveBtn').addEventListener('click', saveEntry);
-    $('clearBtn').addEventListener('click', clearForm);
-    $('checkTodayBtn').addEventListener('click', checkTodayRemote);
-    $('reloadLocalBtn').addEventListener('click', renderLatest);
-    renderLatest();
-  });
+
+    async function postJson(params) {
+      return remotePost(params);
+    }
+
+    function normalizeImportRow(row) {
+      const date = String(row.date || '').trim();
+      if (!date) return null;
+      return {
+        id: String(row.id || '').trim(),
+        date,
+        time: String(row.time || '').trim() || '09:00',
+        resident: String(row.resident || row.user || '').trim(),
+        recorder: String(row.recorder || row.staff || '').trim(),
+        weight: String(row.weight ?? '').trim(),
+        bpSys: String(row.bpSys ?? '').trim(),
+        bpDia: String(row.bpDia ?? '').trim(),
+        pulse: String(row.pulse ?? '').trim(),
+        memo: String(row.memo || '').trim(),
+      };
+    }
+
+    function parseCsvLineSimple(line) {
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          result.push(cur);
+          cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      result.push(cur);
+      return result;
+    }
+
+    function parseCsvSimple(text) {
+      const lines = String(text || '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .filter(line => line.trim() !== '');
+      if (!lines.length) return [];
+      const head = parseCsvLineSimple(lines[0]).map(v => v.trim());
+      return lines.slice(1).map(line => {
+        const cols = parseCsvLineSimple(line);
+        const obj = {};
+        head.forEach((k, i) => obj[k] = String(cols[i] ?? '').trim());
+        return obj;
+      });
+    }
+
+    async function importBulkRows(rows) {
+      const normalized = rows.map(normalizeImportRow).filter(Boolean);
+      if (!normalized.length) {
+        toast('取込データがありません');
+        return;
+      }
+
+      setRemoteStatus('まとめて取込中…');
+      let done = 0;
+
+      for (const row of normalized) {
+        const payload = {
+          action: 'saveVitalRecord',
+          id: row.id || (row.date + '-' + row.time + '-' + row.resident + '-' + done),
+          date: row.date,
+          time: row.time,
+          user: row.resident,
+          staff: row.recorder,
+          weight: row.weight,
+          bpSys: row.bpSys,
+          bpDia: row.bpDia,
+          pulse: row.pulse,
+          memo: row.memo
+        };
+        await postJson(payload);
+        done++;
+      }
+
+      try {
+        await syncRemoteVitals({ silent: true });
+      } catch (e) {
+        console.warn('bulk import sync failed', e);
+      }
+
+      $('filterRange').value = 'all';
+      const residents = Array.from(new Set(normalized.map(v => v.resident).filter(Boolean)));
+      if (residents.length === 1) {
+        const target = residents[0];
+        const hasOption = Array.from($('filterResident').options).some(o => o.value === target);
+        if (hasOption) $('filterResident').value = target;
+      }
+
+      renderList();
+      $('quickStatus').textContent = done + '件取り込みました';
+      setRemoteStatus('まとめて取込完了');
+      toast(done + '件取り込みました');
+    }
+
+    async function handleBulkImportFile(file) {
+      if (!file) return;
+      const text = await file.text();
+      let rows = [];
+      if (file.name.toLowerCase().endsWith('.json')) {
+        rows = JSON.parse(text);
+      } else {
+        rows = parseCsvSimple(text);
+      }
+      await importBulkRows(rows);
+    }
+
+
+    function clearInputs() {
+      $('vWeight').value = '';
+      $('vBpSys').value = '';
+      $('vBpDia').value = '';
+      $('vPulse').value = '';
+      $('vMemo').value = '';
+      $('quickStatus').textContent = '';
+    }
+
+    function getCurrentDraft() {
+      const date = $('vDate').value;
+      const slot = getSelectedSlot('vSlotGroup');
+      const time = getTimeForSlot(slot);
+      const resident = $('vResident').value;
+      const recorder = $('vRecorder').value;
+      const weight = String($('vWeight').value || '').trim();
+      const bpSys = String($('vBpSys').value || '').trim();
+      const bpDia = String($('vBpDia').value || '').trim();
+      const pulse = String($('vPulse').value || '').trim();
+      const memo = String($('vMemo').value || '').trim();
+      return { date, slot, time, resident, recorder, weight, bpSys, bpDia, pulse, memo };
+    }
+
+    async function saveDraftToVitals() {
+      if (isSavingVitalNow) {
+        toast('保存中です。少し待ってください');
+        return;
+      }
+
+      const d = getCurrentDraft();
+      if (!d.resident) {
+        toast('利用者を選択してください');
+        return;
+      }
+      if (!d.date) {
+        toast('日付を入力してください');
+        return;
+      }
+      if (shouldBlockRapidDuplicateSave(d)) {
+        toast('同じ内容の連続保存を止めました');
+        return;
+      }
+
+      setSavingState(true);
+      try {
+        const entry = normalizeVitalRecordObject({
+          id: makeSafeId('vital'),
+          date: d.date,
+          time: d.time,
+          dateKey: d.date,
+          resident: d.resident,
+          recorder: d.recorder || '',
+          measuredAt: buildMeasuredAt(d.date, d.time),
+          weight: d.weight,
+          bpSys: d.bpSys,
+          bpDia: d.bpDia,
+          pulse: d.pulse,
+          memo: d.memo,
+          _localJustSaved: true
+        });
+
+        const beforeVitals = loadVitals();
+        const autoMainReasons = getAutoMainReasons(entry, beforeVitals);
+        const shouldAutoMain = shouldAutoAppendMainRecord(autoMainReasons);
+        const all = mergeVitalsById(beforeVitals, [entry]);
+        saveVitals(all);
+        rememberJustSaved(d);
+
+        // 先に画面へ出す。共有保存の反映待ちはしない。
+        $('filterRange').value = 'today';
+        const hasResidentOption = Array.from($('filterResident').options).some(o => o.value === entry.resident);
+        if (hasResidentOption) $('filterResident').value = entry.resident;
+
+        $('quickStatus').textContent = '保存しました（画面に反映済み・共有保存中）';
+        setRemoteStatus('共有保存中…');
+        clearInputs();
+        renderList();
+        toast('保存しました');
+
+        if (hasRemoteEnabled()) {
+          try {
+            await saveVitalRemote(entry);
+            if (shouldAutoMain) {
+              try {
+                await appendHighVitalToMainRecord(entry, autoMainReasons);
+                setRemoteStatus('共有接続OK：保存＋個人記録へ自動追記しました');
+                $('quickStatus').textContent = '保存しました（個人記録へ自動追記済み）';
+                toast('保存＋個人記録へ追記しました');
+              } catch (e) {
+                console.warn('appendHighVitalToMainRecord failed', e);
+                setRemoteStatus('バイタル保存OK。個人記録への自動追記に失敗しました');
+                $('quickStatus').textContent = '保存しました（個人記録追記は失敗）';
+                toast('保存しました（個人記録追記失敗）');
+              }
+            } else {
+              setRemoteStatus('共有接続OK：保存しました（自動追記なし）');
+              $('quickStatus').textContent = '保存しました（共有OK・自動追記なし）';
+            }
+
+            // 共有側の反映をあとから確認。ローカル表示は残したまま統合する。
+            syncRemoteVitals({ silent: true }).then(() => {
+              renderList();
+              try { renderCharts(); } catch (e) {}
+              setRemoteStatus(shouldAutoMain ? '共有接続OK：保存後に再読込しました（個人記録へ追記済み）' : '共有接続OK：保存後に再読込しました');
+            }).catch(e => {
+              console.warn('post save sync failed', e);
+              setRemoteStatus('共有保存OK。再読込は手動でも確認できます');
+            });
+          } catch (e) {
+            console.warn('saveVitalRemote failed', e);
+            setRemoteStatus('共有保存に失敗しました。端末内には保存済みです');
+            $('quickStatus').textContent = '端末に保存しました（共有失敗）';
+            toast('端末に保存しました（共有失敗）');
+          }
+        } else {
+          setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+          $('quickStatus').textContent = '端末に保存しました';
+        }
+      } finally {
+        setSavingState(false);
+      }
+    }
+
+    // --- 編集 ---
+    let editingId = null;
+    let selectedVitalIds = new Set();
+
+    function openEdit(id) {
+      const all = loadVitals();
+      const v = all.find(x => x.id === id);
+      if (!v) return;
+      editingId = id;
+
+      const editDateKey = getVitalRecordDateKey(v);
+      const editTimeKey = getVitalRecordTime(v);
+      $('eDate').value = editDateKey || nowLocalDate();
+      updateWeekdayLabel('eDate', 'eWeekday');
+      setSlotSelection('eSlotGroup', getSlotFromTime(editTimeKey));
+
+      $('eResident').value = v.resident || '';
+      $('eRecorder').value = v.recorder || '';
+      $('eWeight').value = v.weight ?? '';
+      $('eBpSys').value = v.bpSys ?? '';
+      $('eBpDia').value = v.bpDia ?? '';
+      $('ePulse').value = v.pulse ?? '';
+      $('eMemo').value = v.memo ?? '';
+
+      $('modalBg').style.display = 'flex';
+    }
+
+    function closeEdit() {
+      editingId = null;
+      $('modalBg').style.display = 'none';
+    }
+
+    async function applyEdit() {
+      if (!editingId) return;
+      const all = loadVitals();
+      const idx = all.findIndex(x => x.id === editingId);
+      if (idx < 0) return;
+
+      const date = $('eDate').value;
+      const slot = getSelectedSlot('eSlotGroup');
+      const time = getTimeForSlot(slot);
+      if (!date) { toast('日付を入力してください'); return; }
+
+      all[idx] = normalizeVitalRecordObject({
+        ...all[idx],
+        date,
+        time,
+        dateKey: date,
+        resident: $('eResident').value || '',
+        recorder: $('eRecorder').value || '',
+        measuredAt: buildMeasuredAt(date, time),
+        weight: String($('eWeight').value || '').trim(),
+        bpSys: String($('eBpSys').value || '').trim(),
+        bpDia: String($('eBpDia').value || '').trim(),
+        pulse: String($('ePulse').value || '').trim(),
+        memo: String($('eMemo').value || '').trim(),
+      });
+
+      saveVitals(mergeVitalsById(all, []));
+      renderList();
+      let msg = '更新しました';
+      if (hasRemoteEnabled()) {
+        try {
+          await saveVitalRemote(all[idx]);
+          setRemoteStatus('共有接続OK：更新しました');
+          msg = '更新しました（共有OK）';
+        } catch (e) {
+          console.warn('update remote failed', e);
+          setRemoteStatus('共有更新に失敗しました');
+          msg = '端末で更新しました（共有失敗）';
+        }
+      }
+      toast(msg);
+      closeEdit();
+      renderList();
+    }
+
+    async function deleteEdit() {
+      if (!editingId) return;
+      const ok = confirm('このバイタル記録を削除しますか？');
+      if (!ok) return;
+      const deletingId = editingId;
+      const all = loadVitals().filter(x => x.id !== deletingId);
+      saveVitals(all);
+      let msg = '削除しました';
+      if (hasRemoteEnabled()) {
+        try {
+          await deleteVitalRemote(deletingId);
+          setRemoteStatus('共有接続OK：削除しました');
+          msg = '削除しました（共有OK）';
+        } catch (e) {
+          console.warn('delete remote failed', e);
+          setRemoteStatus('共有削除に失敗しました');
+          msg = '端末で削除しました（共有失敗）';
+        }
+      }
+      toast(msg);
+      closeEdit();
+      renderList();
+    }
+
+    // --- CSV / バックアップ / 復元（このページ単体） ---
+    function yyyymmdd_hhmmss(){
+      const d = new Date();
+      return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
+    }
+
+    function downloadTextFile(filename, text, mime){
+      const blob = new Blob([text], {type: mime || 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    }
+
+    function exportCsv(){
+      const rows = [
+        ['date','time','measuredAt','resident','recorder','weight','bpSys','bpDia','pulse','memo']
+      ];
+      for (const v of loadVitals()) {
+        rows.push([
+          getVitalRecordDateKey(v), getVitalRecordTime(v), v.measuredAt||'', v.resident||'', v.recorder||'', v.weight||'', v.bpSys||'', v.bpDia||'', v.pulse||'', (v.memo||'').replace(/\r?\n/g,' ')
+        ]);
+      }
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell ?? '');
+        if (/[\",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+        return s;
+      }).join(',')).join('\n');
+      downloadTextFile(`vitals_${yyyymmdd_hhmmss()}.csv`, csv, 'text/csv');
+      toast('CSVを保存しました');
+    }
+
+    function backupVitals(){
+      const payload = {
+        app: 'group_home_vitals',
+        schemaVersion: 1,
+        exportedAt: new Date().toISOString(),
+        vitals: loadVitals(),
+      };
+      downloadTextFile(`vitals_backup_${yyyymmdd_hhmmss()}.json`, JSON.stringify(payload, null, 2), 'application/json');
+      toast('バックアップを保存しました');
+    }
+
+    function normalizeVitalsBackup(parsed){
+      if (parsed && parsed.vitals && Array.isArray(parsed.vitals)) return parsed.vitals;
+      if (Array.isArray(parsed)) return parsed;
+      return null;
+    }
+
+    function restoreVitalsFile(file){
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result||''));
+          const vitals = normalizeVitalsBackup(parsed);
+          if (!vitals) { alert('このファイルはバイタル復元用として認識できませんでした'); return; }
+          const ok = confirm(`復元しますか？\n\n現在：${loadVitals().length}件\n復元：${vitals.length}件\n\n※現在のバイタルは上書きされます。`);
+          if (!ok) return;
+          saveVitals(Array.isArray(vitals)?vitals:[]);
+          toast('復元しました');
+          if (hasRemoteEnabled()) {
+        setRemoteStatus('共有URL設定済み：起動時に共有を確認します');
+        syncRemoteVitals({ silent:true }).then(() => renderList()).catch((e) => { console.warn('initial remote sync failed', e); setRemoteStatus('共有読込に失敗しました'); });
+      } else {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+      }
+
+      renderList();
+
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+        } catch (e) {
+          alert('復元に失敗しました：' + (e?.message || e));
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // --- 初期化 ---
+    function init(){
+      $('vDate').value = nowLocalDate();
+      updateWeekdayLabel('vDate', 'vWeekday');
+      updateWeekdayLabel('eDate', 'eWeekday');
+      $('vDate').addEventListener('change', () => updateWeekdayLabel('vDate', 'vWeekday'));
+      $('eDate').addEventListener('change', () => updateWeekdayLabel('eDate', 'eWeekday'));
+      bindSlotGroup('vSlotGroup');
+      bindSlotGroup('eSlotGroup');
+      setSlotSelection('vSlotGroup', 'morning');
+      setSlotSelection('eSlotGroup', 'morning');
+
+      const residents = loadJSON(RESIDENTS_KEY, []);
+      const recorders = loadJSON(RECORDERS_KEY, []);
+      const residentList = Array.isArray(residents) && residents.length ? residents : DEFAULT_RESIDENTS;
+      const recorderList = Array.isArray(recorders) && recorders.length ? recorders : DEFAULT_RECORDERS;
+
+      buildResidentsSelect($('vResident'), residentList, false);
+      buildRecordersSelect($('vRecorder'), recorderList);
+      buildResidentsSelect($('filterResident'), residentList, true);
+
+      // filterResident: なるべく「最後に使った利用者」へ（グラフが見やすい）
+      $('filterResident').value = '__all__';
+
+      // 編集モーダル側
+      buildResidentsSelect($('eResident'), residentList, false);
+      buildRecordersSelect($('eRecorder'), recorderList);
+
+      // 設定の復元（最後に使った利用者/記録者）
+      try {
+        const last = loadJSON('group_home_vitals_last_v1', {});
+        if (last && typeof last === 'object') {
+          if (last.resident && Array.from($('vResident').options).some(o=>o.value===last.resident)) $('vResident').value = last.resident;
+          if (last.recorder && Array.from($('vRecorder').options).some(o=>o.value===last.recorder)) $('vRecorder').value = last.recorder;
+        }
+      } catch(e){}
+
+      // 一覧は初期表示を全員にする
+      $('filterResident').value = '__all__';
+
+      $('saveVitalBtn').onclick = async () => {
+        try { saveJSON('group_home_vitals_last_v1', { resident: $('vResident').value, recorder: $('vRecorder').value }); } catch(e){}
+        await saveDraftToVitals();
+      };
+      $('clearBtn').onclick = clearInputs;
+      $('copyBtn').onclick = () => {
+        const d = getCurrentDraft();
+        const v = { weight:d.weight, bpSys:d.bpSys, bpDia:d.bpDia, pulse:d.pulse, memo:d.memo };
+        const txt = vitalsToText(v);
+        navigator.clipboard?.writeText(txt).then(() => toast('コピーしました')).catch(()=>{ fallbackCopy(txt); toast('コピーしました'); });
+      };
+
+      $('filterResident').onchange = renderList;
+      $('filterRange').onchange = renderList;
+      if ($('listMonthFrom')) $('listMonthFrom').onchange = renderList;
+      if ($('listMonthTo')) $('listMonthTo').onchange = renderList;
+      if ($('clearListMonthBtn')) $('clearListMonthBtn').onclick = clearListMonthRange;
+      if ($('summaryMode')) $('summaryMode').onchange = renderList;
+      if ($('weekdayFilter')) $('weekdayFilter').onchange = renderList;
+      if ($('monthFilter')) $('monthFilter').onchange = renderList;
+      if ($('highOnlyToggle')) $('highOnlyToggle').onchange = renderList;
+      if ($('weightUp1kgToggle')) $('weightUp1kgToggle').onchange = renderList;
+      if ($('pulseAbnormalToggle')) $('pulseAbnormalToggle').onchange = renderList;
+      $('search').oninput = renderList;
+
+      $('syncRemoteBtn').onclick = async () => { try { await syncRemoteVitals(); renderList(); } catch(e){ console.warn(e); setRemoteStatus('共有読込に失敗しました'); toast('共有読込に失敗しました'); } };
+      $('closeModalBtn').onclick = closeEdit;
+      $('modalBg').addEventListener('click', (e) => { if (e.target === $('modalBg')) closeEdit(); });
+      $('saveEditBtn').onclick = applyEdit;
+      $('deleteEditBtn').onclick = deleteEdit;
+
+      const printBtn = $('printBtn');
+      if (printBtn) printBtn.onclick = () => printWithMonthRange();
+      const pdfBtn = $('pdfBtn');
+      if (pdfBtn) pdfBtn.onclick = () => printWithMonthRange();
+      $('exportCsvBtn').onclick = exportCsv;
+      const bulkImportBtn = $('bulkImportBtn');
+      const bulkImportFile = $('bulkImportFile');
+      if (bulkImportBtn && bulkImportFile) {
+        bulkImportBtn.onclick = () => bulkImportFile.click();
+        bulkImportFile.addEventListener('change', async (e) => {
+          try {
+            await handleBulkImportFile(e.target.files?.[0]);
+          } catch (err) {
+            console.error(err);
+            alert('まとめて取込に失敗しました\n' + (err && err.message ? err.message : err));
+          } finally {
+            e.target.value = '';
+          }
+        });
+      }
+      $('backupVitalsBtn').onclick = backupVitals;
+      $('restoreVitalsBtn').onclick = () => $('restoreVitalsFile').click();
+      $('restoreVitalsFile').addEventListener('change', (e) => restoreVitalsFile(e.target.files?.[0]));
+
+      if (hasRemoteEnabled()) {
+        setRemoteStatus('共有URL設定済み：起動時に共有を確認します');
+        syncRemoteVitals({ silent:true }).then(() => renderList()).catch((e) => { console.warn('initial remote sync failed', e); setRemoteStatus('共有読込に失敗しました'); });
+      } else {
+        setRemoteStatus('共有URL未設定のため、この端末内保存のみです');
+      }
+
+      renderList();
+
+      window.addEventListener('resize', () => {
+        // resize charts for new width
+        try { renderCharts(); } catch(e) {}
+      });
+
+      // 注意表示
+      if (!Array.isArray(residents) || residents.length==0) {
+        $('quickStatus').textContent = '※初期利用者を表示しています。本体で登録済みならそちらが優先されます。';
+      }
+    }
+
+  
+    document.addEventListener('DOMContentLoaded', init);
+
+  
+
+    // 印刷前後の調整：印刷範囲を反映し、グラフを印刷サイズに合わせて描き直す
+    function prepareVitalPrintLayout() {
+      try { applyPrintRangeVisibility(); } catch (e) {}
+      try { renderCharts(); } catch (e) {}
+    }
+
+    function restoreVitalPrintLayout() {
+      setTimeout(() => {
+        document.querySelectorAll('[data-month-key]').forEach(el => {
+          el.style.display = '';
+        });
+        try { renderList(); } catch (e) {}
+        try { renderCharts(); } catch (e) {}
+      }, 300);
+    }
+
+    if (!window.__vitalPrintLayoutFixed) {
+      window.__vitalPrintLayoutFixed = true;
+      window.addEventListener('beforeprint', prepareVitalPrintLayout);
+      window.addEventListener('afterprint', restoreVitalPrintLayout);
+    }
+
 </script>
 </body>
 </html>
