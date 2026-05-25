@@ -124,30 +124,23 @@
   .quick-links .ghost,.quick-links .orange{font-weight:700}
   .quick-links .orange{background:var(--orange)}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}.bulk-grid{grid-template-columns:1fr}}
+
+
+  /* LINE内ブラウザ対策：利用者プルダウンを標準UIで開きやすくする */
+  select#userName{
+    -webkit-appearance: menulist;
+    appearance: auto;
+    min-height:46px;
+    font-size:16px;
+    position:relative;
+    z-index:2;
+    touch-action:manipulation;
+  }
+
 </style>
 
-<!-- Excelライブラリ（本体と同じ .xlsx 出力用） -->
-<script>
-(function(){
-  function load(src, onok, onng){
-    var s=document.createElement('script');
-    s.src=src;
-    s.onload=function(){ window.__xlsxReady=true; onok && onok(); };
-    s.onerror=function(){ onng && onng(); };
-    document.head.appendChild(s);
-  }
-  var sources=[
-    "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js",
-    "https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
-  ];
-  var i=0;
-  function next(){
-    if(i>=sources.length){ window.__xlsxLoadFailed=true; return; }
-    load(sources[i++], null, next);
-  }
-  next();
-})();
-</script>
+<!-- ExcelライブラリはLINE内ブラウザ対策のため、ページ表示時ではなく「全記録Excel」ボタン押下時に読み込みます。 -->
+
 
 </head>
 <body>
@@ -1624,6 +1617,45 @@ async function getMainRecordForExcel(user, date){
   return { user, date, text: stripRecorderLine(text, recorder), recorder, record, ok:true };
 }
 
+
+// ===== Excelライブラリ遅延読み込み（LINE内ブラウザ対策） =====
+// 以前はページを開いた直後にExcel用の大きなライブラリを読み込んでいました。
+// Android系のLINE内ブラウザでは、これが利用者プルダウンの反応を悪くすることがあるため、
+// 「全記録Excel」ボタンを押した時だけ読み込む方式に変更しています。
+const EXCEL_LIB_SOURCES = [
+  'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js',
+  'https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'
+];
+let excelLibPromise = null;
+function ensureExcelLibraryLoaded(){
+  if (typeof XLSX !== 'undefined') return Promise.resolve();
+  if (excelLibPromise) return excelLibPromise;
+  excelLibPromise = new Promise((resolve, reject) => {
+    let i = 0;
+    function loadNext(){
+      if (typeof XLSX !== 'undefined') { resolve(); return; }
+      if (i >= EXCEL_LIB_SOURCES.length) {
+        reject(new Error('Excelライブラリを読み込めませんでした。LINE内で失敗する場合は、右上メニューから外部ブラウザで開いて再度お試しください。'));
+        return;
+      }
+      const src = EXCEL_LIB_SOURCES[i++];
+      const sc = document.createElement('script');
+      sc.src = src;
+      sc.async = true;
+      sc.onload = () => {
+        setTimeout(() => {
+          if (typeof XLSX !== 'undefined') resolve();
+          else loadNext();
+        }, 30);
+      };
+      sc.onerror = () => loadNext();
+      document.head.appendChild(sc);
+    }
+    loadNext();
+  });
+  return excelLibPromise;
+}
+
 function buildEasyExcelWorkbook(items, date){
   if (typeof XLSX === "undefined") {
     throw new Error("Excelライブラリが読み込まれていません。インターネット接続をご確認ください。");
@@ -1812,15 +1844,12 @@ async function fetchAllMainRecordsForExcel(){
 }
 
 async function exportExcelAllRecords(){
-  if (typeof XLSX === 'undefined') {
-    checkStatus.textContent = 'Excelライブラリを読み込み中、または読み込めませんでした。インターネット接続を確認して、少し待ってからもう一度押してください。';
-    return;
-  }
-
   excelBtn.disabled = true;
   allCheckBtn.disabled = true;
-  checkStatus.textContent = '全記録のExcelを作成中です...';
+  checkStatus.textContent = 'Excel機能を準備中です...';
   try {
+    await ensureExcelLibraryLoaded();
+    checkStatus.textContent = '全記録のExcelを作成中です...';
     const items = await fetchAllMainRecordsForExcel();
     if (!items.length) throw new Error('Excelに出力できる記録がありません。');
 
