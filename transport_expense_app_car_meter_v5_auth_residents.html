@@ -208,6 +208,12 @@
     function monthKey(value){ return normalizeYmd(value).slice(0,7); }
     function yen(v){ return Number(v || 0).toLocaleString('ja-JP') + '円'; }
     function distanceText(v){ return (Math.round(Number(v || 0) * 10) / 10).toLocaleString('ja-JP', {maximumFractionDigits:1}) + 'km'; }
+    function meterValueText(v){
+      if (v === null || v === undefined || String(v).trim() === '') return '未入力';
+      const n = Number(v);
+      if (!Number.isFinite(n)) return String(v);
+      return (Math.round(n * 10) / 10).toLocaleString('ja-JP', {maximumFractionDigits:1}) + 'km';
+    }
     function escapeHtml(s){ return String(s ?? '').replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
     function uid(){ return 'tr-' + Date.now() + '-' + Math.random().toString(16).slice(2); }
     function round1(v){ return Math.round(Number(v || 0) * 10) / 10; }
@@ -510,18 +516,22 @@
     }
 
     function routeHtml(trips){
-      return (trips || []).map(t => {
-        const route = [t.from, t.to].filter(Boolean).join(' → ') || '移動';
+      return (trips || []).map((t, idx) => {
+        const route = [t.from, t.to].filter(Boolean).join(' → ') || '移動 ' + (idx + 1);
         const timeText = [t.departTime, t.arriveTime].filter(Boolean).join(' → ');
-        return `<div>${escapeHtml(route)}${timeText ? ' <span class="small muted">' + escapeHtml(timeText) + '</span>' : ''} <span class="pill">${distanceText(t.distance)} / ${yen(t.amount)}</span></div>`;
+        const meterText = '乗車 ' + meterValueText(t.meterStart) + ' → 降車 ' + meterValueText(t.meterEnd);
+        return `<div style="margin-bottom:5px;">
+          <div>${escapeHtml(route)}${timeText ? ' <span class="small muted">' + escapeHtml(timeText) + '</span>' : ''} <span class="pill">${distanceText(t.distance)} / ${yen(t.amount)}</span></div>
+          <div class="small muted" style="margin-top:2px;">${escapeHtml(meterText)}</div>
+        </div>`;
       }).join('');
     }
 
     function renderList(){
       const rows = getMonthRecords().slice().sort((a,b) =>
-        String(a.date || '').localeCompare(String(b.date || '')) ||
-        residentName(a).localeCompare(residentName(b), 'ja') ||
-        String(a.createdAt || '').localeCompare(String(b.createdAt || ''))
+        String(normalizeYmd(b.date) || b.date || '').localeCompare(String(normalizeYmd(a.date) || a.date || '')) ||
+        String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+        residentName(a).localeCompare(residentName(b), 'ja')
       );
       els.listBody.innerHTML = rows.map(r => `
         <tr>
