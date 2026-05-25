@@ -1687,6 +1687,11 @@ function buildEasyExcelWorkbook(items, date){
     return String(s).replace(/[\r\n]+/g, " ").trim();
   }
 
+  // Excel出力時だけ、本文先頭の見出しを取り除く（元データは変更しない）
+  function cleanExcelDiaryText(s){
+    return toInlineText(s).replace(/^\s*業務日誌・利用者の活動状況（特記事項含む）\s*[：:]\s*/, "");
+  }
+
   function visualLen(s) {
     let n = 0;
     for (const ch of (s || "")) {
@@ -1718,11 +1723,12 @@ function buildEasyExcelWorkbook(items, date){
       const youbi = getWeekdayJa(d);
       const recorder = r.recorder || "";
       const supportRaw = toInlineText(r.support || "");
-      const diaryRaw = toInlineText(r.note || "");
+      const diaryRaw = cleanExcelDiaryText(r.note || "");
 
       let combined = "";
       if (supportRaw) combined += `支援内容（職員側）：${supportRaw}`;
-      if (diaryRaw) combined += (combined ? " / " : "") + `業務日誌・利用者の活動状況（特記事項含む）：${diaryRaw}`;
+      // 本文が読みやすいよう、Excel出力時は「業務日誌・利用者の活動状況（特記事項含む）：」を付けない
+      if (diaryRaw) combined += (combined ? " / " : "") + diaryRaw;
 
       const rowsForThis = estimateRowsForSupport(combined);
       const rowBase = curRow;
