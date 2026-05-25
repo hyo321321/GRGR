@@ -125,6 +125,30 @@
   .quick-links .orange{background:var(--orange)}
   @media (max-width:640px){.row,.btns{grid-template-columns:1fr}.bulk-grid{grid-template-columns:1fr}}
 </style>
+
+<!-- Excelライブラリ（本体と同じ .xlsx 出力用） -->
+<script>
+(function(){
+  function load(src, onok, onng){
+    var s=document.createElement('script');
+    s.src=src;
+    s.onload=function(){ window.__xlsxReady=true; onok && onok(); };
+    s.onerror=function(){ onng && onng(); };
+    document.head.appendChild(s);
+  }
+  var sources=[
+    "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js",
+    "https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
+  ];
+  var i=0;
+  function next(){
+    if(i>=sources.length){ window.__xlsxLoadFailed=true; return; }
+    load(sources[i++], null, next);
+  }
+  next();
+})();
+</script>
+
 </head>
 <body>
 <div id="authScreen" class="auth-screen">
@@ -280,6 +304,7 @@
         <button id="openResidentInfoBtn" class="ghost" type="button">緊急時情報</button>
         <button id="openTransportBtn" class="ghost" type="button">交通費</button>
         <button id="openMedicalCalendarBtn" class="orange" type="button">受診カレンダー</button>
+        <button id="excelBtn" class="orange" type="button">📊 全記録Excel</button>
       </div>
       <div id="sendStatus" class="status"></div>
     </div>
@@ -317,6 +342,7 @@ const editModeText = document.getElementById('editModeText');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const sendBtn = document.getElementById('sendBtn');
 const allCheckBtn = document.getElementById('allCheckBtn');
+const excelBtn = document.getElementById('excelBtn');
 const openSearchBtn = document.getElementById('openSearchBtn');
 const openVitalsBtn = document.getElementById('openVitalsBtn');
 const openResidentInfoBtn = document.getElementById('openResidentInfoBtn');
@@ -1557,6 +1583,267 @@ async function checkAllMainRecords(){
   }
 }
 
+
+// ===== かんたんページ用：本体と同じ形式のExcel(.xlsx)出力 =====
+function getWeekdayJa(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  const w = ["日","月","火","水","木","金","土"];
+  return w[d.getDay()] || "";
+}
+
+function stripRecorderLine(text, recorder){
+  let t = normalizeText(text || "");
+  const rec = String(recorder || "").trim();
+  if (!t) return "";
+  const lines = t.split(/\r?\n/);
+  if (!lines.length) return t;
+  const last = String(lines[lines.length - 1] || "").trim();
+  if (/^記録者\s*[:：]?\s*.+$/.test(last)) {
+    if (!rec || last.indexOf(rec) !== -1) {
+      lines.pop();
+      t = lines.join("\n").trim();
+    }
+  }
+  return t;
+}
+
+function pickRecorderFromRecord(record, text){
+  const r = record || {};
+  const direct = String(r.recorder || r.staffName || r.staff || r.createdBy || "").trim();
+  if (direct) return direct;
+  const m = String(text || "").match(/(?:^|\n)記録者\s*[:：]?\s*([^\n\r]+)/);
+  return m ? String(m[1] || "").trim() : "";
+}
+
+async function getMainRecordForExcel(user, date){
+  const data = await fetchJson(WEB_APP_URL + '?action=getMainRecord&user=' + encodeURIComponent(user) + '&date=' + encodeURIComponent(date));
+  const record = (data.record && typeof data.record === 'object') ? data.record : data;
+  const text = normalizeText(data.text || (data.record && (data.record.text || data.record.body || data.record.note)) || data.body || data.note || '');
+  const recorder = pickRecorderFromRecord(record, text);
+  return { user, date, text: stripRecorderLine(text, recorder), recorder, record, ok:true };
+}
+
+function buildEasyExcelWorkbook(items, date){
+  if (typeof XLSX === "undefined") {
+    throw new Error("Excelライブラリが読み込まれていません。インターネット接続をご確認ください。");
+  }
+
+  const groups = {};
+  (items || []).forEach((r) => {
+    if (!r || !r.text) return;
+    const residentName = String(r.user || r.resident || "").trim() || "未設定";
+    (groups[residentName] = groups[residentName] || []).push({
+      date: r.date || date || "",
+      resident: residentName,
+      recorder: r.recorder || "",
+      support: r.support || "",
+      note: r.note || r.text || ""
+    });
+  });
+
+  const residentsSorted = Object.keys(groups).sort((a, b) => a.localeCompare(b, "ja"));
+  if (!residentsSorted.length) throw new Error("Excelに出力する記録がありません。");
+
+  function safeSheetName(name) {
+    const s = (name || "").toString().trim() || "未設定";
+    return s.replace(/[\[\]\:\*\?\/\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, 31);
+  }
+
+  function toInlineText(s){
+    if(s === null || s === undefined) return "";
+    return String(s).replace(/[\r\n]+/g, " ").trim();
+  }
+
+  function visualLen(s) {
+    let n = 0;
+    for (const ch of (s || "")) {
+      const code = ch.codePointAt(0);
+      if (code === 10 || code === 13 || code === 9) continue;
+      n += (code <= 0x7f) ? 1 : 2;
+    }
+    return n;
+  }
+
+  function estimateRowsForSupport(text) {
+    const t0 = (text || "").toString();
+    if (!t0.trim()) return 3;
+    const CHARS_PER_LINE = 38;
+    const lines = t0.replace(/\r/g, "").split("\n");
+    let needed = 0;
+    for (const line of lines) needed += Math.max(1, Math.ceil(visualLen(line) / CHARS_PER_LINE));
+    return Math.min(40, Math.max(3, needed + 1));
+  }
+
+  function buildSheetForRecords(list) {
+    const header = ["日付", "曜日", "支援内容（職員側）＋業務日誌・利用者の活動状況（特記事項含む）", "記録者"];
+    const wsData = [header];
+    const merges = [];
+    let curRow = 1;
+
+    (list || []).forEach((r) => {
+      const d = r.date || date || "";
+      const youbi = getWeekdayJa(d);
+      const recorder = r.recorder || "";
+      const supportRaw = toInlineText(r.support || "");
+      const diaryRaw = toInlineText(r.note || "");
+
+      let combined = "";
+      if (supportRaw) combined += `支援内容（職員側）：${supportRaw}`;
+      if (diaryRaw) combined += (combined ? " / " : "") + `業務日誌・利用者の活動状況（特記事項含む）：${diaryRaw}`;
+
+      const rowsForThis = estimateRowsForSupport(combined);
+      const rowBase = curRow;
+      wsData.push([d, youbi, combined, ""]);
+      for (let i = 0; i < rowsForThis - 2; i++) wsData.push(["", "", "", ""]);
+      wsData.push(["", "", "", recorder]);
+
+      merges.push({ s: { r: rowBase, c: 2 }, e: { r: rowBase + rowsForThis - 1, c: 2 } });
+      merges.push({ s: { r: rowBase, c: 3 }, e: { r: rowBase + rowsForThis - 1, c: 3 } });
+      curRow += rowsForThis;
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws["!rows"] = wsData.map((_, ri) => (ri === 0 ? { hpt: 17.65 } : { hpt: 14.25 }));
+    ws["!merges"] = merges;
+    ws["!cols"] = [
+      { wch: 12.8125 },
+      { wch: 6.8125  },
+      { wch: 48      },
+      { wch: 48      },
+      { wch: 12.8125 }
+    ];
+
+    Object.keys(ws).forEach((addr) => {
+      if (addr[0] === "!") return;
+      const cell = ws[addr];
+      if (!cell) return;
+      cell.s = cell.s || {};
+      cell.s.font = { name: "游ゴシック", sz: 11 };
+    });
+
+    const rangeB = XLSX.utils.decode_range(ws["!ref"] || "A1:D1");
+    for (let r = 1; r <= rangeB.e.r; r++) {
+      const addr = XLSX.utils.encode_cell({ r, c: 1 });
+      if (!ws[addr]) continue;
+      ws[addr].s = ws[addr].s || {};
+      ws[addr].s.alignment = Object.assign({}, ws[addr].s.alignment || {}, {
+        horizontal: "center",
+        vertical: "center",
+        wrapText: false
+      });
+    }
+
+    (merges || []).forEach((mg) => {
+      for (let r = mg.s.r; r <= mg.e.r; r++) {
+        for (let c = mg.s.c; c <= mg.e.c; c++) {
+          const a = XLSX.utils.encode_cell({ r, c });
+          if (!ws[a]) ws[a] = { t: "s", v: "" };
+          ws[a].s = ws[a].s || {};
+          ws[a].s.font = ws[a].s.font || { name: "游ゴシック", sz: 11 };
+          ws[a].s.alignment = Object.assign({}, ws[a].s.alignment || {}, {
+            horizontal: "left",
+            vertical: "top",
+            wrapText: true
+          });
+        }
+      }
+    });
+
+    for (let c = 0; c < header.length; c++) {
+      const a = XLSX.utils.encode_cell({ r: 0, c });
+      if (!ws[a]) continue;
+      ws[a].s = ws[a].s || {};
+      ws[a].s.font = { name: "游ゴシック", sz: 11, bold: true };
+      ws[a].s.alignment = { vertical: "center", horizontal: "center", wrapText: true };
+    }
+    return ws;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const infoData = [["利用者", "件数"]];
+  residentsSorted.forEach((name) => infoData.push([name, (groups[name] || []).length]));
+  const infoWs = XLSX.utils.aoa_to_sheet(infoData);
+  infoWs["!cols"] = [{ wch: 22 }, { wch: 8 }];
+  Object.keys(infoWs).forEach((addr) => {
+    if (addr[0] === "!") return;
+    const cell = infoWs[addr];
+    if (!cell) return;
+    cell.s = cell.s || {};
+    cell.s.font = { name: "游ゴシック", sz: 11 };
+  });
+  for (let c = 0; c < 2; c++) {
+    const a = XLSX.utils.encode_cell({ r: 0, c });
+    if (!infoWs[a]) continue;
+    infoWs[a].s = infoWs[a].s || {};
+    infoWs[a].s.font = { name: "游ゴシック", sz: 11, bold: true };
+    infoWs[a].s.alignment = { vertical: "center", horizontal: "center", wrapText: true };
+  }
+  XLSX.utils.book_append_sheet(wb, infoWs, "利用者一覧");
+
+  residentsSorted.forEach((residentName) => {
+    XLSX.utils.book_append_sheet(wb, buildSheetForRecords(groups[residentName] || []), safeSheetName(residentName));
+  });
+
+  return wb;
+}
+
+async function fetchAllMainRecordsForExcel(){
+  const data = await fetchJson(WEB_APP_URL + '?action=getRecords');
+  const list = Array.isArray(data.records) ? data.records : (Array.isArray(data) ? data : []);
+  return list.map((rec) => {
+    const raw = (rec && typeof rec.raw === 'object') ? rec.raw : {};
+    const date = String(rec.date || raw.date || '').trim();
+    const user = String(rec.user || rec.resident || raw.user || raw.resident || '').trim() || '未設定';
+    const support = normalizeText(raw.support || rec.support || '');
+    const bodyText = normalizeText(rec.text || raw.note || rec.note || rec.body || '');
+    const recorder = pickRecorderFromRecord(rec, bodyText) || String(rec.staff || rec.recorder || raw.staff || raw.recorder || '').trim();
+    return {
+      user,
+      date,
+      support,
+      note: stripRecorderLine(bodyText, recorder),
+      text: stripRecorderLine(bodyText, recorder),
+      recorder,
+      record: rec,
+      ok: true
+    };
+  }).filter((r) => r && (r.text || r.support) && String(r.date || '').trim());
+}
+
+async function exportExcelAllRecords(){
+  if (typeof XLSX === 'undefined') {
+    checkStatus.textContent = 'Excelライブラリを読み込み中、または読み込めませんでした。インターネット接続を確認して、少し待ってからもう一度押してください。';
+    return;
+  }
+
+  excelBtn.disabled = true;
+  allCheckBtn.disabled = true;
+  checkStatus.textContent = '全記録のExcelを作成中です...';
+  try {
+    const items = await fetchAllMainRecordsForExcel();
+    if (!items.length) throw new Error('Excelに出力できる記録がありません。');
+
+    // 日付順に並べる（本体のバックアップとして見返しやすくする）
+    items.sort((a, b) => {
+      const ad = String(a.date || '');
+      const bd = String(b.date || '');
+      if (ad !== bd) return ad.localeCompare(bd);
+      return String(a.user || '').localeCompare(String(b.user || ''), 'ja');
+    });
+
+    const wb = buildEasyExcelWorkbook(items, '全記録');
+    const today = todayYmd();
+    XLSX.writeFile(wb, '記録一覧_利用者別_全記録_' + today + '.xlsx', { bookType: 'xlsx', cellStyles: true });
+    checkStatus.textContent = '全記録のExcelを作成しました。記録あり ' + items.length + '件';
+  } catch(err){
+    checkStatus.textContent = '全記録Excel作成に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    excelBtn.disabled = false;
+    allCheckBtn.disabled = false;
+  }
+}
+
 async function sendRecord(){
   if (editState) { await saveEditedRecord(); return; }
   const user = String(userNameEl.value || '').trim();
@@ -1609,6 +1896,7 @@ unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 sendBtn.addEventListener('click', sendRecord);
 allCheckBtn.addEventListener('click', checkAllMainRecords);
+if (excelBtn) excelBtn.addEventListener('click', exportExcelAllRecords);
 recordDateEl.addEventListener('change', handleRecordDateChange);
 if (dayCompleteCheck) dayCompleteCheck.addEventListener('change', handleDayCompleteChange);
 if (prevMonthBtn) prevMonthBtn.addEventListener('click', async () => { calendarMonthCursor = shiftMonth(calendarMonthCursor || monthYmd(selectedDateYmd()), -1); await renderCalendar(); });
