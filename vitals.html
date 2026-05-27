@@ -562,6 +562,54 @@
     .avg-item {
       white-space: nowrap;
     }
+    .avg-subsection {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .avg-subtitle {
+      font-weight: 900;
+      font-size: 12px;
+      color: #334155;
+      margin-bottom: 5px;
+    }
+    .avg-mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .avg-mini-table th,
+    .avg-mini-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 5px 7px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .avg-mini-table th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 900;
+    }
+    .avg-mini-table tr:last-child td {
+      border-bottom: 0;
+    }
+    .avg-empty {
+      font-size: 12px;
+      color: #64748b;
+    }
+    @media (max-width: 700px) {
+      .avg-mini-table {
+        font-size: 11px;
+      }
+      .avg-mini-table th,
+      .avg-mini-table td {
+        padding: 4px 5px;
+      }
+    }
     .avg-legend {
       margin-top: 6px;
       font-size: 12px;
@@ -2545,6 +2593,85 @@
     }
 
 
+
+    function calcVitalAverages(rows) {
+      rows = Array.isArray(rows) ? rows : [];
+      const avgWeight = averageOf(rows.map(v => v.weight), 1);
+      const avgSys = averageOf(rows.map(v => v.bpSys), 1);
+      const avgDia = averageOf(rows.map(v => v.bpDia), 1);
+      const avgPulse = averageOf(rows.map(v => v.pulse), 1);
+      return {
+        count: rows.length,
+        weight: avgWeight != null ? avgWeight + 'kg' : '―',
+        bp: (avgSys != null || avgDia != null) ? `${avgSys ?? '―'} / ${avgDia ?? '―'}` : '―',
+        pulse: avgPulse != null ? avgPulse : '―'
+      };
+    }
+
+    function createAverageSummaryRows(records, mode) {
+      const groups = new Map();
+      const source = Array.isArray(records) ? records : [];
+      source.forEach(v => {
+        const key = mode === 'weekday' ? getWeekdayFromISO(v) : monthKeyFromISO(v);
+        if (!key) return;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(v);
+      });
+
+      const keys = mode === 'weekday'
+        ? ['1','2','3','4','5','6','0'].filter(k => groups.has(k))
+        : Array.from(groups.keys()).sort();
+
+      return keys.map(key => {
+        const rows = groups.get(key) || [];
+        const avg = calcVitalAverages(rows);
+        return {
+          label: mode === 'weekday' ? getWeekdayLabel(key) : monthLabelFromKey(key),
+          count: avg.count,
+          bp: avg.bp,
+          weight: avg.weight,
+          pulse: avg.pulse
+        };
+      });
+    }
+
+    function createAverageMiniTableHtml(title, rows) {
+      if (!rows.length) {
+        return `
+          <div class="avg-subsection">
+            <div class="avg-subtitle">${escapeHTML(title)}</div>
+            <div class="avg-empty">集計できるデータがありません。</div>
+          </div>
+        `;
+      }
+      const body = rows.map(row => `
+        <tr>
+          <td>${escapeHTML(row.label)}</td>
+          <td>${row.count}</td>
+          <td>${escapeHTML(row.bp)}</td>
+          <td>${escapeHTML(row.weight)}</td>
+          <td>${escapeHTML(row.pulse)}</td>
+        </tr>
+      `).join('');
+      return `
+        <div class="avg-subsection">
+          <div class="avg-subtitle">${escapeHTML(title)}</div>
+          <table class="avg-mini-table">
+            <thead>
+              <tr>
+                <th>${title.indexOf('曜日') >= 0 ? '曜日' : '月'}</th>
+                <th>件数</th>
+                <th>血圧</th>
+                <th>体重</th>
+                <th>脈拍</th>
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
     function renderList() {
       const listEl = $('list');
       const all = loadVitals();
@@ -2611,6 +2738,8 @@
 
       const avgBox = document.createElement('div');
       avgBox.className = 'avg-box';
+      const weekdayAverageRows = createAverageSummaryRows(filtered, 'weekday');
+      const monthlyAverageRows = createAverageSummaryRows(filtered, 'month');
       avgBox.innerHTML = `
         <div class="avg-title">平均${getListMonthRangeLabel() ? `（一覧期間：${getListMonthRangeLabel()}）` : ``}</div>
         <div class="avg-items">
@@ -2618,6 +2747,8 @@
           <span class="avg-item">体重 ${avgWeight != null ? `${avgWeight}kg` : '―'}</span>
           <span class="avg-item">脈拍 ${avgPulse != null ? avgPulse : '―'}</span>
         </div>
+        ${createAverageMiniTableHtml('曜日ごとの平均', weekdayAverageRows)}
+        ${createAverageMiniTableHtml('月ごとの平均', monthlyAverageRows)}
         <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上135以上・下85以上は赤 ／ 脈拍：<span class="pulse-high">100以上は赤</span>、<span class="pulse-low">40以下は青</span></div>
       `;
       listEl.appendChild(avgBox);
