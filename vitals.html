@@ -941,7 +941,7 @@
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
-<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧が高い日（上135以上・下85以上）、脈拍が100以上または40以下、体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動追記します。</div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧が高い日（上135以上・下85以上）、脈拍が100以上または40以下、体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動反映します。記録がなければ新規作成し、あれば追記します。</div>
 <div class="input-grid-4">
 <div class="field-compact">
 <label>日付</label>
@@ -997,7 +997,7 @@
 </div>
 <div class="hint" style="margin-top:6px;">
           ・保存すると右の一覧に出ます（新しい順）。<br/>
-          ・血圧高め（上135以上・下85以上）、脈拍100以上・40以下、または体重＋1kg以上の日は、かんたんページの個人記録へ自動追記します。<br/>
+          ・血圧高め（上135以上・下85以上）、脈拍100以上・40以下、または体重＋1kg以上の日は、かんたんページの個人記録へ自動反映します（記録なし＝新規作成、記録あり＝追記）。<br/>
           ・時刻欄はなく、朝・昼・夕で保存されます。実際の測定時刻はメモへ入力してください。<br/>
           ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
 </div>
@@ -2034,9 +2034,6 @@
       if (entry.id && sent[entry.id]) return { ok:false, skipped:true, duplicated:true };
 
       const existing = await fetchExistingMainRecordForVital(entry);
-      if (!existing || (!existing.text && !existing.id)) {
-        throw new Error('個人記録が見つからないため、安全のため自動追記を止めました');
-      }
 
       const tags = ['#バイタル'];
       if (reasons.bpHigh) tags.push('#血圧高め');
@@ -2044,28 +2041,34 @@
       if (reasons.weightUp1kg) tags.push('#体重増加');
 
       const addText = buildHighVitalMainRecordText(entry, reasons);
-      const mergedText = appendTextOnce(existing.text, addText);
-      if (existing.text && mergedText === String(existing.text).trim()) {
+      const hasExistingRecord = !!(existing && (existing.text || existing.id));
+      const existingText = hasExistingRecord ? String(existing.text || '').trim() : '';
+      const mergedText = hasExistingRecord ? appendTextOnce(existingText, addText) : addText;
+
+      // 既存記録に同じ文言が入っている場合は二重追記しない
+      if (hasExistingRecord && existingText && mergedText === existingText) {
         if (entry.id) {
           sent[entry.id] = new Date().toISOString();
           saveAutoMainSentMap(sent);
         }
-        return { ok:true, skipped:true, duplicated:true };
+        return { ok:true, skipped:true, duplicated:true, mode:'already_exists' };
       }
+
+      const mode = hasExistingRecord ? 'append_to_existing_main_record' : 'create_new_main_record';
 
       const payload = {
         action: 'saveMainRecord',
         date: getVitalRecordDateKey(entry) || entry.date || '',
         user: entry.resident || '',
-        staff: entry.recorder || existing.staff || '',
+        staff: entry.recorder || (existing && existing.staff) || '',
         text: mergedText,
-        status: existing.status || '未完成',
-        tags: mergeTagText(existing.tags, tags.join(' ')),
+        status: (existing && existing.status) || '未完成',
+        tags: mergeTagText(existing && existing.tags, tags.join(' ')),
         source: 'vitals_auto_alert',
         raw: JSON.stringify({
-          source: 'vitals_auto_alert_safe_append',
-          mode: 'append_to_existing_main_record',
-          existingId: existing.id || '',
+          source: 'vitals_auto_alert_safe_append_or_create',
+          mode,
+          existingId: hasExistingRecord ? (existing.id || '') : '',
           vitalId: entry.id || '',
           reasons,
           entry: {
@@ -2082,7 +2085,8 @@
         })
       };
 
-      if (existing.id) {
+      // 既存記録がある場合だけIDを渡して更新。記録が無い場合はIDを渡さず新規作成させる。
+      if (hasExistingRecord && existing.id) {
         payload.id = existing.id;
         payload._serverId = existing.id;
         payload.recordId = existing.id;
@@ -2093,7 +2097,7 @@
         sent[entry.id] = new Date().toISOString();
         saveAutoMainSentMap(sent);
       }
-      return res;
+      return { ...(res || {}), mode };
     }
 
     function buildResidentDailyWeightDiffMap(records) {
@@ -3295,14 +3299,14 @@
             if (shouldAutoMain) {
               try {
                 await appendHighVitalToMainRecord(entry, autoMainReasons);
-                setRemoteStatus('共有接続OK：保存＋個人記録へ自動追記しました');
-                $('quickStatus').textContent = '保存しました（個人記録へ自動追記済み）';
-                toast('保存＋個人記録へ追記しました');
+                setRemoteStatus('共有接続OK：保存＋個人記録へ自動反映しました');
+                $('quickStatus').textContent = '保存しました（個人記録へ自動反映済み）';
+                toast('保存＋個人記録へ反映しました');
               } catch (e) {
                 console.warn('appendHighVitalToMainRecord failed', e);
-                setRemoteStatus('バイタル保存OK。個人記録への自動追記に失敗しました');
-                $('quickStatus').textContent = '保存しました（個人記録追記は失敗）';
-                toast('保存しました（個人記録追記失敗）');
+                setRemoteStatus('バイタル保存OK。個人記録への自動反映に失敗しました');
+                $('quickStatus').textContent = '保存しました（個人記録反映は失敗）';
+                toast('保存しました（個人記録反映失敗）');
               }
             } else {
               setRemoteStatus('共有接続OK：保存しました（自動追記なし）');
@@ -3313,7 +3317,7 @@
             syncRemoteVitals({ silent: true }).then(() => {
               renderList();
               try { renderCharts(); } catch (e) {}
-              setRemoteStatus(shouldAutoMain ? '共有接続OK：保存後に再読込しました（個人記録へ追記済み）' : '共有接続OK：保存後に再読込しました');
+              setRemoteStatus(shouldAutoMain ? '共有接続OK：保存後に再読込しました（個人記録へ反映済み）' : '共有接続OK：保存後に再読込しました');
             }).catch(e => {
               console.warn('post save sync failed', e);
               setRemoteStatus('共有保存OK。再読込は手動でも確認できます');
