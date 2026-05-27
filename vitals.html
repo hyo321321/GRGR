@@ -522,6 +522,96 @@
       min-width: 120px;
     }
 
+
+
+    /* 全員分ミニグラフ */
+    .chart-mode-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .chart-mode-actions .btn {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+    .all-resident-charts-panel {
+      display: none;
+    }
+    .all-resident-chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .mini-resident-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 10px;
+      min-width: 0;
+    }
+    .mini-resident-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .mini-resident-title span:last-child {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .mini-chart-label {
+      margin: 8px 0 4px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #334155;
+    }
+    canvas.mini-chart {
+      width: 100%;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    canvas.mini-chart.vitals-mini-chart { height: 190px; }
+    canvas.mini-chart.weight-mini-chart { height: 135px; }
+    .mini-chart-hint {
+      margin-top: 5px;
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (min-width: 1500px) {
+      .all-resident-chart-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      canvas.mini-chart.vitals-mini-chart { height: 180px; }
+      canvas.mini-chart.weight-mini-chart { height: 125px; }
+    }
+    @media (max-width: 900px) {
+      .all-resident-chart-grid { grid-template-columns: 1fr; }
+      canvas.mini-chart.vitals-mini-chart { height: 230px; }
+      canvas.mini-chart.weight-mini-chart { height: 160px; }
+    }
+    @media (max-width: 520px) {
+      .all-resident-chart-grid { grid-template-columns: 1fr; }
+      canvas.mini-chart.vitals-mini-chart { height: 210px; }
+      canvas.mini-chart.weight-mini-chart { height: 145px; }
+    }
+    @media print {
+      .chart-mode-actions { display: none !important; }
+      .all-resident-chart-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+      .mini-resident-card { break-inside: avoid !important; page-break-inside: avoid !important; }
+      canvas.mini-chart.vitals-mini-chart { height: 48mm !important; }
+      canvas.mini-chart.weight-mini-chart { height: 34mm !important; }
+    }
+
     @media print {
       body { background:#fff; }
       .topbar, .toast, .modal-backdrop { display:none !important; }
@@ -966,7 +1056,7 @@
 </div>
 </div>
 </div>
-<div class="wrap"><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span></div><div class="charts-grid"><div class="chart-wrap" id="chartsWrap">
+<div class="wrap"><div class="card" id="chartsCard"><div class="card-title"><span>グラフ（体重・血圧・脈拍）</span><span class="hint" id="chartsSummary"></span><div class="chart-mode-actions"><button class="btn btn-primary" id="showAllResidentChartsBtn" type="button">👥 全員分のグラフだけ表示</button><button class="btn btn-ghost" id="showNormalChartsBtn" type="button" style="display:none;">通常グラフに戻す</button></div></div><div class="charts-grid" id="normalChartsGrid"><div class="chart-wrap" id="chartsWrap">
 <div class="chart-title">
 <span>体重（kg）</span>
 <span class="chart-sub" id="chartResidentLabel"></span>
@@ -982,7 +1072,10 @@
 <span><i style="background:#10b981"></i>脈拍</span>
 </div>
 <div class="hint" id="chartVitalsHint" style="margin-top:6px"></div>
-</div></div></div>
+</div></div><div class="all-resident-charts-panel" id="allResidentChartsPanel">
+<div class="hint" style="margin:0 0 8px;">一覧期間に合わせて、全員分を表示します。血圧・脈拍と体重は別グラフです。</div>
+<div class="all-resident-chart-grid" id="allResidentChartGrid"></div>
+</div></div>
 </div>
 <div class="toast" id="toast"></div>
 <div class="modal-backdrop" id="modalBg">
@@ -2233,6 +2326,102 @@
         });
     }
 
+
+
+    let chartViewMode = 'normal';
+
+    function getFilteredForAllResidentCharts() {
+      const all = loadVitals();
+      return all
+        .slice()
+        .sort(compareVitalsAsc)
+        .filter(v => {
+          if (hasListMonthRange()) {
+            if (!inListMonthRange(v)) return false;
+          } else if (!recordMatchesCurrentRange(v)) return false;
+          return true;
+        });
+    }
+
+    function getChartResidentNames(records) {
+      const optionNames = $('filterResident')
+        ? Array.from($('filterResident').options).map(o => o.value).filter(v => v && v !== '__all__')
+        : [];
+      const recordNames = Array.from(new Set((records || []).map(v => String(v.resident || '').trim()).filter(Boolean)));
+      const merged = [];
+      for (const name of optionNames.concat(recordNames)) {
+        if (name && !merged.includes(name)) merged.push(name);
+      }
+      return merged;
+    }
+
+    function setChartViewMode(mode) {
+      chartViewMode = mode === 'all' ? 'all' : 'normal';
+      const normalGrid = $('normalChartsGrid');
+      const allPanel = $('allResidentChartsPanel');
+      const showAllBtn = $('showAllResidentChartsBtn');
+      const showNormalBtn = $('showNormalChartsBtn');
+      if (normalGrid) normalGrid.style.display = chartViewMode === 'all' ? 'none' : '';
+      if (allPanel) allPanel.style.display = chartViewMode === 'all' ? 'block' : 'none';
+      if (showAllBtn) showAllBtn.style.display = chartViewMode === 'all' ? 'none' : '';
+      if (showNormalBtn) showNormalBtn.style.display = chartViewMode === 'all' ? '' : 'none';
+      renderCharts();
+    }
+
+    function renderAllResidentCharts() {
+      const grid = $('allResidentChartGrid');
+      const sumEl = $('chartsSummary');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const rangeLabel = getRangeLabel();
+      const records = getFilteredForAllResidentCharts();
+      const names = getChartResidentNames(records);
+      if (sumEl) sumEl.textContent = `全員ミニグラフ：${rangeLabel}`;
+
+      if (!names.length) {
+        grid.innerHTML = '<div class="table-empty">利用者データがありません。</div>';
+        return;
+      }
+
+      names.forEach((name) => {
+        const residentRecords = records.filter(v => String(v.resident || '').trim() === name);
+        const days = groupByDayLastMetrics(residentRecords);
+        const labels = days.map(d => d.label);
+        const card = document.createElement('div');
+        card.className = 'mini-resident-card';
+        const vitalsCanvasId = 'mini_vitals_chart_' + Math.random().toString(36).slice(2);
+        const weightCanvasId = 'mini_weight_chart_' + Math.random().toString(36).slice(2);
+        const latest = [...days].reverse().find(d => d.weight != null || d.bpSys != null || d.bpDia != null || d.pulse != null);
+        const latestText = latest ? `${latest.label}` : 'データなし';
+        card.innerHTML = `
+          <div class="mini-resident-title"><span>${escapeHTML(name)}</span><span>${escapeHTML(latestText)}</span></div>
+          <div class="mini-chart-label">血圧・脈拍</div>
+          <canvas class="mini-chart vitals-mini-chart" id="${vitalsCanvasId}"></canvas>
+          <div class="mini-chart-hint">赤:血圧上 / 橙:血圧下 / 緑:脈拍</div>
+          <div class="mini-chart-label">体重</div>
+          <canvas class="mini-chart weight-mini-chart" id="${weightCanvasId}"></canvas>
+          <div class="mini-chart-hint">青:体重（kg）</div>
+        `;
+        grid.appendChild(card);
+        const vitalsCanvas = document.getElementById(vitalsCanvasId);
+        const weightCanvas = document.getElementById(weightCanvasId);
+        if (!days.length) {
+          drawLineChart(vitalsCanvas, [], [], { yFmt: (v) => String(v) });
+          drawLineChart(weightCanvas, [], [], { yFmt: (v) => String(v) });
+          return;
+        }
+        drawLineChart(vitalsCanvas, labels, [
+          { name: '血圧（上）', color: '#ef4444', y: days.map(d => d.bpSys) },
+          { name: '血圧（下）', color: '#f59e0b', y: days.map(d => d.bpDia) },
+          { name: '脈拍', color: '#10b981', y: days.map(d => d.pulse) },
+        ], { yFmt: (v) => String(Math.round(v)) });
+        drawLineChart(weightCanvas, labels, [
+          { name: '体重', color: '#2563eb', y: days.map(d => d.weight) },
+        ], { yFmt: (v) => Number(v).toFixed(1) });
+      });
+    }
+
     function getRangeLabel() {
       const listRange = getListMonthRangeLabel();
       if (listRange) return `一覧期間 ${listRange}`;
@@ -2244,6 +2433,10 @@
     }
 
     function renderCharts() {
+      if (chartViewMode === 'all') {
+        renderAllResidentCharts();
+        return;
+      }
       const records = getFilteredForChart();
       const days = groupByDayLastMetrics(records);
       const labels = days.map(d => d.label);
@@ -3379,6 +3572,8 @@
       };
 
       $('filterResident').onchange = renderList;
+      if ($('showAllResidentChartsBtn')) $('showAllResidentChartsBtn').onclick = () => setChartViewMode('all');
+      if ($('showNormalChartsBtn')) $('showNormalChartsBtn').onclick = () => setChartViewMode('normal');
       $('filterRange').onchange = renderList;
       if ($('listMonthFrom')) $('listMonthFrom').onchange = renderList;
       if ($('listMonthTo')) $('listMonthTo').onchange = renderList;
