@@ -516,14 +516,23 @@ async function createNitchuSupportAi(type){
     const text = normalizeText(data.text || data.result || data.answer || data.content || '');
     if (!text) throw new Error('AIから文章が返りませんでした。');
     showSupportAiResult(type, text);
-    setSearchStatus('日中支援' + (type === 'I' ? 'Ⅰ' : 'Ⅱ') + 'のAI文章を作成しました。', 'ok');
+    if (data && data.fallback) {
+      setSearchStatus('AI側が混み合っている、または利用上限に当たったため、キーワード式の下書きを表示しました。少し時間を置いて再度AI作成できます。', 'error');
+    } else {
+      setSearchStatus('日中支援' + (type === 'I' ? 'Ⅰ' : 'Ⅱ') + 'のAI文章を作成しました。', 'ok');
+    }
   } catch(err) {
     try {
       const records = await getRecordsForAi();
       const localText = fallbackSupportText(type, buildSupportRecordText(records));
       showSupportAiResult(type, localText);
     } catch(e) {}
-    setSearchStatus('AI作成に失敗しました。Apps Script側に aiNitchuSupport の追加が必要です。いったんキーワード式の下書きを表示しました。\n' + (err && err.message ? err.message : err), 'error');
+    const msg = err && err.message ? String(err.message) : String(err || '');
+    let guide = 'AI作成に失敗したため、キーワード式の下書きを表示しました。';
+    if (msg.indexOf('429') >= 0) guide = 'AI側の利用上限・混雑・短時間の連続実行により、キーワード式の下書きを表示しました。';
+    else if (msg.indexOf('GEMINI_API_KEY') >= 0) guide = 'GEMINI_API_KEY が未設定のため、キーワード式の下書きを表示しました。';
+    else if (msg.indexOf('unknown action') >= 0 || msg.indexOf('aiNitchuSupport') >= 0) guide = 'Apps Script側の aiNitchuSupport がまだ反映されていないため、キーワード式の下書きを表示しました。';
+    setSearchStatus(guide + '\n' + msg, 'error');
   } finally {
     setButtonBusy(btn, false, '', type === 'I' ? '日中支援Ⅰ AI作成' : '日中支援Ⅱ AI作成');
     if (aiSupport1Btn) aiSupport1Btn.disabled = false;
