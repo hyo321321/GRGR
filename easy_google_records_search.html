@@ -15,7 +15,7 @@
   input,select,button{font:inherit}
   input,select{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
   .row3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:end}
-  .btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+  .btns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:10px}
   button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}
   .primary{background:var(--primary)} .ghost{background:var(--ghost)} .green{background:var(--green)} .purple{background:var(--purple)}
   .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
@@ -117,6 +117,7 @@
       </div>
       <div class="btns">
         <button id="searchBtn" class="primary" type="button">検索する</button>
+        <button id="aiCreateBtn" class="green" type="button">AI作成</button>
         <button id="dailyReportListBtn" class="purple" type="button">業務日報一覧</button>
         <button id="clearBtn" class="ghost" type="button">条件を消す</button>
       </div>
@@ -146,6 +147,7 @@ const dateFrom = document.getElementById('dateFrom');
 const dateTo = document.getElementById('dateTo');
 const keyword = document.getElementById('keyword');
 const searchBtn = document.getElementById('searchBtn');
+const aiCreateBtn = document.getElementById('aiCreateBtn');
 const dailyReportListBtn = document.getElementById('dailyReportListBtn');
 const clearBtn = document.getElementById('clearBtn');
 const searchStatus = document.getElementById('searchStatus');
@@ -397,6 +399,14 @@ function showDailyReportList(){
   if (!dateTo.value) dateTo.value = todayYmd();
   searchRecords();
 }
+function openAiCreatePage(){
+  const user = String(searchUser.value || '').trim();
+  let url = 'resident_summary.html';
+  if (user && user !== '業務日報') {
+    url += '?user=' + encodeURIComponent(user);
+  }
+  location.href = url;
+}
 function clearConditions(){
   searchUser.value = '';
   dateFrom.value = defaultStartYmd();
@@ -412,6 +422,7 @@ initAuth();
 unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 searchBtn.addEventListener('click', searchRecords);
+if (aiCreateBtn) aiCreateBtn.addEventListener('click', openAiCreatePage);
 if (dailyReportListBtn) dailyReportListBtn.addEventListener('click', showDailyReportList);
 clearBtn.addEventListener('click', clearConditions);
 if (addKeywordBtn) addKeywordBtn.addEventListener('click', addSearchKeyword);
