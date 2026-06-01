@@ -28,7 +28,7 @@
 </style>
 </head>
 <body>
-  <div class="topbar screen-only"><div class="topbar-inner"><div><div class="title">利用者別 個人情報</div><div class="subtitle">7人分の基本情報・連絡先・医療・福祉・支援メモを保存できます。写真も保存できます。</div></div><div class="toolbar"><button class="btn" id="backEasyBtn">← かんたんページに戻る</button><button class="btn btn-primary" id="saveBtn">💾 保存</button><button class="btn" id="printBtn">📄 PDF/印刷</button><button class="btn" id="backupBtn">🧷 バックアップ</button><button class="btn" id="restoreBtn">♻ 復元</button><button class="btn btn-danger" id="clearBtn">🗑 この利用者を初期化</button><input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></div></div></div>
+  <div class="topbar screen-only"><div class="topbar-inner"><div><div class="title">利用者別 個人情報</div><div class="subtitle">7人分の基本情報・連絡先・医療・福祉・支援メモを保存できます。開いた時に共有データを自動読込します。</div></div><div class="toolbar"><button class="btn" id="backEasyBtn">← かんたんページに戻る</button><button class="btn btn-primary" id="saveBtn">💾 保存</button><button class="btn" id="printBtn">📄 PDF/印刷</button><button class="btn" id="backupBtn">🧷 バックアップ</button><button class="btn" id="restoreBtn">♻ 復元</button><button class="btn btn-danger" id="clearBtn">🗑 この利用者を初期化</button><input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></div></div></div>
   <div class="wrap"><div class="layout"><div class="card resident-list-wrap"><div class="card-title"><span>利用者</span><span class="badge" id="residentCount"></span></div><div class="hint" style="margin-bottom:10px;">左から利用者を選ぶと、その人の個人情報を編集できます。</div><div class="resident-list" id="residentList"></div></div>
       <div class="card"><div class="card-title"><span id="editorTitle">個人情報</span><span class="hint" id="savedAtLabel"></span></div><div id="saveStatus" class="status-box"></div><div class="missing-summary screen-only"><span id="missingSummary" class="missing-chip">未記入確認中</span><span class="legend"><span class="empty-sample"></span> 未記入　<span class="filled-sample"></span> 入力済み</span></div><div class="print-only" id="printTitle" style="font-weight:800;font-size:20px;margin-bottom:10px;"></div>
         <div class="section"><div class="section-title">基本情報</div><div class="photo-wrap"><div class="photo-box"><div class="photo-preview" id="photoPreview"><div class="photo-empty">写真なし</div></div><div class="meta-line screen-only"><input type="file" id="photoFile" accept="image/*" style="padding:6px"></div><div class="meta-line screen-only"><button class="btn" type="button" id="removePhotoBtn">写真を削除</button></div></div><div><div class="grid-3"><div><label>氏名</label><input id="fullName" type="text" readonly></div><div><label>フリガナ</label><input id="kana" type="text" placeholder="例）カワイ シンゴ"></div><div><label>血液型</label><select id="bloodType"><option value="">未入力</option><option>A型</option><option>B型</option><option>O型</option><option>AB型</option><option>不明</option></select></div></div><div class="grid-4" style="margin-top:10px;"><div><label>生年月日</label><input id="birthDate" type="date"></div><div><label>年齢</label><input id="age" type="text" placeholder="自動/手入力OK"></div><div><label>性別</label><select id="gender"><option value="">未入力</option><option>男性</option><option>女性</option><option>その他</option></select></div><div><label>入居日</label><input id="moveInDate" type="date"></div></div><div class="grid-3" style="margin-top:10px;"><div><label>居室</label><input id="room" type="text" placeholder="例）101号室"></div><div><label>本人電話番号</label><input id="phone" type="tel" placeholder="例）090-1234-5678"></div><div><label>本人メール</label><input id="email" type="email" placeholder="任意"></div></div><div style="margin-top:10px;"><label>住所</label><input id="address" type="text" placeholder="住所を入力"></div><div style="margin-top:10px;"><label>写真メモ</label><input id="photoMemo" type="text" placeholder="例）眼鏡あり、杖使用、髪型など"></div></div></div></div>
@@ -40,9 +40,13 @@
       </div></div></div><div class="toast" id="toast"></div>
 <script>
 const STORAGE_KEY='group_home_resident_info_v1';
+const GAS_URL_STORAGE_KEY='group_home_gas_web_app_url';
+const CLOUD_GAS_URL='https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
+const CLOUD_LOAD_ACTIONS=['getResidentInfoAll','getPersonalInfoAll'];
+const CLOUD_SAVE_ACTIONS=['saveResidentInfo','savePersonalInfo'];
 const RESIDENTS=['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
 const FIELD_IDS=['kana','bloodType','birthDate','age','gender','moveInDate','room','phone','email','address','photoMemo','emergencyName','emergencyRelation','emergencyPhone','emergencyPriority','emergencyMemo','doctor','hospital','pharmacy','medicalHistory','allergy','medication','medicalMemo','supportLevel','handbook','selfSupport','benefitCert','handbookExpiry','selfSupportExpiry','benefitExpiry','caseworker','welfareMemo','moneyMemo','lifeMemo','supportMemo','preferenceMemo','handoverMemo','freeMemo'];
-const $=id=>document.getElementById(id);let currentResident=RESIDENTS[0];
+const $=id=>document.getElementById(id);let currentResident=RESIDENTS[0];let cloudLoading=false;
 function goBackEasyPage(){
   const params = new URLSearchParams(location.search);
   const resident = params.get('resident') || currentResident || '';
@@ -68,13 +72,103 @@ function goBackEasyPage(){
 
   location.href = fallback;
 }
-function toast(msg){const el=$('toast');el.textContent=msg||'';el.classList.add('show');clearTimeout(window.__toastT);window.__toastT=setTimeout(()=>el.classList.remove('show'),1400)}
+function toast(msg){const el=$('toast');el.textContent=msg||'';el.classList.add('show');clearTimeout(window.__toastT);window.__toastT=setTimeout(()=>el.classList.remove('show'),1600)}
 function setSaveStatus(message,type){const el=$('saveStatus');if(!el)return;el.textContent=message||'';el.className='status-box'+(message?' show':'')+(type?' '+type:'')}
+function getCloudUrl(){
+  const params=new URLSearchParams(location.search);
+  const fromQuery=params.get('gas')||params.get('gasUrl')||params.get('webapp')||'';
+  if(fromQuery){localStorage.setItem(GAS_URL_STORAGE_KEY,fromQuery);return fromQuery}
+  return localStorage.getItem(GAS_URL_STORAGE_KEY)||CLOUD_GAS_URL||'';
+}
+function parseCloudText(text){
+  const t=String(text||'').trim();
+  if(!t)return {};
+  try{return JSON.parse(t)}catch(e){}
+  const m=t.match(/^[\w$]+\((([\s\S])*?)\);?$/);
+  if(m&&m[1]){try{return JSON.parse(m[1])}catch(e){}}
+  return {ok:false,error:t.slice(0,300)};
+}
+async function cloudGet(action,payload){
+  const base=getCloudUrl();
+  if(!base)throw new Error('Apps Script のURLが設定されていません');
+  const url=new URL(base,location.href);
+  url.searchParams.set('action',action);
+  url.searchParams.set('app','resident_info');
+  Object.entries(payload||{}).forEach(([k,v])=>{if(v!==undefined&&v!==null)url.searchParams.set(k,typeof v==='object'?JSON.stringify(v):String(v))});
+  url.searchParams.set('_',String(Date.now()));
+  const res=await fetch(url.toString(),{method:'GET',cache:'no-store'});
+  const text=await res.text();
+  const json=parseCloudText(text);
+  if(!res.ok)throw new Error('HTTP '+res.status+' '+text.slice(0,120));
+  if(json&&json.ok===false)throw new Error(json.error||json.message||'共有読込に失敗しました');
+  return json;
+}
+async function cloudPost(action,payload){
+  const base=getCloudUrl();
+  if(!base)throw new Error('Apps Script のURLが設定されていません');
+  const body=new URLSearchParams();
+  body.set('action',action);
+  body.set('app','resident_info');
+  Object.entries(payload||{}).forEach(([k,v])=>{if(v!==undefined&&v!==null)body.set(k,typeof v==='object'?JSON.stringify(v):String(v))});
+  const res=await fetch(base,{method:'POST',body});
+  const text=await res.text();
+  const json=parseCloudText(text);
+  if(!res.ok)throw new Error('HTTP '+res.status+' '+text.slice(0,120));
+  if(json&&json.ok===false)throw new Error(json.error||json.message||'共有保存に失敗しました');
+  return json;
+}
+async function tryCloudLoadAll(){
+  let lastErr=null;
+  for(const action of CLOUD_LOAD_ACTIONS){
+    try{return await cloudGet(action,{})}catch(e){lastErr=e}
+  }
+  throw lastErr||new Error('共有読込に失敗しました');
+}
+async function tryCloudSaveResident(name,data){
+  let lastErr=null;
+  const json=JSON.stringify(data||{});
+  for(const action of CLOUD_SAVE_ACTIONS){
+    try{return await cloudPost(action,{resident:name,name,json,data:json})}catch(e){lastErr=e}
+  }
+  throw lastErr||new Error('共有保存に失敗しました');
+}
 function loadStore(){try{const raw=localStorage.getItem(STORAGE_KEY);const parsed=raw?JSON.parse(raw):{};return parsed&&typeof parsed==='object'?parsed:{}}catch(e){return {}}}
 function saveStore(data){localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}
 function defaultResidentData(name){return {fullName:name,photoDataUrl:'',savedAt:'',kana:'',bloodType:'',birthDate:'',age:'',gender:'',moveInDate:'',room:'',phone:'',email:'',address:'',photoMemo:'',emergencyName:'',emergencyRelation:'',emergencyPhone:'',emergencyPriority:'',emergencyMemo:'',doctor:'',hospital:'',pharmacy:'',medicalHistory:'',allergy:'',medication:'',medicalMemo:'',supportLevel:'',handbook:'',selfSupport:'',benefitCert:'',handbookExpiry:'',selfSupportExpiry:'',benefitExpiry:'',caseworker:'',welfareMemo:'',moneyMemo:'',lifeMemo:'',supportMemo:'',preferenceMemo:'',handoverMemo:'',freeMemo:''}}
 function ensureStore(){const store=loadStore();let changed=false;for(const name of RESIDENTS){if(!store[name]){store[name]=defaultResidentData(name);changed=true}else if(!('fullName' in store[name])){store[name].fullName=name;changed=true}}if(changed)saveStore(store);return store}
 function fieldMissingCount(data){let n=0;for(const id of FIELD_IDS){const v=String((data&&data[id])||'').trim();if(!v)n++}return n}
+function hasResidentContent(data){if(!data)return false;for(const id of FIELD_IDS){if(String(data[id]||'').trim())return true}return !!data.photoDataUrl}
+function hasAnyContent(store){return RESIDENTS.some(name=>hasResidentContent(store&&store[name]))}
+function normalizeCloudStore(resp){
+  let raw=resp;
+  if(raw&&typeof raw==='object')raw=raw.data||raw.records||raw.residentsData||raw.residentInfo||raw.personalInfo||raw;
+  if(typeof raw==='string'){try{raw=JSON.parse(raw)}catch(e){raw={}}}
+  const next={};
+  if(Array.isArray(raw)){
+    for(const item of raw){
+      if(!item)continue;
+      const name=item.resident||item.name||item.fullName||item.user||'';
+      if(!name)continue;
+      let data=item.data||item.json||item.value||item;
+      if(typeof data==='string'){try{data=JSON.parse(data)}catch(e){data={}}}
+      next[name]=data;
+    }
+  }else if(raw&&typeof raw==='object'){
+    for(const name of RESIDENTS){
+      if(raw[name])next[name]=raw[name];
+    }
+  }
+  const store={};
+  let found=false;
+  for(const name of RESIDENTS){
+    const base=defaultResidentData(name);
+    let data=next[name]||{};
+    if(typeof data==='string'){try{data=JSON.parse(data)}catch(e){data={}}}
+    store[name]={...base,...data,fullName:name};
+    if(hasResidentContent(store[name]))found=true;
+  }
+  return found?store:null;
+}
 function renderResidentList(){const store=ensureStore();const list=$('residentList');list.innerHTML='';for(const name of RESIDENTS){const data=store[name]||defaultResidentData(name);const missing=fieldMissingCount(data);const btn=document.createElement('button');btn.type='button';btn.className='resident-btn '+(missing?'':'complete')+(name===currentResident?' active':'');btn.innerHTML='<span>'+name+'</span><span class="mini-missing">'+(missing?'未記入 '+missing:'入力済み')+'</span>';btn.onclick=()=>{currentResident=name;renderResidentList();fillForm();setSaveStatus('', '')};list.appendChild(btn)}$('residentCount').textContent=RESIDENTS.length+'人'}
 function calcAgeFromBirth(dateStr){if(!dateStr)return'';const birth=new Date(dateStr);if(Number.isNaN(birth.getTime()))return'';const today=new Date();let age=today.getFullYear()-birth.getFullYear();const md=(today.getMonth()+1)*100+today.getDate();const bmd=(birth.getMonth()+1)*100+birth.getDate();if(md<bmd)age--;return age>=0?String(age):''}
 function renderPhoto(dataUrl){const box=$('photoPreview');box.innerHTML=dataUrl?'<img alt="利用者写真" src="'+dataUrl+'">':'<div class="photo-empty">写真なし</div>'}
@@ -82,13 +176,38 @@ function nearestFieldWrap(el){let p=el.parentElement;while(p&&p!==document.body)
 function updateFieldColors(){let missing=0,filled=0;for(const id of FIELD_IDS){const el=$(id);if(!el)continue;const v=String(el.value||'').trim();const wrap=nearestFieldWrap(el);el.classList.remove('empty-field','filled-field');if(wrap)wrap.classList.remove('empty-wrap','filled-wrap');if(v){el.classList.add('filled-field');if(wrap)wrap.classList.add('filled-wrap');filled++}else{el.classList.add('empty-field');if(wrap)wrap.classList.add('empty-wrap');missing++}}const ms=$('missingSummary');if(ms){ms.textContent=missing?'未記入 '+missing+'項目 / 入力済み '+filled+'項目':'すべて入力済み';ms.className='missing-chip'+(missing?'':' ok')}return {missing,filled}}
 function fillForm(){const store=ensureStore();const data=store[currentResident]||defaultResidentData(currentResident);$('editorTitle').textContent=currentResident+' の個人情報';$('printTitle').textContent=currentResident+' 個人情報';$('fullName').value=currentResident;for(const id of FIELD_IDS){const el=$(id);if(el)el.value=data[id]||''}renderPhoto(data.photoDataUrl||'');$('savedAtLabel').textContent=data.savedAt?'最終保存：'+data.savedAt:'';updateFieldColors();renderResidentList()}
 function collectForm(){const store=ensureStore();const current=store[currentResident]||defaultResidentData(currentResident);const next={...current,fullName:currentResident};for(const id of FIELD_IDS){const el=$(id);if(el)next[id]=el.value||''}if(next.birthDate&&!next.age)next.age=calcAgeFromBirth(next.birthDate);next.savedAt=new Date().toLocaleString('ja-JP');return next}
-async function saveCurrent(){const btn=$('saveBtn');const old=btn.textContent;btn.disabled=true;btn.classList.add('saving');btn.textContent='保存中…';setSaveStatus(currentResident+' の個人情報を保存中です…','saving');await new Promise(r=>setTimeout(r,80));try{const store=ensureStore();const next=collectForm();store[currentResident]=next;saveStore(store);$('savedAtLabel').textContent='最終保存：'+next.savedAt;const c=updateFieldColors();renderResidentList();setSaveStatus(currentResident+' の個人情報を保存しました。未記入 '+c.missing+'項目 / 入力済み '+c.filled+'項目です。','ok');toast('保存しました')}catch(e){setSaveStatus('保存に失敗しました。'+(e&&e.message?'\n'+e.message:''),'error');toast('保存に失敗しました')}finally{btn.disabled=false;btn.classList.remove('saving');btn.textContent=old}}
-function clearCurrent(){const ok=confirm(currentResident+' の個人情報を初期化しますか？');if(!ok)return;const store=ensureStore();store[currentResident]=defaultResidentData(currentResident);saveStore(store);fillForm();setSaveStatus(currentResident+' の個人情報を初期化しました。','info');toast('初期化しました')}
+async function autoLoadSharedOnOpen(){
+  if(cloudLoading)return;
+  cloudLoading=true;
+  setSaveStatus('共有データを読み込み中です…','saving');
+  try{
+    const resp=await tryCloudLoadAll();
+    const remoteStore=normalizeCloudStore(resp);
+    if(remoteStore){
+      saveStore(remoteStore);
+      fillForm();
+      setSaveStatus('共有データを読み込みました。編集後に保存すると共有へ自動反映されます。','ok');
+      toast('共有データを読み込みました');
+    }else{
+      const local=ensureStore();
+      fillForm();
+      if(hasAnyContent(local))setSaveStatus('共有データはまだ空です。端末内の内容を表示しています。保存すると共有へ登録されます。','info');
+      else setSaveStatus('共有データはまだ空です。入力して保存すると共有へ登録されます。','info');
+    }
+  }catch(e){
+    fillForm();
+    setSaveStatus('共有データの読み込みに失敗しました。端末内の保存内容を表示しています。GAS側に個人情報用 action が無い可能性があります。\n'+(e&&e.message?e.message:e),'error');
+  }finally{cloudLoading=false}
+}
+async function saveCurrent(){const btn=$('saveBtn');const old=btn.textContent;btn.disabled=true;btn.classList.add('saving');btn.textContent='保存中…';setSaveStatus(currentResident+' の個人情報を保存中です…','saving');await new Promise(r=>setTimeout(r,80));let next=null;try{const store=ensureStore();next=collectForm();store[currentResident]=next;saveStore(store);$('savedAtLabel').textContent='最終保存：'+next.savedAt;const c=updateFieldColors();renderResidentList();setSaveStatus(currentResident+' の個人情報を共有へ保存中です…','saving');await tryCloudSaveResident(currentResident,next);setSaveStatus(currentResident+' の個人情報を端末内と共有に保存しました。未記入 '+c.missing+'項目 / 入力済み '+c.filled+'項目です。','ok');toast('共有に保存しました')}catch(e){if(next){setSaveStatus('端末内には保存しましたが、共有保存に失敗しました。GAS側の個人情報用 action を確認してください。\n'+(e&&e.message?e.message:e),'error');toast('端末内には保存しました')}else{setSaveStatus('保存に失敗しました。'+(e&&e.message?'\n'+e.message:''),'error');toast('保存に失敗しました')}}finally{btn.disabled=false;btn.classList.remove('saving');btn.textContent=old}}
+async function clearCurrent(){const ok=confirm(currentResident+' の個人情報を初期化しますか？');if(!ok)return;const store=ensureStore();store[currentResident]=defaultResidentData(currentResident);store[currentResident].savedAt=new Date().toLocaleString('ja-JP');saveStore(store);fillForm();setSaveStatus(currentResident+' の個人情報を共有へ反映中です…','saving');try{await tryCloudSaveResident(currentResident,store[currentResident]);setSaveStatus(currentResident+' の個人情報を初期化し、共有へ反映しました。','info');toast('初期化しました')}catch(e){setSaveStatus('端末内は初期化しましたが、共有への反映に失敗しました。\n'+(e&&e.message?e.message:e),'error');toast('端末内は初期化しました')}}
 function backupAll(){const store=ensureStore();const payload={app:'group_home_resident_info',schemaVersion:1,exportedAt:new Date().toISOString(),residents:RESIDENTS,data:store};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='resident_info_backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);toast('バックアップを保存しました')}
-function restoreFromFile(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const parsed=JSON.parse(String(reader.result||'{}'));const data=parsed&&parsed.data&&typeof parsed.data==='object'?parsed.data:null;if(!data){alert('復元用ファイルとして読み取れませんでした');return}const ok=confirm('バックアップから復元しますか？\n\n現在の内容は上書きされます。');if(!ok)return;const next={};for(const name of RESIDENTS){next[name]={...defaultResidentData(name),...(data[name]||{})};next[name].fullName=name}saveStore(next);fillForm();renderResidentList();setSaveStatus('バックアップから復元しました。','ok');toast('復元しました')}catch(e){alert('復元に失敗しました：'+(e&&e.message?e.message:e))}};reader.readAsText(file)}
-function handlePhoto(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{const store=ensureStore();store[currentResident]=store[currentResident]||defaultResidentData(currentResident);store[currentResident].photoDataUrl=String(reader.result||'');saveStore(store);renderPhoto(store[currentResident].photoDataUrl);setSaveStatus('写真を保存しました。','ok');toast('写真を保存しました')};reader.readAsDataURL(file)}
-function removePhoto(){const store=ensureStore();store[currentResident]=store[currentResident]||defaultResidentData(currentResident);store[currentResident].photoDataUrl='';saveStore(store);renderPhoto('');setSaveStatus('写真を削除しました。','info');toast('写真を削除しました')}
-function init(){ensureStore();renderResidentList();fillForm();for(const id of FIELD_IDS){const el=$(id);if(el){el.addEventListener('input',updateFieldColors);el.addEventListener('change',updateFieldColors)}}$('birthDate').addEventListener('change',()=>{if(!$('age').value){$('age').value=calcAgeFromBirth($('birthDate').value);updateFieldColors()}});$('backEasyBtn').onclick=goBackEasyPage;$('saveBtn').onclick=saveCurrent;$('clearBtn').onclick=clearCurrent;$('backupBtn').onclick=backupAll;$('restoreBtn').onclick=()=>$('restoreFile').click();$('restoreFile').addEventListener('change',e=>restoreFromFile(e.target.files&&e.target.files[0]));$('printBtn').onclick=()=>window.print();$('photoFile').addEventListener('change',e=>handlePhoto(e.target.files&&e.target.files[0]));$('removePhotoBtn').onclick=removePhoto;setSaveStatus('未記入欄は薄い黄色、入力済み欄は薄い緑で表示されます。','info')}
+async function restoreFromFile(file){if(!file)return;const reader=new FileReader();reader.onload=async()=>{try{const parsed=JSON.parse(String(reader.result||'{}'));const data=parsed&&parsed.data&&typeof parsed.data==='object'?parsed.data:null;if(!data){alert('復元用ファイルとして読み取れませんでした');return}const ok=confirm('バックアップから復元しますか？\n\n現在の内容は上書きされます。');if(!ok)return;const next={};for(const name of RESIDENTS){next[name]={...defaultResidentData(name),...(data[name]||{})};next[name].fullName=name;next[name].savedAt=next[name].savedAt||new Date().toLocaleString('ja-JP')}saveStore(next);fillForm();renderResidentList();setSaveStatus('バックアップを復元しました。共有へ保存中です…','saving');for(const name of RESIDENTS){await tryCloudSaveResident(name,next[name])}setSaveStatus('バックアップから復元し、共有へ保存しました。','ok');toast('復元しました')}catch(e){setSaveStatus('復元または共有保存に失敗しました。\n'+(e&&e.message?e.message:e),'error');alert('復元に失敗しました：'+(e&&e.message?e.message:e))}};reader.readAsText(file)}
+function readFileAsDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=reject;reader.readAsDataURL(file)})}
+function resizeImageFile(file){return new Promise((resolve)=>{try{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{try{const maxW=900,maxH=1200;let w=img.width,h=img.height;const ratio=Math.min(1,maxW/w,maxH/h);w=Math.round(w*ratio);h=Math.round(h*ratio);const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);URL.revokeObjectURL(url);resolve(canvas.toDataURL('image/jpeg',0.82))}catch(e){URL.revokeObjectURL(url);readFileAsDataUrl(file).then(resolve)}};img.onerror=()=>{URL.revokeObjectURL(url);readFileAsDataUrl(file).then(resolve)};img.src=url}catch(e){readFileAsDataUrl(file).then(resolve)}})}
+async function handlePhoto(file){if(!file)return;try{setSaveStatus('写真を読み込み中です…','saving');const dataUrl=await resizeImageFile(file);const store=ensureStore();store[currentResident]=store[currentResident]||defaultResidentData(currentResident);store[currentResident].photoDataUrl=dataUrl;store[currentResident].savedAt=new Date().toLocaleString('ja-JP');saveStore(store);renderPhoto(dataUrl);$('savedAtLabel').textContent='最終保存：'+store[currentResident].savedAt;setSaveStatus('写真を共有へ保存中です…','saving');await tryCloudSaveResident(currentResident,store[currentResident]);setSaveStatus('写真を端末内と共有に保存しました。','ok');toast('写真を共有に保存しました')}catch(e){setSaveStatus('写真は端末内に保存しましたが、共有保存に失敗しました。\n'+(e&&e.message?e.message:e),'error');toast('写真は端末内に保存しました')}}
+async function removePhoto(){const store=ensureStore();store[currentResident]=store[currentResident]||defaultResidentData(currentResident);store[currentResident].photoDataUrl='';store[currentResident].savedAt=new Date().toLocaleString('ja-JP');saveStore(store);renderPhoto('');setSaveStatus('写真削除を共有へ反映中です…','saving');try{await tryCloudSaveResident(currentResident,store[currentResident]);setSaveStatus('写真を削除し、共有へ反映しました。','info');toast('写真を削除しました')}catch(e){setSaveStatus('端末内の写真は削除しましたが、共有への反映に失敗しました。\n'+(e&&e.message?e.message:e),'error');toast('端末内の写真は削除しました')}}
+function init(){ensureStore();renderResidentList();fillForm();for(const id of FIELD_IDS){const el=$(id);if(el){el.addEventListener('input',updateFieldColors);el.addEventListener('change',updateFieldColors)}}$('birthDate').addEventListener('change',()=>{if(!$('age').value){$('age').value=calcAgeFromBirth($('birthDate').value);updateFieldColors()}});$('backEasyBtn').onclick=goBackEasyPage;$('saveBtn').onclick=saveCurrent;$('clearBtn').onclick=clearCurrent;$('backupBtn').onclick=backupAll;$('restoreBtn').onclick=()=>$('restoreFile').click();$('restoreFile').addEventListener('change',e=>restoreFromFile(e.target.files&&e.target.files[0]));$('printBtn').onclick=()=>window.print();$('photoFile').addEventListener('change',e=>handlePhoto(e.target.files&&e.target.files[0]));$('removePhotoBtn').onclick=removePhoto;setSaveStatus('共有データを読み込み中です…','saving');setTimeout(autoLoadSharedOnOpen,120)}
 init();
 </script>
 </body>
