@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>記録検索ページ</title>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--ghost:#64748b;--green:#16a34a;--purple:#7c3aed}
+  :root{--bg:#f6f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--ghost:#64748b;--green:#16a34a;--orange:#ea580c;--purple:#7c3aed}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
   .wrap{max-width:860px;margin:0 auto;padding:10px}
@@ -15,10 +15,10 @@
   input,select,button{font:inherit}
   input,select{width:100%;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff}
   .row3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:end}
-  .btns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:10px}
-  button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}
-  .primary{background:var(--primary)} .ghost{background:var(--ghost)} .green{background:var(--green)} .purple{background:var(--purple)}
-  .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px}
+  .btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:10px}
+  button{border:0;border-radius:12px;padding:13px 14px;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.72;cursor:progress}
+  .primary{background:var(--primary)} .ghost{background:var(--ghost)} .green{background:var(--green)} .orange{background:var(--orange)} .purple{background:var(--purple)}
+  .status{white-space:pre-wrap;font-size:14px;color:var(--muted);margin-top:10px;padding:9px 11px;border-radius:10px;border:1px solid transparent}.status:empty{display:none}.status.loading{background:#fff7ed;border-color:#fed7aa;color:#9a3412;font-weight:800}.status.ok{background:#ecfdf5;border-color:#bbf7d0;color:#166534;font-weight:800}.status.error{background:#fef2f2;border-color:#fecaca;color:#991b1b;font-weight:800}
   .meta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
   .result{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:#fbfbfd}
   .result.daily-report{border-color:#c4b5fd;background:#faf5ff}
@@ -50,6 +50,10 @@
   .small-btn.blue{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
   .small-btn.green{background:#ecfdf5;border-color:#bbf7d0;color:#047857}
   a.back{display:inline-block;color:#2563eb;text-decoration:none;font-weight:700;margin-top:4px}
+  .topLinkRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;margin-bottom:8px}
+  .topLinkBtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:8px 12px;border-radius:999px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;text-decoration:none;font-size:13px;font-weight:800}
+  .topLinkBtn.green{border-color:#bbf7d0;background:#ecfdf5;color:#047857}
+  .topLinkBtn.purple{border-color:#c4b5fd;background:#f5f3ff;color:#6d28d9}
   @media (max-width:640px){.row3,.btns,.keyword-manage{grid-template-columns:1fr}}
 </style>
 </head>
@@ -70,7 +74,11 @@
       <h1>記録検索ページ</h1>
       <div class="meta">利用者名、期間、キーワードで本体記録を絞り込めます。キーワードを空欄にすると、期間内の記録一覧を表示できます。【日中支援Ⅰ】
 【日中支援Ⅱ】で統一。</div>
-      <a class="back" href="easy_google_send_v2.html" onclick="if(history.length>1){history.back();return false;}">← かんたんページに戻る</a>
+      <div class="topLinkRow">
+        <a class="topLinkBtn" href="easy_google_send_v2.html" onclick="if(history.length>1){history.back();return false;}">← かんたんページ編集</a>
+        <a id="residentSummaryTopLink" class="topLinkBtn green" href="resident_summary.html">利用者別まとめ</a>
+        <a id="dailyReportTopLink" class="topLinkBtn purple" href="#">業務日報一覧</a>
+      </div>
       <div class="row3">
         <div>
           <label for="searchUser">利用者名</label>
@@ -115,9 +123,9 @@
         </div>
         <div id="keywordShareStatus" class="status"></div>
       </div>
-      <div class="btns">
+      <div class="btns search-actions">
         <button id="searchBtn" class="primary" type="button">検索する</button>
-        <button id="aiCreateBtn" class="green" type="button">AI作成</button>
+        <button id="aiCreateBtn" class="orange" type="button">利用者まとめを作成</button>
         <button id="dailyReportListBtn" class="purple" type="button">業務日報一覧</button>
         <button id="clearBtn" class="ghost" type="button">条件を消す</button>
       </div>
@@ -148,7 +156,10 @@ const dateTo = document.getElementById('dateTo');
 const keyword = document.getElementById('keyword');
 const searchBtn = document.getElementById('searchBtn');
 const aiCreateBtn = document.getElementById('aiCreateBtn');
+const residentSummaryBtn = document.getElementById('residentSummaryBtn');
+const residentSummaryTopLink = document.getElementById('residentSummaryTopLink');
 const dailyReportListBtn = document.getElementById('dailyReportListBtn');
+const dailyReportTopLink = document.getElementById('dailyReportTopLink');
 const clearBtn = document.getElementById('clearBtn');
 const searchStatus = document.getElementById('searchStatus');
 const results = document.getElementById('results');
@@ -191,6 +202,17 @@ function defaultStartYmd(){
 }
 function normalizeText(text){ return String(text || '').replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n{3,}/g,'\n\n').trim(); }
 function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function setSearchStatus(message,type){
+  if (!searchStatus) return;
+  searchStatus.textContent = message || '';
+  searchStatus.className = 'status' + (message && type ? ' ' + type : '');
+}
+function setButtonBusy(btn,isBusy,busyText,normalText){
+  if (!btn) return;
+  if (!btn.dataset.originalText) btn.dataset.originalText = normalText || btn.textContent;
+  btn.disabled = !!isBusy;
+  btn.textContent = isBusy ? busyText : (normalText || btn.dataset.originalText);
+}
 async function fetchJson(url){
   const res = await fetch(url, { cache:'no-store' });
   const text = await res.text();
@@ -371,26 +393,38 @@ async function searchRecords(){
   const to = String(dateTo.value || '').trim();
   const kw = String(keyword.value || '').trim();
   if (from && to && from > to) {
-    searchStatus.textContent = '開始日と終了日を確認してください。';
+    setSearchStatus('開始日と終了日を確認してください。', 'error');
     return;
   }
-  searchBtn.disabled = true;
-  if (dailyReportListBtn) dailyReportListBtn.disabled = true;
-  searchStatus.textContent = '検索中です...';
+  setButtonBusy(searchBtn, true, '検索中…', '検索する');
+  setSearchStatus('検索中です…', 'loading');
   try {
     const data = await fetchJson(WEB_APP_URL + '?action=getRecords');
     let records = Array.isArray(data.records) ? data.records.slice() : [];
     records = records.filter(rec => (!user || String(rec.user || '').trim() === user) && inDateRange(String(rec.date || ''), from, to) && matchesKeyword(rec, kw));
     records.sort((a,b) => (String(b.date || '') + ' ' + String(b.updatedAt || '')).localeCompare(String(a.date || '') + ' ' + String(a.updatedAt || '')));
     renderResults(records);
-    searchStatus.textContent = (user === '業務日報' ? '業務日報 ' : '') + records.length + '件見つかりました。';
+    setSearchStatus((user === '業務日報' ? '業務日報 ' : '') + records.length + '件見つかりました。', 'ok');
   } catch(err){
     results.innerHTML = '';
-    searchStatus.textContent = '検索に失敗しました。\n' + (err && err.message ? err.message : err);
+    setSearchStatus('検索に失敗しました。\n' + (err && err.message ? err.message : err), 'error');
   } finally {
-    searchBtn.disabled = false;
-    if (dailyReportListBtn) dailyReportListBtn.disabled = false;
+    setButtonBusy(searchBtn, false, '', '検索する');
   }
+}
+function buildResidentSummaryUrl(){
+  const user = String(searchUser.value || '').trim();
+  let url = 'resident_summary.html';
+  if (user && user !== '業務日報') {
+    url += '?user=' + encodeURIComponent(user);
+  }
+  return url;
+}
+function updateResidentSummaryLink(){
+  if (residentSummaryTopLink) residentSummaryTopLink.href = buildResidentSummaryUrl();
+}
+function openResidentSummaryPage(){
+  location.href = buildResidentSummaryUrl();
 }
 function showDailyReportList(){
   searchUser.value = '業務日報';
@@ -400,12 +434,7 @@ function showDailyReportList(){
   searchRecords();
 }
 function openAiCreatePage(){
-  const user = String(searchUser.value || '').trim();
-  let url = 'resident_summary.html';
-  if (user && user !== '業務日報') {
-    url += '?user=' + encodeURIComponent(user);
-  }
-  location.href = url;
+  location.href = buildResidentSummaryUrl();
 }
 function clearConditions(){
   searchUser.value = '';
@@ -413,7 +442,7 @@ function clearConditions(){
   dateTo.value = todayYmd();
   keyword.value = '';
   results.innerHTML = '';
-  searchStatus.textContent = '';
+  setSearchStatus('', '');
 }
 
 dateFrom.value = defaultStartYmd();
@@ -423,7 +452,11 @@ unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 searchBtn.addEventListener('click', searchRecords);
 if (aiCreateBtn) aiCreateBtn.addEventListener('click', openAiCreatePage);
+if (residentSummaryBtn) residentSummaryBtn.addEventListener('click', openResidentSummaryPage);
+if (searchUser) searchUser.addEventListener('change', updateResidentSummaryLink);
+updateResidentSummaryLink();
 if (dailyReportListBtn) dailyReportListBtn.addEventListener('click', showDailyReportList);
+if (dailyReportTopLink) dailyReportTopLink.addEventListener('click', (e) => { e.preventDefault(); showDailyReportList(); });
 clearBtn.addEventListener('click', clearConditions);
 if (addKeywordBtn) addKeywordBtn.addEventListener('click', addSearchKeyword);
 if (keywordManageInput) keywordManageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addSearchKeyword(); });
