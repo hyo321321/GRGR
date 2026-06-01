@@ -14,7 +14,7 @@
 <div id="appRoot" class="app-hidden"><div class="wrap">
 <div class="card controls"><h1>👤 利用者別まとめ</h1><div class="meta">1人を選ぶと、個人記録・気になる記録・バイタル異常・受診/訪問看護・金銭相談・欠席状況をまとめて表示します。区分更新用の文章も自動作成できます。</div><div class="topLinks"><a href="easy_google_records_search.html">← 検索ページに戻る</a><a href="easy_google_send_v2.html">かんたんページへ</a><a href="vitals.html">バイタルページへ</a></div><div class="row4"><div><label for="residentSelect">利用者</label><select id="residentSelect"><option value="木村元子">木村元子</option><option value="河合真吾">河合真吾</option><option value="荒川健二">荒川健二</option><option value="山本浩二">山本浩二</option><option value="原光恵">原光恵</option><option value="岩崎愛">岩崎愛</option><option value="河合志保">河合志保</option></select></div><div><label for="periodSelect">期間</label><select id="periodSelect"><option value="30">過去30日</option><option value="7">過去7日</option><option value="month">今月</option><option value="fiscal" selected>今年度（4/1〜）</option><option value="all">全期間</option><option value="custom">日付指定</option></select></div><div><label for="dateFrom">開始日</label><input id="dateFrom" type="date"></div><div><label for="dateTo">終了日</label><input id="dateTo" type="date"></div></div><div class="btns"><button id="loadBtn" class="primary" type="button">まとめ表示</button><button id="printBtn" class="green" type="button">印刷 / PDF</button><button id="clearBtn" class="ghost" type="button">表示をクリア</button></div><div id="status" class="status"></div></div>
 <div id="summaryRoot" class="hidden"><div class="card printOnly"><h1 id="printTitle">利用者別まとめ</h1><div id="printMeta" class="meta"></div></div>
-<div class="card generatedBox"><div class="sectionTools"><h2>区分更新用文章</h2><div class="meta">日々の記録から支援状況を自動整理</div></div><div class="generatedNote">AI作成は「記録から確認できる事実だけ」を使います。金銭管理・服薬管理・清潔保持などは、記録で明確に確認できない場合、断定せず「聞き取りで確認が必要」と書くルールにしています。記録数を多くしすぎて失敗する場合は、100件または150件に戻してください。</div><div class="row3"><div><label for="draftType">文章パターン</label><select id="draftType"><option value="short">短め</option><option value="detail">詳しめ</option><option value="items">項目別</option><option value="consult">相談員・役所共有向け</option><option value="hearing">聞き取り前メモ</option></select></div><div><label for="aiCategory">AI作成項目</label><select id="aiCategory"><option value="all">全体</option><option value="money">金銭面</option><option value="medication">服薬面</option><option value="cleanliness">清潔・入浴・掃除</option><option value="medical">医療・受診</option><option value="activity">日中活動</option><option value="mental">精神面・行動面</option><option value="hearing">聞き取り前チェック</option></select></div><div><label>&nbsp;</label><button id="aiDraftBtn" class="purple" type="button" style="width:100%;">AIで区分更新文章を作成</button></div></div><div class="row3"><div><label for="draftTone">書き方</label><select id="draftTone"><option value="formal">丁寧</option><option value="plain">簡潔</option></select></div><div><label for="aiEvidenceLimit">AIに渡す記録数</label><select id="aiEvidenceLimit"><option value="30">新しい順30件</option><option value="50">新しい順50件</option><option value="100" selected>新しい順100件</option><option value="150">新しい順150件</option><option value="200">新しい順200件</option><option value="all">全件</option></select></div><div><label>&nbsp;</label><button id="makeDraftBtn" class="light" type="button" style="width:100%;">固定文で作成</button></div></div><textarea id="draftText" placeholder="まとめ表示後に「AIで区分更新文章を作成」を押すと、ここに文章が出ます。"></textarea><div class="btns4"><button id="copyDraftBtn" class="green" type="button">コピー</button><button id="shortDraftBtn" class="light" type="button">短めにする</button><button id="detailDraftBtn" class="light" type="button">詳しめにする</button><button id="clearDraftBtn" class="ghost" type="button">文章クリア</button></div><div id="draftStatus" class="status"></div></div>
+<div class="card generatedBox"><div class="sectionTools"><h2>区分更新用文章</h2><div class="meta">日々の記録から支援状況を自動整理</div></div><div class="generatedNote">AI作成は「記録から確認できる事実だけ」を使います。金銭管理・服薬管理・清潔保持などは、記録で明確に確認できない場合、断定せず「聞き取りで確認が必要」と書くルールにしています。AI作成はApps Scriptの aiKubunDraft に送信します。使いすぎ・混雑・API上限で失敗する場合があります。初期は30件にしてあります。失敗時は固定文の下書きを表示します。</div><div class="row3"><div><label for="draftType">文章パターン</label><select id="draftType"><option value="short">短め</option><option value="detail">詳しめ</option><option value="items">項目別</option><option value="consult">相談員・役所共有向け</option><option value="hearing">聞き取り前メモ</option></select></div><div><label for="aiCategory">AI作成項目</label><select id="aiCategory"><option value="all">全体</option><option value="money">金銭面</option><option value="medication">服薬面</option><option value="cleanliness">清潔・入浴・掃除</option><option value="medical">医療・受診</option><option value="activity">日中活動</option><option value="mental">精神面・行動面</option><option value="hearing">聞き取り前チェック</option></select></div><div><label>&nbsp;</label><button id="aiDraftBtn" class="purple" type="button" style="width:100%;">AIで区分更新文章を作成</button></div></div><div class="row3"><div><label for="draftTone">書き方</label><select id="draftTone"><option value="formal">丁寧</option><option value="plain">簡潔</option></select></div><div><label for="aiEvidenceLimit">AIに渡す記録数</label><select id="aiEvidenceLimit"><option value="30" selected>新しい順30件</option><option value="50">新しい順50件</option><option value="100">新しい順100件</option><option value="150">新しい順150件</option><option value="200">新しい順200件</option><option value="all">全件</option></select></div><div><label>&nbsp;</label><button id="makeDraftBtn" class="light" type="button" style="width:100%;">固定文で作成</button></div></div><textarea id="draftText" placeholder="まとめ表示後に「AIで区分更新文章を作成」を押すと、ここに文章が出ます。"></textarea><div class="btns4"><button id="copyDraftBtn" class="green" type="button">コピー</button><button id="shortDraftBtn" class="light" type="button">短めにする</button><button id="detailDraftBtn" class="light" type="button">詳しめにする</button><button id="clearDraftBtn" class="ghost" type="button">文章クリア</button></div><div id="draftStatus" class="status"></div></div>
 <div class="card"><h2>要注意まとめ</h2><div id="attentionBox"></div><div id="keywordChips" class="chipRow" style="margin-top:10px;"></div></div><div class="card"><h2>集計</h2><div class="summaryGrid"><div class="summaryItem"><div class="summaryLabel">記録件数</div><div class="summaryValue" id="countRecords">0</div><div class="summaryHint">選択期間</div></div><div class="summaryItem"><div class="summaryLabel">気になる記録</div><div class="summaryValue" id="countAttention">0</div><div class="summaryHint">欠席・金銭・受診など</div></div><div class="summaryItem"><div class="summaryLabel">バイタル件数</div><div class="summaryValue" id="countVitals">0</div><div class="summaryHint">共有バイタル</div></div><div class="summaryItem"><div class="summaryLabel">バイタル異常</div><div class="summaryValue" id="countVitalAlerts">0</div><div class="summaryHint">血圧/脈拍/体重</div></div></div></div><div class="twoCol"><div class="card"><div class="sectionTools"><h2>日中活動・欠席</h2><div class="meta">記録本文から自動集計</div></div><div id="activityBox" class="chipRow"></div></div><div class="card"><div class="sectionTools"><h2>受診・医療連携</h2><div class="meta">受診/訪問看護/薬変更</div></div><div id="medicalBox" class="miniList"></div></div></div><div class="card"><div class="sectionTools"><h2>バイタル異常だけ</h2><div class="meta">上135以上・下85以上 / 脈拍100以上または40以下 / 体重±1kg以上</div></div><div id="vitalAlertsBox"></div></div><div class="card"><div class="sectionTools"><h2>金銭相談</h2><div class="meta">金銭・小遣い・買い物など</div></div><div id="moneyBox" class="miniList"></div></div><div class="card"><div class="sectionTools"><h2>気になる記録</h2><div class="meta">キーワードに当てはまる記録</div></div><div id="attentionRecords"></div></div><div class="card"><div class="sectionTools"><h2>最近の個人記録</h2><div class="meta">新しい順。まず20件表示</div></div><div id="recentRecords"></div></div></div></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbySEqzNUSLOheYPJ-0l7zANNhiFnayaCbU1C_6hhfyyb5E5Mal31mblGqERVyKunSZB/exec';
@@ -154,30 +154,95 @@ async function postAiKubunDraft(prompt){
   const text = await res.text();
   let data = {};
   try{ data = text ? JSON.parse(text) : {}; }catch(e){ data = {ok:false, rawText:text}; }
-  if(!res.ok || data.ok===false) throw new Error(data.message || data.error || data.rawText || ('HTTP '+res.status));
-  return data.text || data.result || data.answer || data.draft || '';
+
+  if(!res.ok || data.ok===false){
+    let detailMessage = data.message || data.error || data.rawText || ('HTTP '+res.status);
+    let apiCode = '';
+    try{
+      apiCode = data.statusCode || data.code || (data.detail && data.detail.error && data.detail.error.code) || '';
+    }catch(e){}
+    const err = new Error(detailMessage);
+    err.httpStatus = res.status;
+    err.apiCode = apiCode;
+    err.data = data;
+    throw err;
+  }
+
+  const answer = data.text || data.result || data.answer || data.draft || '';
+  return String(answer || '').trim();
+}
+function buildAiTargetText(summary, category){
+  const evidence = buildAiEvidence(summary, category);
+  return '対象：' + evidence.user + ' ／ ' + evidence.period + ' ／ ' + evidence.category + ' ／ 抽出記録 ' + String((evidence.recordsText.match(/【記録/g)||[]).length) + '件';
+}
+function classifyAiKubunError(err){
+  const msg = String((err && err.message) || err || '');
+  const lower = msg.toLowerCase();
+  const dataText = (()=>{ try{return JSON.stringify(err && err.data ? err.data : {});}catch(e){return '';} })();
+  const all = (msg + '\n' + dataText).toLowerCase();
+
+  if(all.includes('429') || all.includes('quota') || all.includes('rate limit') || all.includes('resource_exhausted')){
+    return {
+      kind:'429',
+      title:'AIの利用上限または混雑です',
+      body:'短時間の連続使用、1分あたりの上限、1日の上限、またはAI側の混雑で止まっています。少し時間を置いてから再実行してください。今回は固定文の下書きを表示しました。'
+    };
+  }
+  if(all.includes('gemini_api_key') || all.includes('api key')){
+    return {
+      kind:'key',
+      title:'GEMINI_API_KEY が未設定の可能性があります',
+      body:'Apps Scriptのスクリプトプロパティに GEMINI_API_KEY が入っているか確認してください。今回は固定文の下書きを表示しました。'
+    };
+  }
+  if(all.includes('unknown action') || all.includes('aikubundraft')){
+    return {
+      kind:'action',
+      title:'Apps Scriptのデプロイが古い可能性があります',
+      body:'コード内に aiKubunDraft があっても、デプロイ更新前だと古い版が動きます。Apps Scriptでデプロイを更新してください。今回は固定文の下書きを表示しました。'
+    };
+  }
+  if(all.includes('failed to fetch') || all.includes('network') || all.includes('cors')){
+    return {
+      kind:'network',
+      title:'通信エラーの可能性があります',
+      body:'ネットワーク、Apps Scriptの権限、デプロイURLを確認してください。今回は固定文の下書きを表示しました。'
+    };
+  }
+  return {
+    kind:'other',
+    title:'AI作成に失敗しました',
+    body:'原因を確認できるよう、エラー内容を表示します。今回は固定文の下書きを表示しました。'
+  };
 }
 async function makeAiDraft(){
   if(!currentSummary){setStatusBox('draftStatus','先に「まとめ表示」を押してください。','error');return}
   const category = $('aiCategory').value || 'all';
   const prompt = buildKubunAiPrompt(currentSummary, category);
-  setStatusBox('draftStatus','AIで作成中です。完了までこのままお待ちください…','loading');
+  const targetText = buildAiTargetText(currentSummary, category);
+
+  setStatusBox('draftStatus','AIで作成中です。完了までこのままお待ちください…\n' + targetText,'loading');
   setButtonLoading($('aiDraftBtn'),true,'AI作成中…','AIで区分更新文章を作成');
+
   try{
     const text = await postAiKubunDraft(prompt);
     if(!text) throw new Error('AIの返答が空でした。');
     $('draftText').value = text.trim();
-    setStatusBox('draftStatus','AIで作成しました。実際の状況と違う部分がないか確認してから使ってください。','ok');
+    setStatusBox('draftStatus','AIで作成しました。実際の状況と違う部分がないか確認してから使ってください。\n' + targetText,'ok');
   }catch(err){
-    $('draftText').value = `AI連携がまだ有効でない可能性があります。
+    const info = classifyAiKubunError(err);
 
-下の内容を、前に導入したAI用の処理に渡せば作成できます。
-Apps Script 側に action: aiKubunDraft を追加すると、このボタンから直接作成できます。
+    // AIが使えない場合でも、画面が止まらないよう固定文の下書きを作る
+    makeDraftText('short');
 
------ AIに渡す内容 -----
-
-${prompt}`;
-    setStatusBox('draftStatus','AI作成に失敗しました。代わりにAI用プロンプトを作成しました。GAS側に aiKubunDraft を追加すると直接使えます。\n'+(err&&err.message?err.message:err),'error');
+    setStatusBox(
+      'draftStatus',
+      info.title + '\n' +
+      info.body + '\n\n' +
+      targetText + '\n\n' +
+      'エラー詳細：' + ((err && err.message) ? err.message : String(err || '')),
+      'error'
+    );
   }finally{
     setButtonLoading($('aiDraftBtn'),false,'','AIで区分更新文章を作成');
   }
