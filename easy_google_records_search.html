@@ -54,6 +54,14 @@
   .topLinkBtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:8px 12px;border-radius:999px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;text-decoration:none;font-size:13px;font-weight:800}
   .topLinkBtn.green{border-color:#bbf7d0;background:#ecfdf5;color:#047857}
   .topLinkBtn.purple{border-color:#c4b5fd;background:#f5f3ff;color:#6d28d9}
+
+  .ai-box{margin-top:12px;border:1px solid #fed7aa;background:#fff7ed;border-radius:14px;padding:12px}
+  .ai-box.ai-i{border-color:#bbf7d0;background:#f0fdf4}
+  .ai-box.ai-ii{border-color:#c4b5fd;background:#faf5ff}
+  .ai-title{font-weight:900;margin-bottom:8px;color:#1f2937}
+  .ai-help{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+  .ai-output{width:100%;min-height:150px;resize:vertical;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff;line-height:1.7;white-space:pre-wrap}
+  .ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
   @media (max-width:640px){.row3,.btns,.keyword-manage{grid-template-columns:1fr}}
 </style>
 </head>
@@ -72,8 +80,7 @@
   <div class="wrap">
     <div class="card">
       <h1>記録検索ページ</h1>
-      <div class="meta">利用者名、期間、キーワードで本体記録を絞り込めます。キーワードを空欄にすると、期間内の記録一覧を表示できます。【日中支援Ⅰ】
-【日中支援Ⅱ】で統一。</div>
+      <div class="meta">利用者名、期間、キーワードで本体記録を絞り込めます。キーワードを空欄にすると、期間内の記録一覧を表示できます。日中支援Ⅰ・ⅡのAI文章作成にも対応。</div>
       <div class="topLinkRow">
         <a class="topLinkBtn" href="easy_google_send_v2.html" onclick="if(history.length>1){history.back();return false;}">← かんたんページ編集</a>
         <a id="residentSummaryTopLink" class="topLinkBtn green" href="resident_summary.html">利用者別まとめ</a>
@@ -125,11 +132,22 @@
       </div>
       <div class="btns search-actions">
         <button id="searchBtn" class="primary" type="button">検索する</button>
+        <button id="aiSupport1Btn" class="green" type="button">日中支援Ⅰ AI作成</button>
+        <button id="aiSupport2Btn" class="purple" type="button">日中支援Ⅱ AI作成</button>
         <button id="aiCreateBtn" class="orange" type="button">利用者まとめを作成</button>
         <button id="dailyReportListBtn" class="purple" type="button">業務日報一覧</button>
         <button id="clearBtn" class="ghost" type="button">条件を消す</button>
       </div>
       <div id="searchStatus" class="status"></div>
+      <div id="supportAiBox" class="ai-box" style="display:none;">
+        <div id="supportAiTitle" class="ai-title"></div>
+        <div class="ai-help">検索条件に合う記録をもとに作成します。必要に応じて内容を確認・修正してから使用してください。</div>
+        <textarea id="supportAiText" class="ai-output" placeholder="ここにAI作成した日中支援文章が表示されます"></textarea>
+        <div class="ai-actions">
+          <button id="copySupportAiBtn" class="small-btn green" type="button">コピー</button>
+          <button id="clearSupportAiBtn" class="small-btn" type="button">AI文章を消す</button>
+        </div>
+      </div>
     </div>
     <div class="card">
       <h2>検索結果</h2>
@@ -145,6 +163,7 @@ const SEARCH_KEYWORDS_KEY = 'easy_search_keywords_v1';
 const SEARCH_KEYWORDS_LOCAL_KEY = 'easy_search_keywords_local_v1';
 const DEFAULT_SEARCH_KEYWORDS = ['日中支援Ⅰ','日中支援Ⅱ','業務日報','受診同行','服薬確認','血圧','体重','欠席','入浴','訪問看護','B型','A型','買い物','金銭管理'];
 let searchKeywords = DEFAULT_SEARCH_KEYWORDS.slice();
+let lastSearchRecords = [];
 const authScreen = document.getElementById('authScreen');
 const appRoot = document.getElementById('appRoot');
 const sitePasswordEl = document.getElementById('sitePassword');
@@ -155,6 +174,13 @@ const dateFrom = document.getElementById('dateFrom');
 const dateTo = document.getElementById('dateTo');
 const keyword = document.getElementById('keyword');
 const searchBtn = document.getElementById('searchBtn');
+const aiSupport1Btn = document.getElementById('aiSupport1Btn');
+const aiSupport2Btn = document.getElementById('aiSupport2Btn');
+const supportAiBox = document.getElementById('supportAiBox');
+const supportAiTitle = document.getElementById('supportAiTitle');
+const supportAiText = document.getElementById('supportAiText');
+const copySupportAiBtn = document.getElementById('copySupportAiBtn');
+const clearSupportAiBtn = document.getElementById('clearSupportAiBtn');
 const aiCreateBtn = document.getElementById('aiCreateBtn');
 const residentSummaryBtn = document.getElementById('residentSummaryBtn');
 const residentSummaryTopLink = document.getElementById('residentSummaryTopLink');
@@ -368,6 +394,143 @@ function matchesKeyword(rec, kw){
   const hay = [rec.date, rec.user, rec.staff, normalizeText(rec.text), JSON.stringify(rec.raw || {})].join('\n').toLowerCase();
   return hay.includes(kw.toLowerCase());
 }
+
+function getSearchFilteredRecords(allRecords){
+  const user = String(searchUser.value || '').trim();
+  const from = String(dateFrom.value || '').trim();
+  const to = String(dateTo.value || '').trim();
+  const kw = String(keyword.value || '').trim();
+  let records = Array.isArray(allRecords) ? allRecords.slice() : [];
+  records = records.filter(rec => (!user || String(rec.user || '').trim() === user) && inDateRange(String(rec.date || ''), from, to) && matchesKeyword(rec, kw));
+  records.sort((a,b) => (String(b.date || '') + ' ' + String(b.updatedAt || '')).localeCompare(String(a.date || '') + ' ' + String(a.updatedAt || '')));
+  return records;
+}
+function buildSupportRecordText(records){
+  const limited = (Array.isArray(records) ? records : []).slice(0, 25);
+  const text = limited.map((rec, idx) => {
+    return '【記録' + (idx + 1) + '】\n日付: ' + String(rec.date || '') + '\n利用者: ' + String(rec.user || '') + '\n記録者: ' + String(rec.staff || '') + '\n本文:\n' + normalizeText(rec.text || '');
+  }).join('\n\n---\n\n');
+  return text.length > 12000 ? text.slice(0, 12000) + '\n\n※文字数が多いため一部を省略しています。' : text;
+}
+async function getRecordsForAi(){
+  if (lastSearchRecords && lastSearchRecords.length) return lastSearchRecords.slice();
+  const data = await fetchJson(WEB_APP_URL + '?action=getRecords');
+  return getSearchFilteredRecords(Array.isArray(data.records) ? data.records : []);
+}
+function fallbackSupportText(type, recordText){
+  const t = String(recordText || '');
+  const hasOut = /市役所|銀行|買い物|杏林堂|通院|受診|外出|同行|図書館|ドンキ|ファミマ/.test(t);
+  const hasClean = /掃除|清掃|シンク|トイレ|片付け|ゴミ|洗濯/.test(t);
+  const hasBath = /入浴|着替え|髭剃り|清潔/.test(t);
+  const hasMed = /服薬|内服|薬/.test(t);
+  const hasB = /B型|A型|欠席|日中活動/.test(t);
+  const hasWater = /水分|飲水|水の取り過ぎ|喫煙|パニック/.test(t);
+  let parts = [];
+  if (type === 'I') {
+    parts.push('【日中支援Ⅰ】');
+    if (hasB) parts.push('外出や日中活動への参加が難しい様子があるため、ホーム内にて日中支援を実施した。');
+    else parts.push('本人の生活状況に合わせて、ホーム内にて日中支援を実施した。');
+    parts.push('体調や精神面の状態に配慮しながら、声かけ、見守り、安全確認を行った。');
+    if (hasWater) parts.push('水分摂取や喫煙、気分の変化に注意し、刺激を減らせるよう環境調整を行った。');
+    if (hasMed || hasClean || hasBath) {
+      const items = [];
+      if (hasMed) items.push('服薬確認');
+      if (hasClean) items.push('清掃や生活環境の整備');
+      if (hasBath) items.push('入浴・清潔保持に関する声かけ');
+      parts.push(items.join('、') + 'を行い、安心して過ごせるよう支援した。');
+    } else {
+      parts.push('必要に応じて生活環境を整え、安心して過ごせるよう支援した。');
+    }
+  } else {
+    parts.push('【日中支援Ⅱ】');
+    parts.push('本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。');
+    if (hasOut) parts.push('外出時の安全確認を行い、手続きや買い物、通院等に必要な支援を行った。');
+    if (hasClean || hasBath || hasMed) {
+      const items = [];
+      if (hasClean) items.push('清掃や片付け');
+      if (hasBath) items.push('入浴・清潔保持');
+      if (hasMed) items.push('服薬確認');
+      parts.push(items.join('、') + 'について声かけや確認を行った。');
+    }
+    if (!hasOut && hasB) parts.push('日中活動への参加が難しい様子があったため、ホーム内での状態を確認しながら、安心して過ごせるよう支援した。');
+    parts.push('本人が安心して日中を過ごせるよう、必要な見守りと支援を行った。');
+  }
+  return parts.join('\n');
+}
+function showSupportAiResult(type, text){
+  if (!supportAiBox || !supportAiTitle || !supportAiText) return;
+  supportAiBox.style.display = 'block';
+  supportAiBox.className = 'ai-box ' + (type === 'I' ? 'ai-i' : 'ai-ii');
+  supportAiTitle.textContent = '日中支援' + (type === 'I' ? 'Ⅰ' : 'Ⅱ') + ' AI作成結果';
+  supportAiText.value = normalizeText(text || '');
+  supportAiText.focus();
+}
+function clearSupportAiResult(){
+  if (supportAiText) supportAiText.value = '';
+  if (supportAiBox) supportAiBox.style.display = 'none';
+}
+async function copySupportAiText(){
+  const text = supportAiText ? String(supportAiText.value || '').trim() : '';
+  if (!text) {
+    setSearchStatus('コピーするAI文章がありません。', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    setSearchStatus('AI文章をコピーしました。', 'ok');
+  } catch(e) {
+    supportAiText.select();
+    document.execCommand('copy');
+    setSearchStatus('AI文章をコピーしました。', 'ok');
+  }
+}
+async function createNitchuSupportAi(type){
+  const user = String(searchUser.value || '').trim();
+  if (!user || user === '業務日報') {
+    setSearchStatus('利用者名を1人選んでから、日中支援AI作成を押してください。', 'error');
+    searchUser.focus();
+    return;
+  }
+  const btn = type === 'I' ? aiSupport1Btn : aiSupport2Btn;
+  setButtonBusy(btn, true, 'AI作成中…', btn ? btn.dataset.originalText || btn.textContent : '');
+  if (aiSupport1Btn) aiSupport1Btn.disabled = true;
+  if (aiSupport2Btn) aiSupport2Btn.disabled = true;
+  setSearchStatus('AI作成中です。現在の検索条件に合う記録を読み込んでいます…', 'loading');
+  try {
+    const records = await getRecordsForAi();
+    if (!records.length) {
+      setSearchStatus('AI作成に使える記録がありません。日付・利用者名・キーワードを確認してください。', 'error');
+      return;
+    }
+    const recordText = buildSupportRecordText(records);
+    const data = await postJson({
+      action:'aiNitchuSupport',
+      supportType:type,
+      type:type,
+      user:user,
+      dateFrom:String(dateFrom.value || ''),
+      dateTo:String(dateTo.value || ''),
+      keyword:String(keyword.value || ''),
+      recordText:recordText
+    });
+    const text = normalizeText(data.text || data.result || data.answer || data.content || '');
+    if (!text) throw new Error('AIから文章が返りませんでした。');
+    showSupportAiResult(type, text);
+    setSearchStatus('日中支援' + (type === 'I' ? 'Ⅰ' : 'Ⅱ') + 'のAI文章を作成しました。', 'ok');
+  } catch(err) {
+    try {
+      const records = await getRecordsForAi();
+      const localText = fallbackSupportText(type, buildSupportRecordText(records));
+      showSupportAiResult(type, localText);
+    } catch(e) {}
+    setSearchStatus('AI作成に失敗しました。Apps Script側に aiNitchuSupport の追加が必要です。いったんキーワード式の下書きを表示しました。\n' + (err && err.message ? err.message : err), 'error');
+  } finally {
+    setButtonBusy(btn, false, '', type === 'I' ? '日中支援Ⅰ AI作成' : '日中支援Ⅱ AI作成');
+    if (aiSupport1Btn) aiSupport1Btn.disabled = false;
+    if (aiSupport2Btn) aiSupport2Btn.disabled = false;
+  }
+}
+
 function renderResults(records){
   if (!records.length) {
     results.innerHTML = '<div class="meta">該当する記録はありません。</div>';
@@ -400,9 +563,9 @@ async function searchRecords(){
   setSearchStatus('検索中です…', 'loading');
   try {
     const data = await fetchJson(WEB_APP_URL + '?action=getRecords');
-    let records = Array.isArray(data.records) ? data.records.slice() : [];
-    records = records.filter(rec => (!user || String(rec.user || '').trim() === user) && inDateRange(String(rec.date || ''), from, to) && matchesKeyword(rec, kw));
-    records.sort((a,b) => (String(b.date || '') + ' ' + String(b.updatedAt || '')).localeCompare(String(a.date || '') + ' ' + String(a.updatedAt || '')));
+    let records = getSearchFilteredRecords(Array.isArray(data.records) ? data.records : []);
+    lastSearchRecords = records.slice();
+    clearSupportAiResult();
     renderResults(records);
     setSearchStatus((user === '業務日報' ? '業務日報 ' : '') + records.length + '件見つかりました。', 'ok');
   } catch(err){
@@ -442,6 +605,8 @@ function clearConditions(){
   dateTo.value = todayYmd();
   keyword.value = '';
   results.innerHTML = '';
+  lastSearchRecords = [];
+  clearSupportAiResult();
   setSearchStatus('', '');
 }
 
@@ -451,9 +616,16 @@ initAuth();
 unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 searchBtn.addEventListener('click', searchRecords);
+if (aiSupport1Btn) aiSupport1Btn.addEventListener('click', () => createNitchuSupportAi('I'));
+if (aiSupport2Btn) aiSupport2Btn.addEventListener('click', () => createNitchuSupportAi('II'));
+if (copySupportAiBtn) copySupportAiBtn.addEventListener('click', copySupportAiText);
+if (clearSupportAiBtn) clearSupportAiBtn.addEventListener('click', clearSupportAiResult);
 if (aiCreateBtn) aiCreateBtn.addEventListener('click', openAiCreatePage);
 if (residentSummaryBtn) residentSummaryBtn.addEventListener('click', openResidentSummaryPage);
-if (searchUser) searchUser.addEventListener('change', updateResidentSummaryLink);
+if (searchUser) searchUser.addEventListener('change', () => { updateResidentSummaryLink(); lastSearchRecords = []; clearSupportAiResult(); });
+if (dateFrom) dateFrom.addEventListener('change', () => { lastSearchRecords = []; clearSupportAiResult(); });
+if (dateTo) dateTo.addEventListener('change', () => { lastSearchRecords = []; clearSupportAiResult(); });
+if (keyword) keyword.addEventListener('input', () => { lastSearchRecords = []; clearSupportAiResult(); });
 updateResidentSummaryLink();
 if (dailyReportListBtn) dailyReportListBtn.addEventListener('click', showDailyReportList);
 if (dailyReportTopLink) dailyReportTopLink.addEventListener('click', (e) => { e.preventDefault(); showDailyReportList(); });
