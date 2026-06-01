@@ -43,7 +43,31 @@ const STORAGE_KEY='group_home_resident_info_v1';
 const RESIDENTS=['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
 const FIELD_IDS=['kana','bloodType','birthDate','age','gender','moveInDate','room','phone','email','address','photoMemo','emergencyName','emergencyRelation','emergencyPhone','emergencyPriority','emergencyMemo','doctor','hospital','pharmacy','medicalHistory','allergy','medication','medicalMemo','supportLevel','handbook','selfSupport','benefitCert','handbookExpiry','selfSupportExpiry','benefitExpiry','caseworker','welfareMemo','moneyMemo','lifeMemo','supportMemo','preferenceMemo','handoverMemo','freeMemo'];
 const $=id=>document.getElementById(id);let currentResident=RESIDENTS[0];
-function goBackEasyPage(){const params=new URLSearchParams(location.search);const resident=params.get('resident')||currentResident||'';const url=resident?'easy_google_send_v2_emergency.html?resident='+encodeURIComponent(resident):'easy_google_send_v2_emergency.html';location.href=url}
+function goBackEasyPage(){
+  const params = new URLSearchParams(location.search);
+  const resident = params.get('resident') || currentResident || '';
+  const fallback = 'easy_google_send_v2.html' + (resident ? '?resident=' + encodeURIComponent(resident) : '');
+
+  // 404対策：ファイル名が違っても、直前に開いていたかんたんページへ戻る
+  // 例：easy_google_send_v2 (18).html から開いた場合も、そのページへ戻る
+  if (document.referrer) {
+    try {
+      const ref = new URL(document.referrer, location.href);
+      if (ref.pathname.includes('easy_google_send')) {
+        location.href = ref.href;
+        return;
+      }
+    } catch(e) {}
+  }
+
+  if (window.history.length > 1) {
+    history.back();
+    setTimeout(() => { location.href = fallback; }, 600);
+    return;
+  }
+
+  location.href = fallback;
+}
 function toast(msg){const el=$('toast');el.textContent=msg||'';el.classList.add('show');clearTimeout(window.__toastT);window.__toastT=setTimeout(()=>el.classList.remove('show'),1400)}
 function setSaveStatus(message,type){const el=$('saveStatus');if(!el)return;el.textContent=message||'';el.className='status-box'+(message?' show':'')+(type?' '+type:'')}
 function loadStore(){try{const raw=localStorage.getItem(STORAGE_KEY);const parsed=raw?JSON.parse(raw):{};return parsed&&typeof parsed==='object'?parsed:{}}catch(e){return {}}}
