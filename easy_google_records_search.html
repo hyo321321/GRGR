@@ -61,7 +61,14 @@
   .ai-title{font-weight:900;margin-bottom:8px;color:#1f2937}
   .ai-help{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px}
   .ai-output{width:100%;min-height:150px;resize:vertical;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff;line-height:1.7;white-space:pre-wrap}
+  .ai-input{width:100%;min-height:170px;resize:vertical;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff;line-height:1.7;white-space:pre-wrap}
   .ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+  .small-btn.purple{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9}
+  .small-btn.orange{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+  .update-banner{margin:8px 0 0;padding:8px 10px;border-radius:12px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;font-size:12px;font-weight:800;line-height:1.5}
+  .template-editor-box{margin-top:10px;border:1px solid #dbe4f0;background:#fff;border-radius:12px;padding:10px 12px}
+  .template-editor-box summary{cursor:pointer;font-weight:900;color:#1f2937}
+  .template-editor-box textarea.ai-input{min-height:120px}
   .ai-guide{margin-top:10px;border:1px solid #dbe4f0;background:#f8fbff;border-radius:14px;padding:10px 12px}
   .ai-guide-title{font-size:14px;font-weight:900;margin-bottom:5px;color:#1f2937}
   .ai-guide-text{font-size:12px;color:var(--muted);line-height:1.7}
@@ -85,6 +92,7 @@
     <div class="card">
       <h1>記録検索ページ</h1>
       <div class="meta">利用者名、期間、キーワードで本体記録を絞り込めます。キーワードを空欄にすると、期間内の記録一覧を表示できます。日中支援Ⅰ・ⅡのAI文章作成にも対応。</div>
+      <div class="update-banner">アップデートしました：日中支援AIで、利用者別テンプレの編集・保存・共有保存に対応しました。</div>
       <div class="topLinkRow">
         <a class="topLinkBtn" href="easy_google_send_v2.html" onclick="if(history.length>1){history.back();return false;}">← かんたんページ編集</a>
         <a id="residentSummaryTopLink" class="topLinkBtn green" href="resident_summary.html">利用者別まとめ</a>
@@ -136,8 +144,8 @@
       </div>
       <div class="btns search-actions">
         <button id="searchBtn" class="primary" type="button">検索する</button>
-        <button id="aiSupport1Btn" class="green" type="button">日中支援Ⅰ AI作成</button>
-        <button id="aiSupport2Btn" class="purple" type="button">日中支援Ⅱ AI作成</button>
+        <button id="aiSupport1Btn" class="green" type="button">検索結果から日中支援Ⅰ</button>
+        <button id="aiSupport2Btn" class="purple" type="button">検索結果から日中支援Ⅱ</button>
         <button id="aiCreateBtn" class="orange" type="button">利用者まとめを作成</button>
         <button id="dailyReportListBtn" class="purple" type="button">業務日報一覧</button>
         <button id="clearBtn" class="ghost" type="button">条件を消す</button>
@@ -148,6 +156,38 @@
           AI作成は、下の「読み込み対象」に表示されている条件に合う本体記録を使います。保存先は main_records です。キーワードを空欄にすると、その期間内の記録をすべて対象にします。安全に使う場合は、利用者名を1人選び、開始日と終了日を今日にしてから作成してください。AIに送る本文は最大25件までで、文字数が多い場合は一部省略します。
         </div>
         <div id="aiTargetPreview" class="ai-target">読み込み対象：未確認</div>
+      </div>
+      <div class="ai-guide">
+        <div class="ai-guide-title">記録貼り付けからAI作成</div>
+        <div class="ai-guide-text">
+          検索せずに作りたい場合は、今日の支援記録を下にそのまま貼り付けてください。選択中の利用者テンプレを反映し、貼り付けた内容から今日行った支援だけを拾って文章を作成します。
+        </div>
+        <label for="manualSupportRecordText">今日の支援記録を貼り付け</label>
+        <textarea id="manualSupportRecordText" class="ai-input" placeholder="例：朝食時間内に受け取り。体重・血圧測定。服薬確認。掃除のため訪室。冷蔵庫確認。訪問看護来所。最近の様子を共有。"></textarea>
+        <div class="ai-actions">
+          <button id="manualSupport1Btn" class="small-btn green" type="button">貼り付けから日中支援Ⅰ</button>
+          <button id="manualSupport2Btn" class="small-btn purple" type="button">貼り付けから日中支援Ⅱ</button>
+          <button id="clearManualSupportTextBtn" class="small-btn" type="button">貼り付け欄を消す</button>
+        </div>
+        <div id="supportTemplatePreview" class="ai-target">利用者別テンプレ：利用者を選ぶと表示されます。</div>
+        <details class="template-editor-box">
+          <summary>利用者別テンプレを編集する</summary>
+          <div class="ai-guide-text" style="margin-top:8px;">
+            利用者名を1人選ぶと、その人の日中支援Ⅰ・Ⅱテンプレを編集できます。保存するとこの端末に保存され、共有保存を押すと他の端末でも読み込めます。
+          </div>
+          <label for="supportTemplateEditI">日中支援Ⅰテンプレ</label>
+          <textarea id="supportTemplateEditI" class="ai-input" placeholder="日中支援Ⅰの基本文を入力"></textarea>
+          <label for="supportTemplateEditII">日中支援Ⅱテンプレ</label>
+          <textarea id="supportTemplateEditII" class="ai-input" placeholder="日中支援Ⅱの基本文を入力"></textarea>
+          <div class="ai-actions">
+            <button id="saveCurrentTemplateBtn" class="small-btn green" type="button">この利用者テンプレを保存</button>
+            <button id="reloadTemplateBtn" class="small-btn" type="button">☁ 共有テンプレ読込</button>
+            <button id="saveTemplateShareBtn" class="small-btn blue" type="button">💾 テンプレを共有保存</button>
+            <button id="resetCurrentTemplateBtn" class="small-btn" type="button">この利用者を初期に戻す</button>
+            <button id="resetAllTemplateBtn" class="small-btn" type="button">全員を初期に戻す</button>
+          </div>
+          <div id="templateShareStatus" class="status"></div>
+        </details>
       </div>
       <div id="searchStatus" class="status"></div>
       <div id="supportAiBox" class="ai-box" style="display:none;">
@@ -173,6 +213,39 @@ const AUTH_KEY = 'easy_page_auth_ok';
 const SEARCH_KEYWORDS_KEY = 'easy_search_keywords_v1';
 const SEARCH_KEYWORDS_LOCAL_KEY = 'easy_search_keywords_local_v1';
 const DEFAULT_SEARCH_KEYWORDS = ['日中支援Ⅰ','日中支援Ⅱ','業務日報','受診同行','服薬確認','血圧','体重','欠席','入浴','訪問看護','B型','A型','買い物','金銭管理'];
+const SUPPORT_TEMPLATE_SHARE_KEY = 'easy_nitchu_support_templates_v1';
+const SUPPORT_TEMPLATE_LOCAL_KEY = 'easy_nitchu_support_templates_local_v1';
+const SUPPORT_BASE_TEMPLATES = {
+  '木村元子': {
+    I: '住居の外で過ごすことが困難なため、ホーム内にて日中支援を実施。水分摂取過多や喫煙過多に注意しながら見守り、声かけ、安全確認を行った。刺激を減らすよう環境調整を行った。居室清掃、生活環境の整備を支援した。',
+    II: '本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。水分摂取過多や喫煙過多に注意しながら、外出や買い物等がある場合は安全確認を行い、必要な支援を行った。'
+  },
+  '河合真吾': {
+    I: '体調や服薬状況、予定の確認に配慮しながら、安心してホーム内で過ごせるよう声かけ、見守り、安全確認を行った。生活リズムや身の回りの状況を確認し、必要に応じて生活環境の整備を支援した。',
+    II: '本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。通院や外出、手続き等がある場合は予定確認と安全確認を行い、必要な支援を行った。'
+  },
+  '荒川健二': {
+    I: '体調や気分の変化に配慮しながら、ホーム内での過ごし方を確認し、必要に応じて声かけ、見守り、安全確認を行った。生活環境の整備を支援し、落ち着いて過ごせるよう関わった。',
+    II: '本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。外出や買い物等がある場合は安全確認を行い、本人が行える部分は本人主体で進められるよう支援した。'
+  },
+  '山本浩二': {
+    I: '不安や確認行為が出やすいため、本人の訴えや様子を確認しながら、安心してホーム内で過ごせるよう声かけ、見守り、安全確認を行った。必要に応じて生活環境の整備を支援した。',
+    II: '本人の不安や確認行為に配慮しながら、声かけ、見守り、生活環境の整備を行った。外出や買い物等がある場合は安全確認を行い、安心して行動できるよう支援した。'
+  },
+  '原光恵': {
+    I: '体調や生活状況を確認しながら、安心してホーム内で過ごせるよう声かけ、見守り、安全確認を行った。必要に応じて生活環境の整備を支援した。',
+    II: '本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。外出や手続き等がある場合は安全確認を行い、必要な支援を行った。'
+  },
+  '岩崎愛': {
+    I: '気分や体調の波に配慮し、日中活動や生活リズムを確認しながら、声かけ、見守り、安全確認を行った。必要に応じて生活環境の整備を支援した。',
+    II: '気分や体調の波に配慮しながら、本人の生活状況に合わせて声かけ、見守り、生活環境の整備を行った。外出や買い物等がある場合は安全確認を行い、必要な支援を行った。'
+  },
+  '河合志保': {
+    I: '本人の生活状況や気分の変化に配慮しながら、ホーム内での過ごし方を確認し、必要に応じて声かけ、見守り、安全確認を行った。生活環境の整備を支援した。',
+    II: '本人の生活状況や気分の変化に配慮しながら、声かけ、見守り、生活環境の整備を行った。外出や買い物等がある場合は安全確認を行い、必要な支援を行った。'
+  }
+};
+let supportTemplates = JSON.parse(JSON.stringify(SUPPORT_BASE_TEMPLATES));
 let searchKeywords = DEFAULT_SEARCH_KEYWORDS.slice();
 let lastSearchRecords = [];
 let lastSearchSignature = '';
@@ -192,6 +265,19 @@ const supportAiBox = document.getElementById('supportAiBox');
 const supportAiTitle = document.getElementById('supportAiTitle');
 const supportAiText = document.getElementById('supportAiText');
 const aiTargetPreview = document.getElementById('aiTargetPreview');
+const manualSupportRecordText = document.getElementById('manualSupportRecordText');
+const manualSupport1Btn = document.getElementById('manualSupport1Btn');
+const manualSupport2Btn = document.getElementById('manualSupport2Btn');
+const clearManualSupportTextBtn = document.getElementById('clearManualSupportTextBtn');
+const supportTemplatePreview = document.getElementById('supportTemplatePreview');
+const supportTemplateEditI = document.getElementById('supportTemplateEditI');
+const supportTemplateEditII = document.getElementById('supportTemplateEditII');
+const saveCurrentTemplateBtn = document.getElementById('saveCurrentTemplateBtn');
+const reloadTemplateBtn = document.getElementById('reloadTemplateBtn');
+const saveTemplateShareBtn = document.getElementById('saveTemplateShareBtn');
+const resetCurrentTemplateBtn = document.getElementById('resetCurrentTemplateBtn');
+const resetAllTemplateBtn = document.getElementById('resetAllTemplateBtn');
+const templateShareStatus = document.getElementById('templateShareStatus');
 const copySupportAiBtn = document.getElementById('copySupportAiBtn');
 const clearSupportAiBtn = document.getElementById('clearSupportAiBtn');
 const aiCreateBtn = document.getElementById('aiCreateBtn');
@@ -415,6 +501,180 @@ function buildSearchSignature(){
     keyword:String(keyword.value || '').trim()
   });
 }
+function normalizeUserKey(value){
+  return String(value || '').normalize('NFKC').replace(/\s+/g,'').replace(/さん$/,'').trim();
+}
+function cloneSupportTemplates(obj){
+  return JSON.parse(JSON.stringify(obj || {}));
+}
+function normalizeSupportTemplateMap(obj){
+  const base = cloneSupportTemplates(SUPPORT_BASE_TEMPLATES);
+  const src = (obj && typeof obj === 'object') ? obj : {};
+  Object.keys(src).forEach((name) => {
+    const user = String(name || '').trim();
+    if (!user) return;
+    const item = src[name] && typeof src[name] === 'object' ? src[name] : {};
+    base[user] = {
+      I: normalizeText(item.I || item['Ⅰ'] || item.support1 || ''),
+      II: normalizeText(item.II || item['Ⅱ'] || item.support2 || '')
+    };
+  });
+  return base;
+}
+function findSupportTemplateName(user){
+  const key = normalizeUserKey(user);
+  let foundName = '';
+  Object.keys(supportTemplates || {}).some((name) => {
+    if (normalizeUserKey(name) === key) { foundName = name; return true; }
+    return false;
+  });
+  return foundName;
+}
+function getCurrentTemplateUserName(){
+  const user = String(searchUser.value || '').trim();
+  if (!user || user === '業務日報') return '';
+  return findSupportTemplateName(user) || user;
+}
+function getSupportTemplateForUser(user, type){
+  const name = findSupportTemplateName(user);
+  if (!name) return '';
+  const found = supportTemplates[name] || {};
+  return normalizeText(type === 'II' ? (found.II || found.I || '') : (found.I || ''));
+}
+function updateSupportTemplatePreview(type){
+  if (!supportTemplatePreview) return;
+  const user = String(searchUser.value || '').trim();
+  if (!user || user === '業務日報') {
+    supportTemplatePreview.textContent = '利用者別テンプレ：利用者を1人選ぶと表示されます。';
+    return;
+  }
+  const t1 = getSupportTemplateForUser(user, 'I');
+  const t2 = getSupportTemplateForUser(user, 'II');
+  if (!t1 && !t2) {
+    supportTemplatePreview.textContent = '利用者別テンプレ：' + user + ' のテンプレは未登録です。共通文で作成します。';
+    return;
+  }
+  const target = type === 'II' ? t2 : t1;
+  supportTemplatePreview.textContent = '利用者別テンプレ：' + user + '\n' + (target || t1 || t2);
+}
+function refreshSupportTemplateEditor(){
+  if (!supportTemplateEditI || !supportTemplateEditII) return;
+  const user = getCurrentTemplateUserName();
+  if (!user) {
+    supportTemplateEditI.value = '';
+    supportTemplateEditII.value = '';
+    supportTemplateEditI.disabled = true;
+    supportTemplateEditII.disabled = true;
+    if (templateShareStatus) templateShareStatus.textContent = '利用者名を1人選ぶとテンプレを編集できます。';
+    return;
+  }
+  const item = supportTemplates[user] || { I:'', II:'' };
+  supportTemplateEditI.disabled = false;
+  supportTemplateEditII.disabled = false;
+  supportTemplateEditI.value = item.I || '';
+  supportTemplateEditII.value = item.II || '';
+  if (templateShareStatus) templateShareStatus.textContent = '編集中：' + user + ' のテンプレ';
+}
+function saveSupportTemplatesLocal(){
+  try { localStorage.setItem(SUPPORT_TEMPLATE_LOCAL_KEY, JSON.stringify(supportTemplates || {})); } catch(e) {}
+}
+function loadSupportTemplatesLocal(){
+  try {
+    const raw = localStorage.getItem(SUPPORT_TEMPLATE_LOCAL_KEY) || '';
+    if (!raw) return;
+    supportTemplates = normalizeSupportTemplateMap(JSON.parse(raw));
+  } catch(e) {
+    supportTemplates = cloneSupportTemplates(SUPPORT_BASE_TEMPLATES);
+  }
+}
+function saveCurrentSupportTemplate(){
+  const user = getCurrentTemplateUserName();
+  if (!user) {
+    if (templateShareStatus) templateShareStatus.textContent = '先に利用者名を1人選んでください。';
+    searchUser.focus();
+    return;
+  }
+  supportTemplates[user] = {
+    I: normalizeText(supportTemplateEditI ? supportTemplateEditI.value : ''),
+    II: normalizeText(supportTemplateEditII ? supportTemplateEditII.value : '')
+  };
+  saveSupportTemplatesLocal();
+  updateSupportTemplatePreview();
+  if (templateShareStatus) templateShareStatus.textContent = user + ' のテンプレを保存しました。全員に反映する場合は「💾 テンプレを共有保存」を押してください。';
+}
+async function loadSharedSupportTemplates(options){
+  const silent = !!(options && options.silent);
+  if (!silent && templateShareStatus) templateShareStatus.textContent = '共有テンプレを読込中です...';
+  try {
+    const data = await fetchJson(WEB_APP_URL + '?action=getSharedNotice&noticeKey=' + encodeURIComponent(SUPPORT_TEMPLATE_SHARE_KEY));
+    const text = String(data.text || '').trim();
+    if (!text) {
+      if (!silent && templateShareStatus) templateShareStatus.textContent = '共有テンプレはまだ保存されていません。';
+      return;
+    }
+    const parsed = JSON.parse(text);
+    const map = parsed && parsed.templates ? parsed.templates : parsed;
+    supportTemplates = normalizeSupportTemplateMap(map);
+    saveSupportTemplatesLocal();
+    updateSupportTemplatePreview();
+    refreshSupportTemplateEditor();
+    if (!silent && templateShareStatus) templateShareStatus.textContent = '共有テンプレを読み込みました。';
+  } catch(err) {
+    if (!silent && templateShareStatus) templateShareStatus.textContent = '共有テンプレの読込に失敗しました。\n' + (err && err.message ? err.message : err);
+  }
+}
+async function saveSharedSupportTemplates(){
+  if (supportTemplateEditI && !supportTemplateEditI.disabled) saveCurrentSupportTemplate();
+  if (!saveTemplateShareBtn) return;
+  saveTemplateShareBtn.disabled = true;
+  if (templateShareStatus) templateShareStatus.textContent = 'テンプレを共有保存中です...';
+  try {
+    await postJson({
+      action:'saveSharedNotice',
+      noticeKey: SUPPORT_TEMPLATE_SHARE_KEY,
+      text: JSON.stringify({ templates: supportTemplates, updatedAt: new Date().toISOString() })
+    });
+    if (templateShareStatus) templateShareStatus.textContent = 'テンプレを共有保存しました。他の端末では「☁ 共有テンプレ読込」で反映できます。';
+  } catch(err) {
+    if (templateShareStatus) templateShareStatus.textContent = 'テンプレの共有保存に失敗しました。\n' + (err && err.message ? err.message : err);
+  } finally {
+    saveTemplateShareBtn.disabled = false;
+  }
+}
+function resetCurrentSupportTemplate(){
+  const user = getCurrentTemplateUserName();
+  if (!user) {
+    if (templateShareStatus) templateShareStatus.textContent = '先に利用者名を1人選んでください。';
+    return;
+  }
+  if (!confirm(user + ' のテンプレを初期文に戻しますか？')) return;
+  const baseName = Object.keys(SUPPORT_BASE_TEMPLATES).find((name) => normalizeUserKey(name) === normalizeUserKey(user)) || user;
+  supportTemplates[user] = cloneSupportTemplates(SUPPORT_BASE_TEMPLATES[baseName] || { I:'', II:'' });
+  saveSupportTemplatesLocal();
+  refreshSupportTemplateEditor();
+  updateSupportTemplatePreview();
+  if (templateShareStatus) templateShareStatus.textContent = user + ' のテンプレを初期文に戻しました。';
+}
+function resetAllSupportTemplates(){
+  if (!confirm('全員分のテンプレを初期文に戻しますか？')) return;
+  supportTemplates = cloneSupportTemplates(SUPPORT_BASE_TEMPLATES);
+  saveSupportTemplatesLocal();
+  refreshSupportTemplateEditor();
+  updateSupportTemplatePreview();
+  if (templateShareStatus) templateShareStatus.textContent = '全員分のテンプレを初期文に戻しました。共有反映する場合は「💾 テンプレを共有保存」を押してください。';
+}
+function initSupportTemplates(){
+  loadSupportTemplatesLocal();
+  refreshSupportTemplateEditor();
+  updateSupportTemplatePreview();
+  loadSharedSupportTemplates({silent:true});
+}
+function buildManualSupportRecordText(user, pastedText){
+  const body = normalizeText(pastedText || '');
+  if (!body) return '';
+  const dateLabel = String(dateFrom.value || dateTo.value || todayYmd());
+  return '【貼り付け記録】\n日付: ' + dateLabel + '\n利用者: ' + String(user || '') + '\n本文:\n' + body;
+}
 function buildAiTargetText(count){
   const user = String(searchUser.value || '').trim() || '未選択';
   const from = String(dateFrom.value || '').trim() || '指定なし';
@@ -463,45 +723,46 @@ async function getRecordsForAi(){
   lastSearchSignature = sig;
   return records;
 }
-function fallbackSupportText(type, recordText){
+function fallbackSupportText(type, recordText, templateText){
   const t = String(recordText || '');
-  const hasOut = /市役所|銀行|買い物|杏林堂|通院|受診|外出|同行|図書館|ドンキ|ファミマ/.test(t);
-  const hasClean = /掃除|清掃|シンク|トイレ|片付け|ゴミ|洗濯/.test(t);
-  const hasBath = /入浴|着替え|髭剃り|清潔/.test(t);
-  const hasMed = /服薬|内服|薬/.test(t);
-  const hasB = /B型|A型|欠席|日中活動/.test(t);
-  const hasWater = /水分|飲水|水の取り過ぎ|喫煙|パニック/.test(t);
+  const template = normalizeText(templateText || '');
+  const hasOut = /市役所|銀行|買い物|杏林堂|通院|受診|外出|同行|図書館|ドンキ|ファミマ|郵便|役所|病院/.test(t);
+  const hasClean = /掃除|清掃|シンク|トイレ|片付け|ゴミ|洗濯|居室|モップ|冷蔵庫/.test(t);
+  const hasBath = /入浴|着替え|髭剃り|清潔|身だしなみ/.test(t);
+  const hasMed = /服薬|内服|薬|薬確認/.test(t);
+  const hasVital = /血圧|体重|脈拍|バイタル|測定|体温/.test(t);
+  const hasMeal = /朝食|昼食|夕食|食事/.test(t);
+  const hasB = /B型|A型|欠席|日中活動|通所/.test(t);
+  const hasWater = /水分|飲水|水の取り過ぎ|ペットボトル|麦茶|喫煙|パニック|不安|不穏/.test(t);
+  const hasNurse = /訪問看護|看護/.test(t);
   let parts = [];
   if (type === 'I') {
     parts.push('【日中支援Ⅰ】');
-    if (hasB) parts.push('外出や日中活動への参加が難しい様子があるため、ホーム内にて日中支援を実施した。');
-    else parts.push('本人の生活状況に合わせて、ホーム内にて日中支援を実施した。');
-    parts.push('体調や精神面の状態に配慮しながら、声かけ、見守り、安全確認を行った。');
-    if (hasWater) parts.push('水分摂取や喫煙、気分の変化に注意し、刺激を減らせるよう環境調整を行った。');
-    if (hasMed || hasClean || hasBath) {
-      const items = [];
-      if (hasMed) items.push('服薬確認');
-      if (hasClean) items.push('清掃や生活環境の整備');
-      if (hasBath) items.push('入浴・清潔保持に関する声かけ');
-      parts.push(items.join('、') + 'を行い、安心して過ごせるよう支援した。');
-    } else {
-      parts.push('必要に応じて生活環境を整え、安心して過ごせるよう支援した。');
-    }
+    parts.push(template || (hasB ? '外出や日中活動への参加が難しい様子があるため、ホーム内にて日中支援を実施した。体調や精神面の状態に配慮しながら、声かけ、見守り、安全確認を行った。' : '本人の生活状況に合わせて、ホーム内にて日中支援を実施し、声かけ、見守り、安全確認を行った。'));
+    const items = [];
+    if (hasMeal) items.push('食事状況の確認');
+    if (hasVital) items.push('バイタル測定や体調確認');
+    if (hasMed) items.push('服薬確認');
+    if (hasWater) items.push('水分摂取状況の確認');
+    if (hasClean) items.push('清掃や生活環境の整備');
+    if (hasBath) items.push('入浴・清潔保持に関する声かけ');
+    if (hasOut) items.push('外出前後の様子確認');
+    if (hasNurse) items.push('訪問看護との情報共有');
+    if (items.length) parts.push(items.join('、') + 'を行い、安心して過ごせるよう支援した。');
   } else {
     parts.push('【日中支援Ⅱ】');
-    parts.push('本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。');
-    if (hasOut) parts.push('外出時の安全確認を行い、手続きや買い物、通院等に必要な支援を行った。');
-    if (hasClean || hasBath || hasMed) {
-      const items = [];
-      if (hasClean) items.push('清掃や片付け');
-      if (hasBath) items.push('入浴・清潔保持');
-      if (hasMed) items.push('服薬確認');
-      parts.push(items.join('、') + 'について声かけや確認を行った。');
-    }
-    if (!hasOut && hasB) parts.push('日中活動への参加が難しい様子があったため、ホーム内での状態を確認しながら、安心して過ごせるよう支援した。');
-    parts.push('本人が安心して日中を過ごせるよう、必要な見守りと支援を行った。');
+    parts.push(template || '本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。');
+    const items = [];
+    if (hasOut) items.push('外出時の安全確認や必要な支援');
+    if (hasClean) items.push('清掃や生活環境の整備');
+    if (hasBath) items.push('入浴・清潔保持に関する声かけ');
+    if (hasMed) items.push('服薬確認');
+    if (hasVital) items.push('体調確認');
+    if (hasNurse) items.push('関係機関との情報共有');
+    if (items.length) parts.push(items.join('、') + 'を行った。');
+    if (!items.length && hasB) parts.push('日中活動への参加が難しい様子があったため、ホーム内での状態を確認しながら、安心して過ごせるよう支援した。');
   }
-  return parts.join('\n');
+  return normalizeText(parts.join('\n'));
 }
 function showSupportAiResult(type, text){
   if (!supportAiBox || !supportAiTitle || !supportAiText) return;
@@ -530,28 +791,55 @@ async function copySupportAiText(){
     setSearchStatus('AI文章をコピーしました。', 'ok');
   }
 }
-async function createNitchuSupportAi(type){
+async function createNitchuSupportAi(type, sourceMode){
+  sourceMode = sourceMode || 'search';
   const user = String(searchUser.value || '').trim();
   if (!user || user === '業務日報') {
     setSearchStatus('利用者名を1人選んでから、日中支援AI作成を押してください。', 'error');
     searchUser.focus();
     return;
   }
-  const btn = type === 'I' ? aiSupport1Btn : aiSupport2Btn;
-  setButtonBusy(btn, true, 'AI作成中…', btn ? btn.dataset.originalText || btn.textContent : '');
-  if (aiSupport1Btn) aiSupport1Btn.disabled = true;
-  if (aiSupport2Btn) aiSupport2Btn.disabled = true;
-  updateAiTargetPreview();
-  setSearchStatus('AI作成中です。対象条件を確認しています…\n' + buildAiTargetText(), 'loading');
+
+  const isManual = sourceMode === 'manual';
+  const btn = isManual ? (type === 'I' ? manualSupport1Btn : manualSupport2Btn) : (type === 'I' ? aiSupport1Btn : aiSupport2Btn);
+  const normalLabel = isManual
+    ? (type === 'I' ? '貼り付けから日中支援Ⅰ' : '貼り付けから日中支援Ⅱ')
+    : (type === 'I' ? '検索結果から日中支援Ⅰ' : '検索結果から日中支援Ⅱ');
+
+  setButtonBusy(btn, true, 'AI作成中…', normalLabel);
+  [aiSupport1Btn, aiSupport2Btn, manualSupport1Btn, manualSupport2Btn].forEach((b) => { if (b) b.disabled = true; });
+  updateSupportTemplatePreview(type);
+
+  let recordText = '';
+  let usedCount = 0;
+  const templateText = getSupportTemplateForUser(user, type);
+
   try {
-    const records = await getRecordsForAi();
-    updateAiTargetPreview(records.length);
-    if (!records.length) {
-      setSearchStatus('AI作成に使える記録がありません。日付・利用者名・キーワードを確認してください。\n' + buildAiTargetText(0), 'error');
-      return;
+    if (isManual) {
+      const pastedText = manualSupportRecordText ? normalizeText(manualSupportRecordText.value || '') : '';
+      if (!pastedText) {
+        setSearchStatus('貼り付け欄に今日の支援記録を入れてから押してください。', 'error');
+        if (manualSupportRecordText) manualSupportRecordText.focus();
+        return;
+      }
+      recordText = buildManualSupportRecordText(user, pastedText);
+      if (recordText.length > 12000) recordText = recordText.slice(0, 12000) + '\n\n※文字数が多いため一部を省略しています。';
+      usedCount = 1;
+      setSearchStatus('AI作成中です。貼り付け欄の記録と利用者別テンプレを読み込んでいます…', 'loading');
+    } else {
+      updateAiTargetPreview();
+      setSearchStatus('AI作成中です。対象条件を確認しています…\n' + buildAiTargetText(), 'loading');
+      const records = await getRecordsForAi();
+      usedCount = records.length;
+      updateAiTargetPreview(records.length);
+      if (!records.length) {
+        setSearchStatus('AI作成に使える記録がありません。日付・利用者名・キーワードを確認してください。\n' + buildAiTargetText(0), 'error');
+        return;
+      }
+      setSearchStatus('AI作成中です。下記の記録と利用者別テンプレを読み込んで文章を作成しています…\n' + buildAiTargetText(records.length), 'loading');
+      recordText = buildSupportRecordText(records);
     }
-    setSearchStatus('AI作成中です。下記の記録を読み込んで文章を作成しています…\n' + buildAiTargetText(records.length), 'loading');
-    const recordText = buildSupportRecordText(records);
+
     const data = await postJson({
       action:'aiNitchuSupport',
       supportType:type,
@@ -560,32 +848,30 @@ async function createNitchuSupportAi(type){
       dateFrom:String(dateFrom.value || ''),
       dateTo:String(dateTo.value || ''),
       keyword:String(keyword.value || ''),
-      recordText:recordText
+      recordText:recordText,
+      templateText:templateText,
+      sourceMode:sourceMode
     });
     const text = normalizeText(data.text || data.result || data.answer || data.content || '');
     if (!text) throw new Error('AIから文章が返りませんでした。');
     showSupportAiResult(type, text);
     if (data && data.fallback) {
-      setSearchStatus('AI側が混み合っている、または利用上限に当たったため、キーワード式の下書きを表示しました。少し時間を置いて再度AI作成できます。', 'error');
+      setSearchStatus('AI側が混み合っている、または利用上限に当たったため、利用者別テンプレを使ったキーワード式の下書きを表示しました。少し時間を置いて再度AI作成できます。', 'error');
     } else {
-      setSearchStatus('日中支援' + (type === 'I' ? 'Ⅰ' : 'Ⅱ') + 'のAI文章を作成しました。', 'ok');
+      setSearchStatus('日中支援' + (type === 'I' ? 'Ⅰ' : 'Ⅱ') + 'のAI文章を作成しました。読み込み件数：' + usedCount + '件', 'ok');
     }
   } catch(err) {
-    try {
-      const records = await getRecordsForAi();
-      const localText = fallbackSupportText(type, buildSupportRecordText(records));
-      showSupportAiResult(type, localText);
-    } catch(e) {}
+    const localText = fallbackSupportText(type, recordText, templateText);
+    if (localText) showSupportAiResult(type, localText);
     const msg = err && err.message ? String(err.message) : String(err || '');
-    let guide = 'AI作成に失敗したため、キーワード式の下書きを表示しました。';
-    if (msg.indexOf('429') >= 0) guide = 'AI側の利用上限・混雑・短時間の連続実行により、キーワード式の下書きを表示しました。';
-    else if (msg.indexOf('GEMINI_API_KEY') >= 0) guide = 'GEMINI_API_KEY が未設定のため、キーワード式の下書きを表示しました。';
-    else if (msg.indexOf('unknown action') >= 0 || msg.indexOf('aiNitchuSupport') >= 0) guide = 'Apps Script側の aiNitchuSupport がまだ反映されていないため、キーワード式の下書きを表示しました。';
+    let guide = 'AI作成に失敗したため、利用者別テンプレを使ったキーワード式の下書きを表示しました。';
+    if (msg.indexOf('429') >= 0) guide = 'AI側の利用上限・混雑・短時間の連続実行により、利用者別テンプレを使ったキーワード式の下書きを表示しました。';
+    else if (msg.indexOf('GEMINI_API_KEY') >= 0) guide = 'GEMINI_API_KEY が未設定のため、利用者別テンプレを使ったキーワード式の下書きを表示しました。';
+    else if (msg.indexOf('unknown action') >= 0 || msg.indexOf('aiNitchuSupport') >= 0) guide = 'Apps Script側の aiNitchuSupport がまだ反映されていないため、利用者別テンプレを使ったキーワード式の下書きを表示しました。';
     setSearchStatus(guide + '\n' + msg, 'error');
   } finally {
-    setButtonBusy(btn, false, '', type === 'I' ? '日中支援Ⅰ AI作成' : '日中支援Ⅱ AI作成');
-    if (aiSupport1Btn) aiSupport1Btn.disabled = false;
-    if (aiSupport2Btn) aiSupport2Btn.disabled = false;
+    setButtonBusy(btn, false, '', normalLabel);
+    [aiSupport1Btn, aiSupport2Btn, manualSupport1Btn, manualSupport2Btn].forEach((b) => { if (b) b.disabled = false; });
   }
 }
 
@@ -668,7 +954,10 @@ function clearConditions(){
   lastSearchRecords = [];
   lastSearchSignature = '';
   clearSupportAiResult();
+  if (manualSupportRecordText) manualSupportRecordText.value = '';
   updateAiTargetPreview();
+  updateSupportTemplatePreview();
+  refreshSupportTemplateEditor();
   setSearchStatus('', '');
 }
 
@@ -678,18 +967,22 @@ initAuth();
 unlockBtn.addEventListener('click', tryUnlock);
 sitePasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
 searchBtn.addEventListener('click', searchRecords);
-if (aiSupport1Btn) aiSupport1Btn.addEventListener('click', () => createNitchuSupportAi('I'));
-if (aiSupport2Btn) aiSupport2Btn.addEventListener('click', () => createNitchuSupportAi('II'));
+if (aiSupport1Btn) aiSupport1Btn.addEventListener('click', () => createNitchuSupportAi('I', 'search'));
+if (aiSupport2Btn) aiSupport2Btn.addEventListener('click', () => createNitchuSupportAi('II', 'search'));
+if (manualSupport1Btn) manualSupport1Btn.addEventListener('click', () => createNitchuSupportAi('I', 'manual'));
+if (manualSupport2Btn) manualSupport2Btn.addEventListener('click', () => createNitchuSupportAi('II', 'manual'));
+if (clearManualSupportTextBtn) clearManualSupportTextBtn.addEventListener('click', () => { if (manualSupportRecordText) manualSupportRecordText.value = ''; setSearchStatus('貼り付け欄を消しました。', 'ok'); });
 if (copySupportAiBtn) copySupportAiBtn.addEventListener('click', copySupportAiText);
 if (clearSupportAiBtn) clearSupportAiBtn.addEventListener('click', clearSupportAiResult);
 if (aiCreateBtn) aiCreateBtn.addEventListener('click', openAiCreatePage);
 if (residentSummaryBtn) residentSummaryBtn.addEventListener('click', openResidentSummaryPage);
-if (searchUser) searchUser.addEventListener('change', () => { updateResidentSummaryLink(); resetAiTargetAfterConditionChange(); });
+if (searchUser) searchUser.addEventListener('change', () => { updateResidentSummaryLink(); resetAiTargetAfterConditionChange(); updateSupportTemplatePreview(); refreshSupportTemplateEditor(); });
 if (dateFrom) dateFrom.addEventListener('change', resetAiTargetAfterConditionChange);
 if (dateTo) dateTo.addEventListener('change', resetAiTargetAfterConditionChange);
 if (keyword) keyword.addEventListener('input', resetAiTargetAfterConditionChange);
 updateResidentSummaryLink();
 updateAiTargetPreview();
+updateSupportTemplatePreview();
 if (dailyReportListBtn) dailyReportListBtn.addEventListener('click', showDailyReportList);
 if (dailyReportTopLink) dailyReportTopLink.addEventListener('click', (e) => { e.preventDefault(); showDailyReportList(); });
 clearBtn.addEventListener('click', clearConditions);
@@ -698,7 +991,13 @@ if (keywordManageInput) keywordManageInput.addEventListener('keydown', (e) => { 
 if (reloadKeywordsBtn) reloadKeywordsBtn.addEventListener('click', () => loadSharedKeywords({silent:false}));
 if (saveKeywordsBtn) saveKeywordsBtn.addEventListener('click', saveSharedKeywords);
 if (resetKeywordsBtn) resetKeywordsBtn.addEventListener('click', resetKeywords);
+if (saveCurrentTemplateBtn) saveCurrentTemplateBtn.addEventListener('click', saveCurrentSupportTemplate);
+if (reloadTemplateBtn) reloadTemplateBtn.addEventListener('click', () => loadSharedSupportTemplates({silent:false}));
+if (saveTemplateShareBtn) saveTemplateShareBtn.addEventListener('click', saveSharedSupportTemplates);
+if (resetCurrentTemplateBtn) resetCurrentTemplateBtn.addEventListener('click', resetCurrentSupportTemplate);
+if (resetAllTemplateBtn) resetAllTemplateBtn.addEventListener('click', resetAllSupportTemplates);
 initSearchKeywords();
+initSupportTemplates();
 </script>
 </body>
 </html>
