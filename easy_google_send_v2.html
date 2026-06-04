@@ -1408,7 +1408,7 @@ async function saveEditedRecord(){
     await postJson(buildEditPayload(text));
     clearEditMode(true);
     sendStatus.textContent = '修正を保存しました。';
-    await checkAllMainRecords();
+    await checkAllMainRecords({forceRefresh:true});
   } catch(err){
     sendStatus.textContent = '修正保存に失敗しました。\nApps Script側に saveMainRecord が必要です。\n' + (err && err.message ? err.message : err);
   } finally {
@@ -1499,14 +1499,207 @@ async function sendBulkRecords(){
       bulkStatus.textContent = '一括送信に失敗しました。\n' + failedUsers.join('、');
     }
 
-    await checkAllMainRecords();
+    await checkAllMainRecords({forceRefresh:true});
   } finally {
     sendBtn.disabled = false;
     allCheckBtn.disabled = false;
     bulkSendBtn.disabled = false;
   }
 }
-async function checkAllMainRecords(){
+const DAY_RECORD_CACHE = {};
+
+function getDayRecordCacheKey(date){
+  return String(date || '').trim();
+}
+
+function clearDayRecordCache(date){
+  const key = getDayRecordCacheKey(date || selectedDateYmd());
+  if (key) delete DAY_RECORD_CACHE[key];
+}
+
+function pickDateFromRecord(record){
+  const r = record || {};
+  const raw = (r.raw && typeof r.raw === 'object') ? r.raw : {};
+  return String(r.date || r.recordDate || r.day || raw.date || raw.recordDate || raw.day || '').trim().slice(0,10);
+}
+
+function pickUserFromRecord(record){
+  const r = record || {};
+  const raw = (r.raw && typeof r.raw === 'object') ? r.raw : {};
+  return String(r.user || r.userName || r.resident || r.name || raw.user || raw.userName || raw.resident || raw.name || '').trim();
+}
+
+function pickTextFromRecordLike(data){
+  const r = data || {};
+  const raw = (r.raw && typeof r.raw === 'object') ? r.raw : {};
+  return normalizeText(
+    r.text || r.body || r.note || r.memo || r.content || r.support ||
+    raw.text || raw.body || raw.note || raw.memo || raw.content || raw.support || ''
+  );
+}
+
+function isRecordDeleted(record){
+  const r = record || {};
+  const raw = (r.raw && typeof r.raw === 'object') ? r.raw : {};
+  const flags = [r.deleted, r.isDeleted, r.trash, r.removed, raw.deleted, raw.isDeleted, raw.trash, raw.removed];
+  if (flags.some(v => v === true || String(v).toLowerCase() === 'true' || String(v) === '1')) return true;
+  const status = String(r.status || r.state || raw.status || raw.state || '').toLowerCase();
+  return status === 'deleted' || status === 'trash' || status === 'removed';
+}
+
+function recordTimeScore(record, index){
+  const r = record || {};
+  const raw = (r.raw && typeof r.raw === 'object') ? r.raw : {};
+  const candidates = [r.updatedAt, r.savedAt, r.createdAt, r.timestamp, r.time, raw.updatedAt, raw.savedAt, raw.createdAt, raw.timestamp, raw.time];
+  for (const v of candidates) {
+    const t = Date.parse(String(v || ''));
+    if (!Number.isNaN(t)) return t;
+  }
+  const id = String(r.id || r.serverId || r._serverId || raw.id || raw.serverId || raw._serverId || '');
+  const m = id.match(/(?:easy|main)-(\d{10,})/);
+  if (m) return Number(m[1]);
+  return Number(index || 0);
+}
+
+function normalizeDayResultItem(user, record, index){
+  const itemRecord = (record && record.record && typeof record.record === 'object') ? record.record : record;
+  const text = normalizeText(
+    (record && record.text) ||
+    (record && record.body) ||
+    (record && record.note) ||
+    (itemRecord && (itemRecord.text || itemRecord.body || itemRecord.note || itemRecord.memo)) ||
+    ''
+  ) || pickTextFromRecordLike(itemRecord);
+  return {
+    user,
+    text,
+    record: itemRecord || record || {},
+    ok: true,
+    score: recordTimeScore(itemRecord || record || {}, index)
+  };
+}
+
+function getRecordListFromResponse(data){
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.records)) return data.records;
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.list)) return data.list;
+  if (Array.isArray(data.results)) return data.results;
+  if (data.recordsByUser && typeof data.recordsByUser === 'object') {
+    return Object.keys(data.recordsByUser).map((user) => Object.assign({ user }, data.recordsByUser[user] || {}));
+  }
+  if (data.byUser && typeof data.byUser === 'object') {
+    return Object.keys(data.byUser).map((user) => Object.assign({ user }, data.byUser[user] || {}));
+  }
+  return [];
+}
+
+function buildResultsFromRecordList(list, users, date){
+  const byUser = {};
+  (list || []).forEach((rec, index) => {
+    if (!rec || typeof rec !== 'object') return;
+    if (isRecordDeleted(rec)) return;
+    const recDate = pickDateFromRecord(rec);
+    if (recDate && recDate !== date) return;
+    const user = pickUserFromRecord(rec);
+    if (!user || !users.includes(user)) return;
+    const item = normalizeDayResultItem(user, rec, index);
+    if (!item.text) return;
+    if (!byUser[user] || item.score >= byUser[user].score) byUser[user] = item;
+  });
+  return users.map((user) => byUser[user] || { user, text:'', record:{}, ok:true, score:0 });
+}
+
+async function fetchDayRecordsFast(users, date){
+  const key = getDayRecordCacheKey(date);
+  if (DAY_RECORD_CACHE[key]) return Object.assign({ fromCache:true }, DAY_RECORD_CACHE[key]);
+
+  try {
+    checkStatus.textContent = '高速取得中です...';
+    const data = await fetchJson(WEB_APP_URL + '?action=getDayAllRecords&date=' + encodeURIComponent(date));
+    const list = getRecordListFromResponse(data);
+    if (list.length) {
+      const results = buildResultsFromRecordList(list, users, date);
+      DAY_RECORD_CACHE[key] = { results, method:'高速まとめ取得' };
+      return DAY_RECORD_CACHE[key];
+    }
+  } catch(e) {
+    // Apps Script側に getDayAllRecords がない場合は、下の既存データ取得方式へ戻す。
+  }
+
+  try {
+    checkStatus.textContent = 'まとめ取得中です...';
+    const data = await fetchJson(WEB_APP_URL + '?action=getRecords&date=' + encodeURIComponent(date));
+    const list = getRecordListFromResponse(data);
+    if (list.length) {
+      const results = buildResultsFromRecordList(list, users, date);
+      DAY_RECORD_CACHE[key] = { results, method:'まとめ取得' };
+      return DAY_RECORD_CACHE[key];
+    }
+  } catch(e) {
+    // getRecords が使えない場合は、最後に従来方式へ戻す。
+  }
+
+  checkStatus.textContent = '従来方式で確認中です...';
+  const results = await Promise.all(users.map(async (user, index) => {
+    try {
+      const data = await fetchJson(WEB_APP_URL + '?action=getMainRecord&user=' + encodeURIComponent(user) + '&date=' + encodeURIComponent(date));
+      const record = (data.record && typeof data.record === 'object') ? data.record : data;
+      const item = normalizeDayResultItem(user, Object.assign({}, record, { text: data.text || record.text || record.body || record.note }), index);
+      return item;
+    } catch (err) {
+      return { user, text:'', ok:false, error:err && err.message ? err.message : String(err), record:{}, score:0 };
+    }
+  }));
+  DAY_RECORD_CACHE[key] = { results, method:'従来方式' };
+  return DAY_RECORD_CACHE[key];
+}
+
+function renderDayRecordResults(results, date, method, fromCache){
+  const blocks = [];
+  let hitCount = 0;
+  mainRecordCache = {};
+
+  (results || []).forEach((item) => {
+    let body = '';
+    let actions = '';
+    if (item.ok && item.text) {
+      body = colorizeVitalText(item.text);
+      hitCount++;
+      mainRecordCache[item.user] = item;
+      actions = '<div class="record-actions"><button class="record-edit-btn" type="button" data-edit-user="' + escapeHtml(item.user) + '">✏ 編集</button></div>';
+    } else if (item.ok) {
+      body = '記録なし';
+    } else {
+      body = '取得失敗: ' + escapeHtml(item.error);
+    }
+    const titleClass = String(item.user || '').trim() === '業務日報'
+      ? 'resident-title daily-report-title'
+      : 'resident-title';
+
+    blocks.push(
+      '<div class="resident-block">' +
+      '<div class="' + titleClass + '">【' + escapeHtml(item.user) + '】</div>' +
+      '<div class="resident-text">' + body + '</div>' +
+      actions +
+      '</div>'
+    );
+  });
+
+  mainCheckBox.innerHTML = blocks.join('');
+  Array.from(mainCheckBox.querySelectorAll('button[data-edit-user]')).forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const user = String(btn.dataset.editUser || '').trim();
+      const item = mainRecordCache[user];
+      if (!item || !item.text) return;
+      setEditMode(user, date, item.text, item.record);
+    });
+  });
+  checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件（' + (method || '取得') + (fromCache ? '・再表示' : '') + '）';
+}
+
+async function checkAllMainRecords(options){
+  const forceRefresh = options && options.forceRefresh === true;
   const date = String(recordDateEl.value || '').trim() || todayYmd();
   const users = getResidentNames();
   if (!users.length) {
@@ -1514,60 +1707,12 @@ async function checkAllMainRecords(){
     mainCheckBox.innerHTML = 'ここに選択した日の記録が表示されます。';
     return;
   }
+  if (forceRefresh) clearDayRecordCache(date);
   allCheckBtn.disabled = true;
   checkStatus.textContent = '全員分を確認中です...';
   try {
-    const results = await Promise.all(users.map(async (user) => {
-      try {
-        const data = await fetchJson(WEB_APP_URL + '?action=getMainRecord&user=' + encodeURIComponent(user) + '&date=' + encodeURIComponent(date));
-        const record = (data.record && typeof data.record === 'object') ? data.record : data;
-        const text = normalizeText(data.text || (data.record && (data.record.text || data.record.body || data.record.note)) || data.body || data.note || '');
-        return { user, text, record, ok: true };
-      } catch (err) {
-        return { user, text: '', ok: false, error: err && err.message ? err.message : String(err) };
-      }
-    }));
-
-    const blocks = [];
-    let hitCount = 0;
-    mainRecordCache = {};
-
-    results.forEach((item) => {
-      let body = '';
-      let actions = '';
-      if (item.ok && item.text) {
-        body = colorizeVitalText(item.text);
-        hitCount++;
-        mainRecordCache[item.user] = item;
-        actions = '<div class="record-actions"><button class="record-edit-btn" type="button" data-edit-user="' + escapeHtml(item.user) + '">✏ 編集</button></div>';
-      } else if (item.ok) {
-        body = '記録なし';
-      } else {
-        body = '取得失敗: ' + escapeHtml(item.error);
-      }
-      const titleClass = String(item.user || '').trim() === '業務日報'
-        ? 'resident-title daily-report-title'
-        : 'resident-title';
-
-      blocks.push(
-        '<div class="resident-block">' +
-        '<div class="' + titleClass + '">【' + escapeHtml(item.user) + '】</div>' +
-        '<div class="resident-text">' + body + '</div>' +
-        actions +
-        '</div>'
-      );
-    });
-
-    mainCheckBox.innerHTML = blocks.join('');
-    Array.from(mainCheckBox.querySelectorAll('button[data-edit-user]')).forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const user = String(btn.dataset.editUser || '').trim();
-        const item = mainRecordCache[user];
-        if (!item || !item.text) return;
-        setEditMode(user, date, item.text, item.record);
-      });
-    });
-    checkStatus.textContent = date + ' の全員分を表示しました。記録あり ' + hitCount + '件';
+    const data = await fetchDayRecordsFast(users, date);
+    renderDayRecordResults(data.results, date, data.method, data.fromCache);
   } catch(err){
     mainCheckBox.innerHTML = 'ここに選択した日の記録が表示されます。';
     checkStatus.textContent = '全員分の確認に失敗しました。\n' + (err && err.message ? err.message : err);
@@ -1899,7 +2044,7 @@ async function sendRecord(){
     await postJson(buildPayload(text));
     memoInput.value = '';
     sendStatus.textContent = '送信しました。';
-    await checkAllMainRecords();
+    await checkAllMainRecords({forceRefresh:true});
   } catch(err){
     sendStatus.textContent = '送信に失敗しました。\n' + (err && err.message ? err.message : err);
   } finally {
