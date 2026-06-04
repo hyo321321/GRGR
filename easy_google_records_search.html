@@ -61,14 +61,15 @@
   .ai-title{font-weight:900;margin-bottom:8px;color:#1f2937}
   .ai-help{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px}
   .ai-output{width:100%;min-height:150px;resize:vertical;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff;line-height:1.7;white-space:pre-wrap}
-  .ai-input{width:100%;min-height:170px;resize:vertical;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff;line-height:1.7;white-space:pre-wrap}
-  .ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+
+  .ai-input{width:100%;min-height:150px;resize:vertical;padding:10px 12px;border:1px solid #cfd5df;border-radius:12px;background:#fff;line-height:1.7;white-space:pre-wrap}
   .small-btn.purple{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9}
   .small-btn.orange{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
   .update-banner{margin:8px 0 0;padding:8px 10px;border-radius:12px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;font-size:12px;font-weight:800;line-height:1.5}
   .template-editor-box{margin-top:10px;border:1px solid #dbe4f0;background:#fff;border-radius:12px;padding:10px 12px}
   .template-editor-box summary{cursor:pointer;font-weight:900;color:#1f2937}
-  .template-editor-box textarea.ai-input{min-height:120px}
+  .template-editor-box textarea.ai-input{min-height:110px}
+  .ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
   .ai-guide{margin-top:10px;border:1px solid #dbe4f0;background:#f8fbff;border-radius:14px;padding:10px 12px}
   .ai-guide-title{font-size:14px;font-weight:900;margin-bottom:5px;color:#1f2937}
   .ai-guide-text{font-size:12px;color:var(--muted);line-height:1.7}
@@ -92,7 +93,7 @@
     <div class="card">
       <h1>記録検索ページ</h1>
       <div class="meta">利用者名、期間、キーワードで本体記録を絞り込めます。キーワードを空欄にすると、期間内の記録一覧を表示できます。日中支援Ⅰ・ⅡのAI文章作成にも対応。</div>
-      <div class="update-banner">アップデートしました：日中支援AIで、利用者別テンプレの編集・保存・共有保存に対応しました。</div>
+      <div class="update-banner">アップデートしました：検索結果の表示は元のまま、日中支援AIの貼り付け作成・利用者別テンプレ編集を下に分けました。</div>
       <div class="topLinkRow">
         <a class="topLinkBtn" href="easy_google_send_v2.html" onclick="if(history.length>1){history.back();return false;}">← かんたんページ編集</a>
         <a id="residentSummaryTopLink" class="topLinkBtn green" href="resident_summary.html">利用者別まとめ</a>
@@ -144,8 +145,8 @@
       </div>
       <div class="btns search-actions">
         <button id="searchBtn" class="primary" type="button">検索する</button>
-        <button id="aiSupport1Btn" class="green" type="button">検索結果から日中支援Ⅰ</button>
-        <button id="aiSupport2Btn" class="purple" type="button">検索結果から日中支援Ⅱ</button>
+        <button id="aiSupport1Btn" class="green" type="button">日中支援Ⅰ AI作成</button>
+        <button id="aiSupport2Btn" class="purple" type="button">日中支援Ⅱ AI作成</button>
         <button id="aiCreateBtn" class="orange" type="button">利用者まとめを作成</button>
         <button id="dailyReportListBtn" class="purple" type="button">業務日報一覧</button>
         <button id="clearBtn" class="ghost" type="button">条件を消す</button>
@@ -156,38 +157,6 @@
           AI作成は、下の「読み込み対象」に表示されている条件に合う本体記録を使います。保存先は main_records です。キーワードを空欄にすると、その期間内の記録をすべて対象にします。安全に使う場合は、利用者名を1人選び、開始日と終了日を今日にしてから作成してください。AIに送る本文は最大25件までで、文字数が多い場合は一部省略します。
         </div>
         <div id="aiTargetPreview" class="ai-target">読み込み対象：未確認</div>
-      </div>
-      <div class="ai-guide">
-        <div class="ai-guide-title">記録貼り付けからAI作成</div>
-        <div class="ai-guide-text">
-          検索せずに作りたい場合は、今日の支援記録を下にそのまま貼り付けてください。選択中の利用者テンプレを反映し、貼り付けた内容から今日行った支援だけを拾って文章を作成します。
-        </div>
-        <label for="manualSupportRecordText">今日の支援記録を貼り付け</label>
-        <textarea id="manualSupportRecordText" class="ai-input" placeholder="例：朝食時間内に受け取り。体重・血圧測定。服薬確認。掃除のため訪室。冷蔵庫確認。訪問看護来所。最近の様子を共有。"></textarea>
-        <div class="ai-actions">
-          <button id="manualSupport1Btn" class="small-btn green" type="button">貼り付けから日中支援Ⅰ</button>
-          <button id="manualSupport2Btn" class="small-btn purple" type="button">貼り付けから日中支援Ⅱ</button>
-          <button id="clearManualSupportTextBtn" class="small-btn" type="button">貼り付け欄を消す</button>
-        </div>
-        <div id="supportTemplatePreview" class="ai-target">利用者別テンプレ：利用者を選ぶと表示されます。</div>
-        <details class="template-editor-box">
-          <summary>利用者別テンプレを編集する</summary>
-          <div class="ai-guide-text" style="margin-top:8px;">
-            利用者名を1人選ぶと、その人の日中支援Ⅰ・Ⅱテンプレを編集できます。保存するとこの端末に保存され、共有保存を押すと他の端末でも読み込めます。
-          </div>
-          <label for="supportTemplateEditI">日中支援Ⅰテンプレ</label>
-          <textarea id="supportTemplateEditI" class="ai-input" placeholder="日中支援Ⅰの基本文を入力"></textarea>
-          <label for="supportTemplateEditII">日中支援Ⅱテンプレ</label>
-          <textarea id="supportTemplateEditII" class="ai-input" placeholder="日中支援Ⅱの基本文を入力"></textarea>
-          <div class="ai-actions">
-            <button id="saveCurrentTemplateBtn" class="small-btn green" type="button">この利用者テンプレを保存</button>
-            <button id="reloadTemplateBtn" class="small-btn" type="button">☁ 共有テンプレ読込</button>
-            <button id="saveTemplateShareBtn" class="small-btn blue" type="button">💾 テンプレを共有保存</button>
-            <button id="resetCurrentTemplateBtn" class="small-btn" type="button">この利用者を初期に戻す</button>
-            <button id="resetAllTemplateBtn" class="small-btn" type="button">全員を初期に戻す</button>
-          </div>
-          <div id="templateShareStatus" class="status"></div>
-        </details>
       </div>
       <div id="searchStatus" class="status"></div>
       <div id="supportAiBox" class="ai-box" style="display:none;">
@@ -204,6 +173,38 @@
       <h2>検索結果</h2>
       <div id="results"></div>
     </div>
+    <div class="card">
+      <h2>日中支援AI 貼り付け・テンプレ設定</h2>
+      <div class="meta">検索結果の表示を崩さないよう、この機能は下に分けています。記録をそのまま貼り付けて作成する場合や、利用者別テンプレを変更する場合はこちらを使ってください。</div>
+      <div class="ai-guide">
+        <div class="ai-guide-title">記録貼り付けからAI作成</div>
+        <div class="ai-guide-text">今日の支援記録を下にそのまま貼り付けてください。上の利用者名で選択中のテンプレを反映し、貼り付けた内容から今日行った支援だけを拾って文章を作成します。</div>
+        <label for="manualSupportRecordText">今日の支援記録を貼り付け</label>
+        <textarea id="manualSupportRecordText" class="ai-input" placeholder="例：朝食時間内に受け取り。体重・血圧測定。服薬確認。掃除のため訪室。冷蔵庫確認。訪問看護来所。最近の様子を共有。"></textarea>
+        <div class="ai-actions">
+          <button id="manualSupport1Btn" class="small-btn green" type="button">貼り付けから日中支援Ⅰ</button>
+          <button id="manualSupport2Btn" class="small-btn purple" type="button">貼り付けから日中支援Ⅱ</button>
+          <button id="clearManualSupportTextBtn" class="small-btn" type="button">貼り付け欄を消す</button>
+        </div>
+        <div id="supportTemplatePreview" class="ai-target">利用者別テンプレ：利用者を選ぶと表示されます。</div>
+      </div>
+      <details class="template-editor-box">
+        <summary>利用者別テンプレを編集する</summary>
+        <div class="ai-guide-text" style="margin-top:8px;">利用者名を1人選ぶと、その人の日中支援Ⅰ・Ⅱテンプレを編集できます。保存するとこの端末に保存され、共有保存を押すと他の端末でも読み込めます。</div>
+        <label for="supportTemplateEditI">日中支援Ⅰテンプレ</label>
+        <textarea id="supportTemplateEditI" class="ai-input" placeholder="日中支援Ⅰの基本文を入力"></textarea>
+        <label for="supportTemplateEditII">日中支援Ⅱテンプレ</label>
+        <textarea id="supportTemplateEditII" class="ai-input" placeholder="日中支援Ⅱの基本文を入力"></textarea>
+        <div class="ai-actions">
+          <button id="saveCurrentTemplateBtn" class="small-btn green" type="button">この利用者テンプレを保存</button>
+          <button id="reloadTemplateBtn" class="small-btn" type="button">☁ 共有テンプレ読込</button>
+          <button id="saveTemplateShareBtn" class="small-btn blue" type="button">💾 テンプレを共有保存</button>
+          <button id="resetCurrentTemplateBtn" class="small-btn" type="button">この利用者を初期に戻す</button>
+          <button id="resetAllTemplateBtn" class="small-btn" type="button">全員を初期に戻す</button>
+        </div>
+        <div id="templateShareStatus" class="status"></div>
+      </details>
+    </div>
   </div>
 </div>
 <script>
@@ -213,11 +214,12 @@ const AUTH_KEY = 'easy_page_auth_ok';
 const SEARCH_KEYWORDS_KEY = 'easy_search_keywords_v1';
 const SEARCH_KEYWORDS_LOCAL_KEY = 'easy_search_keywords_local_v1';
 const DEFAULT_SEARCH_KEYWORDS = ['日中支援Ⅰ','日中支援Ⅱ','業務日報','受診同行','服薬確認','血圧','体重','欠席','入浴','訪問看護','B型','A型','買い物','金銭管理'];
+
 const SUPPORT_TEMPLATE_SHARE_KEY = 'easy_nitchu_support_templates_v1';
 const SUPPORT_TEMPLATE_LOCAL_KEY = 'easy_nitchu_support_templates_local_v1';
 const SUPPORT_BASE_TEMPLATES = {
   '木村元子': {
-    I: '住居の外で過ごすことが困難なため、ホーム内にて日中支援を実施。水分摂取過多や喫煙過多に注意しながら見守り、声かけ、安全確認を行った。刺激を減らすよう環境調整を行った。居室清掃、生活環境の整備を支援した。',
+    I: '外出や日中活動への参加が難しい様子があるため、ホーム内にて日中支援を実施した。水分摂取過多や喫煙過多に注意しながら見守り、声かけ、安全確認を行った。刺激を減らすよう環境調整を行い、居室清掃、生活環境の整備を支援した。',
     II: '本人の生活状況に合わせて、声かけ、見守り、生活環境の整備を行った。水分摂取過多や喫煙過多に注意しながら、外出や買い物等がある場合は安全確認を行い、必要な支援を行った。'
   },
   '河合真吾': {
@@ -265,19 +267,6 @@ const supportAiBox = document.getElementById('supportAiBox');
 const supportAiTitle = document.getElementById('supportAiTitle');
 const supportAiText = document.getElementById('supportAiText');
 const aiTargetPreview = document.getElementById('aiTargetPreview');
-const manualSupportRecordText = document.getElementById('manualSupportRecordText');
-const manualSupport1Btn = document.getElementById('manualSupport1Btn');
-const manualSupport2Btn = document.getElementById('manualSupport2Btn');
-const clearManualSupportTextBtn = document.getElementById('clearManualSupportTextBtn');
-const supportTemplatePreview = document.getElementById('supportTemplatePreview');
-const supportTemplateEditI = document.getElementById('supportTemplateEditI');
-const supportTemplateEditII = document.getElementById('supportTemplateEditII');
-const saveCurrentTemplateBtn = document.getElementById('saveCurrentTemplateBtn');
-const reloadTemplateBtn = document.getElementById('reloadTemplateBtn');
-const saveTemplateShareBtn = document.getElementById('saveTemplateShareBtn');
-const resetCurrentTemplateBtn = document.getElementById('resetCurrentTemplateBtn');
-const resetAllTemplateBtn = document.getElementById('resetAllTemplateBtn');
-const templateShareStatus = document.getElementById('templateShareStatus');
 const copySupportAiBtn = document.getElementById('copySupportAiBtn');
 const clearSupportAiBtn = document.getElementById('clearSupportAiBtn');
 const aiCreateBtn = document.getElementById('aiCreateBtn');
@@ -295,6 +284,19 @@ const reloadKeywordsBtn = document.getElementById('reloadKeywordsBtn');
 const saveKeywordsBtn = document.getElementById('saveKeywordsBtn');
 const resetKeywordsBtn = document.getElementById('resetKeywordsBtn');
 const keywordShareStatus = document.getElementById('keywordShareStatus');
+const manualSupportRecordText = document.getElementById('manualSupportRecordText');
+const manualSupport1Btn = document.getElementById('manualSupport1Btn');
+const manualSupport2Btn = document.getElementById('manualSupport2Btn');
+const clearManualSupportTextBtn = document.getElementById('clearManualSupportTextBtn');
+const supportTemplatePreview = document.getElementById('supportTemplatePreview');
+const supportTemplateEditI = document.getElementById('supportTemplateEditI');
+const supportTemplateEditII = document.getElementById('supportTemplateEditII');
+const saveCurrentTemplateBtn = document.getElementById('saveCurrentTemplateBtn');
+const reloadTemplateBtn = document.getElementById('reloadTemplateBtn');
+const saveTemplateShareBtn = document.getElementById('saveTemplateShareBtn');
+const resetCurrentTemplateBtn = document.getElementById('resetCurrentTemplateBtn');
+const resetAllTemplateBtn = document.getElementById('resetAllTemplateBtn');
+const templateShareStatus = document.getElementById('templateShareStatus');
 
 function unlockApp(){ authScreen.style.display = 'none'; appRoot.classList.remove('app-hidden'); }
 function showAuthError(msg){ authError.textContent = msg || ''; }
@@ -501,6 +503,7 @@ function buildSearchSignature(){
     keyword:String(keyword.value || '').trim()
   });
 }
+
 function normalizeUserKey(value){
   return String(value || '').normalize('NFKC').replace(/\s+/g,'').replace(/さん$/,'').trim();
 }
@@ -675,6 +678,13 @@ function buildManualSupportRecordText(user, pastedText){
   const dateLabel = String(dateFrom.value || dateTo.value || todayYmd());
   return '【貼り付け記録】\n日付: ' + dateLabel + '\n利用者: ' + String(user || '') + '\n本文:\n' + body;
 }
+function addTemplateToRecordText(type, recordText, templateText){
+  const template = normalizeText(templateText || '');
+  const body = normalizeText(recordText || '');
+  if (!template) return body;
+  return '【利用者別テンプレ（日中支援' + (type === 'I' ? 'Ⅰ' : 'Ⅱ') + '）】\n' + template + '\n\n---\n\n【今日の記録】\n' + body;
+}
+
 function buildAiTargetText(count){
   const user = String(searchUser.value || '').trim() || '未選択';
   const from = String(dateFrom.value || '').trim() || '指定なし';
@@ -804,7 +814,7 @@ async function createNitchuSupportAi(type, sourceMode){
   const btn = isManual ? (type === 'I' ? manualSupport1Btn : manualSupport2Btn) : (type === 'I' ? aiSupport1Btn : aiSupport2Btn);
   const normalLabel = isManual
     ? (type === 'I' ? '貼り付けから日中支援Ⅰ' : '貼り付けから日中支援Ⅱ')
-    : (type === 'I' ? '検索結果から日中支援Ⅰ' : '検索結果から日中支援Ⅱ');
+    : (type === 'I' ? '日中支援Ⅰ AI作成' : '日中支援Ⅱ AI作成');
 
   setButtonBusy(btn, true, 'AI作成中…', normalLabel);
   [aiSupport1Btn, aiSupport2Btn, manualSupport1Btn, manualSupport2Btn].forEach((b) => { if (b) b.disabled = true; });
@@ -840,6 +850,7 @@ async function createNitchuSupportAi(type, sourceMode){
       recordText = buildSupportRecordText(records);
     }
 
+    const recordTextForAi = addTemplateToRecordText(type, recordText, templateText);
     const data = await postJson({
       action:'aiNitchuSupport',
       supportType:type,
@@ -848,7 +859,7 @@ async function createNitchuSupportAi(type, sourceMode){
       dateFrom:String(dateFrom.value || ''),
       dateTo:String(dateTo.value || ''),
       keyword:String(keyword.value || ''),
-      recordText:recordText,
+      recordText:recordTextForAi,
       templateText:templateText,
       sourceMode:sourceMode
     });
@@ -954,7 +965,6 @@ function clearConditions(){
   lastSearchRecords = [];
   lastSearchSignature = '';
   clearSupportAiResult();
-  if (manualSupportRecordText) manualSupportRecordText.value = '';
   updateAiTargetPreview();
   updateSupportTemplatePreview();
   refreshSupportTemplateEditor();
