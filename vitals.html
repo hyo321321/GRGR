@@ -710,6 +710,22 @@
       color: #dc2626;
       font-weight: 800;
     }
+    .bp-caution {
+      color: #a16207;
+      font-weight: 800;
+      background: #fef3c7;
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .bp-high {
+      color: #dc2626;
+      font-weight: 800;
+      background: #fee2e2;
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-block;
+    }
     .pulse-high {
       color: #dc2626;
       font-weight: 800;
@@ -912,7 +928,6 @@
         padding: 3px 5px !important;
       }
     }
-
 </style>
 </head>
 <body>
@@ -941,7 +956,7 @@
 <span>入力</span>
 <span class="hint" id="quickStatus"></span>
 </div>
-<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧が高い日（上135以上・下85以上）、脈拍が100以上または40以下、体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動反映します。記録がなければ新規作成し、あれば追記します。</div>
+<div class="hint" id="remoteStatus" style="margin-bottom:6px;"></div><div class="hint" style="margin-bottom:6px;">保存後は先に画面へ即表示し、その後に共有保存・共有再読込します。<br/>血圧注意（上125以上または下75以上）、脈拍が100以上または40以下、体重が前回より＋1kg以上の日は、かんたんページの個人記録へ自動反映します。記録がなければ新規作成し、あれば追記します。</div>
 <div class="input-grid-4">
 <div class="field-compact">
 <label>日付</label>
@@ -997,7 +1012,7 @@
 </div>
 <div class="hint" style="margin-top:6px;">
           ・保存すると右の一覧に出ます（新しい順）。<br/>
-          ・血圧高め（上135以上・下85以上）、脈拍100以上・40以下、または体重＋1kg以上の日は、かんたんページの個人記録へ自動反映します（記録なし＝新規作成、記録あり＝追記）。<br/>
+          ・血圧注意（上125以上または下75以上）、脈拍100以上・40以下、または体重＋1kg以上の日は、かんたんページの個人記録へ自動反映します（記録なし＝新規作成、記録あり＝追記）。<br/>
           ・時刻欄はなく、朝・昼・夕で保存されます。実際の測定時刻はメモへ入力してください。<br/>
           ・「📋 コピー」は、今入力している内容をクリップボードへ（例：バイタル：体重58.4kg、血圧128/78、脈拍72）。
 </div>
@@ -1045,7 +1060,7 @@
 <option value="all">全月</option>
 </select>
 <div class="filter-checks">
-<label class="filter-check-label"><input id="highOnlyToggle" type="checkbox">血圧が高い日だけ</label>
+<label class="filter-check-label"><input id="highOnlyToggle" type="checkbox">血圧やや高め以上の日だけ</label>
 <label class="filter-check-label"><input id="weightUp1kgToggle" type="checkbox">体重＋1kg以上の日だけ</label>
 <label class="filter-check-label"><input id="pulseAbnormalToggle" type="checkbox">脈拍が高い・低い日だけ</label>
 </div>
@@ -1124,6 +1139,8 @@
     const DEFAULT_RECORDERS = ['太田'];
     const VITALS_MANUAL_FLAGS_KEY = 'group_home_vitals_manual_flags_v1';
     const VITALS_AUTO_MAIN_SENT_KEY = 'group_home_vitals_auto_main_sent_v1';
+    const AUTO_BP_SYS_CAUTION = 125;
+    const AUTO_BP_DIA_CAUTION = 75;
     const AUTO_BP_SYS_HIGH = 135;
     const AUTO_BP_DIA_HIGH = 85;
     const AUTO_WEIGHT_UP_KG = 1.0;
@@ -1841,10 +1858,23 @@
       return Number.isFinite(n) ? n : null;
     }
 
-    function isAutoHighBp(bpSys, bpDia) {
+    function getBpLevel(bpSys, bpDia) {
       const sys = parseNumOrNull(bpSys);
       const dia = parseNumOrNull(bpDia);
-      return (sys != null && sys >= AUTO_BP_SYS_HIGH) || (dia != null && dia >= AUTO_BP_DIA_HIGH);
+      const high = (sys != null && sys >= AUTO_BP_SYS_HIGH) || (dia != null && dia >= AUTO_BP_DIA_HIGH);
+      const caution = (sys != null && sys >= AUTO_BP_SYS_CAUTION) || (dia != null && dia >= AUTO_BP_DIA_CAUTION);
+      if (high) return 'high';
+      if (caution) return 'caution';
+      return '';
+    }
+
+    function isAutoHighBp(bpSys, bpDia) {
+      return getBpLevel(bpSys, bpDia) === 'high';
+    }
+
+    function isAutoBpNotice(bpSys, bpDia) {
+      const level = getBpLevel(bpSys, bpDia);
+      return level === 'high' || level === 'caution';
     }
 
     function formatBpHtml(bpSys, bpDia, forceRed) {
@@ -1856,12 +1886,17 @@
       const diaNum = parseNumOrNull(bpDia);
       const sysHigh = forceRed || (sysNum != null && sysNum >= AUTO_BP_SYS_HIGH);
       const diaHigh = forceRed || (diaNum != null && diaNum >= AUTO_BP_DIA_HIGH);
+      const sysCaution = !sysHigh && (sysNum != null && sysNum >= AUTO_BP_SYS_CAUTION);
+      const diaCaution = !diaHigh && (diaNum != null && diaNum >= AUTO_BP_DIA_CAUTION);
+
+      const sysClass = sysHigh ? 'bp-high' : (sysCaution ? 'bp-caution' : '');
+      const diaClass = diaHigh ? 'bp-high' : (diaCaution ? 'bp-caution' : '');
 
       const sysHtml = sysRaw
-        ? `<span class="${sysHigh ? 'manual-flag' : ''}">${escapeHTML(sysRaw)}</span>`
+        ? `<span class="${sysClass}">${escapeHTML(sysRaw)}</span>`
         : '―';
       const diaHtml = diaRaw
-        ? `<span class="${diaHigh ? 'manual-flag' : ''}">${escapeHTML(diaRaw)}</span>`
+        ? `<span class="${diaClass}">${escapeHTML(diaRaw)}</span>`
         : '―';
 
       return `${sysHtml}/${diaHtml}`;
@@ -1907,7 +1942,10 @@
     }
 
     function getAutoMainReasons(entry, previousRecords) {
-      const bpHigh = isAutoHighBp(entry.bpSys, entry.bpDia);
+      const bpLevel = getBpLevel(entry.bpSys, entry.bpDia);
+      const bpHigh = bpLevel === 'high';
+      const bpCaution = bpLevel === 'caution';
+      const bpNotice = bpHigh || bpCaution;
       const pulseNum = parseNumOrNull(entry.pulse);
       const pulseHigh = pulseNum != null && pulseNum >= AUTO_PULSE_HIGH;
       const pulseLow = pulseNum != null && pulseNum <= AUTO_PULSE_LOW;
@@ -1916,11 +1954,11 @@
       const prevWeight = prev ? parseNumOrNull(prev.weight) : null;
       const weightDiff = (currentWeight != null && prevWeight != null) ? Number((currentWeight - prevWeight).toFixed(1)) : null;
       const weightUp1kg = weightDiff != null && weightDiff >= AUTO_WEIGHT_UP_KG;
-      return { bpHigh, pulseHigh, pulseLow, pulseNum, weightUp1kg, weightDiff, previousWeight: prevWeight, previousDate: prev ? getVitalRecordDateKey(prev) : '' };
+      return { bpLevel, bpHigh, bpCaution, bpNotice, pulseHigh, pulseLow, pulseNum, weightUp1kg, weightDiff, previousWeight: prevWeight, previousDate: prev ? getVitalRecordDateKey(prev) : '' };
     }
 
     function shouldAutoAppendMainRecord(reasons) {
-      return !!(reasons && (reasons.bpHigh || reasons.pulseHigh || reasons.pulseLow || reasons.weightUp1kg));
+      return !!(reasons && (reasons.bpNotice || reasons.pulseHigh || reasons.pulseLow || reasons.weightUp1kg));
     }
 
     function formatSignedKg(n) {
@@ -1945,13 +1983,14 @@
       if (pulse) parts.push(`脈拍${pulse}`);
 
       const reasonLines = [];
-      if (reasons && reasons.bpHigh) reasonLines.push('血圧が高めであった');
-      if (reasons && reasons.pulseHigh) reasonLines.push('脈拍が100以上であった');
-      if (reasons && reasons.pulseLow) reasonLines.push('脈拍が40以下であった');
-      if (reasons && reasons.weightUp1kg) reasonLines.push(`体重が前回より${formatSignedKg(reasons.weightDiff)}増加していた`);
+      if (reasons && reasons.bpHigh) reasonLines.push('血圧高値');
+      else if (reasons && reasons.bpCaution) reasonLines.push('血圧やや高め');
+      if (reasons && reasons.pulseHigh) reasonLines.push('脈拍100以上');
+      if (reasons && reasons.pulseLow) reasonLines.push('脈拍40以下');
+      if (reasons && reasons.weightUp1kg) reasonLines.push('体重増加');
 
       let text = `バイタル測定を実施。${parts.length ? parts.join('、') : '数値未入力'}。`;
-      if (reasonLines.length) text += `${reasonLines.join('。')}ため、様子観察を行う。`;
+      if (reasonLines.length) text += `${reasonLines.join('、')}のため、様子観察を行った。`;
       if (memo) text += `
 メモ：${memo}`;
       return text;
@@ -2036,7 +2075,8 @@
       const existing = await fetchExistingMainRecordForVital(entry);
 
       const tags = ['#バイタル'];
-      if (reasons.bpHigh) tags.push('#血圧高め');
+      if (reasons.bpHigh) tags.push('#血圧高値');
+      else if (reasons.bpCaution) tags.push('#血圧やや高め');
       if (reasons.pulseHigh || reasons.pulseLow) tags.push('#脈拍注意');
       if (reasons.weightUp1kg) tags.push('#体重増加');
 
@@ -2548,7 +2588,7 @@
     function matchesHighThresholds(v) {
       const highOnly = $('highOnlyToggle') ? $('highOnlyToggle').checked : false;
       if (!highOnly) return true;
-      return isAutoHighBp(v.bpSys, v.bpDia);
+      return isAutoBpNotice(v.bpSys, v.bpDia);
     }
 
     function isPulseAbnormal(v) {
@@ -2914,7 +2954,7 @@
       const weightPlusOnlyOn = $('weightUp1kgToggle') && $('weightUp1kgToggle').checked;
       const pulseOnlyOn = $('pulseAbnormalToggle') && $('pulseAbnormalToggle').checked;
       const filterNotes = [];
-      if (highOnlyOn) filterNotes.push('血圧高め');
+      if (highOnlyOn) filterNotes.push('血圧やや高め以上');
       if (weightPlusOnlyOn) filterNotes.push('体重＋1kg以上');
       if (pulseOnlyOn) filterNotes.push('脈拍高低');
       const filterNoteText = filterNotes.length ? '（' + filterNotes.join('・') + '抽出）' : '';
@@ -2946,7 +2986,7 @@
         </div>
         ${createAverageMiniTableHtml('曜日ごとの平均', weekdayAverageRows)}
         ${createAverageMiniTableHtml('月ごとの平均', monthlyAverageRows)}
-        <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上135以上・下85以上は赤 ／ 脈拍：<span class="pulse-high">100以上は赤</span>、<span class="pulse-low">40以下は青</span></div>
+        <div class="avg-legend">体重：前日比で増加は赤、減少は青（＋1kg以上の日だけ抽出可） ／ 血圧：上125以上・下75以上は黄色、上135以上・下85以上は赤 ／ 脈拍：<span class="pulse-high">100以上は赤</span>、<span class="pulse-low">40以下は青</span></div>
       `;
       listEl.appendChild(avgBox);
       listEl.appendChild(createPrintAllMonthAverageBox(all));
