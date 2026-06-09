@@ -48,6 +48,7 @@
 
   /* バイタル異常の色付け（個人記録の確認表示だけ） */
   .vital-red{color:#dc2626;font-weight:400;background:#fee2e2;padding:1px 5px;border-radius:6px}
+  .vital-yellow{color:#a16207;font-weight:400;background:#fef3c7;padding:1px 5px;border-radius:6px}
   .vital-blue{color:#2563eb;font-weight:400;background:#dbeafe;padding:1px 5px;border-radius:6px}
   .template-wrap{border:1px solid #dbe4f0;background:#f8fbff;border-radius:12px;padding:10px 12px;margin:10px 0}
   .template-head{font-size:14px;color:#475569;margin-top:6px;line-height:1.6}
@@ -136,6 +137,8 @@
     z-index:2;
     touch-action:manipulation;
   }
+
+
 
 </style>
 
@@ -421,6 +424,7 @@ function colorizeVitalText(text){
 
   // 携帯でも確実に色が出るように、classだけでなく inline style も直接付ける
   const redOpen = '<span class="vital-red" style="color:#dc2626 !important;font-weight:400;background:#fee2e2;padding:1px 5px;border-radius:6px;">';
+  const yellowOpen = '<span class="vital-yellow" style="color:#a16207 !important;font-weight:400;background:#fef3c7;padding:1px 5px;border-radius:6px;">';
   const blueOpen = '<span class="vital-blue" style="color:#2563eb !important;font-weight:400;background:#dbeafe;padding:1px 5px;border-radius:6px;">';
   const close = '</span>';
 
@@ -447,13 +451,13 @@ function colorizeVitalText(text){
     return a + sp + blueOpen + num + close + b;
   });
 
-  // 血圧：上135以上・下85以上の「該当する数字だけ」赤
-  // 例：血圧145/78 → 145だけ赤、血圧128/88 → 88だけ赤、血圧145/88 → 両方赤
+  // 血圧：上125以上・下75以上は黄色、上135以上・下85以上は赤
+  // 例：血圧123/80 → 80だけ黄色、血圧136/86 → 両方赤
   s = s.replace(/(血圧[:：]?\s*)([0-9０-９]{2,3})(\s*[\/／]\s*)([0-9０-９]{2,3})/g, function(match, label, sys, sep, dia){
     const sysN = Number(toHalfNumber(sys));
     const diaN = Number(toHalfNumber(dia));
-    const sysHtml = sysN >= 135 ? redOpen + sys + close : sys;
-    const diaHtml = diaN >= 85 ? redOpen + dia + close : dia;
+    const sysHtml = sysN >= 135 ? redOpen + sys + close : (sysN >= 125 ? yellowOpen + sys + close : sys);
+    const diaHtml = diaN >= 85 ? redOpen + dia + close : (diaN >= 75 ? yellowOpen + dia + close : dia);
     return label + sysHtml + sep + diaHtml;
   });
 
