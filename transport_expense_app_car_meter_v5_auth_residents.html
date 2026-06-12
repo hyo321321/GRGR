@@ -9,7 +9,7 @@
       --bg:#f6f8fb; --card:#ffffff; --line:#d9e1ea; --text:#1f2a37; --sub:#6b7280;
       --blue:#2563eb; --green:#16a34a; --red:#dc2626; --shadow:0 8px 24px rgba(15,23,42,.08); --radius:16px;
     }
-    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
     body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",sans-serif;}
     .wrap{max-width:900px;margin:0 auto;padding:16px 14px 28px;}
     .title{font-size:24px;font-weight:800;margin:6px 0 14px;}
@@ -18,7 +18,7 @@
     .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;}
     .card h2{font-size:17px;margin:0 0 12px;}
     .note{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;line-height:1.6;}
-    .warn{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none;}
+    .warn{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none;white-space:pre-wrap;}
     .statusBox{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.6;color:#475569;margin-bottom:12px;white-space:pre-wrap;}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
     .row.one{grid-template-columns:1fr;}
@@ -35,10 +35,10 @@
     .secondary{background:#eef2ff;color:#3730a3;}
     .danger{background:#fee2e2;color:#991b1b;}
     .editBtn{background:#e0f2fe;color:#075985;}
-    .actionBtns{display:flex;gap:6px;flex-wrap:wrap;}
-    .editingBanner{display:none;background:#ecfdf5;border:1px solid #86efac;color:#166534;border-radius:12px;padding:10px 12px;font-size:13px;margin:10px 0;line-height:1.6;font-weight:700;}
     .ghost{background:#f3f4f6;color:#374151;}
     .success{background:#dcfce7;color:#166534;}
+    .actionBtns{display:flex;gap:6px;flex-wrap:wrap;}
+    .editingBanner{display:none;background:#ecfdf5;border:1px solid #86efac;color:#166534;border-radius:12px;padding:10px 12px;font-size:13px;margin:10px 0;line-height:1.6;font-weight:700;}
     .sumGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
     .sumItem{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;}
     .sumLabel{font-size:12px;color:var(--sub);margin-bottom:4px;font-weight:700;}
@@ -55,14 +55,14 @@
     .empty{padding:20px;text-align:center;color:var(--sub);font-size:14px;}
     .footerLink{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;}
     .readonlyView{width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#f8fafc;color:var(--text);font-weight:700;}
-    .auth-screen{position:fixed;inset:0;background:linear-gradient(180deg,#eff6ff 0%, #f8fafc 100%);display:none;align-items:center;justify-content:center;padding:20px;z-index:9999;}
+    .auth-screen{position:fixed;inset:0;background:linear-gradient(180deg,#eff6ff 0%,#f8fafc 100%);display:none;align-items:center;justify-content:center;padding:20px;z-index:9999;}
     .auth-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 18px 40px rgba(15,23,42,.16);padding:22px;}
     .auth-title{font-size:22px;font-weight:900;margin:0 0 8px;}
     .auth-text{color:var(--sub);font-size:14px;line-height:1.7;margin:0 0 12px;}
     .auth-error{color:#dc2626;font-size:13px;min-height:1.3em;margin-top:8px;font-weight:700;}
     .app-hidden{display:none;}
     @media (max-width:700px){.row,.sumGrid,.toolbar{grid-template-columns:1fr}.sumValue{font-size:22px}th:nth-child(2),td:nth-child(2){min-width:190px}}
-    @media print {
+    @media print{
       body{background:#fff;}
       .auth-screen,.btns,.toolbar,.footerLink,.note,.sub,.statusBox,.statusMini{display:none !important;}
       .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid;}
@@ -75,13 +75,8 @@
     <div class="auth-card">
       <div class="auth-title">パスワード入力</div>
       <p class="auth-text">交通費ページを開くにはパスワードを入れてください。かんたんページと同じ 1122 で入れます。</p>
-      <div class="field">
-        <label for="sitePassword">パスワード</label>
-        <input id="sitePassword" type="password" inputmode="numeric" placeholder="1122">
-      </div>
-      <div class="btns" style="margin-top:12px;">
-        <button class="primary" id="unlockBtn" type="button" style="width:100%;">開く</button>
-      </div>
+      <div class="field"><label for="sitePassword">パスワード</label><input id="sitePassword" type="password" inputmode="numeric" placeholder="1122"></div>
+      <div class="btns" style="margin-top:12px;"><button class="primary" id="unlockBtn" type="button" style="width:100%;">開く</button></div>
       <div id="authError" class="auth-error"></div>
     </div>
   </div>
@@ -94,7 +89,7 @@
       <div class="grid">
         <section class="card">
           <h2>交通費を入力</h2>
-          <div class="note">1kmあたり20円で計算します。往復は「行き」と「帰り」を別々に追加してください。利用者名は、かんたんページと同じ名前から選べます。出発・到着は基本は空欄でOKです。出発時刻・帰着時刻も未入力のままで使え、必要な時だけ30分単位で選べます。</div>
+          <div class="note">1kmあたり20円で計算します。往復は「行き」と「帰り」を別々に追加してください。利用者名は、かんたんページと同じ名前から選べます。</div>
           <div id="syncStatus" class="statusBox">共有データを読み込む前です。</div>
           <div class="warn" id="calcWarn"></div>
 
@@ -103,8 +98,7 @@
             <div class="field"><label for="staff">氏名</label><input id="staff" type="text" placeholder="例：兵頭"></div>
           </div>
           <div class="row">
-            <div class="field"><label for="resident">利用者名・対象</label>
-              <select id="resident"></select></div>
+            <div class="field"><label for="resident">利用者名・対象</label><select id="resident"></select></div>
             <div class="field"><label for="purpose">用件</label><input id="purpose" type="text" placeholder="例：受診同行"></div>
           </div>
 
@@ -157,10 +151,7 @@
         <section class="card">
           <h2>利用者別集計</h2>
           <div class="tableWrap">
-            <table>
-              <thead><tr><th>利用者名</th><th>件数</th><th>距離</th><th>合計</th></tr></thead>
-              <tbody id="residentSummaryBody"></tbody>
-            </table>
+            <table><thead><tr><th>利用者名</th><th>件数</th><th>距離</th><th>合計</th></tr></thead><tbody id="residentSummaryBody"></tbody></table>
             <div class="empty" id="residentSummaryEmpty">この月のデータはありません。</div>
           </div>
         </section>
@@ -168,10 +159,7 @@
         <section class="card">
           <h2>保存一覧</h2>
           <div class="tableWrap">
-            <table>
-              <thead><tr><th>日付</th><th>内容</th><th>距離</th><th>合計</th><th>操作</th></tr></thead>
-              <tbody id="listBody"></tbody>
-            </table>
+            <table><thead><tr><th>日付</th><th>内容</th><th>距離</th><th>合計</th><th>操作</th></tr></thead><tbody id="listBody"></tbody></table>
             <div class="empty" id="emptyState">まだ保存はありません。</div>
           </div>
           <div class="footerLink"><a class="linkBtn success" href="javascript:void(0)" id="backToEasyBtn">かんたんページへ戻る</a></div>
@@ -186,6 +174,7 @@
     const RATE_PER_KM = 20;
     const SITE_PASSWORD = '1122';
     const AUTH_KEY = 'easy_page_auth_ok';
+    const RECEIVER_SIGN = 'グループホーム＋R';
     const RESIDENT_OPTIONS = ['木村元子','河合真吾','荒川健二','山本浩二','原光恵','岩崎愛','河合志保'];
     const els = {};
     let remoteRecords = [];
@@ -199,11 +188,8 @@
       if (!s) return '';
       if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
       const d = new Date(s);
-      if (isNaN(d)) return s;
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return y + '-' + m + '-' + day;
+      if (isNaN(d.getTime())) return s;
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
     function monthKey(value){ return normalizeYmd(value).slice(0,7); }
     function yen(v){ return Number(v || 0).toLocaleString('ja-JP') + '円'; }
@@ -220,6 +206,17 @@
     function safeNumber(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
     function setSyncStatus(text){ if (els.syncStatus) els.syncStatus.textContent = text || ''; }
 
+    function formatReiwaDate(dateStr){
+      const ymd = normalizeYmd(dateStr) || todayStr();
+      const d = new Date(ymd + 'T00:00:00');
+      if (isNaN(d.getTime())) return String(dateStr || '');
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const r = y - 2018;
+      if (r <= 0) return y + '年' + m + '月' + day + '日';
+      return '令和' + (r === 1 ? '元' : r) + '年' + m + '月' + day + '日';
+    }
 
     function buildTimeOptions(selected){
       const current = String(selected || '').trim();
@@ -227,8 +224,7 @@
       for (let h = 0; h < 24; h++) {
         for (let m = 0; m < 60; m += 30) {
           const value = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-          const selectedAttr = value === current ? ' selected' : '';
-          options.push('<option value="' + value + '"' + selectedAttr + '>' + value + '</option>');
+          options.push('<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + value + '</option>');
         }
       }
       return options.join('');
@@ -262,9 +258,7 @@
       if(!el) return;
       el.textContent = text || '';
       clearTimeout(setTapStatus._t);
-      setTapStatus._t = setTimeout(() => {
-        if (el.textContent === text) el.textContent = '';
-      }, 1800);
+      setTapStatus._t = setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, 1800);
     }
 
     function createTrip(initial){
@@ -334,21 +328,14 @@
         box.querySelector('.tripAmount').textContent = yen(data.amount);
         totalDistance += data.distance;
         total += data.amount;
-        if (data.meterEnd && data.meterStart && data.meterEnd < data.meterStart) {
-          warn.push('乗車時メーターより降車時メーターが小さい移動があります。');
-        }
+        if (data.meterEnd && data.meterStart && data.meterEnd < data.meterStart) warn.push('乗車時メーターより降車時メーターが小さい移動があります。');
       });
       els.currentTotal.textContent = yen(total);
       els.currentDistance.textContent = distanceText(totalDistance);
       els.tripCount.textContent = String(els.trips.children.length || 0);
       els.currentStatus.textContent = total > 0 ? '計算済み' : '入力中';
-      if (warn.length) {
-        els.calcWarn.style.display = 'block';
-        els.calcWarn.textContent = warn.join('\n');
-      } else {
-        els.calcWarn.style.display = 'none';
-        els.calcWarn.textContent = '';
-      }
+      if (warn.length) { els.calcWarn.style.display = 'block'; els.calcWarn.textContent = warn.join('\n'); }
+      else { els.calcWarn.style.display = 'none'; els.calcWarn.textContent = ''; }
       return { totalDistance: round1(totalDistance), total };
     }
 
@@ -356,7 +343,7 @@
       const summary = calcCurrent();
       const trips = Array.from(els.trips.children).map(getTripData);
       return {
-        id: uid(),
+        id: editingRecord && editingRecord.id ? uid() : uid(),
         date: (els.date.value || '').trim() || todayStr(),
         staff: (els.staff.value || '').trim(),
         resident: (els.resident.value || '').trim(),
@@ -374,13 +361,8 @@
       if (els.saveBtn) els.saveBtn.textContent = editingRecord ? '編集内容を保存' : '保存する';
       if (els.cancelEditBtn) els.cancelEditBtn.style.display = editingRecord ? 'inline-flex' : 'none';
       if (els.editingBanner) {
-        if (editingRecord) {
-          els.editingBanner.style.display = 'block';
-          els.editingBanner.textContent = '編集中：' + residentName(editingRecord) + ' ／ ' + (normalizeYmd(editingRecord.date) || editingRecord.date || '') + ' の交通費';
-        } else {
-          els.editingBanner.style.display = 'none';
-          els.editingBanner.textContent = '';
-        }
+        if (editingRecord) { els.editingBanner.style.display = 'block'; els.editingBanner.textContent = '編集中：' + residentName(editingRecord) + ' ／ ' + (normalizeYmd(editingRecord.date) || editingRecord.date || '') + ' の交通費'; }
+        else { els.editingBanner.style.display = 'none'; els.editingBanner.textContent = ''; }
       }
       if (els.currentStatus) els.currentStatus.textContent = editingRecord ? '編集中' : '入力中';
     }
@@ -405,11 +387,7 @@
       if (inputCard && inputCard.scrollIntoView) inputCard.scrollIntoView({ behavior:'smooth', block:'start' });
     }
 
-    function cancelEdit(){
-      setEditingState(null);
-      resetForm();
-      setTapStatus('編集をやめました');
-    }
+    function cancelEdit(){ setEditingState(null); resetForm(); setTapStatus('編集をやめました'); }
 
     function resetForm(){
       editingRecord = null;
@@ -427,16 +405,8 @@
       els.currentStatus.textContent = '入力中';
     }
 
-    function getMonthRecords(){
-      const target = els.monthFilter.value || monthStr(todayStr());
-      return remoteRecords.filter(r => monthKey(r.date) === target);
-    }
-
-    function getTodayRecords(){
-      const today = todayStr();
-      return remoteRecords.filter(r => normalizeYmd(r.date) === today);
-    }
-
+    function getMonthRecords(){ const target = els.monthFilter.value || monthStr(todayStr()); return remoteRecords.filter(r => monthKey(r.date) === target); }
+    function getTodayRecords(){ const today = todayStr(); return remoteRecords.filter(r => normalizeYmd(r.date) === today); }
     function residentName(r){ return String((r && r.resident) || '未設定'); }
 
     function sortResidentsForPrint(rows){
@@ -449,17 +419,8 @@
         return String(a.resident || '').localeCompare(String(b.resident || ''), 'ja');
       });
     }
-
-    function chunkArray(arr, size){
-      const chunks = [];
-      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
-      return chunks;
-    }
-
-    function compactReceiptNo(target, resident, index){
-      const yyyymm = String(target || '').replace('-', '');
-      return 'TR-' + yyyymm + '-' + String(index + 1).padStart(2, '0');
-    }
+    function chunkArray(arr, size){ const chunks = []; for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size)); return chunks; }
+    function compactReceiptNo(target, resident, index){ const yyyymm = String(target || '').replace('-', ''); return 'TR-' + yyyymm + '-' + String(index + 1).padStart(2, '0'); }
 
     function getResidentSummaryRows(rows){
       const map = new Map();
@@ -478,40 +439,27 @@
       const rows = getMonthRecords();
       const names = Array.from(new Set(rows.map(r => residentName(r)).filter(Boolean))).sort((a,b) => a.localeCompare(b, 'ja'));
       const current = (els.printResident && els.printResident.value) || '';
-      const options = ['<option value="">利用者を選ぶ</option>']
-        .concat(names.map(name => '<option value="' + escapeHtml(name) + '"' + (name === current ? ' selected' : '') + '>' + escapeHtml(name) + '</option>'));
+      const options = ['<option value="">利用者を選ぶ</option>'].concat(names.map(name => '<option value="' + escapeHtml(name) + '"' + (name === current ? ' selected' : '') + '>' + escapeHtml(name) + '</option>'));
       els.printResident.innerHTML = options.join('');
       if (!names.length) return;
-      if (current && names.includes(current)) {
-        els.printResident.value = current;
-      } else if (els.resident.value && names.includes(els.resident.value)) {
-        els.printResident.value = els.resident.value;
-      } else {
-        els.printResident.value = names[0];
-      }
+      if (current && names.includes(current)) els.printResident.value = current;
+      else if (els.resident.value && names.includes(els.resident.value)) els.printResident.value = els.resident.value;
+      else els.printResident.value = names[0];
     }
 
     function renderSummary(){
       const monthRows = getMonthRecords();
       const todayRows = getTodayRecords();
-      const monthTotal = monthRows.reduce((a,b) => a + safeNumber(b.total), 0);
-      const monthDistance = monthRows.reduce((a,b) => a + safeNumber(b.totalDistance), 0);
-      const todayTotal = todayRows.reduce((a,b) => a + safeNumber(b.total), 0);
-      els.monthTotal.textContent = yen(monthTotal);
-      els.monthDistance.textContent = distanceText(monthDistance);
+      els.monthTotal.textContent = yen(monthRows.reduce((a,b) => a + safeNumber(b.total), 0));
+      els.monthDistance.textContent = distanceText(monthRows.reduce((a,b) => a + safeNumber(b.totalDistance), 0));
       els.monthCount.textContent = String(monthRows.length);
-      els.todayTotal.textContent = yen(todayTotal);
+      els.todayTotal.textContent = yen(todayRows.reduce((a,b) => a + safeNumber(b.total), 0));
     }
 
     function renderResidentSummary(){
       const rows = getResidentSummaryRows(getMonthRecords());
       els.residentSummaryBody.innerHTML = rows.map(r => `
-        <tr>
-          <td>${escapeHtml(r.resident)}</td>
-          <td>${r.count}</td>
-          <td class="yen">${distanceText(r.distance)}</td>
-          <td class="yen">${yen(r.total)}</td>
-        </tr>`).join('');
+        <tr><td>${escapeHtml(r.resident)}</td><td>${r.count}</td><td class="yen">${distanceText(r.distance)}</td><td class="yen">${yen(r.total)}</td></tr>`).join('');
       els.residentSummaryEmpty.style.display = rows.length ? 'none' : 'block';
     }
 
@@ -520,10 +468,7 @@
         const route = [t.from, t.to].filter(Boolean).join(' → ') || '移動 ' + (idx + 1);
         const timeText = [t.departTime, t.arriveTime].filter(Boolean).join(' → ');
         const meterText = '乗車 ' + meterValueText(t.meterStart) + ' → 降車 ' + meterValueText(t.meterEnd);
-        return `<div style="margin-bottom:5px;">
-          <div>${escapeHtml(route)}${timeText ? ' <span class="small muted">' + escapeHtml(timeText) + '</span>' : ''} <span class="pill">${distanceText(t.distance)} / ${yen(t.amount)}</span></div>
-          <div class="small muted" style="margin-top:2px;">${escapeHtml(meterText)}</div>
-        </div>`;
+        return `<div style="margin-bottom:5px;"><div>${escapeHtml(route)}${timeText ? ' <span class="small muted">' + escapeHtml(timeText) + '</span>' : ''} <span class="pill">${distanceText(t.distance)} / ${yen(t.amount)}</span></div><div class="small muted" style="margin-top:2px;">${escapeHtml(meterText)}</div></div>`;
       }).join('');
     }
 
@@ -536,42 +481,21 @@
       els.listBody.innerHTML = rows.map(r => `
         <tr>
           <td><div>${escapeHtml(normalizeYmd(r.date) || String(r.date || ''))}</div><div class="small muted">${escapeHtml(r.staff || '')}</div></td>
-          <td>
-            <div><strong>${escapeHtml(residentName(r))}</strong>${r.purpose ? ' ／ ' + escapeHtml(r.purpose) : ''}</div>
-            <div class="small" style="margin-top:4px;">${routeHtml(r.trips)}</div>
-            ${r.memo ? `<div class="small muted" style="margin-top:6px;">メモ：${escapeHtml(r.memo)}</div>` : ''}
-          </td>
+          <td><div><strong>${escapeHtml(residentName(r))}</strong>${r.purpose ? ' ／ ' + escapeHtml(r.purpose) : ''}</div><div class="small" style="margin-top:4px;">${routeHtml(r.trips)}</div>${r.memo ? `<div class="small muted" style="margin-top:6px;">メモ：${escapeHtml(r.memo)}</div>` : ''}</td>
           <td class="yen">${distanceText(r.totalDistance)}</td>
           <td class="yen">${yen(r.total)}</td>
-          <td>
-            <div class="actionBtns">
-              <button type="button" class="editBtn editRowBtn" data-id="${escapeHtml(r.id)}">編集</button>
-              <button type="button" class="danger delBtn" data-id="${escapeHtml(r.id)}">削除</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+          <td><div class="actionBtns"><button type="button" class="editBtn editRowBtn" data-id="${escapeHtml(r.id)}">編集</button><button type="button" class="danger delBtn" data-id="${escapeHtml(r.id)}">削除</button></div></td>
+        </tr>`).join('');
       els.emptyState.style.display = rows.length ? 'none' : 'block';
     }
 
     function updateBackLink(){
       const url = localStorage.getItem(EASY_PAGE_URL_KEY) || '';
-      if (url) {
-        els.backToEasyBtn.href = url;
-        els.backToEasyBtn.textContent = 'かんたんページへ戻る';
-      } else {
-        els.backToEasyBtn.href = 'javascript:void(0)';
-        els.backToEasyBtn.textContent = 'かんたんページURL未設定';
-      }
+      if (url) { els.backToEasyBtn.href = url; els.backToEasyBtn.textContent = 'かんたんページへ戻る'; }
+      else { els.backToEasyBtn.href = 'javascript:void(0)'; els.backToEasyBtn.textContent = 'かんたんページURL未設定'; }
     }
 
-    function renderAll(){
-      renderSummary();
-      renderResidentSummary();
-      renderList();
-      renderPrintResidentOptions();
-      updateBackLink();
-    }
+    function renderAll(){ renderSummary(); renderResidentSummary(); renderList(); renderPrintResidentOptions(); updateBackLink(); }
 
     async function loadRemoteRecords(showMsg){
       setSyncStatus('共有データを読み込み中です...');
@@ -600,20 +524,17 @@
       try {
         await postJson({ action:'saveTransportRecord', record: entry });
         if (isEditing) {
-          try {
-            await postJson({ action:'deleteTransportRecord', id: oldEditingRecord.id });
-          } catch (deleteErr) {
-            setSyncStatus('編集内容は保存しましたが、古い記録の削除に失敗しました。\n保存一覧に同じ記録が2つ出た場合は、古い方を手動で削除してください。\n' + (deleteErr && deleteErr.message ? deleteErr.message : deleteErr));
-            alert('編集内容は保存しましたが、古い記録の削除に失敗しました。\n保存一覧に同じ記録が2つ出た場合は、古い方を手動で削除してください。');
-          }
+          try { await postJson({ action:'deleteTransportRecord', id: oldEditingRecord.id }); }
+          catch (deleteErr) { setSyncStatus('編集内容は保存しましたが、古い記録の削除に失敗しました。\n保存一覧に同じ記録が2つ出た場合は、古い方を手動で削除してください。\n' + (deleteErr && deleteErr.message ? deleteErr.message : deleteErr)); }
         }
         setTapStatus(isEditing ? '編集保存しました' : '保存しました');
+        setEditingState(null);
         resetForm();
         await loadRemoteRecords(false);
-        setSyncStatus(isEditing ? '編集内容を保存しました。共有データを更新済みです。' : '保存しました。共有データを更新済みです。');
+        setSyncStatus(isEditing ? '編集保存しました。共有データを更新済みです。' : '保存しました。共有データを更新済みです。');
       } catch (err) {
-        setSyncStatus((isEditing ? '編集保存に失敗しました。' : '保存に失敗しました。') + '\n' + (err && err.message ? err.message : err));
-        alert((isEditing ? '編集保存に失敗しました。' : '保存に失敗しました。') + '\n' + (err && err.message ? err.message : err));
+        setSyncStatus('保存に失敗しました。\n' + (err && err.message ? err.message : err));
+        alert('保存に失敗しました。\n' + (err && err.message ? err.message : err));
       }
     }
 
@@ -632,49 +553,32 @@
     }
 
     async function clearMonth(){
+      const rows = getMonthRecords();
+      if (!rows.length) { alert('この月の削除データがありません。'); return; }
       const target = els.monthFilter.value || monthStr(todayStr());
-      if (!confirm(target + ' の交通費を全部削除しますか？')) return;
-      setSyncStatus(target + ' を削除中です...');
-      try {
-        await postJson({ action:'clearTransportMonth', month: target });
-        await loadRemoteRecords(false);
-        setSyncStatus(target + ' を削除しました。');
-      } catch (err) {
-        setSyncStatus('月削除に失敗しました。\n' + (err && err.message ? err.message : err));
-        alert('月削除に失敗しました。\n' + (err && err.message ? err.message : err));
+      if (!confirm(target + ' の交通費 ' + rows.length + '件を全削除しますか？\nこの操作は元に戻せません。')) return;
+      setSyncStatus('この月の交通費を削除中です...');
+      let ok = 0;
+      let ng = 0;
+      for (const r of rows) {
+        try { await postJson({ action:'deleteTransportRecord', id:r.id }); ok++; }
+        catch(e) { ng++; }
       }
+      await loadRemoteRecords(false);
+      setSyncStatus('削除完了：' + ok + '件' + (ng ? '\n失敗：' + ng + '件' : ''));
     }
 
     function exportCsv(){
-      const rows = getMonthRecords().slice().sort((a,b) => (a.date || '').localeCompare(b.date || ''));
+      const rows = getMonthRecords().slice().sort((a,b) => String(a.date || '').localeCompare(String(b.date || '')));
       if (!rows.length) { alert('書き出すデータがありません。'); return; }
-      const lines = [[
-        '日付','氏名','利用者名・対象','用件','出発','到着','出発時刻','帰着時刻','乗車時メーターkm','降車時メーターkm','走行距離km','単価','移動金額','メモ','合計'
-      ]];
+      const lines = [['日付','氏名','利用者名・対象','用件','出発','到着','出発時刻','帰着時刻','乗車時メーターkm','降車時メーターkm','走行距離km','単価','移動金額','メモ','合計']];
       rows.forEach(r => {
         (r.trips || []).forEach((t, idx) => {
-          lines.push([
-            idx === 0 ? r.date || '' : '',
-            idx === 0 ? r.staff || '' : '',
-            idx === 0 ? r.resident || '' : '',
-            idx === 0 ? r.purpose || '' : '',
-            t.from || '',
-            t.to || '',
-            t.departTime || '',
-            t.arriveTime || '',
-            t.meterStart ?? '',
-            t.meterEnd ?? '',
-            t.distance ?? '',
-            t.unitRate ?? RATE_PER_KM,
-            t.amount ?? '',
-            idx === 0 ? r.memo || '' : '',
-            idx === 0 ? r.total || 0 : ''
-          ]);
+          lines.push([idx === 0 ? r.date || '' : '', idx === 0 ? r.staff || '' : '', idx === 0 ? r.resident || '' : '', idx === 0 ? r.purpose || '' : '', t.from || '', t.to || '', t.departTime || '', t.arriveTime || '', t.meterStart ?? '', t.meterEnd ?? '', t.distance ?? '', t.unitRate ?? RATE_PER_KM, t.amount ?? '', idx === 0 ? r.memo || '' : '', idx === 0 ? r.total || 0 : '']);
         });
       });
-      const csv = lines.map(row => row.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
-      const bom = '\uFEFF';
-      const blob = new Blob([bom + csv], { type:'text/csv;charset=utf-8;' });
+      const csv = '\uFEFF' + lines.map(row => row.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -689,52 +593,46 @@
       const target = els.monthFilter.value || monthStr(todayStr());
       const selectedResident = (els.printResident.value || '').trim();
       if (!selectedResident) { alert('印刷する利用者を選んでください。'); return; }
-      const rows = getMonthRecords().filter(r => residentName(r) === selectedResident).slice().sort((a,b) =>
-        String(a.date || '').localeCompare(String(b.date || '')) ||
-        String(a.createdAt || '').localeCompare(String(b.createdAt || ''))
-      );
+      const rows = getMonthRecords().filter(r => residentName(r) === selectedResident).slice().sort((a,b) => String(a.date || '').localeCompare(String(b.date || '')) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
       if (!rows.length) { alert('選択した利用者の印刷データがありません。'); return; }
       const total = rows.reduce((a,b) => a + safeNumber(b.total), 0);
       const totalDistance = round1(rows.reduce((a,b) => a + safeNumber(b.totalDistance), 0));
-      const issueDate = todayStr();
+      const issueDate = formatReiwaDate(todayStr());
       const detailRows = rows.map((r, idx) => `
         <tr>
           <td style="text-align:center;">${idx + 1}</td>
           <td>${escapeHtml(normalizeYmd(r.date) || String(r.date || ''))}</td>
           <td>${escapeHtml(r.purpose || '')}</td>
-          <td>${(r.trips || []).map(t => {
-            const route = [t.from || '', t.to || ''].filter(Boolean).join(' → ') || '移動';
-            const time = [t.departTime || '', t.arriveTime || ''].filter(Boolean).join(' → ');
-            return `${escapeHtml(route)}${time ? ' [' + escapeHtml(time) + ']' : ''}`;
-          }).join('<br>')}</td>
+          <td>${escapeHtml((r.trips || []).map(t => [t.from, t.to].filter(Boolean).join(' → ') || '移動').join(' / '))}</td>
           <td style="text-align:right;">${distanceText(r.totalDistance)}</td>
           <td style="text-align:right;">${yen(r.total)}</td>
         </tr>`).join('');
-      const html = `<!doctype html><html lang="ja"><head><meta charset="UTF-8"><title>請求書・領収書 ${target} ${escapeHtml(selectedResident)}</title>
+
+      const html = `<!doctype html><html lang="ja"><head><meta charset="UTF-8"><title>交通費印刷 ${escapeHtml(selectedResident)} ${escapeHtml(target)}</title>
       <style>
-      @page{size:A4 portrait;margin:12mm;}
-      body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;color:#111827;margin:0;font-size:12px;}
-      .sheet{display:flex;flex-direction:column;gap:10mm;}
-      .block{border:1px solid #111827;border-radius:8px;padding:10px 12px;}
-      .title{font-size:24px;font-weight:800;text-align:center;letter-spacing:.08em;margin:0 0 8px;}
-      .meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:12px;}
-      .line{border-bottom:1px solid #111827;display:inline-block;min-width:160px;padding:2px 4px;}
-      .amountBox{border:2px solid #111827;padding:8px 12px;font-size:20px;font-weight:900;text-align:center;margin:8px 0;}
-      .desc{margin:6px 0 10px;line-height:1.6;}
-      table{width:100%;border-collapse:collapse;font-size:11px;}
-      th,td{border:1px solid #94a3b8;padding:5px 6px;vertical-align:top;} th{background:#f8fafc;}
-      .signRow{display:flex;justify-content:space-between;gap:12px;margin-top:12px;}
-      .signBox{flex:1;min-height:52px;border-top:1px solid #111827;padding-top:4px;}
-      .split{border-top:2px dashed #64748b;padding-top:10mm;}
-      .small{font-size:11px;color:#334155;line-height:1.5;}
+      @page{size:A4 portrait;margin:8mm;}
+      *{box-sizing:border-box;}
+      body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;color:#111827;margin:0;background:#fff;}
+      .page{width:100%;min-height:280mm;display:grid;grid-template-rows:1fr 1fr;gap:7mm;}
+      .block{border:1.5px solid #111827;border-radius:8px;padding:8mm;}
+      .title{font-size:22px;font-weight:900;text-align:center;margin:0 0 6mm;letter-spacing:.08em;}
+      .meta{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin:0 0 4mm;font-size:13px;}
+      .line{display:inline-block;border-bottom:1px solid #111827;min-width:130px;padding:0 3mm 1mm;text-align:center;}
+      table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4mm;}
+      th,td{border:1px solid #111827;padding:2mm;vertical-align:top;}
+      th{background:#f3f4f6;}
+      .amountBox{border:2px solid #111827;border-radius:6px;padding:5mm;text-align:center;font-size:24px;font-weight:900;margin:7mm 0;}
+      .desc{font-size:14px;line-height:1.8;margin:5mm 0;}
+      .small{font-size:12px;line-height:1.6;}
+      .signRow{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-top:8mm;}
+      .signBox{border:1px solid #111827;min-height:24mm;padding:3mm;font-size:13px;}
+      .signValue{font-size:18px;font-weight:900;margin-top:7mm;text-align:center;}
       </style></head><body>
-      <div class="sheet">
+      <div class="page">
         <section class="block">
           <h1 class="title">請求書</h1>
           <div class="meta"><div>対象月：<span class="line">${escapeHtml(target)}</span></div><div>発行日：<span class="line">${escapeHtml(issueDate)}</span></div></div>
           <div class="meta"><div>利用者名：<span class="line">${escapeHtml(selectedResident)}</span></div><div>宛名：<span class="line">　　　　　　　　　様</span></div></div>
-          <div class="amountBox">請求金額　${yen(total)}</div>
-          <div class="desc">上記のとおり、${escapeHtml(target)}分の車交通費を請求いたします。</div>
           <table>
             <thead><tr><th style="width:36px;">No</th><th style="width:78px;">日付</th><th style="width:90px;">用件</th><th>内容</th><th style="width:70px;">距離</th><th style="width:74px;">金額</th></tr></thead>
             <tbody>${detailRows}</tbody>
@@ -742,15 +640,14 @@
           </table>
           <div class="signRow"><div class="signBox">備考</div><div class="signBox">作成者</div></div>
         </section>
-
-        <section class="block split">
+        <section class="block">
           <h1 class="title">領収書</h1>
-          <div class="meta"><div>対象月：<span class="line">${escapeHtml(target)}</span></div><div>領収日：<span class="line">${escapeHtml(issueDate)}</span></div></div>
+          <div class="meta"><div>対象月：<span class="line">${escapeHtml(target)}</span></div><div>受領日：<span class="line">${escapeHtml(issueDate)}</span></div></div>
           <div class="meta"><div>利用者名：<span class="line">${escapeHtml(selectedResident)}</span></div><div>宛名：<span class="line">　　　　　　　　　様</span></div></div>
           <div class="amountBox">領収金額　${yen(total)}</div>
           <div class="desc">上記金額を、${escapeHtml(target)}分の車交通費として領収しました。</div>
           <div class="small">但し、${escapeHtml(target)}分車交通費として</div>
-          <div class="signRow"><div class="signBox">受領者署名</div><div class="signBox">備考</div></div>
+          <div class="signRow"><div class="signBox">受領者署名<div class="signValue">${escapeHtml(RECEIVER_SIGN)}</div></div><div class="signBox">備考</div></div>
         </section>
       </div>
       </body></html>`;
@@ -767,11 +664,9 @@
       const target = els.monthFilter.value || monthStr(todayStr());
       const rows = getMonthRecords();
       if (!rows.length) { alert('この月の印刷データがありません。'); return; }
-
       const summaries = sortResidentsForPrint(getResidentSummaryRows(rows).filter(r => r.resident && r.resident !== '未設定'));
       if (!summaries.length) { alert('利用者別の集計がありません。'); return; }
-
-      const issueDate = todayStr();
+      const issueDate = formatReiwaDate(todayStr());
       const allPages = chunkArray(summaries, 6);
       const pagesHtml = allPages.map((pageRows, pageIndex) => {
         const cards = pageRows.map((r, idxInPage) => {
@@ -779,23 +674,15 @@
           const no = compactReceiptNo(target, r.resident, globalIndex);
           return `
             <section class="miniCard">
-              <div class="miniHead">
-                <div class="miniTitle">交通費 請求書・領収書</div>
-                <div class="miniNo">${escapeHtml(no)}</div>
-              </div>
+              <div class="miniHead"><div class="miniTitle">交通費 請求書・領収書</div><div class="miniNo">${escapeHtml(no)}</div></div>
               <div class="miniLine"><span>対象月</span><strong>${escapeHtml(target)}</strong></div>
               <div class="miniLine"><span>利用者名</span><strong>${escapeHtml(r.resident)} 様</strong></div>
               <div class="miniAmount">${yen(r.total)}</div>
               <div class="miniDesc">上記金額を、${escapeHtml(target)}分の車交通費として請求いたします。受領確認をもって領収といたします。</div>
-              <div class="miniInfo">
-                <div>件数：${r.count}件</div>
-                <div>距離：${distanceText(r.distance)}</div>
-                <div>発行日：${escapeHtml(issueDate)}</div>
-              </div>
+              <div class="miniInfo"><div>件数：${r.count}件</div><div>距離：${distanceText(r.distance)}</div><div>発行日：${escapeHtml(issueDate)}</div></div>
               <div class="signArea">
-                <div class="signDate">受領日：　　　年　　　月　　　日</div>
-                <div class="signName">受領者署名：</div>
-                <div class="relation">関係：本人・家族・後見人・その他（　　　　）</div>
+                <div class="signDate">受領日：令和　　　年　　　月　　　日</div>
+                <div class="signName">受領者署名：${escapeHtml(RECEIVER_SIGN)}</div>
               </div>
             </section>`;
         });
@@ -808,7 +695,7 @@
       @page{size:A4 portrait;margin:7mm;}
       *{box-sizing:border-box;}
       body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;color:#111827;margin:0;background:#fff;}
-      .page{width:100%;min-height:283mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3, 1fr);gap:4mm;page-break-after:always;}
+      .page{width:100%;min-height:283mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:4mm;page-break-after:always;}
       .page:last-child{page-break-after:auto;}
       .miniCard{border:1.4px solid #111827;border-radius:7px;padding:4mm 4.5mm;display:flex;flex-direction:column;justify-content:flex-start;min-height:0;overflow:hidden;}
       .miniCard.blank{border:1px dashed #cbd5e1;}
@@ -819,12 +706,12 @@
       .miniLine span{color:#475569;font-weight:700;white-space:nowrap;}
       .miniLine strong{font-size:12px;text-align:right;}
       .miniAmount{border:2px solid #111827;border-radius:5px;margin:2.5mm 0 2mm;padding:2.5mm 2mm;text-align:center;font-size:20px;font-weight:900;}
-      .miniDesc{font-size:9.5px;line-height:1.45;margin-bottom:2mm;}
-      .miniInfo{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:1.5mm;font-size:8.8px;color:#334155;border:1px solid #cbd5e1;border-radius:4px;padding:1.5mm;margin-bottom:2.5mm;}
-      .signArea{margin-top:auto;font-size:10px;line-height:1.7;}
-      .signName{border-bottom:1px solid #111827;min-height:8mm;padding-top:1mm;}
-      .relation{font-size:9px;margin-top:1mm;}
-      @media print{body{margin:0;} .page{break-after:page;} .page:last-child{break-after:auto;}}
+      .miniDesc{font-size:9.5px;line-height:1.55;margin-bottom:2mm;}
+      .miniInfo{display:grid;grid-template-columns:1fr 1fr;gap:1mm 3mm;font-size:9px;color:#334155;margin-top:auto;border-top:1px solid #e5e7eb;padding-top:1.5mm;}
+      .miniInfo div:last-child{grid-column:1 / -1;}
+      .signArea{border:1px solid #111827;border-radius:4px;margin-top:2mm;padding:2mm;font-size:10.5px;line-height:1.8;min-height:18mm;}
+      .signDate{font-weight:700;}
+      .signName{font-size:13px;font-weight:900;margin-top:2mm;}
       </style></head><body>${pagesHtml}</body></html>`;
       const w = window.open('', '_blank');
       if (!w) { alert('印刷画面を開けませんでした。'); return; }
@@ -835,109 +722,49 @@
       setTimeout(() => { try { w.print(); } catch(e) {} }, 300);
     }
 
-    function bindAuth(){
-      els.unlockBtn.addEventListener('click', tryUnlock);
-      els.sitePassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
-    }
-
     function unlockApp(){ els.authScreen.style.display = 'none'; els.appRoot.classList.remove('app-hidden'); }
     function showAuthError(msg){ els.authError.textContent = msg || ''; }
     function tryUnlock(){
       const pw = String(els.sitePassword.value || '').trim();
-      if (pw !== SITE_PASSWORD) {
-        showAuthError('パスワードが違います。');
-        els.sitePassword.value = '';
-        els.sitePassword.focus();
-        return;
-      }
+      if (pw !== SITE_PASSWORD) { showAuthError('パスワードが違います。'); els.sitePassword.value = ''; els.sitePassword.focus(); return; }
       sessionStorage.setItem(AUTH_KEY, '1');
       showAuthError('');
       unlockApp();
     }
     function initAuth(){
-      if (sessionStorage.getItem(AUTH_KEY) === '1') {
-        unlockApp();
-        return;
-      }
+      if (sessionStorage.getItem(AUTH_KEY) === '1') { unlockApp(); return; }
       els.authScreen.style.display = 'flex';
       els.appRoot.classList.add('app-hidden');
     }
 
     function onAction(target){
       if (!target) return;
-      if (target.id === 'addTripBtn') {
-        createTrip();
-        setTapStatus('移動を追加しました');
-        return;
-      }
-      if (target.id === 'resetBtn') {
-        resetForm();
-        setTapStatus('入力をクリアしました');
-        return;
-      }
-      if (target.id === 'cancelEditBtn') {
-        cancelEdit();
-        return;
-      }
-      if (target.id === 'saveBtn') {
-        saveEntry();
-        return;
-      }
-      if (target.id === 'printBtn') {
-        printMonth();
-        return;
-      }
-      if (target.id === 'printCompactBtn') {
-        printCompactMonth();
-        return;
-      }
-      if (target.id === 'csvBtn') {
-        exportCsv();
-        return;
-      }
-      if (target.id === 'clearMonthBtn') {
-        clearMonth();
-        return;
-      }
-      if (target.id === 'reloadBtn' || target.id === 'reloadBtnTop') {
-        loadRemoteRecords(true).catch(err => {
-          setSyncStatus('再読込に失敗しました。\n' + (err && err.message ? err.message : err));
-        });
-        return;
-      }
+      if (target.id === 'addTripBtn') { createTrip(); setTapStatus('移動を追加しました'); return; }
+      if (target.id === 'resetBtn') { resetForm(); setTapStatus('入力をクリアしました'); return; }
+      if (target.id === 'cancelEditBtn') { cancelEdit(); return; }
+      if (target.id === 'saveBtn') { saveEntry(); return; }
+      if (target.id === 'printBtn') { printMonth(); return; }
+      if (target.id === 'printCompactBtn') { printCompactMonth(); return; }
+      if (target.id === 'csvBtn') { exportCsv(); return; }
+      if (target.id === 'clearMonthBtn') { clearMonth(); return; }
+      if (target.id === 'reloadBtn' || target.id === 'reloadBtnTop') { loadRemoteRecords(true).catch(err => setSyncStatus('再読込に失敗しました。\n' + (err && err.message ? err.message : err))); return; }
       if (target.classList.contains('removeTripBtn')) {
-        if (els.trips.children.length <= 1) {
-          alert('移動は1つ以上残してください。');
-          return;
-        }
+        if (els.trips.children.length <= 1) { alert('移動は1つ以上残してください。'); return; }
         target.closest('.tripBox').remove();
         refreshTripTitles();
         calcCurrent();
         setTapStatus('移動を削除しました');
         return;
       }
-      if (target.classList.contains('editRowBtn')) {
-        startEdit(target.getAttribute('data-id'));
-        return;
-      }
-      if (target.classList.contains('delBtn')) {
-        deleteRow(target.getAttribute('data-id'));
-        return;
-      }
+      if (target.classList.contains('editRowBtn')) { startEdit(target.getAttribute('data-id')); return; }
+      if (target.classList.contains('delBtn')) { deleteRow(target.getAttribute('data-id')); return; }
       if (target.id === 'backToEasyBtn') {
         const url = localStorage.getItem(EASY_PAGE_URL_KEY) || '';
         if (!url) {
           const input = prompt('かんたんページのURLを入れてください。\n例：https://example.github.io/easy.html');
-          if (input && /^https?:\/\//.test(input.trim())) {
-            localStorage.setItem(EASY_PAGE_URL_KEY, input.trim());
-            updateBackLink();
-            alert('URLを保存しました。もう一度押すと移動できます。');
-          } else if (input) {
-            alert('URLは http:// または https:// から始まる形で入れてください。');
-          }
-        } else {
-          location.href = url;
-        }
+          if (input && /^https?:\/\//.test(input.trim())) { localStorage.setItem(EASY_PAGE_URL_KEY, input.trim()); updateBackLink(); alert('URLを保存しました。もう一度押すと移動できます。'); }
+          else if (input) alert('URLは http:// または https:// から始まる形で入れてください。');
+        } else location.href = url;
       }
     }
 
@@ -957,12 +784,8 @@
     }
 
     function bindInputs(){
-      els.trips.addEventListener('input', function(e){
-        if (e.target.closest('.tripBox')) calcCurrent();
-      });
-      els.trips.addEventListener('change', function(e){
-        if (e.target.closest('.tripBox')) calcCurrent();
-      });
+      els.trips.addEventListener('input', function(e){ if (e.target.closest('.tripBox')) calcCurrent(); });
+      els.trips.addEventListener('change', function(e){ if (e.target.closest('.tripBox')) calcCurrent(); });
       els.monthFilter.addEventListener('change', renderAll);
     }
 
@@ -1001,11 +824,8 @@
       els.editingBanner = $('editingBanner');
 
       const current = els.resident.value;
-      els.resident.innerHTML = ['<option value="">選択してください</option>']
-        .concat(RESIDENT_OPTIONS.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`))
-        .join('');
+      els.resident.innerHTML = ['<option value="">選択してください</option>'].concat(RESIDENT_OPTIONS.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)).join('');
       els.resident.value = current || '';
-
       els.date.value = todayStr();
       els.monthFilter.value = monthStr(todayStr());
       createTrip();
@@ -1015,18 +835,17 @@
       bindActions();
       bindAuth();
       initAuth();
-      try {
-        await loadRemoteRecords(false);
-      } catch (err) {
-        setSyncStatus('共有データの読み込みに失敗しました。\nApps Script 側に交通費用の処理を追加してください。\n' + (err && err.message ? err.message : err));
-      }
+      try { await loadRemoteRecords(false); }
+      catch (err) { setSyncStatus('共有データの読み込みに失敗しました。\nApps Script 側に交通費用の処理を追加してください。\n' + (err && err.message ? err.message : err)); }
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init, { once:true });
-    } else {
-      init();
+    function bindAuth(){
+      els.unlockBtn.addEventListener('click', tryUnlock);
+      els.sitePassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
     }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true });
+    else init();
   </script>
 </body>
 </html>
